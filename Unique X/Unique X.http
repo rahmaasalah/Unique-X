@@ -1,0 +1,6 @@
+@Unique_X_HostAddress = http://localhost:5265
+
+GET {{Unique_X_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
