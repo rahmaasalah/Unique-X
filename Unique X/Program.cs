@@ -51,8 +51,25 @@ builder.Services.AddScoped<IPhotoService, PhotoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPropertiesService, PropertiesService>();
 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularApp",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200") // بورت الأنجولار
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 // 3. Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // يخلي الـ Enums تظهر كـ Strings في الـ JSON
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 builder.Services.AddEndpointsApiExplorer();
 // تعريف Swagger مع إعدادات الـ JWT
@@ -66,10 +83,9 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "أدخل كلمة Bearer مسافة ثم التوكن.\r\n\r\nمثال: \r\nBearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        //Description = "أدخل كلمة Bearer مسافة ثم التوكن.\r\n\r\nمثال: \r\nBearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
     });
 
-    // 2. فرض الحماية على الـ Endpoints
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
@@ -93,6 +109,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(); 
 }
+app.UseCors("AllowAngularApp");
 
 app.UseHttpsRedirection();
 

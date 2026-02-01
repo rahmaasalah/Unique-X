@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using static Unique_X.Models.PropEnums;
 
 namespace Unique_X.Models
 {
@@ -9,12 +10,12 @@ namespace Unique_X.Models
 
         [Required]
         [MaxLength(200)]
-        public string Title { get; set; } // عنوان الإعلان
+        public string Title { get; set; } 
 
         [Required]
         public string Description { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")] // لتحديد دقة العملة
+        [Column(TypeName = "decimal(18,2)")] 
         public decimal Price { get; set; }
 
         public int Area { get; set; } // المساحة بالمتر
@@ -22,15 +23,11 @@ namespace Unique_X.Models
         public int Bathrooms { get; set; }
 
         [Required]
-        public string City { get; set; } // القاهرة، الجيزة..
+        public City City { get; set; }
         public string Region { get; set; } // المعادي، التجمع..
         public string Address { get; set; }
-
-        // Enum: 0 = Sale, 1 = Rent
-        public int ListingType { get; set; }
-
-        // Enum: 0 = Apartment, 1 = Villa, 2 = Office...
-        public int PropertyType { get; set; }
+        public ListingType ListingType { get; set; }
+        public PropertyType PropertyType { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
