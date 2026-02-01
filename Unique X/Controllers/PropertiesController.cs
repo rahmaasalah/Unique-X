@@ -20,20 +20,18 @@ namespace Unique_X.Controllers
 
 
         [HttpPost("add")]
-        [Authorize] // يجب أن يكون مسجلاً للدخول
+        [Authorize]
         [DisableRequestSizeLimit]
         public async Task<IActionResult> AddProperty([FromForm] PropertyFormDto dto)
         {
             // استخراج الـ ID الخاص بالبروكر من التوكن
             var brokerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            //string brokerId = "test-id";
 
             if (brokerId == null)
                 return Unauthorized();
             if (dto.Photos == null || dto.Photos.Count == 0)
             {
-                // يمكنك إرجاع رسالة خطأ هنا لو الصور مطلوبة
-                return BadRequest("يجب رفع صور للعقار");
+                return BadRequest("Photos must be uploded");
             }
 
             if (!ModelState.IsValid)
@@ -43,11 +41,76 @@ namespace Unique_X.Controllers
 
             return Ok(result);
         }
-        [HttpGet("test")]
-        [AllowAnonymous] // يسمح بالدخول بدون توكن للتجربة
-        public IActionResult TestConnection()
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] PropertyFilterDto filter)
         {
-            return Ok("الكنترولر شغال وزي الفل! 🚀");
+            var result = await _propertiesService.GetAllPropertiesAsync(filter);
+
+            if (result == null || !result.Any())
+            {
+                string message = "There are no properties that match your selections at the moment.";
+
+                if (filter.City.HasValue)
+                {
+                    var cityName = Enum.GetName(typeof(Unique_X.Models.PropEnums.City), filter.City.Value);
+                    message = $"There are no properties in {cityName}.";
+                }
+                else if (filter.MinPrice.HasValue || filter.MaxPrice.HasValue)
+                {
+                    message = "There are no properties in the requested price range.";
+                }
+
+                return Ok(new { Message = message, Data = result });
+            }
+
+            return Ok(result);
+        }
+
+        [HttpGet("my-properties")]
+        [Authorize]
+        public async Task<IActionResult> GetMyProperties()
+        {
+            var brokerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (brokerId == null) return Unauthorized();
+
+            var result = await _propertiesService.GetBrokerPropertiesAsync(brokerId);
+            return Ok(result);
+        }
+
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProperty(int id, [FromForm] UpdatePropertyDto dto)
+        {
+            var brokerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var result = await _propertiesService.UpdatePropertyAsync(id, dto, brokerId);
+
+            if (result == null)
+                return NotFound("Can't update this property");
+
+            return Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteProperty(int id)
+        {
+            var brokerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var deleted = await _propertiesService.DeletePropertyAsync(id, brokerId);
+
+            if (!deleted)
+                return BadRequest("Failed to delete property");
+
+            return Ok("Deleted Successfully");
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var result = await _propertiesService.GetPropertyByIdAsync(id);
+            return result != null ? Ok(result) : NotFound();
         }
     }
 }

@@ -6,6 +6,11 @@ namespace Unique_X.Services.Interface
     public interface IPropertiesService
     {
         //Task<Property> AddPropertyAsync(PropertyFormDto dto, string brokerId);
-        Task<Property> AddPropertyAsync(PropertyFormDto dto, string brokerId);
+        Task<PropertyResponseDto> AddPropertyAsync(PropertyFormDto dto, string brokerId);
+        Task<PropertyResponseDto> UpdatePropertyAsync(int id, UpdatePropertyDto dto, string brokerId);
+        Task<bool> DeletePropertyAsync(int id, string brokerId);
+        Task<IEnumerable<PropertyResponseDto>> GetAllPropertiesAsync(PropertyFilterDto filter);
+        Task<IEnumerable<PropertyResponseDto>> GetBrokerPropertiesAsync(string brokerId);
+        Task<PropertyResponseDto> GetPropertyByIdAsync(int id);
     }
 }

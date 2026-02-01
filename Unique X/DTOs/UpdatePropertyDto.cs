@@ -1,30 +1,18 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Unique_X.DTOs
+﻿namespace Unique_X.DTOs
 {
-    public class PropertyFormDto
+    public class UpdatePropertyDto
     {
-        [Required, MaxLength(200)]
         public string? Title { get; set; }
-
-        [Required]
         public string? Description { get; set; }
-
-        [Required]
         public decimal? Price { get; set; }
-
         public int? Area { get; set; }
         public int? Rooms { get; set; }
         public int? Bathrooms { get; set; }
-
-        [Required]
         public int? City { get; set; }
         public string? Region { get; set; }
         public string? Address { get; set; }
         public int? ListingType { get; set; }
-
         public int? PropertyType { get; set; }
-
         public List<IFormFile>? Photos { get; set; }
     }
 }
