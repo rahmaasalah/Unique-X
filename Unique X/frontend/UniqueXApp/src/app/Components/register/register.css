@@ -1,0 +1,36 @@
+.register-container {
+  min-height: 90vh;
+  background-color: #f8f9fa;
+}
+
+.form-control {
+  padding: 0.7rem;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.form-control:focus {
+  border-color: #ef3341;
+  box-shadow: 0 0 0 0.2rem rgba(239, 51, 65, 0.1);
+}
+
+/* ستايل أزرار اختيار النوع */
+.btn-check:checked + .btn-outline-danger {
+  background-color: #ef3341;
+  color: white;
+}
+
+.btn-outline-danger {
+  border-color: #ef3341;
+  color: #ef3341;
+}
+
+.btn-danger {
+  background-color: #ef3341;
+  transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+  background-color: #d12b36;
+  transform: translateY(-1px);
+}

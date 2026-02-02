@@ -1,0 +1,30 @@
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-5">
+    <h2 class="fw-bold">Discover Your <span class="text-danger">Perfect Home</span></h2>
+  </div>
+
+  <!-- لو فيه رسالة "لا توجد نتائج" تظهر هنا -->
+  @if (message()) {
+    <div class="alert alert-info text-center py-4 rounded-4 shadow-sm">
+      <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
+      {{ message() }}
+    </div>
+  }
+
+  <!-- عرض العقارات باستخدام الـ Signal -->
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    @for (prop of properties(); track prop.id) {
+      <div class="col">
+        <app-property-card [property]="prop"></app-property-card>
+      </div>
+    } @empty {
+      <!-- لو مفيش بيانات خالص والباك اند لسه محملش أو راجع فاضي -->
+      <div class="text-center w-100 py-5">
+        <div class="spinner-border text-danger" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Searching for properties...</p>
+      </div>
+    }
+  </div>
+</div>
