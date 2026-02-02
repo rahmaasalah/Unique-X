@@ -1,0 +1,71 @@
+<div class="register-container d-flex align-items-center justify-content-center py-5">
+  <div class="card shadow-lg border-0 p-4" style="max-width: 500px; width: 100%;">
+    <div class="text-center mb-4">
+      <h2 class="fw-bold text-danger">Create <span class="text-dark">Account</span></h2>
+      <p class="text-muted">Join Unique X and find your dream home.</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <!-- First & Last Name -->
+      <div class="row g-2 mb-3">
+        <div class="col">
+          <label class="form-label small fw-bold">First Name</label>
+          <input type="text" formControlName="firstName" class="form-control" placeholder="John">
+        </div>
+        <div class="col">
+          <label class="form-label small fw-bold">Last Name</label>
+          <input type="text" formControlName="lastName" class="form-control" placeholder="Doe">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small fw-bold">Email Address</label>
+        <input type="email" formControlName="email" class="form-control" placeholder="example@mail.com">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small fw-bold">Phone Number</label>
+        <input type="text" formControlName="phoneNumber" class="form-control" placeholder="01xxxxxxxxx">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small fw-bold">Password</label>
+        <input type="password" formControlName="password" class="form-control">
+
+        <div *ngIf="registerForm.get('password')?.dirty && registerForm.get('password')?.invalid" class="text-danger small mt-1 animate__animated animate__fadeIn">
+    
+    <!-- لو الباسورد لسه محققش الـ Pattern (الregex) -->
+    <span *ngIf="registerForm.get('password')?.errors?.['pattern']">
+       Password must be at least 6 characters and include an uppercase letter, a lowercase letter, a number, and a special character.
+    </span>
+    
+    <!-- لو الحقل فاضي تماماً -->
+    <span *ngIf="registerForm.get('password')?.errors?.['required']">
+       Password is required.
+    </span>
+  </div>
+      </div>
+
+      <!-- User Type Selection (0 for Client, 1 for Broker) -->
+      <div class="mb-4">
+        <label class="form-label small fw-bold d-block">I am a:</label>
+        <div class="btn-group w-100" role="group">
+          <input type="radio" class="btn-check" formControlName="userType" [value]="0" id="client" checked>
+          <label class="btn btn-outline-danger py-2" for="client">🏠 Client / Buyer</label>
+
+          <input type="radio" class="btn-check" formControlName="userType" [value]="1" id="broker">
+          <label class="btn btn-outline-danger py-2" for="broker">💼 Broker / Agent</label>
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="registerForm.invalid" class="btn btn-danger btn-lg w-100 rounded-pill mb-3 shadow-sm">
+        Create Account
+      </button>
+
+      <div class="text-center">
+        <span class="text-muted small">Already have an account? </span>
+        <a routerLink="/login" class="text-danger fw-bold text-decoration-none small">Login</a>
+      </div>
+    </form>
+  </div>
+</div>
