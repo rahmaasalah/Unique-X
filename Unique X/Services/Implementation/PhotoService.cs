@@ -28,16 +28,22 @@ namespace Unique_X.Services.Implementation
 
             if (file.Length > 0)
             {
-                using var stream = file.OpenReadStream();
-
-                var uploadParams = new ImageUploadParams
+                try
                 {
-                    File = new FileDescription(file.FileName, stream),
-                    // تحسين الأداء: قص الصورة لتركز على أهم جزء وتصغير حجمها
-                    Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face")
-                };
+                    using var stream = file.OpenReadStream();
+                    var uploadParams = new ImageUploadParams
+                    {
+                        File = new FileDescription(file.FileName, stream),
+                        Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face")
+                    };
 
-                uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                    uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                }
+                catch (Exception ex)
+                {
+                    // في حالة حدوث خطأ شبكة، نضع الخطأ في الـ Result بدل أن ينهار البرنامج
+                    uploadResult.Error = new Error { Message = "Error during uploading photos: " + ex.Message };
+                }
             }
 
             return uploadResult;

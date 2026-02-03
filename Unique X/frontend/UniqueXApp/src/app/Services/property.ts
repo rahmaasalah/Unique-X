@@ -11,7 +11,6 @@ export class PropertyService {
 
   constructor(private http: HttpClient) { }
 
-  // الحصول على كل العقارات مع دعم الفلترة
   getProperties(filters?: any): Observable<any> {
     let params = new HttpParams();
     if (filters) {
@@ -25,4 +24,12 @@ export class PropertyService {
   getPropertyById(id: number): Observable<Property> {
     return this.http.get<Property>(`${this.baseUrl}/${id}`);
   }
+
+ addProperty(formData: FormData): Observable<any> {
+  return this.http.post(`${this.baseUrl}/add`, formData);
+ }
+
+getUserProperties(): Observable<Property[]> {
+  return this.http.get<Property[]>(this.baseUrl + '/my-properties');
+}
 }

@@ -1,0 +1,22 @@
+.card {
+  transition: transform 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #ef3341;
+  box-shadow: 0 0 0 0.25rem rgba(239, 51, 65, 0.1);
+}
+
+.border-dashed {
+  border-style: dashed !important;
+  border-width: 2px !important;
+  border-color: #dee2e6 !important;
+}
+
+.input-group-text {
+  border-right: none;
+}
+
+input.form-control {
+  border-left: 1px solid #dee2e6;
+}
