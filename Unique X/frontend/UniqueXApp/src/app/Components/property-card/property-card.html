@@ -1,5 +1,7 @@
-<div class="card property-card border-0 shadow-sm h-100 mb-4">
-  <div class="position-relative">
+<div class="card property-card border-0 shadow-sm h-100 mb-4 cursor-pointer" 
+     [routerLink]="['/property-details', property.id]" 
+     style="cursor: pointer;">
+    <div class="position-relative">
     <!-- الصورة الرئيسية -->
     <img [src]="property.photos[0]?.url || 'assets/placeholder.jpg'" 
          class="card-img-top object-fit-cover" 

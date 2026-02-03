@@ -36,4 +36,25 @@ export class HomeComponent implements OnInit {
       error: (err) => console.error(err)
     });
   }
+  // دالة البحث والفلترة
+  onSearch(city: string, minPrice: string, maxPrice: string) {
+    const filters = {
+      city: city || null,
+      minPrice: minPrice || null,
+      maxPrice: maxPrice || null
+    };
+
+    // إعادة تحميل البيانات بناءً على الفلتر
+    this.propertyService.getProperties(filters).subscribe({
+      next: (response: any) => {
+        if (response.message) {
+          this.message.set(response.message);
+          this.properties.set([]);
+        } else {
+          this.properties.set(response);
+          this.message.set('');
+        }
+      }
+    });
+  }
 }

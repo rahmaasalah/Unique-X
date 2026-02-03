@@ -9,7 +9,7 @@
             NorthCoast = 3
         }
 
-        public enum ListingType
+        public enum ListingType //category
         {
             Resell = 0,
             Rent = 1,
@@ -17,7 +17,7 @@
             ResellProject = 3
         }
 
-        public enum PropertyType
+        public enum PropertyType //type
         {
             Apartment = 0,
             Villa = 1,

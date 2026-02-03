@@ -35,4 +35,15 @@ export class AuthService {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   }
+
+  getUserType(): number {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  return user.roles?.includes('Broker') ? 1 : 0; 
+  // أو بناءً على الحقل اللي بيجيلك من الباك اند مباشرة
+}
+
+getUserName(): string {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  return user.username || 'User';
+}
 }
