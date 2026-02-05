@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map } from 'rxjs';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -45,5 +46,13 @@ export class AuthService {
 getUserName(): string {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   return user.username || 'User';
+}
+
+getProfile(): Observable<any> {
+  return this.http.get(`${this.baseUrl}profile`);
+}
+
+updateProfile(model: any): Observable<any> {
+  return this.http.put(`${this.baseUrl}profile`, model);
 }
 }

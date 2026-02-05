@@ -14,6 +14,7 @@
         public decimal Price { get; set; }
         public int Area { get; set; }
         public int Rooms { get; set; }
+        public bool IsFavorite { get; set; }
         public int Bathrooms { get; set; }
         public string? Region { get; set; }
         public string? Address { get; set; }
@@ -23,16 +24,18 @@
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public List<PhotoResponseDto> Photos { get; set; }
 
-        public string BrokerName { get; set; } // اسم صاحب العقار
-        public string BrokerPhone { get; set; } // رقم تليفونه للتواصل
+        public string BrokerName { get; set; } 
+        public string BrokerPhone { get; set; } 
     }
 
     public class PropertyFilterDto
     {
+        public string? SearchTerm { get; set; }
         public int? City { get; set; }
         public decimal? MinPrice { get; set; }
         public decimal? MaxPrice { get; set; }
         public int? Rooms { get; set; }
         public int? PropertyType { get; set; }
+        public int? ListingType { get; set; }
     }
 }

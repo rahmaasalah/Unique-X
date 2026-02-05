@@ -9,7 +9,7 @@ namespace Unique_X.Services.Interface
         Task<PropertyResponseDto> AddPropertyAsync(PropertyFormDto dto, string brokerId);
         Task<PropertyResponseDto> UpdatePropertyAsync(int id, UpdatePropertyDto dto, string brokerId);
         Task<bool> DeletePropertyAsync(int id, string brokerId);
-        Task<IEnumerable<PropertyResponseDto>> GetAllPropertiesAsync(PropertyFilterDto filter);
+        Task<IEnumerable<PropertyResponseDto>> GetAllPropertiesAsync(PropertyFilterDto filter, string userId);
         Task<IEnumerable<PropertyResponseDto>> GetBrokerPropertiesAsync(string brokerId);
         Task<PropertyResponseDto> GetPropertyByIdAsync(int id);
     }

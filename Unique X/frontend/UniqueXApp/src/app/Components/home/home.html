@@ -3,7 +3,6 @@
     <h2 class="fw-bold">Discover Your <span class="text-danger">Perfect Home</span></h2>
   </div>
 
-  <!-- لو فيه رسالة "لا توجد نتائج" تظهر هنا -->
   @if (message()) {
     <div class="alert alert-info text-center py-4 rounded-4 shadow-sm">
       <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
@@ -11,14 +10,21 @@
     </div>
   }
 
-
   <div class="bg-light py-4 border-bottom mb-5 shadow-sm">
   <div class="container">
     <div class="row g-2 align-items-end">
-      <!-- المدينة -->
+
       <div class="col-md-3">
-        <label class="form-label small fw-bold">City</label>
-        <select class="form-select border-0 shadow-sm" #city>
+  <label class="form-label small fw-bold  mb-1">Search</label>
+  <div class="input-group shadow-sm border rounded-2 bg-white">
+          <span class="input-group-text bg-white border-0"><i class="bi bi-search text-danger small"></i></span>
+          <input type="text" class="form-control border-0 bg-transparent" placeholder="Maadi, Villa..." #searchTerm>
+        </div>
+</div>
+      <!-- المدينة -->
+      <div class="col-md-2">
+        <label class="form-label small fw-bold mb-1">City</label>
+        <select class="form-select border shadow-sm rounded-2" #city>
           <option value="">All Cities</option>
           <option value="1">Cairo</option>
           <option value="2">Alexandria</option>
@@ -26,19 +32,19 @@
         </select>
       </div>
       <!-- السعر الأدنى -->
-      <div class="col-md-3">
-        <label class="form-label small fw-bold">Min Price</label>
-        <input type="number" class="form-control border-0 shadow-sm" placeholder="EGP 0" #minPrice>
+      <div class="col-md-2">
+        <label class="form-label small fw-bold mb-1">Min Price</label>
+        <input type="number" class="form-control border shadow-sm rounded-2" placeholder="" #minPrice>
       </div>
       <!-- السعر الأقصى -->
-      <div class="col-md-3">
-        <label class="form-label small fw-bold">Max Price</label>
-        <input type="number" class="form-control border-0 shadow-sm" placeholder="Any Price" #maxPrice>
+      <div class="col-md-2">
+        <label class="form-label small fw-bold mb-1">Max Price</label>
+        <input type="number" class="form-control border shadow-sm rounded-2" placeholder="" #maxPrice>
       </div>
       <!-- زرار البحث -->
       <div class="col-md-3">
-        <button class="btn btn-danger w-100 fw-bold shadow-sm" 
-                (click)="onSearch(city.value, minPrice.value, maxPrice.value)">
+        <button class="btn btn-danger w-100 fw-bold shadow-sm rounded-2 py-2" 
+                (click)="onSearch(city.value, minPrice.value, maxPrice.value , searchTerm.value)">
           <i class="bi bi-search me-2"></i> Find Properties
         </button>
       </div>
@@ -48,18 +54,28 @@
 
   <!-- عرض العقارات باستخدام الـ Signal -->
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    @if (isLoading()) {
+    <div class="text-center w-100 py-5">
+      <div class="spinner-border text-danger" role="status"></div>
+      <p class="mt-2 text-muted">Searching for properties...</p>
+    </div>
+  } 
+  @else {
+    <!-- لو خلص تحميل، يلف على العقارات -->
     @for (prop of properties(); track prop.id) {
       <div class="col">
         <app-property-card [property]="prop"></app-property-card>
       </div>
-    } @empty {
-      <!-- لو مفيش بيانات خالص والباك اند لسه محملش أو راجع فاضي -->
-      <div class="text-center w-100 py-5">
-        <div class="spinner-border text-danger" role="status">
-          <span class="visually-hidden">Loading...</span>
+    } 
+    <!-- لو خلص تحميل واللستة فاضية ومافيش رسالة خطأ، يظهر مفيش نتايج -->
+    @empty {
+      @if (!message()) {
+        <div class="text-center w-100 py-5">
+           <i class="bi bi-search fs-1 text-muted"></i>
+           <p class="mt-2 text-muted">No properties found with this search.</p>
         </div>
-        <p class="mt-2 text-muted">Searching for properties...</p>
-      </div>
+      }
     }
+  }
   </div>
 </div>

@@ -12,14 +12,13 @@ namespace Unique_X.Data
 
         public DbSet<Property> Properties { get; set; }
         public DbSet<Photo> Photos { get; set; }
+        public DbSet<Wishlist> Wishlists { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            // ==================================================
-            // 2. تحسين الأداء (Performance Tuning & Indexes)
-            // ==================================================
+            
 
             // فهرس للسعر لتسريع الفلترة
             builder.Entity<Property>()

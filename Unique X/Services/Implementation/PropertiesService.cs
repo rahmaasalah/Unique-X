@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CloudinaryDotNet;
+using Microsoft.EntityFrameworkCore;
 using Unique_X.Data;
 using Unique_X.DTOs;
 using Unique_X.Models;
@@ -64,8 +65,18 @@ namespace Unique_X.Services.Implementation
             return MapToResponseDto(property);
         }
 
-        public async Task<IEnumerable<PropertyResponseDto>> GetAllPropertiesAsync(PropertyFilterDto filter)
+        public async Task<IEnumerable<PropertyResponseDto>> GetAllPropertiesAsync(PropertyFilterDto filter, string userId)
         {
+
+            var userFavorites = new List<int>();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                userFavorites = await _context.Wishlists
+                    .Where(w => w.UserId == userId)
+                    .Select(w => w.PropertyId)
+                    .ToListAsync();
+            }
+
             var query = _context.Properties
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
@@ -86,9 +97,37 @@ namespace Unique_X.Services.Implementation
             if (filter.PropertyType.HasValue)
                 query = query.Where(p => p.PropertyType == (PropertyType)filter.PropertyType.Value);
 
+            if (filter.ListingType.HasValue)
+            {
+                if (filter.ListingType.Value == 1)
+                {
+                    query = query.Where(p => p.ListingType == ListingType.Rent);
+                }
+                else
+                {
+                    
+                    query = query.Where(p => p.ListingType != ListingType.Rent);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(filter.SearchTerm))
+            {
+                var search = filter.SearchTerm.ToLower();
+
+                query = query.Where(p =>
+                    p.Title.ToLower().Contains(search) ||
+                    p.Region.ToLower().Contains(search) ||
+                    p.PropertyType.ToString().ToLower().Contains(search)
+                );
+            }
+
             var properties = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
 
-            return properties.Select(p => MapToResponseDto(p));
+            return properties.Select(p => {
+                var dto = MapToResponseDto(p);
+                dto.IsFavorite = userFavorites.Contains(p.Id); // لو الـ ID موجود في لستة المفضلات يبقى True
+                return dto;
+            });
         }
 
         public async Task<IEnumerable<PropertyResponseDto>> GetBrokerPropertiesAsync(string brokerId)

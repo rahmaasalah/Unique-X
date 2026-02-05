@@ -17,7 +17,12 @@ export class PropertyService {
       if (filters.city) params = params.append('city', filters.city);
       if (filters.minPrice) params = params.append('minPrice', filters.minPrice);
       if (filters.maxPrice) params = params.append('maxPrice', filters.maxPrice);
+      if (filters.listingType !== undefined && filters.listingType !== null) 
+        params = params.append('listingType', filters.listingType);
+
+       if (filters.searchTerm) params = params.append('searchTerm', filters.searchTerm);
     }
+    
     return this.http.get<any>(this.baseUrl, { params });
   }
 
@@ -31,5 +36,23 @@ export class PropertyService {
 
 getUserProperties(): Observable<Property[]> {
   return this.http.get<Property[]>(this.baseUrl + '/my-properties');
+}
+
+deleteProperty(id: number): Observable<any> {
+  // تأكدي من المسار؛ في الباك اند بتاعنا هو api/properties/{id}
+  return this.http.delete(`${this.baseUrl}/${id}`, { responseType: 'text' as 'json' });
+}
+
+// تحديث عقار
+updateProperty(id: number, formData: FormData): Observable<any> {
+  return this.http.put(`${this.baseUrl}/${id}`, formData);
+}
+
+toggleWishlist(propertyId: number): Observable<any> {
+  return this.http.post(`https://localhost:7294/api/wishlist/toggle/${propertyId}`, {});
+}
+
+getWishlist(): Observable<Property[]> {
+  return this.http.get<Property[]>(`https://localhost:7294/api/wishlist`);
 }
 }
