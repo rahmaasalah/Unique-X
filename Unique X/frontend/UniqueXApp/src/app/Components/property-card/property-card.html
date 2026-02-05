@@ -7,10 +7,25 @@
          class="card-img-top object-fit-cover" 
          style="height: 200px;" alt="Property Image">
     
-    <!-- نوع البيع/الإيجار (Badge) -->
     <span class="badge bg-danger position-absolute top-0 start-0 m-3 rounded-pill px-3 py-2">
       {{ property.listingType }}
     </span>
+
+    @if (authService.loggedIn() && authService.getUserType() === 0) {
+  <button class="btn btn-light rounded-circle position-absolute top-0 end-0 m-2 shadow-sm border-0 wishlist-btn"
+          (click)="onToggleWishlist($event)" 
+          style="z-index: 10; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: white;">
+    
+    <i class="bi fs-5" 
+       [class.bi-heart-fill]="isLiked" 
+       [class.bi-heart]="!isLiked"
+       [class.text-danger]="isLiked"
+       [style.color]="!isLiked ? '#adb5bd' : ''">
+    </i>
+  </button>
+}
+
+    
   </div>
 
   <div class="card-body">

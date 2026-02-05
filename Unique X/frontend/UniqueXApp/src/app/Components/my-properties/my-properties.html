@@ -1,0 +1,66 @@
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="bi bi-speedometer2 text-danger me-2"></i>My Dashboard</h2>
+    <button class="btn btn-danger rounded-pill px-4" routerLink="/add-property">
+      <i class="bi bi-plus-lg"></i> Add New
+    </button>
+  </div>
+
+  @if (myProperties().length > 0) {
+    <div class="table-responsive bg-white shadow-sm rounded-4 p-3">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Property</th>
+            <th>Location</th>
+            <th>Price</th>
+            <th>Category</th>
+            <th>Type</th>  
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (prop of myProperties(); track prop.id) {
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <img [src]="prop.photos[0]?.url" class="rounded-3 me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                  <div>
+                    <h6 class="mb-0 fw-bold">{{ prop.title }}</h6>
+                    <small class="text-muted">{{ prop.propertyType }}</small>
+                  </div>
+                </div>
+              </td>
+              <td><small><i class="bi bi-geo-alt text-danger"></i> {{ prop.region }}, {{ prop.city }}</small></td>
+              <td class="fw-bold text-danger">EGP {{ prop.price | number }}</td>
+              <td><span class="badge bg-success-subtle text-success rounded-pill px-3">{{ prop.listingType }}</span></td>
+              <td>
+        <span class="badge bg-primary-subtle text-primary rounded-pill px-3">
+          {{ prop.propertyType }}
+        </span>
+      </td>
+              <td>
+                <div class="d-flex justify-content-center gap-2">
+                  <!-- زرار التعديل -->
+                  <button class="btn btn-outline-dark btn-sm rounded-pill px-3" [routerLink]="['/edit-property', prop.id]">
+                    <i class="bi bi-pencil-square me-1"></i> Edit
+                  </button>
+                  <!-- زرار الحذف -->
+                  <button class="btn btn-outline-danger btn-sm rounded-pill px-3" (click)="onDelete(prop.id)">
+                    <i class="bi bi-trash me-1"></i> Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="text-center py-5 bg-light rounded-4 border border-dashed">
+      <i class="bi bi-house-exclamation fs-1 text-muted d-block mb-3"></i>
+      <h5>You haven't listed any properties yet.</h5>
+      <button class="btn btn-danger mt-3 rounded-pill px-4" routerLink="/add-property">Post Your First Ad</button>
+    </div>
+  }
+</div>

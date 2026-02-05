@@ -1,0 +1,19 @@
+.wishlist-nav-icon i {
+  transition: transform 0.2s ease-in-out;
+  display: inline-block;
+}
+
+.wishlist-nav-icon:hover i {
+  transform: scale(1.2); /* القلب بيكبر شوية لما توقفي عليه */
+  filter: brightness(1.1);
+}
+
+.profile-nav-icon i, .wishlist-nav-icon i {
+  transition: transform 0.2s ease-in-out;
+  display: inline-block;
+}
+
+.profile-nav-icon:hover i, .wishlist-nav-icon:hover i {
+  transform: scale(1.15);
+  color: #ef3341 !important; /* لون أحمر عند الوقوف بالماوس */
+}

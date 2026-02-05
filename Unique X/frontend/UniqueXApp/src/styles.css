@@ -1,1 +1,7 @@
-/* You can add global styles to this file, and also import other style files */
+.wishlist-btn i {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.wishlist-btn:hover i {
+  transform: scale(1.2);
+}

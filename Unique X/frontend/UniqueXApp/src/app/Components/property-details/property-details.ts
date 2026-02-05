@@ -24,7 +24,12 @@ export class PropertyDetailsComponent implements OnInit {
       this.propertyService.getPropertyById(id).subscribe({
         next: (data) => this.property.set(data),
         error: (err) => console.error(err)
+
+        
       });
     }
+    
   }
+
+  
 }

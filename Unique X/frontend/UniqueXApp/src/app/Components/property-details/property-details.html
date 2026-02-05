@@ -1,7 +1,10 @@
 @if (property(); as prop) {
 <div class="container py-4">
   <!-- 1. معرض الصور (Carousel) -->
-  <div id="propertyCarousel" class="carousel slide shadow rounded-4 overflow-hidden mb-4" data-bs-ride="carousel">
+ <div id="propertyCarousel" class="carousel slide shadow rounded-4 overflow-hidden mb-4" 
+     data-bs-ride="carousel" 
+     data-bs-pause="hover" 
+     data-bs-interval="2000">
     <div class="carousel-inner">
       @for (photo of prop.photos; track photo.url; let i = $index) {
         <div class="carousel-item" [class.active]="i === 0">
@@ -9,11 +12,16 @@
         </div>
       }
     </div>
+    <!-- زر السابق -->
     <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
-      <span class="carousel-control-prev-icon"></span>
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
     </button>
+
+    <!-- زر التالي -->
     <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
-      <span class="carousel-control-next-icon"></span>
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
     </button>
   </div>
 

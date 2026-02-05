@@ -1,13 +1,14 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common'; // مهم جداً للأوامر مثل *ngIf
 import { PropertyCardComponent } from '../property-card/property-card'; // مهم لكي يتعرف على الكارت
 import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
+import { ActivatedRoute } from '@angular/router'
+
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  // أضفنا PropertyCardComponent و CommonModule هنا
   imports: [CommonModule, PropertyCardComponent], 
   templateUrl: './home.html',
   styleUrl: './home.css'
@@ -15,16 +16,21 @@ import { Property } from '../../Models/property.model';
 export class HomeComponent implements OnInit {
   properties = signal<Property[]>([]); 
   message = signal<string>('');
+  isLoading = signal<boolean>(false);
+  private route = inject(ActivatedRoute);
   constructor(private propertyService: PropertyService) {}
 
   ngOnInit(): void {
-    this.loadProperties();
+     this.route.queryParams.subscribe(params => {
+      this.loadProperties(params);
+    });
   }
 
-  loadProperties() {
-    this.propertyService.getProperties().subscribe({
+  loadProperties(filters: any = {}) {
+    this.isLoading.set(true);
+    this.propertyService.getProperties(filters).subscribe({
       next: (response: any) => {
-        // فحص الرد إذا كان يحتوي على رسالة أو داتا مباشرة
+       this.isLoading.set(false); // 3. وقف التحميل لما الداتا تيجي
         if (response.message) {
           this.message.set(response.message);
           this.properties.set([]);
@@ -33,15 +39,18 @@ export class HomeComponent implements OnInit {
           this.message.set('');
         }
       },
-      error: (err) => console.error(err)
+      error: (err) => {
+        this.isLoading.set(false); // 4. وقف التحميل حتى لو فيه خطأ
+        console.error(err);
+      }
     });
   }
-  // دالة البحث والفلترة
-  onSearch(city: string, minPrice: string, maxPrice: string) {
+  onSearch(city: string, minPrice: string, maxPrice: string , searchTerm: string) {
     const filters = {
       city: city || null,
       minPrice: minPrice || null,
-      maxPrice: maxPrice || null
+      maxPrice: maxPrice || null,
+      searchTerm: searchTerm || null
     };
 
     // إعادة تحميل البيانات بناءً على الفلتر

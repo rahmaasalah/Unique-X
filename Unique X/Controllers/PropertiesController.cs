@@ -45,7 +45,8 @@ namespace Unique_X.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] PropertyFilterDto filter)
         {
-            var result = await _propertiesService.GetAllPropertiesAsync(filter);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var result = await _propertiesService.GetAllPropertiesAsync(filter, userId);
 
             if (result == null || !result.Any())
             {

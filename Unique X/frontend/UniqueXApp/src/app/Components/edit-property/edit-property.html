@@ -1,0 +1,135 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <!-- الهيدر الأحمر الموحد -->
+        <div class="bg-danger py-4 text-center">
+          <h2 class="text-white fw-bold mb-0">Edit <span class="text-white">Property</span></h2>
+          <p class="text-white-50 small">Update the details for your property listing</p>
+        </div>
+        
+        <div class="card-body p-4 p-md-5">
+          <form [formGroup]="editForm" (ngSubmit)="onSubmit()">
+            
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Basic Information</h5>
+            
+            <!-- العنوان -->
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Property Title</label>
+              <input type="text" formControlName="title" class="form-control form-control-lg">
+            </div>
+
+            <!-- السعر والمساحة -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Price (EGP)</label>
+                <input type="number" formControlName="price" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Area (m²)</label>
+                <input type="number" formControlName="area" class="form-control">
+              </div>
+            </div>
+
+            <!-- عداد الغرف والحمامات (الذي طلبته) -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-bold small"><i class="bi bi-door-open text-danger me-1"></i> Rooms</label>
+                <div class="input-group">
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', -1)">-</button>
+                  <input type="number" formControlName="rooms" class="form-control text-center" min="0">
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', 1)">+</button>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small"><i class="bi bi-droplet text-danger me-1"></i> Bathrooms</label>
+                <div class="input-group">
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', -1)">-</button>
+                  <input type="number" formControlName="bathrooms" class="form-control text-center" min="0">
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', 1)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Location & Type</h5>
+            
+            <!-- المدينة والأنواع -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label fw-bold small">City</label>
+                <select formControlName="city" class="form-select text-capitalize">
+                  <option [value]="1">Cairo</option>
+                  <option [value]="2">Alexandria</option>
+                  <option [value]="3">North Coast</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold small">Listing Type</label>
+                <select formControlName="listingType" class="form-select">
+                  <option [value]="0">Resell</option>
+                  <option [value]="1">Rent</option>
+                  <option [value]="2">Primary</option>
+                  <option [value]="3">Resell Project</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold small">Property Type</label>
+                <select formControlName="propertyType" class="form-select">
+                  <option [value]="0">Apartment</option>
+                  <option [value]="1">Villa</option>
+                  <option [value]="2">Shop</option>
+                  <option [value]="3">Office</option>
+                  <option [value]="4">Chalet</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold small">Region & Address</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-geo-alt text-danger"></i></span>
+                <input type="text" formControlName="region" class="form-control" placeholder="Region">
+                <input type="text" formControlName="address" class="form-control" placeholder="Address">
+              </div>
+            </div>
+
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Media & Description</h5>
+            
+            <!-- عرض الصور الحالية -->
+            @if (existingPhotos().length > 0) {
+              <div class="mb-3">
+                <label class="form-label fw-bold small d-block">Current Photos</label>
+                <div class="d-flex gap-2 overflow-auto pb-2">
+                  @for (photo of existingPhotos(); track photo.url) {
+                    <div class="position-relative">
+                      <img [src]="photo.url" class="rounded-3 shadow-sm border" style="width: 100px; height: 80px; object-fit: cover;">
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="mb-4">
+              <label class="form-label fw-bold small">Add New Photos</label>
+              <input type="file" (change)="onFileSelect($event)" multiple class="form-control" accept="image/*">
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold small">Description</label>
+              <textarea formControlName="description" class="form-control" rows="5"></textarea>
+            </div>
+
+            <!-- أزرار الحفظ والإلغاء -->
+            <div class="d-grid gap-2">
+              <button type="submit" [disabled]="editForm.invalid" class="btn btn-danger btn-lg rounded-pill fw-bold py-3 shadow">
+                <i class="bi bi-check-circle me-2"></i> Save Changes
+              </button>
+              <a routerLink="/my-properties" class="btn btn-link text-muted text-decoration-none">Discard Changes</a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

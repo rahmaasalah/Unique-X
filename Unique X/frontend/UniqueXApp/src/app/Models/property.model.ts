@@ -11,6 +11,7 @@ export interface Property {
   address: string;
   listingType: string;
   propertyType: string;
+  isFavorite: boolean;
   createdAt: string;
   photos: Photo[];
   brokerName: string;

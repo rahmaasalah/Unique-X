@@ -1,0 +1,61 @@
+<div class="container py-5">
+  <div class="row g-4 justify-content-center">
+    <!-- كارت الإحصائيات -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+        <div class="bg-danger-subtle text-danger rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+          <i class="bi bi-person-fill fs-1"></i>
+        </div>
+        <h4 class="fw-bold mb-1">{{ profileForm.get('firstName')?.value }} {{ profileForm.get('lastName')?.value }}</h4>
+        <span class="badge rounded-pill mb-4" [class]="stats()?.userType === 1 ? 'bg-danger' : 'bg-primary'">
+          {{ stats()?.userType === 1 ? 'Broker / Agent' : 'Client / Buyer' }}
+        </span>
+
+        <div class="row g-2">
+          <div class="col-6">
+            <div class="bg-light p-3 rounded-3">
+              <h5 class="fw-bold mb-0">{{ stats()?.userType === 1 ? stats()?.totalProperties : stats()?.totalWishlist }}</h5>
+              <small class="text-muted">{{ stats()?.userType === 1 ? 'Properties' : 'Wishlist' }}</small>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="bg-light p-3 rounded-3">
+              <h5 class="fw-bold mb-0">Active</h5>
+              <small class="text-muted">Status</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- كارت تعديل البيانات -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+        <h3 class="fw-bold mb-4">Account <span class="text-danger">Settings</span></h3>
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+          <div class="row mb-3">
+            <div class="col">
+              <label class="form-label small fw-bold">First Name</label>
+              <input type="text" formControlName="firstName" class="form-control">
+            </div>
+            <div class="col">
+              <label class="form-label small fw-bold">Last Name</label>
+              <input type="text" formControlName="lastName" class="form-control">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Email Address</label>
+            <input type="email" formControlName="email" class="form-control bg-light">
+          </div>
+          <div class="mb-4">
+            <label class="form-label small fw-bold">Phone Number</label>
+            <input type="text" formControlName="phoneNumber" class="form-control">
+          </div>
+          <button type="submit" class="btn btn-danger w-100 rounded-pill py-2 fw-bold shadow-sm">
+            Save Profile Changes
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -41,7 +41,6 @@ namespace Unique_X.Services.Implementation
                 }
                 catch (Exception ex)
                 {
-                    // في حالة حدوث خطأ شبكة، نضع الخطأ في الـ Result بدل أن ينهار البرنامج
                     uploadResult.Error = new Error { Message = "Error during uploading photos: " + ex.Message };
                 }
             }
