@@ -33,7 +33,22 @@ namespace Unique_X.Services.Implementation
                 City = (City)(dto.City ?? 0),
                 ListingType = (ListingType)(dto.ListingType ?? 0),
                 PropertyType = (PropertyType)(dto.PropertyType ?? 0),
+                DistanceFromLandmark = dto.DistanceFromLandmark,
+                View = dto.View,
+                BuildYear = dto.BuildYear ?? 2015,
+                Floor = dto.Floor ?? 0,
+                TotalFloors = dto.TotalFloors ?? 0,
+                ApartmentsPerFloor = dto.ApartmentsPerFloor ?? 0,
+                ElevatorsCount = dto.ElevatorsCount ?? 0,
+                ReceptionPieces = dto.ReceptionPieces ?? 0,
 
+                HasMasterRoom = dto.HasMasterRoom ?? false,
+                HasHotelEntrance = dto.HasHotelEntrance ?? false,
+                HasSecurity = dto.HasSecurity ?? false,
+                IsFirstOwner = dto.IsFirstOwner ?? false,
+                IsLegalReconciled = dto.IsLegalReconciled ?? false,
+                HasParking = dto.HasParking ?? false,
+                CommissionPercentage = 2.5m, 
                 Region = dto.Region ?? string.Empty,
                 Address = dto.Address ?? string.Empty,
                 BrokerId = brokerId,
@@ -42,16 +57,17 @@ namespace Unique_X.Services.Implementation
 
             if (dto.Photos != null && dto.Photos.Count > 0)
             {
-                foreach (var file in dto.Photos)
+                for (int i = 0; i < dto.Photos.Count; i++)
                 {
-                    var result = await _photoService.AddPhotoAsync(file);
+                    var result = await _photoService.AddPhotoAsync(dto.Photos[i]);
                     if (result.Error == null)
                     {
                         property.Photos.Add(new Photo
                         {
                             Url = result.SecureUrl.AbsoluteUri,
                             PublicId = result.PublicId,
-                            IsMain = property.Photos.Count == 0
+                            // السطر السحري: لو الترتيب الحالي هو نفس اللي البروكر اختاره، خليها IsMain
+                            IsMain = (i == dto.MainPhotoIndex)
                         });
                     }
                 }
@@ -109,6 +125,7 @@ namespace Unique_X.Services.Implementation
                     query = query.Where(p => p.ListingType != ListingType.Rent);
                 }
             }
+            query = query.Where(p => !p.IsSold);
 
             if (!string.IsNullOrEmpty(filter.SearchTerm))
             {
@@ -128,6 +145,19 @@ namespace Unique_X.Services.Implementation
                 dto.IsFavorite = userFavorites.Contains(p.Id); // لو الـ ID موجود في لستة المفضلات يبقى True
                 return dto;
             });
+        }
+
+        public async Task<bool> MarkAsSoldAsync(int id, string brokerId)
+        {
+            var property = await _context.Properties
+                .FirstOrDefaultAsync(p => p.Id == id && p.BrokerId == brokerId);
+
+            if (property == null) return false;
+
+            // دي أهم حتة: لو true تبقى false ولو false تبقى true
+            property.IsSold = !property.IsSold;
+
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<IEnumerable<PropertyResponseDto>> GetBrokerPropertiesAsync(string brokerId)
@@ -163,21 +193,7 @@ namespace Unique_X.Services.Implementation
             if (property == null || property.BrokerId != brokerId)
                 return null;
 
-            //if (!string.IsNullOrEmpty(dto.Title)) property.Title = dto.Title;
-            //if (!string.IsNullOrEmpty(dto.Description)) property.Description = dto.Description;
-
-            //if (dto.Price.HasValue && dto.Price > 0) property.Price = dto.Price.Value;
-            //if (dto.Area.HasValue && dto.Area > 0) property.Area = dto.Area.Value;
-            //if (dto.Rooms.HasValue && dto.Rooms > 0) property.Rooms = dto.Rooms.Value;
-            //if (dto.Bathrooms.HasValue && dto.Bathrooms > 0) property.Bathrooms = dto.Bathrooms.Value;
-
-            //if (dto.City.HasValue) property.City = (City)dto.City.Value;
-            //if (dto.ListingType.HasValue) property.ListingType = (ListingType)dto.ListingType.Value;
-            //if (dto.PropertyType.HasValue) property.PropertyType = (PropertyType)dto.PropertyType.Value;
-
-            //if (!string.IsNullOrEmpty(dto.Region)) property.Region = dto.Region;
-            //if (!string.IsNullOrEmpty(dto.Address)) property.Address = dto.Address;
-
+           
 
             if (property == null || property.BrokerId != brokerId)
                 return null;
@@ -210,6 +226,26 @@ namespace Unique_X.Services.Implementation
             if (dto.PropertyType.HasValue)
                 property.PropertyType = (PropertyType)dto.PropertyType.Value;
 
+            if (!string.IsNullOrEmpty(dto.DistanceFromLandmark)) property.DistanceFromLandmark = dto.DistanceFromLandmark;
+            if (!string.IsNullOrEmpty(dto.View)) property.View = dto.View;
+
+            // أرقام (باستخدام HasValue لأنها Nullable في الـ DTO)
+            if (dto.BuildYear.HasValue) property.BuildYear = dto.BuildYear.Value;
+            if (dto.Floor.HasValue) property.Floor = dto.Floor.Value;
+            if (dto.TotalFloors.HasValue) property.TotalFloors = dto.TotalFloors.Value;
+            if (dto.ApartmentsPerFloor.HasValue) property.ApartmentsPerFloor = dto.ApartmentsPerFloor.Value;
+            if (dto.ElevatorsCount.HasValue) property.ElevatorsCount = dto.ElevatorsCount.Value;
+            if (dto.ReceptionPieces.HasValue) property.ReceptionPieces = dto.ReceptionPieces.Value;
+
+            // حالات (Booleans)
+            if (dto.HasMasterRoom.HasValue) property.HasMasterRoom = dto.HasMasterRoom.Value;
+            if (dto.HasHotelEntrance.HasValue) property.HasHotelEntrance = dto.HasHotelEntrance.Value;
+            if (dto.HasSecurity.HasValue) property.HasSecurity = dto.HasSecurity.Value;
+            if (dto.IsFirstOwner.HasValue) property.IsFirstOwner = dto.IsFirstOwner.Value;
+            if (dto.IsLegalReconciled.HasValue) property.IsLegalReconciled = dto.IsLegalReconciled.Value;
+            if (dto.HasParking.HasValue) property.HasParking = dto.HasParking.Value;
+
+
             property.Region = !string.IsNullOrEmpty(dto.Region) && dto.Region != "string"
                                       ? dto.Region : property.Region;
 
@@ -220,16 +256,17 @@ namespace Unique_X.Services.Implementation
 
             if (dto.Photos != null && dto.Photos.Count > 0)
             {
-                foreach (var file in dto.Photos)
+                for (int i = 0; i < dto.Photos.Count; i++)
                 {
-                    var result = await _photoService.AddPhotoAsync(file);
+                    var result = await _photoService.AddPhotoAsync(dto.Photos[i]);
                     if (result.Error == null)
                     {
                         property.Photos.Add(new Photo
                         {
                             Url = result.SecureUrl.AbsoluteUri,
                             PublicId = result.PublicId,
-                            IsMain = false
+                            // السطر السحري: لو الترتيب الحالي هو نفس اللي البروكر اختاره، خليها IsMain
+                            IsMain = (i == dto.MainPhotoIndex)
                         });
                     }
                 }
@@ -239,6 +276,23 @@ namespace Unique_X.Services.Implementation
             await _context.SaveChangesAsync();
 
             return MapToResponseDto(property);
+        }
+
+        public async Task<bool> SetExistingPhotoAsMainAsync(int propertyId, int photoId, string brokerId)
+        {
+            var property = await _context.Properties.Include(p => p.Photos)
+                .FirstOrDefaultAsync(p => p.Id == propertyId && p.BrokerId == brokerId);
+
+            if (property == null) return false;
+
+            // 1. جعل كل الصور "ليست رئيسية"
+            foreach (var p in property.Photos) p.IsMain = false;
+
+            // 2. تحديد الصورة المختارة كـ رئيسية
+            var photo = property.Photos.FirstOrDefault(p => p.Id == photoId);
+            if (photo != null) photo.IsMain = true;
+
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> DeletePropertyAsync(int id, string brokerId)
@@ -274,10 +328,27 @@ namespace Unique_X.Services.Implementation
                 ListingType = property.ListingType.ToString(),
                 PropertyType = property.PropertyType.ToString(),
                 Region = property.Region,
+                IsSold = property.IsSold,
+                DistanceFromLandmark = property.DistanceFromLandmark,
+                HasMasterRoom = property.HasMasterRoom,
+                ReceptionPieces = property.ReceptionPieces,
+                View = property.View,
+                Floor = property.Floor,
+                TotalFloors = property.TotalFloors,
+                ApartmentsPerFloor = property.ApartmentsPerFloor,
+                ElevatorsCount = property.ElevatorsCount,
+                BuildYear = property.BuildYear,
+                HasHotelEntrance = property.HasHotelEntrance,
+                HasSecurity = property.HasSecurity,
+                IsFirstOwner = property.IsFirstOwner,
+                IsLegalReconciled = property.IsLegalReconciled,
+                HasParking = property.HasParking,
+                CommissionPercentage = property.CommissionPercentage,
                 Address = property.Address,
                 CreatedAt = property.CreatedAt,
                 Photos = property.Photos.Select(p => new PhotoResponseDto
                 {
+                    Id = p.Id,
                     Url = p.Url,
                     IsMain = p.IsMain
                 }).ToList(),

@@ -54,10 +54,16 @@
 
           <!-- 2. أيقونة البروفايل (الخطوة القادمة) -->
           <li class="nav-item me-3">
-            <a routerLink="/profile" class="nav-link text-dark profile-nav-icon" title="My Profile">
-              <i class="bi bi-person-circle fs-4"></i>
-            </a>
-          </li>
+  <a routerLink="/profile" class="nav-link p-0 d-flex align-items-center profile-nav-link">
+    <!-- لو فيه صورة بروفايل اعرضها، لو مفيش اعرض الأيقونة -->
+    @if (authService.getUserImage()) {
+      <img [src]="authService.getUserImage()" class="rounded-circle border border-2 border-danger shadow-sm" 
+           style="width: 38px; height: 38px; object-fit: cover;">
+    } @else {
+      <i class="bi bi-person-circle fs-4 text-dark"></i>
+    }
+  </a>
+</li>
 
           <!-- 3. رسالة الترحيب: في سطر واحد -->
           <li class="nav-item me-4">

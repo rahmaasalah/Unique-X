@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Unique_X.DTOs;
 using Unique_X.Services;
@@ -112,6 +113,33 @@ namespace Unique_X.Controllers
         {
             var result = await _propertiesService.GetPropertyByIdAsync(id);
             return result != null ? Ok(result) : NotFound();
+        }
+
+        [HttpPatch("{id}/mark-as-sold")]
+        [Authorize]
+        public async Task<IActionResult> MarkAsSold(int id)
+        {
+            var brokerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (brokerId == null) return Unauthorized();
+
+            var result = await _propertiesService.MarkAsSoldAsync(id, brokerId);
+
+            if (!result)
+                return NotFound("Property not found or unauthorized");
+
+            return Ok(new { Message = "Property marked as sold successfully" });
+        }
+
+        [HttpPatch("{id}/set-main/{photoId}")]
+        [Authorize]
+        public async Task<IActionResult> SetMainPhoto(int id, int photoId)
+        {
+            var brokerId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (brokerId == null) return Unauthorized();
+
+            var result = await _propertiesService.SetExistingPhotoAsMainAsync(id, photoId, brokerId);
+
+            return result ? Ok(new { Message = "Main photo updated" }) : BadRequest("Failed to update main photo");
         }
     }
 }

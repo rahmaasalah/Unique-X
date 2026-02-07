@@ -38,4 +38,14 @@ export class MyPropertiesComponent implements OnInit {
       });
     });
   }
+
+  onMarkAsSold(id: number) {
+  this.propertyService.markAsSold(id).subscribe({
+    next: () => {
+      // هذه الخطوة هي التي ستغير شكل الزرار فوراً
+      this.loadMyProperties(); 
+      this.alertService.success('Status updated!');
+    }
+  });
+}
 }

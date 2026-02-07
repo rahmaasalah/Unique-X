@@ -2,6 +2,7 @@
 {
     public class PhotoResponseDto
     {
+        public int Id { get; set; }
         public string Url { get; set; }
         public bool IsMain { get; set; }
     }
@@ -18,7 +19,23 @@
         public int Bathrooms { get; set; }
         public string? Region { get; set; }
         public string? Address { get; set; }
-        public string City { get; set; } 
+        public string City { get; set; }
+        public bool IsSold { get; set; } = false;
+        public string? DistanceFromLandmark { get; set; } // 4 نمرة من ابوقير
+        public bool HasMasterRoom { get; set; }           // غرف ماستر
+        public int ReceptionPieces { get; set; }          // ريسيبشن كم قطعة
+        public string? View { get; set; }                 // الاطلالة (على الشارع)
+        public int Floor { get; set; }                    // الدور
+        public int TotalFloors { get; set; }               // عدد أدوار العقار
+        public int ApartmentsPerFloor { get; set; }        // الدور كم شقة
+        public int ElevatorsCount { get; set; }            // عدد الاسانسيرات
+        public int BuildYear { get; set; }                 // سنة المباني
+        public bool HasHotelEntrance { get; set; }        // مدخل فندقي
+        public bool HasSecurity { get; set; }             // أمن وحراسة
+        public bool IsFirstOwner { get; set; }            // أول مالك
+        public bool IsLegalReconciled { get; set; }       // مدفوع تصالح
+        public bool HasParking { get; set; }              // متاح جراج
+        public decimal CommissionPercentage { get; set; } = 2.5m; // العمولة
         public string ListingType { get; set; }
         public string PropertyType { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

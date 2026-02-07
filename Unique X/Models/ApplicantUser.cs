@@ -8,5 +8,7 @@ namespace Unique_X.Models
         public string LastName { get; set; }
         // 0 = Client, 1 = Broker
         public int UserType { get; set; }
+        public string? ProfileImageUrl { get; set; }
+        public string? ProfileImagePublicId { get; set; }
     }
 }

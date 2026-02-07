@@ -34,6 +34,11 @@ export class PropertyService {
   return this.http.post(`${this.baseUrl}/add`, formData);
  }
 
+ setMainPhoto(propertyId: number, photoId: number): Observable<any> {
+  // يرسل طلب PATCH للرابط الذي عرفناه في الكنترولر
+  return this.http.patch(`${this.baseUrl}/${propertyId}/set-main/${photoId}`, {});
+}
+
 getUserProperties(): Observable<Property[]> {
   return this.http.get<Property[]>(this.baseUrl + '/my-properties');
 }
@@ -54,5 +59,9 @@ toggleWishlist(propertyId: number): Observable<any> {
 
 getWishlist(): Observable<Property[]> {
   return this.http.get<Property[]>(`https://localhost:7294/api/wishlist`);
+}
+
+markAsSold(id: number): Observable<any> {
+  return this.http.patch(`${this.baseUrl}/${id}/mark-as-sold`, {});
 }
 }

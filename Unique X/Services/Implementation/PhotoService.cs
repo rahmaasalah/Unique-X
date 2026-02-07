@@ -34,7 +34,8 @@ namespace Unique_X.Services.Implementation
                     var uploadParams = new ImageUploadParams
                     {
                         File = new FileDescription(file.FileName, stream),
-                        Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face")
+                        //Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face")
+                        Transformation = new Transformation().Width(1200).Crop("limit")
                     };
 
                     uploadResult = await _cloudinary.UploadAsync(uploadParams);

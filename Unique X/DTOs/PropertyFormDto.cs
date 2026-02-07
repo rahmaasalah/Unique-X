@@ -16,6 +16,21 @@ namespace Unique_X.DTOs
         public int? Area { get; set; }
         public int? Rooms { get; set; }
         public int? Bathrooms { get; set; }
+        public string? DistanceFromLandmark { get; set; } // 4 نمرة من ابوقير
+        public bool? HasMasterRoom { get; set; }           // غرف ماستر
+        public int? ReceptionPieces { get; set; }          // ريسيبشن كم قطعة
+        public string? View { get; set; }                 // الاطلالة (على الشارع)
+        public int? Floor { get; set; }                    // الدور
+        public int? TotalFloors { get; set; }               // عدد أدوار العقار
+        public int? ApartmentsPerFloor { get; set; }        // الدور كم شقة
+        public int? ElevatorsCount { get; set; }            // عدد الاسانسيرات
+        public int? BuildYear { get; set; }                 // سنة المباني
+        public bool? HasHotelEntrance { get; set; }        // مدخل فندقي
+        public bool? HasSecurity { get; set; }             // أمن وحراسة
+        public bool? IsFirstOwner { get; set; }            // أول مالك
+        public bool? IsLegalReconciled { get; set; }       // مدفوع تصالح
+        public bool? HasParking { get; set; }              // متاح جراج
+        public decimal CommissionPercentage { get; set; } = 2.5m; // العمولة
 
         [Required]
         public int? City { get; set; }
@@ -24,6 +39,7 @@ namespace Unique_X.DTOs
         public int? ListingType { get; set; }
 
         public int? PropertyType { get; set; }
+        public int MainPhotoIndex { get; set; } = 0;
 
         public List<IFormFile>? Photos { get; set; }
     }

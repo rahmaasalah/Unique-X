@@ -12,5 +12,8 @@ namespace Unique_X.Services.Interface
         Task<IEnumerable<PropertyResponseDto>> GetAllPropertiesAsync(PropertyFilterDto filter, string userId);
         Task<IEnumerable<PropertyResponseDto>> GetBrokerPropertiesAsync(string brokerId);
         Task<PropertyResponseDto> GetPropertyByIdAsync(int id);
+
+        Task<bool> MarkAsSoldAsync(int id, string brokerId);
+        Task<bool> SetExistingPhotoAsMainAsync(int propertyId, int photoId, string brokerId);
     }
 }

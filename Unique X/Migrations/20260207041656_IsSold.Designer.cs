@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Unique_X.Data;
 
@@ -11,9 +12,11 @@ using Unique_X.Data;
 namespace Unique_X.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260207041656_IsSold")]
+    partial class IsSold
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -205,12 +208,6 @@ namespace Unique_X.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("ProfileImagePublicId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProfileImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -278,9 +275,6 @@ namespace Unique_X.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ApartmentsPerFloor")
-                        .HasColumnType("int");
-
                     b.Property<int>("Area")
                         .HasColumnType("int");
 
@@ -291,14 +285,8 @@ namespace Unique_X.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("BuildYear")
-                        .HasColumnType("int");
-
                     b.Property<int>("City")
                         .HasColumnType("int");
-
-                    b.Property<decimal>("CommissionPercentage")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -306,33 +294,6 @@ namespace Unique_X.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DistanceFromLandmark")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ElevatorsCount")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Floor")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("HasHotelEntrance")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("HasMasterRoom")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("HasParking")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("HasSecurity")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsFirstOwner")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsLegalReconciled")
-                        .HasColumnType("bit");
 
                     b.Property<bool>("IsSold")
                         .HasColumnType("bit");
@@ -346,9 +307,6 @@ namespace Unique_X.Migrations
                     b.Property<int>("PropertyType")
                         .HasColumnType("int");
 
-                    b.Property<int>("ReceptionPieces")
-                        .HasColumnType("int");
-
                     b.Property<string>("Region")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -360,12 +318,6 @@ namespace Unique_X.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
-
-                    b.Property<int>("TotalFloors")
-                        .HasColumnType("int");
-
-                    b.Property<string>("View")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

@@ -12,6 +12,21 @@ export interface Property {
   listingType: string;
   propertyType: string;
   isFavorite: boolean;
+  isSold: boolean;
+   distanceFromLandmark: string;
+  hasMasterRoom: boolean;
+  receptionPieces: number;
+  view: string;
+  floor: number;
+  totalFloors: number;
+  apartmentsPerFloor: number;
+  elevatorsCount: number;
+  buildYear: number;
+  hasHotelEntrance: boolean;
+  hasSecurity: boolean;
+  isFirstOwner: boolean;
+  isLegalReconciled: boolean;
+  hasParking: boolean;
   createdAt: string;
   photos: Photo[];
   brokerName: string;
@@ -19,6 +34,7 @@ export interface Property {
 }
 
 export interface Photo {
+  id: number; 
   url: string;
   isMain: boolean;
 }
