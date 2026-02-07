@@ -29,13 +29,14 @@
   </div>
 
   <div class="card-body">
+    <h4 class="fw-bold text-dark mb-1"> {{ property.title }}</h4>
     <!-- السعر (بالخط العريض - Signature Style) -->
-    <h4 class="fw-bold text-dark mb-1">EGP {{ property.price | number }}</h4>
+    <h6 class=" text-dark mb-1">EGP {{ property.price | number }}</h6>
     
     <!-- العنوان -->
     <p class="text-truncate text-muted small mb-2">
       <i class="bi bi-geo-alt-fill text-danger me-1"></i>
-      {{ property.address }}, {{ property.region }}, {{ property.city }}
+       {{ property.region }}, {{ property.city }}
     </p>
 
     <!-- التفاصيل (الأيقونات) -->

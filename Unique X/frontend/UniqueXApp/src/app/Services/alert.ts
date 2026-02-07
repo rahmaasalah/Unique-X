@@ -45,4 +45,21 @@ export class AlertService {
       }
     });
   }
+
+  showLoading(message: string = 'Processing your request...') {
+  Swal.fire({
+    title: 'Please Wait',
+    text: message,
+    allowOutsideClick: false, // يمنع المستخدم من إغلاق الرسالة بالضغط بره
+    showConfirmButton: false, // يخفي زرار OK
+    didOpen: () => {
+      Swal.showLoading(); // يشغل علامة التحميل
+    }
+  });
+}
+
+// إغلاق أي رسالة مفتوحة
+close() {
+  Swal.close();
+}
 }

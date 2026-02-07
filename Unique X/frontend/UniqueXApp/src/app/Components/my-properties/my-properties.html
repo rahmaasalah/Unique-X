@@ -15,8 +15,10 @@
             <th>Location</th>
             <th>Price</th>
             <th>Category</th>
-            <th>Type</th>  
+            <th>Type</th>
+            
             <th class="text-center">Actions</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -51,6 +53,21 @@
                   </button>
                 </div>
               </td>
+<td>
+  <button class="btn btn-sm rounded-pill px-3 fw-bold transition-all status-toggle-btn shadow-sm"
+          [class.btn-dark]="prop.isSold" 
+          [class.btn-outline-danger]="!prop.isSold"
+          (click)="onMarkAsSold(prop.id)">
+    
+    @if (prop.isSold) {
+      <i class="bi bi-check-circle-fill me-1"></i> Sold
+    } @else {
+      <i class="bi bi-tag me-1"></i> Mark as sold
+    }
+  </button>
+</td>
+
+         
             </tr>
           }
         </tbody>

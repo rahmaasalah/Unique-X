@@ -7,6 +7,7 @@ using Unique_X.Data;
 using Unique_X.DTOs;
 using Unique_X.Models;
 using Unique_X.Services;
+using Unique_X.Services.Implementation;
 using Unique_X.Services.Interface;
 
 namespace Unique_X.Controllers
@@ -17,16 +18,19 @@ namespace Unique_X.Controllers
     {
         private readonly IAuthService _authService;
         private readonly UserManager<ApplicantUser> _userManager; 
-        private readonly AppDbContext _context; 
+        private readonly AppDbContext _context;
+        private readonly IPhotoService _photoService;
 
         public AuthController(
             IAuthService authService, 
             UserManager<ApplicantUser> userManager,
-            AppDbContext context)
+            AppDbContext context,
+            IPhotoService photoService)
         {
             _authService = authService;
             _userManager = userManager;
             _context = context;
+            _photoService = photoService;
         }
 
         [HttpPost("register")]
@@ -73,6 +77,7 @@ namespace Unique_X.Controllers
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
                 UserType = user.UserType,
+                ProfileImageUrl = user.ProfileImageUrl,
                 // حساب الإحصائيات سريعاً
                 TotalProperties = _context.Properties.Count(p => p.BrokerId == userId),
                 TotalWishlist = _context.Wishlists.Count(w => w.UserId == userId)
@@ -97,5 +102,27 @@ namespace Unique_X.Controllers
 
             return BadRequest(result.Errors);
         }
+
+        [HttpPost("upload-profile-image")]
+        [Authorize]
+        public async Task<IActionResult> UploadProfileImage(IFormFile file)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+
+            // 1. رفع الصورة لـ Cloudinary
+            var result = await _photoService.AddPhotoAsync(file);
+            if (result.Error != null) return BadRequest(result.Error.Message);
+
+            // 2. تحديث بيانات اليوزر
+            user.ProfileImageUrl = result.SecureUrl.AbsoluteUri;
+            user.ProfileImagePublicId = result.PublicId;
+
+            await _userManager.UpdateAsync(user);
+
+            return Ok(new { url = user.ProfileImageUrl });
+        }
+
     }
 }

@@ -1,78 +1,35 @@
 <div class="container py-5">
   <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-lg-10">
       <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
-        <!-- الهيدر الأحمر الموحد -->
+        
+        <!-- الهيدر الموحد -->
         <div class="bg-danger py-4 text-center">
-          <h2 class="text-white fw-bold mb-0">Edit <span class="text-white">Property</span></h2>
-          <p class="text-white-50 small">Update the details for your property listing</p>
+          <h2 class="text-white fw-bold mb-0">Edit Property</h2>
+          <p class="text-white-50 small mb-0">Update your listing details to keep it accurate</p>
         </div>
         
         <div class="card-body p-4 p-md-5">
           <form [formGroup]="editForm" (ngSubmit)="onSubmit()">
             
-            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Basic Information</h5>
+            <!-- القسم الأول: المعلومات العامة -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-info-circle me-2 text-danger"></i>General Information</h5>
             
-            <!-- العنوان -->
-            <div class="mb-3">
-              <label class="form-label fw-bold small">Property Title</label>
-              <input type="text" formControlName="title" class="form-control form-control-lg">
-            </div>
-
-            <!-- السعر والمساحة -->
             <div class="row g-3 mb-4">
               <div class="col-md-6">
-                <label class="form-label fw-bold small">Price (EGP)</label>
-                <input type="number" formControlName="price" class="form-control">
+                <label class="form-label fw-bold small">Property Title</label>
+                <input type="text" formControlName="title" class="form-control">
               </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold small">Area (m²)</label>
-                <input type="number" formControlName="area" class="form-control">
-              </div>
-            </div>
-
-            <!-- عداد الغرف والحمامات (الذي طلبته) -->
-            <div class="row g-3 mb-4">
-              <div class="col-md-6">
-                <label class="form-label fw-bold small"><i class="bi bi-door-open text-danger me-1"></i> Rooms</label>
-                <div class="input-group">
-                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', -1)">-</button>
-                  <input type="number" formControlName="rooms" class="form-control text-center" min="0">
-                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', 1)">+</button>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold small"><i class="bi bi-droplet text-danger me-1"></i> Bathrooms</label>
-                <div class="input-group">
-                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', -1)">-</button>
-                  <input type="number" formControlName="bathrooms" class="form-control text-center" min="0">
-                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', 1)">+</button>
-                </div>
-              </div>
-            </div>
-
-            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Location & Type</h5>
-            
-            <!-- المدينة والأنواع -->
-            <div class="row g-3 mb-4">
-              <div class="col-md-4">
-                <label class="form-label fw-bold small">City</label>
-                <select formControlName="city" class="form-select text-capitalize">
-                  <option [value]="1">Cairo</option>
-                  <option [value]="2">Alexandria</option>
-                  <option [value]="3">North Coast</option>
-                </select>
-              </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label fw-bold small">Listing Type</label>
                 <select formControlName="listingType" class="form-select">
-                  <option [value]="0">Resell</option>
+                  <option [value]="0">Resale</option>
                   <option [value]="1">Rent</option>
                   <option [value]="2">Primary</option>
-                  <option [value]="3">Resell Project</option>
+                  <option [value]="3">Resale Project</option>
                 </select>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label fw-bold small">Property Type</label>
                 <select formControlName="propertyType" class="form-select">
                   <option [value]="0">Apartment</option>
@@ -84,47 +41,206 @@
               </div>
             </div>
 
-            <div class="mb-4">
-              <label class="form-label fw-bold small">Region & Address</label>
-              <div class="input-group">
-                <span class="input-group-text bg-white"><i class="bi bi-geo-alt text-danger"></i></span>
-                <input type="text" formControlName="region" class="form-control" placeholder="Region">
-                <input type="text" formControlName="address" class="form-control" placeholder="Address">
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Price (EGP)</label>
+                <input type="number" formControlName="price" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Area (m²)</label>
+                <input type="number" formControlName="area" class="form-control">
               </div>
             </div>
 
-            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Media & Description</h5>
+            <!-- القسم الثاني: المواصفات الداخلية -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-house-door me-2 text-danger"></i>Unit Specifications</h5>
             
-            <!-- عرض الصور الحالية -->
-            @if (existingPhotos().length > 0) {
-              <div class="mb-3">
-                <label class="form-label fw-bold small d-block">Current Photos</label>
-                <div class="d-flex gap-2 overflow-auto pb-2">
-                  @for (photo of existingPhotos(); track photo.url) {
-                    <div class="position-relative">
-                      <img [src]="photo.url" class="rounded-3 shadow-sm border" style="width: 100px; height: 80px; object-fit: cover;">
-                    </div>
-                  }
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <label class="form-label fw-bold small">Rooms</label>
+                <div class="input-group input-group-sm">
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', -1)">-</button>
+                  <input type="number" formControlName="rooms" class="form-control text-center bg-white" readonly>
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', 1)">+</button>
                 </div>
               </div>
-            }
+              <div class="col-md-3">
+                <label class="form-label fw-bold small">Bathrooms</label>
+                <div class="input-group input-group-sm">
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', -1)">-</button>
+                  <input type="number" formControlName="bathrooms" class="form-control text-center bg-white" readonly>
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', 1)">+</button>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold small">Reception Pieces</label>
+                <input type="number" formControlName="receptionPieces" class="form-control">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold small">Floor Number</label>
+                <input type="number" formControlName="floor" class="form-control">
+              </div>
+            </div>
 
-            <div class="mb-4">
-              <label class="form-label fw-bold small">Add New Photos</label>
-              <input type="file" (change)="onFileSelect($event)" multiple class="form-control" accept="image/*">
+            <!-- القسم الثالث: الموقع -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-geo-alt me-2 text-danger"></i>Location Details</h5>
+            
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label fw-bold small">City</label>
+                <select formControlName="city" class="form-select">
+                  <option [value]="1">Cairo</option>
+                  <option [value]="2">Alexandria</option>
+                  <option [value]="3">North Coast</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold small">Region</label>
+                <select formControlName="region" class="form-select">
+                  @for (region of filteredRegions; track region) {
+                    <option [value]="region">{{ region }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold small">Landmark</label>
+                <input type="text" formControlName="distanceFromLandmark" class="form-control">
+              </div>
+            </div>
+
+            <!-- القسم الرابع: تفاصيل المبنى -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-building me-2 text-danger"></i>Building Details</h5>
+            
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <label class="small fw-bold">Build Year</label>
+                <input type="number" formControlName="buildYear" class="form-control">
+              </div>
+              <div class="col-md-3">
+                <label class="small fw-bold">Total Floors</label>
+                <input type="number" formControlName="totalFloors" class="form-control">
+              </div>
+              <div class="col-md-3">
+  <label class="small fw-bold">Units Per Floor</label>
+  <input type="number" formControlName="apartmentsPerFloor" class="form-control">
+</div>
+              <div class="col-md-3">
+                <label class="small fw-bold">Elevators</label>
+                <input type="number" formControlName="elevatorsCount" class="form-control">
+              </div>
             </div>
 
             <div class="mb-4">
-              <label class="form-label fw-bold small">Description</label>
+                <label class="small fw-bold">View</label>
+                <input type="text" formControlName="view" class="form-control">
+            </div>
+
+            <!-- القسم الخامس: المميزات (Switches) -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-check-square me-2 text-danger"></i>Features & Status</h5>
+            
+            <div class="row g-3 mb-2">
+              <div class="col-md-6">
+                <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center">
+                  <label class="form-check-label small fw-bold mb-0" for="firstOwner">First Owner</label>
+                  <input class="form-check-input ms-0" type="checkbox" formControlName="isFirstOwner" id="firstOwner">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center">
+                  <label class="form-check-label small fw-bold mb-0" for="reconciled">Legal Reconciled</label>
+                  <input class="form-check-input ms-0" type="checkbox" formControlName="isLegalReconciled" id="reconciled">
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" formControlName="hasMasterRoom" id="master">
+                  <label class="form-check-label small" for="master">Master Room</label>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" formControlName="hasHotelEntrance" id="entrance">
+                  <label class="form-check-label small" for="entrance">Hotel Entrance</label>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" formControlName="hasSecurity" id="security">
+                  <label class="form-check-label small" for="security">Security</label>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" formControlName="hasParking" id="parking">
+                  <label class="form-check-label small" for="parking">Parking Slot</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- القسم السادس: الصور والوصف -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-images me-2 text-danger"></i>Photos & Description</h5>
+            
+            <!-- عرض الصور الحالية (خاص بالتعديل) -->
+            <!-- قسم الصور الحالية -->
+@if (existingPhotos().length > 0) {
+  <h6 class="fw-bold small text-muted mb-3">Current Photos (Click to set as Main)</h6>
+  <div class="row g-2 mb-4">
+    @for (photo of existingPhotos(); track photo.id) {
+      <div class="col-md-2 col-4">
+        <div class="position-relative rounded-3 overflow-hidden border cursor-pointer shadow-sm"
+             [class.border-danger]="photo.isMain" [style.border-width]="photo.isMain ? '3px' : '1px'"
+             (click)="!photo.isMain ? setExistingAsMain(photo.id) : null">
+          
+          <img [src]="photo.url" class="w-100 object-fit-cover" style="height: 100px;">
+          
+          @if (photo.isMain) {
+            <span class="badge bg-danger position-absolute top-0 start-0 m-1" style="font-size: 0.6rem;">MAIN</span>
+          } @else {
+            <div class="photo-overlay d-flex align-items-center justify-content-center">
+               <i class="bi bi-star text-white"></i>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<!-- قسم إضافة صور جديدة -->
+<h6 class="fw-bold small text-muted mb-2">Add New Photos</h6>
+<div class="upload-box border border-dashed rounded-3 p-3 text-center bg-light mb-3">
+  <input type="file" (change)="onFileSelect($event)" multiple class="form-control form-control-sm">
+</div>
+
+<div class="row g-2 mb-4">
+  @for (photo of selectedPhotos(); track $index) {
+    <div class="col-md-2 col-4">
+      <div class="position-relative rounded-3 overflow-hidden border shadow-sm cursor-pointer"
+           [class.border-danger]="newMainPhotoIndex === $index"
+           (click)="setNewAsMain($index)">
+        <img [src]="photo.preview" class="w-100 object-fit-cover" style="height: 100px;">
+        @if (newMainPhotoIndex === $index) {
+          <span class="badge bg-danger position-absolute top-0 start-0 m-1" style="font-size: 0.6rem;">NEW MAIN</span>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold small">Detailed Description</label>
               <textarea formControlName="description" class="form-control" rows="5"></textarea>
             </div>
 
-            <!-- أزرار الحفظ والإلغاء -->
-            <div class="d-grid gap-2">
+            <!-- أزرار الحفظ -->
+            <div class="d-grid gap-2 pt-3">
               <button type="submit" [disabled]="editForm.invalid" class="btn btn-danger btn-lg rounded-pill fw-bold py-3 shadow">
                 <i class="bi bi-check-circle me-2"></i> Save Changes
               </button>
-              <a routerLink="/my-properties" class="btn btn-link text-muted text-decoration-none">Discard Changes</a>
+              <a routerLink="/my-properties" class="btn btn-dark btn-lg rounded-pill fw-bold py-3 shadow">Discard Changes</a>
             </div>
 
           </form>

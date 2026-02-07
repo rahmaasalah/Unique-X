@@ -1,38 +1,33 @@
 @if (property(); as prop) {
 <div class="container py-4">
-  <!-- 1. معرض الصور (Carousel) -->
- <div id="propertyCarousel" class="carousel slide shadow rounded-4 overflow-hidden mb-4" 
-     data-bs-ride="carousel" 
-     data-bs-pause="hover" 
-     data-bs-interval="2000">
+  
+  <!-- 1. معرض الصور (Carousel) - يظل بالأعلى بعرض الصفحة -->
+  <div id="propertyCarousel" class="carousel slide shadow rounded-4 overflow-hidden mb-5" data-bs-ride="carousel">
     <div class="carousel-inner">
       @for (photo of prop.photos; track photo.url; let i = $index) {
         <div class="carousel-item" [class.active]="i === 0">
-          <img [src]="photo.url" class="d-block w-100 object-fit-cover" style="height: 500px;" alt="Property Image">
+          <img [src]="photo.url" class="d-block w-100 object-fit-cover" style="height: 600px;" alt="Property Image">
         </div>
       }
     </div>
-    <!-- زر السابق -->
     <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
-      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-      <span class="visually-hidden">Previous</span>
+      <span class="carousel-control-prev-icon"></span>
     </button>
-
-    <!-- زر التالي -->
     <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
-      <span class="carousel-control-next-icon" aria-hidden="true"></span>
-      <span class="visually-hidden">Next</span>
+      <span class="carousel-control-next-icon"></span>
     </button>
   </div>
 
   <div class="row g-4">
-    <!-- العمود الأيسر: التفاصيل -->
+    <!-- العمود الأيسر (عرض 8): يحتوي على كل التفاصيل والمواصفات -->
     <div class="col-lg-8">
-      <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+      
+      <!-- كارت المعلومات الأساسية -->
+      <div class="bg-white p-4 rounded-4 shadow-sm mb-4 border border-light">
         <span class="badge bg-danger rounded-pill mb-2 px-3">{{ prop.listingType }}</span>
-        <h2 class="fw-bold mb-1">EGP {{ prop.price | number }}</h2>
-        <h4 class="text-dark mb-3">{{ prop.title }}</h4>
-        <p class="text-muted"><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ prop.address }}, {{ prop.region }}, {{ prop.city }}</p>
+        <h2 class="fw-bold text-dark mb-1">EGP {{ prop.price | number }}</h2>
+        <h4 class="text-secondary mb-3">{{ prop.title }}</h4>
+        <p class="text-muted small"><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ prop.region }}, {{ prop.city }}</p>
         
         <div class="d-flex gap-4 border-top border-bottom py-3 my-4 justify-content-around text-center">
           <div><i class="bi bi-door-open fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.rooms }}</span> <small class="text-muted d-block">Beds</small></div>
@@ -41,38 +36,65 @@
           <div><i class="bi bi-building fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.propertyType }}</span> <small class="text-muted d-block">Type</small></div>
         </div>
 
-        <h5 class="fw-bold mb-3">Description</h5>
+        <h5 class="fw-bold mb-3 border-start border-danger border-4 ps-2">Description</h5>
         <p class="text-muted lh-lg">{{ prop.description }}</p>
       </div>
-    </div>
 
-    <!-- العمود الأيمن: أزرار التواصل (ثابتة Sidebar) -->
-    <div class="col-lg-4">
-      <div class="card border-0 shadow-sm p-4 sticky-top" style="top: 100px; z-index: 10;">
-        <div class="text-center mb-4">
-          <div class="bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-            <i class="bi bi-person fs-2"></i>
+      <!-- كارت المواصفات الفنية والمميزات -->
+      <div class="bg-white p-4 rounded-4 shadow-sm border border-light">
+        <h5 class="fw-bold mb-4 border-bottom pb-2">Technical Specifications</h5>
+        <div class="row g-4 mb-4">
+          <div class="col-md-6">
+            <ul class="list-unstyled">
+              <li class="mb-3"><i class="bi bi-geo text-danger me-2"></i> <strong>Location:</strong> {{ prop.distanceFromLandmark }}</li>
+              <li class="mb-3"><i class="bi bi-layers text-danger me-2"></i> <strong>Floor:</strong> {{ prop.floor }} of {{ prop.totalFloors }}</li>
+              <!-- لاحظي التعديل هنا لاسم الحقل -->
+              <li class="mb-3"><i class="bi bi-people text-danger me-2"></i> <strong>Units per floor:</strong> {{ prop.apartmentsPerFloor }}</li>
+              <li class="mb-3"><i class="bi bi-calendar-check text-danger me-2"></i> <strong>Built in:</strong> {{ prop.buildYear }}</li>
+            </ul>
           </div>
-          <h5 class="fw-bold mb-0">{{ prop.brokerName }}</h5>
-          <small class="text-muted">Listed by Agent</small>
+          <div class="col-md-6">
+            <ul class="list-unstyled">
+              <li class="mb-3"><i class="bi bi-eye text-danger me-2"></i> <strong>View:</strong> {{ prop.view }}</li>
+              <li class="mb-3"><i class="bi bi-arrow-up-circle text-danger me-2"></i> <strong>Elevators:</strong> {{ prop.elevatorsCount }}</li>
+              <li class="mb-3"><i class="bi bi-cash-stack text-danger me-2"></i> <strong>Commission:</strong> 2.5%</li>
+            </ul>
+          </div>
         </div>
 
-        <!-- زرار الاتصال الهاتفي -->
-        <a [href]="'tel:' + prop.brokerPhone" class="btn btn-outline-dark btn-lg w-100 rounded-pill mb-3 fw-bold">
-          <i class="bi bi-telephone-fill me-2"></i> Call Now
-        </a>
-
-        <!-- زرار الواتساب (WhatsApp Integration) -->
-        <a [href]="'https://wa.me/' + prop.brokerPhone" target="_blank" class="btn btn-success btn-lg w-100 rounded-pill fw-bold">
-          <i class="bi bi-whatsapp me-2"></i> WhatsApp
-        </a>
+        <h6 class="fw-bold small text-muted mb-3">KEY FEATURES</h6>
+        <div class="d-flex flex-wrap gap-2">
+          @if(prop.hasHotelEntrance) { <span class="badge bg-light text-dark border px-3 py-2">Hotel Entrance</span> }
+          @if(prop.hasSecurity) { <span class="badge bg-light text-dark border px-3 py-2">24/7 Security</span> }
+          @if(prop.isFirstOwner) { <span class="badge bg-light text-dark border px-3 py-2">First Owner</span> }
+          @if(prop.hasParking) { <span class="badge bg-light text-dark border px-3 py-2">Parking Available</span> }
+        </div>
       </div>
     </div>
+
+    <!-- العمود الأيمن (عرض 4): السايد بار الثابت -->
+    <div class="col-lg-4">
+      <div class="sticky-sidebar"> <!-- الكلاس ده هو سر الثبات -->
+        <div class="card border-0 shadow rounded-4 p-4 text-center">
+          <div class="bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3 shadow" style="width: 70px; height: 70px;">
+            <i class="bi bi-person-badge fs-2"></i>
+          </div>
+          <h5 class="fw-bold mb-1">{{ prop.brokerName }}</h5>
+          <p class="text-muted small mb-4">Certified Real Estate Agent</p>
+
+          <a [href]="'tel:' + prop.brokerPhone" class="btn btn-outline-dark btn-lg w-100 rounded-pill mb-3 fw-bold shadow-sm py-2">
+            <i class="bi bi-telephone-fill me-2"></i> Call Now
+          </a>
+
+          <a [href]="getWhatsAppLink(prop.brokerPhone)" target="_blank" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow py-2">
+            <i class="bi bi-whatsapp me-2"></i> WhatsApp
+          </a>
+          
+          
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
-} @else {
-  <div class="text-center py-5">
-    <div class="spinner-border text-danger" role="status"></div>
-    <p class="mt-3">Loading details...</p>
-  </div>
 }

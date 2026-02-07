@@ -18,6 +18,25 @@ export class EditPropertyComponent implements OnInit {
   propertyId!: number;
   selectedFiles: File[] = [];
   existingPhotos = signal<any[]>([]);
+  selectedPhotos = signal<{ file: File, preview: string }[]>([]);
+newMainPhotoIndex: number | null = null;
+
+  regionsMapping: any = {
+  1: ['Zamalek', 'El-Qourba', 'Nasr city'], // Cairo
+  2: [
+    'zizinia', 'Janaklis', 'Gliem', 'Fleming', 'San Stefano', 'Shods', 
+    'Elshalalat', 'Wabur al-miyah', 'Al-Ibrahimiya', 'Al-Manshiyya', 
+    'Camp Schésar', 'Muharram Bik', 'Mahattat Misr', 'Cleopatra', 
+    'Al-Azariṭa', 'Al-Shatibi', 'Saba Basha', 'Sidi Gaber', 'Roshdy', 
+    'Bolkley', 'Moustafa Kamel', 'Kafr Abdo', 'Stanly', 'Sidi Beshr', 
+    'El-Mandara', 'Al-Suyuf', 'Victoria', 'Al-Aasafirah', 'Al-Maamoura', 
+    'Toson', 'Smouha', 'New Smouha', 'Borj Al-Arab', 'Loran', 
+    'Al-Agamy', 'King Mariout'
+  ], // Alexandria
+  3: ['Al-Dabaa', 'Sidi Abdulrahman', 'Ghazala Bay', 'Al-Alamin', 'Sahel', 'Ras Al Hekma'] // North Coast
+};
+
+filteredRegions: string[] = [];
 
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
@@ -33,29 +52,41 @@ export class EditPropertyComponent implements OnInit {
       area: ['', [Validators.required]],
       rooms: [0],
       bathrooms: [0],
+      receptionPieces: [0],
+      floor: [0],
       city: [1],
       region: [''],
       address: [''],
       listingType: [0],
-      propertyType: [0]
+      propertyType: [0],
+      distanceFromLandmark: [''],
+      buildYear: [2024],
+      totalFloors: [0],
+      apartmentsPerFloor: [0],
+      elevatorsCount: [0],
+      view: [''],
+      hasMasterRoom: [false],
+      hasHotelEntrance: [false],
+      hasSecurity: [false],
+      hasParking: [false],
+      isFirstOwner: [false],
+      isLegalReconciled: [false]
     });
 
     this.propertyId = Number(this.route.snapshot.paramMap.get('id'));
     this.loadPropertyData();
+
+    this.editForm.get('city')?.valueChanges.subscribe(cityId => {
+    this.updateRegions(cityId);
+  });
   }
 
-  loadPropertyData() {
+ loadPropertyData() {
     this.propertyService.getPropertyById(this.propertyId).subscribe({
       next: (data: any) => {
+        this.updateRegions(this.mapCityToId(data.city));
         this.editForm.patchValue({
-          title: data.title,
-          description: data.description,
-          price: data.price,
-          area: data.area,
-          rooms: data.rooms,
-          bathrooms: data.bathrooms,
-          region: data.region,
-          address: data.address,
+          ...data,
           city: this.mapCityToId(data.city),
           listingType: this.mapListingToId(data.listingType),
           propertyType: this.mapTypeToId(data.propertyType)
@@ -64,6 +95,16 @@ export class EditPropertyComponent implements OnInit {
       }
     });
   }
+  updateRegions(cityId: any) {
+  // تحويل cityId لرقم للتأكد
+  const id = Number(cityId);
+  this.filteredRegions = this.regionsMapping[id] || [];
+  
+  // إعادة تصغير حقل المنطقة لو المدينة اتغيرت عشان ميفضلش مختار منطقة قديمة غلط
+  if (this.editForm.get('region')?.value) {
+     this.editForm.get('region')?.setValue('');
+  }
+}
 
   // دالة التحكم في عداد الغرف/الحمامات
   updateCounter(controlName: string, amount: number) {
@@ -73,6 +114,23 @@ export class EditPropertyComponent implements OnInit {
       if (newValue >= 0) control.patchValue(newValue);
     }
   }
+
+  setExistingAsMain(photoId: number) {
+  this.alertService.showLoading('Updating cover photo...');
+  this.propertyService.setMainPhoto(this.propertyId, photoId).subscribe({
+    next: () => {
+      this.alertService.close();
+      this.loadPropertyData(); // إعادة تحميل الصور لتظهر العلامة على الجديدة
+      this.alertService.success('Main photo updated!');
+    }
+  });
+}
+
+// دالة اختيار صورة رئيسية من الصور الجديدة (قبل الرفع)
+setNewAsMain(index: number) {
+  this.newMainPhotoIndex = index;
+}
+
 
   // تحويل النصوص القادمة من الباك اند لأرقام (IDs)
   mapCityToId(city: string) {
@@ -92,18 +150,30 @@ export class EditPropertyComponent implements OnInit {
 
   onSubmit() {
     if (this.editForm.valid) {
+      this.alertService.showLoading('Saving changes...');
       const formData = new FormData();
       Object.keys(this.editForm.value).forEach(key => {
-        formData.append(key, this.editForm.value[key]);
+        // نرسل المفاتيح بأسماء PascalCase لتطابق الـ DTO في الباك اند
+        const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
+        formData.append(pascalKey, this.editForm.value[key]);
       });
-      this.selectedFiles.forEach(file => { formData.append('Photos', file); });
+
+      if (this.newMainPhotoIndex !== null) {
+      formData.append('MainPhotoIndex', this.newMainPhotoIndex.toString());
+    }
+      this.selectedPhotos().forEach(p => formData.append('Photos', p.file));
 
       this.propertyService.updateProperty(this.propertyId, formData).subscribe({
         next: () => {
-          this.alertService.success('Update successful!');
+          this.alertService.close();
+          this.alertService.success('Changes saved successfully!');
           this.router.navigate(['/my-properties']);
-        }
-      });
-    }
+        },
+      error: () => {
+        this.alertService.close();
+        this.alertService.error('Update failed');
+      }
+    });
   }
+}
 }

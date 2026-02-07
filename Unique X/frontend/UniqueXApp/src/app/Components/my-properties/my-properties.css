@@ -1,0 +1,28 @@
+.status-toggle-btn {
+    min-width: 125px; /* عرض ثابت عشان الزرار ميكبرش ويصغر لما الكلام يتغير */
+    transition: all 0.3s ease-in-out;
+    border-width: 2px;
+}
+
+/* ستايل لما يكون "Mark as sold" (مفرغ) */
+.btn-outline-danger {
+    border-color: #ef3341;
+    color: #ef3341;
+}
+
+.btn-outline-danger:hover {
+    background-color: #ef3341;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* ستايل لما يكون "Sold" (أسود) */
+.btn-dark {
+    background-color: #212529;
+    border-color: #212529;
+}
+
+.btn-dark:hover {
+    background-color: #000;
+    transform: translateY(-2px);
+}

@@ -1,0 +1,38 @@
+#propertyCarousel {
+    background-color: #f8f9fa; /* خلفية رمادية فاتحة للمساحات الفارغة لو الصورة مش عريضة */
+    border-radius: 15px;
+    overflow: hidden;
+    height: 500px;
+}
+
+/* ضبط مقاس الصور داخل السلايدر */
+.carousel-item img {
+    height: 1300px; /* ثبتي الارتفاع اللي يناسب ديزاينك */
+    width: 1000px;
+    object-fit: contain; /* أهم سطر: بيخلي الصورة تظهر كاملة بدون قص أو تمطيط */
+    display: block;
+}
+
+/* جعل السايد بار يثبت عند السكرول */
+.sticky-sidebar {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 100px; /* المسافة من أعلى الصفحة (اتركي مكان للـ Navbar) */
+    z-index: 10;
+}
+
+/* تحسين شكل الكروت لتبدو أكثر فخامة */
+.card, .bg-white {
+    transition: box-shadow 0.3s ease;
+}
+
+.badge.bg-light {
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    #propertyCarousel, .carousel-item img {
+        height: 400px;
+    }
+}

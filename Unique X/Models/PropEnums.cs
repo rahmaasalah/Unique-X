@@ -11,10 +11,10 @@
 
         public enum ListingType //category
         {
-            Resell = 0,
+            Resale = 0,
             Rent = 1,
             Primary = 2,
-            ResellProject = 3
+            ResaleProject = 3
         }
 
         public enum PropertyType //type

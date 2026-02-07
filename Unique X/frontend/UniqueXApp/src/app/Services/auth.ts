@@ -55,4 +55,19 @@ getProfile(): Observable<any> {
 updateProfile(model: any): Observable<any> {
   return this.http.put(`${this.baseUrl}profile`, model);
 }
+
+uploadProfileImage(file: File): Observable<any> {
+  const formData = new FormData();
+  formData.append('file', file);
+  return this.http.post(`${this.baseUrl}upload-profile-image`, formData);
+}
+getUserImage(): string | null {
+  const userString = localStorage.getItem('user');
+  if (userString) {
+    const user = JSON.parse(userString);
+    // تأكدي إن الاسم مطابق للي بيتخزن عندك (غالباً profileImageUrl)
+    return user.profileImageUrl || null;
+  }
+  return null;
+}
 }

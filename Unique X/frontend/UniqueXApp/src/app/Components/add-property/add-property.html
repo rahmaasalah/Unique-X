@@ -1,72 +1,26 @@
 <div class="container py-5">
   <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-lg-10"> <!-- كبرنا المساحة شوية لـ 10 عشان الحقول كتير -->
       <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        
+        <!-- الهيدر -->
         <div class="bg-danger py-4 text-center">
           <h2 class="text-white fw-bold mb-0">List Your Property</h2>
-          <p class="text-white-50 small">Fill in the details to reach thousands of buyers</p>
+          <p class="text-white-50 small mb-0">Fill in the details to reach thousands of buyers</p>
         </div>
         
         <div class="card-body p-4 p-md-5">
           <form [formGroup]="propertyForm" (ngSubmit)="onSubmit()">
             
-            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Basic Information</h5>
-            
-            <div class="mb-3">
-              <label class="form-label fw-bold small">Property Title</label>
-              <input type="text" formControlName="title" class="form-control form-control-lg" placeholder="e.g. Luxurious Apartment with Nile View">
-            </div>
-
-            <div class="row g-3 mb-4">
-              <div class="col-md-6">
-                <label class="form-label fw-bold small">Price (EGP)</label>
-                <input type="number" formControlName="price" class="form-control" placeholder="0.00">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold small">Area (m²)</label>
-                <input type="number" formControlName="area" class="form-control" placeholder="150">
-              </div>
-            </div>
-
-            <div class="row g-3 mb-4">
-  <!-- حقل الغرف -->
-  <div class="col-md-6">
-    <label class="form-label fw-bold small"><i class="bi bi-door-open text-danger me-1"></i> Number of Rooms</label>
-    <div class="input-group">
-      <!-- نمرر -1 للنقصان -->
-      <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', -1)">-</button>
-      
-      <!-- إضافة min="0" لمنع الكتابة اليدوية للسالب أيضاً -->
-      <input type="number" formControlName="rooms" class="form-control text-center" min="0">
-      
-      <!-- نمرر 1 للزيادة -->
-      <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', 1)">+</button>
-    </div>
-  </div>
-  
-  <!-- حقل الحمامات -->
-  <div class="col-md-6">
-    <label class="form-label fw-bold small"><i class="bi bi-droplet text-danger me-1"></i> Number of Bathrooms</label>
-    <div class="input-group">
-      <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', -1)">-</button>
-      <input type="number" formControlName="bathrooms" class="form-control text-center" min="0">
-      <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', 1)">+</button>
-    </div>
-  </div>
-</div>
-
-            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Location & Type</h5>
+            <!-- القسم الأول: المعلومات الأساسية والنوع -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-info-circle me-2 text-danger"></i>General Information</h5>
             
             <div class="row g-3 mb-4">
-              <div class="col-md-4">
-                <label class="form-label fw-bold small">City</label>
-                <select formControlName="city" class="form-select">
-                  <option [value]="1">Cairo</option>
-                  <option [value]="2">Alexandria</option>
-                  <option [value]="3">North Coast</option>
-                </select>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Property Title</label>
+                <input type="text" formControlName="title" class="form-control" placeholder="">
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label fw-bold small">Listing Type</label>
                 <select formControlName="listingType" class="form-select">
                   <option [value]="0">Resale</option>
@@ -75,7 +29,7 @@
                   <option [value]="3">Resale Project</option>
                 </select>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label fw-bold small">Property Type</label>
                 <select formControlName="propertyType" class="form-select">
                   <option [value]="0">Apartment</option>
@@ -87,35 +41,211 @@
               </div>
             </div>
 
-            <div class="mb-4">
-              <label class="form-label fw-bold small">Detailed Address & Region</label>
-              <div class="input-group">
-                <span class="input-group-text bg-white"><i class="bi bi-geo-alt text-danger"></i></span>
-                <input type="text" formControlName="region" class="form-control" placeholder="Region (e.g. Maadi)">
-                <input type="text" formControlName="address" class="form-control" placeholder="Street Address">
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Price (EGP)</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0">EGP</span>
+                  <input type="number" formControlName="price" class="form-control border-start-0" placeholder="">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Area (m²)</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-aspect-ratio"></i></span>
+                  <input type="number" formControlName="area" class="form-control border-start-0" placeholder="">
+                </div>
               </div>
             </div>
 
-            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4">Media & Details</h5>
+            <!-- القسم الثاني: الغرف والمواصفات الداخلية -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-house-door me-2 text-danger"></i>Unit Specifications</h5>
             
-            <div class="mb-4">
-              <label class="form-label fw-bold small">Property Photos</label>
-              <div class="upload-box border border-dashed rounded-3 p-4 text-center bg-light">
-                <i class="bi bi-images fs-1 text-danger d-block mb-2"></i>
-                <input type="file" (change)="onFileSelect($event)" multiple class="form-control" accept="image/*">
-                <small class="text-muted d-block mt-2">Upload high quality photos (Max 10 images)</small>
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <label class="form-label fw-bold small">Rooms</label>
+                <div class="input-group input-group-sm shadow-sm">
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', -1)">-</button>
+                  <input type="number" formControlName="rooms" class="form-control text-center bg-white" readonly>
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', 1)">+</button>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold small">Bathrooms</label>
+                <div class="input-group input-group-sm shadow-sm">
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', -1)">-</button>
+                  <input type="number" formControlName="bathrooms" class="form-control text-center bg-white" readonly>
+                  <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', 1)">+</button>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold small">Reception Pieces</label>
+                <input type="number" formControlName="receptionPieces" class="form-control" placeholder="0">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold small">Floor Number</label>
+                <input type="number" formControlName="floor" class="form-control" placeholder="">
+              </div>
+            </div>
+
+            <!-- القسم الثالث: تفاصيل الموقع -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-geo-alt me-2 text-danger"></i>Location Details</h5>
+            
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label fw-bold small">City</label>
+                <select formControlName="city" class="form-select">
+                  <option [value]="1">Cairo</option>
+                  <option [value]="2">Alexandria</option>
+                  <option [value]="3">North Coast</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold small">Region</label>
+                <select formControlName="region" class="form-select">
+                  <option value="">-- Select Region --</option>
+                  @for (region of filteredRegions; track region) {
+                    <option [value]="region">{{ region }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold small">Landmark</label>
+                <input type="text" formControlName="distanceFromLandmark" class="form-control" placeholder="">
+              </div>
+            </div>
+
+            <!-- القسم الرابع: مواصفات العقار (المبنى) -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-building me-2 text-danger"></i>Building Details</h5>
+            
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <label class="small fw-bold">Build Year</label>
+                <input type="number" formControlName="buildYear" class="form-control" placeholder="">
+              </div>
+              <div class="col-md-3">
+                <label class="small fw-bold">Building Total Floors</label>
+                <input type="number" formControlName="totalFloors" class="form-control" placeholder="">
+              </div>
+              <div class="col-md-3">
+  <label class="small fw-bold">Units Per Floor</label>
+  <input type="number" formControlName="apartmentsPerFloor" class="form-control">
+</div>
+              <div class="col-md-3">
+                <label class="small fw-bold">Elevators Count</label>
+                <input type="number" formControlName="elevatorsCount" class="form-control" placeholder="">
               </div>
             </div>
 
             <div class="mb-4">
-              <label class="form-label fw-bold small">Description</label>
-              <textarea formControlName="description" class="form-control" rows="5" placeholder="Describe the features, view, and finishing..."></textarea>
+              <label class="small fw-bold">View</label>
+              <input type="text" formControlName="view" class="form-control" placeholder="">
             </div>
 
-            <div class="d-grid pt-2">
-              <button type="submit" [disabled]="propertyForm.invalid" class="btn btn-danger btn-lg rounded-pill fw-bold py-3 shadow">
-                <i class="bi bi-cloud-upload me-2"></i> Publish My Property
-              </button>
+            <!-- القسم الخامس: المميزات والوضع القانوني (Switches) -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-check-square me-2 text-danger"></i>Features & Legal Status</h5>
+            
+            <!-- تجميع الـ Switches في صفوف لتوفير المساحة -->
+            <div class="row g-3 mb-2">
+              <div class="col-md-6">
+                <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center">
+                  <label class="form-check-label small fw-bold mb-0" for="firstOwner">First Owner</label>
+                  <input class="form-check-input ms-0" type="checkbox" formControlName="isFirstOwner" id="firstOwner">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center">
+                  <label class="form-check-label small fw-bold mb-0" for="reconciled">Legal Reconciled</label>
+                  <input class="form-check-input ms-0" type="checkbox" formControlName="isLegalReconciled" id="reconciled">
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" formControlName="hasMasterRoom" id="master">
+                  <label class="form-check-label small" for="master">Master Room</label>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" formControlName="hasHotelEntrance" id="entrance">
+                  <label class="form-check-label small" for="entrance">Hotel Entrance</label>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" formControlName="hasSecurity" id="security">
+                  <label class="form-check-label small" for="security">24/7 Security</label>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" formControlName="hasParking" id="parking">
+                  <label class="form-check-label small" for="parking">Parking Available</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- القسم السادس: الميديا والوصف -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-images me-2 text-danger"></i>Media & Description</h5>
+            
+           <div class="mb-4">
+  <label class="form-label fw-bold small"><i class="bi bi-images text-danger me-1"></i> Property Photos</label>
+  
+  <!-- منطقة الرفع -->
+  <div class="upload-box border border-dashed rounded-4 p-4 text-center bg-light mb-3">
+    <i class="bi bi-cloud-arrow-up fs-1 text-danger d-block mb-2"></i>
+    <input type="file" (change)="onFileSelect($event)" multiple class="form-control mx-auto shadow-sm" style="max-width: 350px;" accept="image/*">
+    <p class="text-muted small mt-2 mb-0">Select all photos at once. Click on any photo below to set it as <b>Main</b>.</p>
+  </div>
+
+  <!-- عرض الصور المختار فوراً -->
+  <div class="row g-3 mt-2">
+  <!-- لاحظي القوسين بعد اسم المتغير: selectedPhotos() -->
+  @for (photo of selectedPhotos(); track $index) {
+    <div class="col-md-3 col-6">
+      <div class="photo-preview-card position-relative rounded-3 overflow-hidden shadow-sm border"
+           [class.main-selected]="mainPhotoIndex === $index"
+           (click)="setMainPhoto($index)">
+        
+        <img [src]="photo.preview" class="w-100 object-fit-cover" style="height: 140px;">
+
+        <!-- طبقة الـ Hover -->
+        <div class="photo-overlay d-flex align-items-center justify-content-center">
+           <span class="text-white small fw-bold">Click to set Main</span>
+        </div>
+
+        @if (mainPhotoIndex === $index) {
+          <div class="main-badge bg-danger text-white">
+            <i class="bi bi-star-fill me-1"></i> MAIN
+          </div>
+        }
+
+        <button type="button" class="btn-remove-photo" (click)="removePhoto($index); $event.stopPropagation()">
+          <i class="bi bi-x-circle-fill"></i>
+        </button>
+      </div>
+    </div>
+  }
+</div>
+           </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold small">Detailed Description</label>
+              <textarea formControlName="description" class="form-control" rows="5" placeholder="Include finishing, special features, etc."></textarea>
+            </div>
+
+            <!-- زر النشر -->
+            <div class="d-grid pt-3">
+              <button type="submit" [disabled]="propertyForm.invalid || isSubmitting" class="btn btn-danger btn-lg w-100 rounded-pill py-3 fw-bold shadow">
+    @if (isSubmitting) {
+       <span class="spinner-border spinner-border-sm me-2"></span> Publishing...
+    } @else {
+       <i class="bi bi-cloud-upload me-2"></i> Publish Property
+    }
+</button>
             </div>
 
           </form>

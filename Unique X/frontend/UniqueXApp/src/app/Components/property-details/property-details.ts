@@ -28,8 +28,23 @@ export class PropertyDetailsComponent implements OnInit {
         
       });
     }
-    
   }
+
+  getWhatsAppLink(phone: string): string {
+  if (!phone) return '#';
+
+  // 1. مسح أي حروف أو مسافات، نسيب الأرقام فقط
+  let cleanedPhone = phone.replace(/\D/g, '');
+
+  // 2. لو الرقم بيبدأ بـ 0 (زي 012...)، نضيف كود مصر 2 في الأول
+  if (cleanedPhone.startsWith('0')) {
+    cleanedPhone = '2' + cleanedPhone;
+  }
+
+  // 3. نرجع الرابط مع رسالة ترحيب اختيارية (عشان البروكر يعرف العميل جاي من انهي شقة)
+  const message = encodeURIComponent(`Hello, I'm interested in your property: ${this.property()?.title}`);
+  return `https://wa.me/${cleanedPhone}?text=${message}`;
+}
 
   
 }

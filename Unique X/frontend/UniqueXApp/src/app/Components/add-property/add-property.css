@@ -20,3 +20,61 @@
 input.form-control {
   border-left: 1px solid #dee2e6;
 }
+
+
+.photo-preview-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 140px;
+}
+
+/* إطار أحمر واضح للصورة الرئيسية */
+.main-selected {
+  border: 3px solid #ef3341 !important;
+  transform: scale(1.05);
+  z-index: 5;
+}
+
+/* الشارة (Badge) */
+.main-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  font-weight: bold;
+  border-bottom-right-radius: 10px;
+}
+
+/* تأثير الـ Hover (الغطاء) */
+.photo-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.photo-preview-card:hover .photo-overlay {
+  opacity: 1;
+}
+
+/* زر الحذف */
+.btn-remove-photo {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+
+.btn-remove-photo:hover {
+  opacity: 1;
+  color: #ffc107;
+}
