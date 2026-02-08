@@ -1,38 +1,75 @@
-#propertyCarousel {
-    background-color: #f8f9fa; /* خلفية رمادية فاتحة للمساحات الفارغة لو الصورة مش عريضة */
-    border-radius: 15px;
-    overflow: hidden;
-    height: 500px;
+/* 1. حاوية المعرض الرئيسي (الشبكة) */
+.gallery-grid {
+    height: 500px; /* توحيد الارتفاع */
+    margin-bottom: 40px !important; /* مسافة أمان إجبارية تحت الصور */
+    position: relative;
+    z-index: 1; /* التأكد أنها تحت أي مودال أو نافبار */
 }
 
-/* ضبط مقاس الصور داخل السلايدر */
-.carousel-item img {
-    height: 1300px; /* ثبتي الارتفاع اللي يناسب ديزاينك */
-    width: 1000px;
-    object-fit: contain; /* أهم سطر: بيخلي الصورة تظهر كاملة بدون قص أو تمطيط */
-    display: block;
+.main-photo-container {
+    height: 100%;
 }
 
-/* جعل السايد بار يثبت عند السكرول */
+.side-photo-container {
+    height: calc(50% - 4px); /* تقسيم الارتفاع لصورتين جانبيتين */
+}
+
+/* 2. ضبط الصور لعدم الخروج عن البوردر */
+.main-photo-container img, .side-photo-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* لملء المساحة بشكل جمالي */
+    transition: transform 0.5s ease;
+}
+
+.transition-hover:hover {
+    transform: scale(1.02);
+}
+
+/* 3. السايد بار الثابت (البروكر) */
 .sticky-sidebar {
     position: -webkit-sticky;
     position: sticky;
-    top: 100px; /* المسافة من أعلى الصفحة (اتركي مكان للـ Navbar) */
+    top: 100px; /* المسافة من أعلى الشاشة */
     z-index: 10;
 }
 
-/* تحسين شكل الكروت لتبدو أكثر فخامة */
-.card, .bg-white {
-    transition: box-shadow 0.3s ease;
+/* 4. الكاراسول داخل المودال (المعرض الكامل) */
+#modalCarousel .carousel-item img {
+    height: 80vh; /* ارتفاع مناسب للشاشة */
+    width: 100%;
+    object-fit: contain; /* إظهار الصورة كاملة دون قص */
 }
 
-.badge.bg-light {
-    font-weight: 500;
-    font-size: 0.85rem;
+/* تحسينات عامة للكروت */
+.bg-white {
+    border: 1px solid #f1f1f1 !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
 }
 
-@media (max-width: 768px) {
-    #propertyCarousel, .carousel-item img {
-        height: 400px;
-    }
+.camera-btn {
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.8rem;
+}
+
+.overlay-more {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+}
+
+.text-dark.fw-medium {
+    font-size: 0.95rem;
+    color: #444 !important;
+}
+
+/* حركة بسيطة لما المستخدم يمر بالماوس على ميزة معينة */
+.d-flex.align-items-center {
+    transition: transform 0.2s ease;
+}
+
+.d-flex.align-items-center:hover {
+    transform: translateX(5px);
 }

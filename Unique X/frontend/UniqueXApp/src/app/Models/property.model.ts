@@ -31,6 +31,12 @@ export interface Property {
   photos: Photo[];
   brokerName: string;
   brokerPhone: string;
+  brokerId: string;
+brokerPropertyCount: number;
+hasBalcony: boolean;
+isFurnished: boolean;
+paymentMethod: string;
+installmentYears?: number;
 }
 
 export interface Photo {

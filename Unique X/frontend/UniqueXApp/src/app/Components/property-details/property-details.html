@@ -1,100 +1,261 @@
 @if (property(); as prop) {
 <div class="container py-4">
   
-  <!-- 1. معرض الصور (Carousel) - يظل بالأعلى بعرض الصفحة -->
-  <div id="propertyCarousel" class="carousel slide shadow rounded-4 overflow-hidden mb-5" data-bs-ride="carousel">
-    <div class="carousel-inner">
-      @for (photo of prop.photos; track photo.url; let i = $index) {
-        <div class="carousel-item" [class.active]="i === 0">
-          <img [src]="photo.url" class="d-block w-100 object-fit-cover" style="height: 600px;" alt="Property Image">
-        </div>
-      }
+  <!-- 1. معرض الصور (Grid Gallery) -->
+  <div class="row g-2 gallery-grid shadow-sm rounded-4 overflow-hidden mb-5">
+    
+    <!-- الصورة الكبيرة -->
+    <div class="col-md-8 position-relative main-photo-container" (click)="openGallery(0)" style="cursor: pointer;">
+      <img [src]="prop.photos[0]?.url" class="transition-hover" alt="Main View">
+      
+      <div class="camera-btn position-absolute bottom-0 start-0 m-3 bg-white text-dark px-3 py-1 rounded-2 shadow-sm fw-bold border">
+        <i class="bi bi-camera-fill me-1 text-danger"></i> {{ prop.photos.length }} Photos
+      </div>
     </div>
-    <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
-      <span class="carousel-control-prev-icon"></span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
-      <span class="carousel-control-next-icon"></span>
-    </button>
+
+    <!-- الصور الجانبية -->
+    <div class="col-md-4 d-none d-md-flex flex-column gap-2">
+      <div class="side-photo-container overflow-hidden" (click)="openGallery(1)" style="cursor: pointer;">
+        <img [src]="prop.photos[1]?.url || prop.photos[0]?.url" class="transition-hover">
+      </div>
+
+      <div class="side-photo-container overflow-hidden position-relative" (click)="openGallery(2)" style="cursor: pointer;">
+        <img [src]="prop.photos[2]?.url || prop.photos[0]?.url" class="transition-hover">
+        @if(prop.photos.length > 3) {
+          <div class="overlay-more d-flex align-items-center justify-content-center text-white fw-bold fs-5">
+            +{{ prop.photos.length - 3 }} More
+          </div>
+        }
+      </div>
+    </div>
   </div>
 
-  <div class="row g-4">
-    <!-- العمود الأيسر (عرض 8): يحتوي على كل التفاصيل والمواصفات -->
+  <!-- 2. قسم البيانات (أضفنا mt-5 لضمان عدم التداخل) -->
+  <div class="row g-4 mt-5">
+    
     <div class="col-lg-8">
-      
       <!-- كارت المعلومات الأساسية -->
       <div class="bg-white p-4 rounded-4 shadow-sm mb-4 border border-light">
-        <span class="badge bg-danger rounded-pill mb-2 px-3">{{ prop.listingType }}</span>
-        <h2 class="fw-bold text-dark mb-1">EGP {{ prop.price | number }}</h2>
-        <h4 class="text-secondary mb-3">{{ prop.title }}</h4>
-        <p class="text-muted small"><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ prop.region }}, {{ prop.city }}</p>
         
-        <div class="d-flex gap-4 border-top border-bottom py-3 my-4 justify-content-around text-center">
-          <div><i class="bi bi-door-open fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.rooms }}</span> <small class="text-muted d-block">Beds</small></div>
-          <div><i class="bi bi-droplet fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.bathrooms }}</span> <small class="text-muted d-block">Baths</small></div>
-          <div><i class="bi bi-aspect-ratio fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.area }}</span> <small class="text-muted d-block">Sqft</small></div>
-          <div><i class="bi bi-building fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.propertyType }}</span> <small class="text-muted d-block">Type</small></div>
+        <!-- العنوان (Title) - الآن واضح وتحت الصور بمسافة مريحة -->
+        <h2 class="fw-bold text-dark mb-2">{{ prop.title }}</h2>
+        
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <h3 class="fw-bold text-danger mb-0">EGP {{ prop.price | number }}</h3>
+            <span class="badge bg-danger rounded-pill px-3 py-2 fw-bold small">{{ prop.listingType }}</span>
+        </div>
+
+        <p class="text-muted small mb-4">
+            <i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ prop.region }}, {{ prop.city }}
+        </p>
+        
+        <!-- الأيقونات (Beds, Baths, etc.) -->
+        <div class="d-flex gap-4 border-top border-bottom py-3 my-4 justify-content-around text-center bg-light-subtle rounded-3">
+          @if (prop.rooms > 0) {
+    <div><i class="bi bi-door-open fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.rooms }}</span> <small class="text-muted d-block small">Beds</small></div>
+  }
+
+  <!-- لا يظهر إلا إذا كان عدد الحمامات أكبر من 0 -->
+  @if (prop.bathrooms > 0) {
+    <div><i class="bi bi-droplet fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.bathrooms }}</span> <small class="text-muted d-block small">Baths</small></div>
+  }
+
+  <!-- المساحة دائماً تظهر لأنها أساسية لكل أنواع العقارات -->
+  <div><i class="bi bi-aspect-ratio fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.area }}</span> <small class="text-muted d-block small">m²</small></div>
+  
+  <div><i class="bi bi-building fs-4 d-block text-danger"></i> <span class="fw-bold text-truncate" style="max-width: 80px;">{{ prop.propertyType }}</span> <small class="text-muted d-block">Type</small></div>
         </div>
 
         <h5 class="fw-bold mb-3 border-start border-danger border-4 ps-2">Description</h5>
-        <p class="text-muted lh-lg">{{ prop.description }}</p>
+        <p class="text-muted lh-lg" style="white-space: pre-line;">{{ prop.description }}</p>
       </div>
 
-      <!-- كارت المواصفات الفنية والمميزات -->
+      <!-- كارت المواصفات الفنية -->
       <div class="bg-white p-4 rounded-4 shadow-sm border border-light">
-        <h5 class="fw-bold mb-4 border-bottom pb-2">Technical Specifications</h5>
+        <h5 class="fw-bold mb-4 border-bottom pb-2">Property Specifications</h5>
         <div class="row g-4 mb-4">
           <div class="col-md-6">
             <ul class="list-unstyled">
-              <li class="mb-3"><i class="bi bi-geo text-danger me-2"></i> <strong>Location:</strong> {{ prop.distanceFromLandmark }}</li>
-              <li class="mb-3"><i class="bi bi-layers text-danger me-2"></i> <strong>Floor:</strong> {{ prop.floor }} of {{ prop.totalFloors }}</li>
-              <!-- لاحظي التعديل هنا لاسم الحقل -->
-              <li class="mb-3"><i class="bi bi-people text-danger me-2"></i> <strong>Units per floor:</strong> {{ prop.apartmentsPerFloor }}</li>
-              <li class="mb-3"><i class="bi bi-calendar-check text-danger me-2"></i> <strong>Built in:</strong> {{ prop.buildYear }}</li>
-            </ul>
-          </div>
-          <div class="col-md-6">
-            <ul class="list-unstyled">
-              <li class="mb-3"><i class="bi bi-eye text-danger me-2"></i> <strong>View:</strong> {{ prop.view }}</li>
-              <li class="mb-3"><i class="bi bi-arrow-up-circle text-danger me-2"></i> <strong>Elevators:</strong> {{ prop.elevatorsCount }}</li>
-              <li class="mb-3"><i class="bi bi-cash-stack text-danger me-2"></i> <strong>Commission:</strong> 2.5%</li>
-            </ul>
+        @if (prop.distanceFromLandmark) {
+          <li class="mb-3 small"><i class="bi bi-geo text-danger me-2"></i> <strong>Location:</strong> {{ prop.distanceFromLandmark }}</li>
+        }
+        
+        <!-- إظهار الدور فقط لو أكبر من 0 -->
+        @if (prop.floor > 0) {
+          <li class="mb-3 small"><i class="bi bi-layers text-danger me-2"></i> <strong>Floor:</strong> {{ prop.floor }} @if(prop.totalFloors > 0) { of {{ prop.totalFloors }} }</li>
+        }
+
+        @if (prop.apartmentsPerFloor > 0) {
+          <li class="mb-3 small"><i class="bi bi-people text-danger me-2"></i> <strong>Units per floor:</strong> {{ prop.apartmentsPerFloor }}</li>
+        }
+
+        @if (prop.buildYear > 0) {
+          <li class="mb-3 small"><i class="bi bi-calendar-check text-danger me-2"></i> <strong>Built in:</strong> {{ prop.buildYear }}</li>
+        }
+      </ul>
+    </div>
+
+    <div class="col-md-6">
+      <ul class="list-unstyled">
+        @if (prop.view && prop.view !== 'string') {
+          <li class="mb-3 small"><i class="bi bi-eye text-danger me-2"></i> <strong>View:</strong> {{ prop.view }}</li>
+        }
+
+        @if (prop.elevatorsCount > 0) {
+          <li class="mb-3 small"><i class="bi bi-arrow-up-circle text-danger me-2"></i> <strong>Elevators:</strong> {{ prop.elevatorsCount }}</li>
+        }
+
+        @if (prop.receptionPieces > 0) {
+           <li class="mb-3 small"><i class="bi bi-grid-3x3-gap text-danger me-2"></i> <strong>Reception:</strong> {{ prop.receptionPieces }} Pieces</li>
+        }
+
+        <li class="mb-3 small"><i class="bi bi-cash-stack text-danger me-2"></i> <strong>Commission:</strong> 2.5%</li>
+      </ul>
           </div>
         </div>
 
-        <h6 class="fw-bold small text-muted mb-3">KEY FEATURES</h6>
-        <div class="d-flex flex-wrap gap-2">
-          @if(prop.hasHotelEntrance) { <span class="badge bg-light text-dark border px-3 py-2">Hotel Entrance</span> }
-          @if(prop.hasSecurity) { <span class="badge bg-light text-dark border px-3 py-2">24/7 Security</span> }
-          @if(prop.isFirstOwner) { <span class="badge bg-light text-dark border px-3 py-2">First Owner</span> }
-          @if(prop.hasParking) { <span class="badge bg-light text-dark border px-3 py-2">Parking Available</span> }
-        </div>
+        <div class="mt-4 p-3 rounded-3 bg-danger-subtle border border-danger border-opacity-10">
+  <div class="d-flex align-items-center">
+    <i class="bi bi-wallet2 fs-4 text-danger me-3"></i>
+    <div>
+      <h6 class="mb-0 fw-bold">Payment Method: {{ prop.paymentMethod }}</h6>
+      
+      <!-- إظهار سنوات التقسيط فقط لو المختارة Installment والقيمة أكبر من 0 -->
+      @if (prop.paymentMethod === 'Installment') {
+        <small class="text-danger fw-bold">Flexible plans up to {{ prop.installmentYears }} years available</small>
+      } @else if (prop.paymentMethod === 'Cash') {
+        <small class="text-muted">Direct cash payment required for this unit</small>
+      }
+    </div>
+  </div>
+</div>
+
+<br>
+        <div class="mt-4">
+  <h6 class="fw-bold small text-muted mb-3 text-uppercase" style="letter-spacing: 1px;">Key Features</h6>
+  
+  <div class="d-flex flex-column gap-3">
+    
+    @if(prop.hasHotelEntrance) { 
+      <div class="d-flex align-items-center">
+        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+        <span class="text-dark fw-medium">Hotel Entrance</span>
+      </div>
+    }
+    @if(prop.hasMasterRoom) { 
+      <div class="d-flex align-items-center">
+        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+        <span class="text-dark fw-medium">Master Room Available</span>
+      </div>
+    }
+
+    @if(prop.hasSecurity) { 
+      <div class="d-flex align-items-center">
+        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+        <span class="text-dark fw-medium">24/7 Security Service</span>
+      </div>
+    }
+
+    @if(prop.isFirstOwner) { 
+      <div class="d-flex align-items-center">
+        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+        <span class="text-dark fw-medium">First Owner Property</span>
+      </div>
+    }
+
+    @if(prop.hasParking) { 
+      <div class="d-flex align-items-center">
+        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+        <span class="text-dark fw-medium">Parking Slot Available</span>
+      </div>
+    }
+
+    @if(prop.hasBalcony) { 
+      <div class="d-flex align-items-center">
+        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+        <span class="text-dark fw-medium">Balcony Available</span>
+      </div>
+    }
+
+    @if(prop.isFurnished) { 
+      <div class="d-flex align-items-center">
+        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+        <span class="text-dark fw-medium">Fully Furnished Unit</span>
+      </div>
+    }
+    @if(prop.isLegalReconciled) { 
+      <div class="d-flex align-items-center">
+        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+        <span class="text-dark fw-medium">Legal Reconciled</span>
+      </div>
+    }
+
+  </div>
+</div>
       </div>
     </div>
 
-    <!-- العمود الأيمن (عرض 4): السايد بار الثابت -->
+    
+
+    <!-- العمود الأيمن (البروكر) -->
     <div class="col-lg-4">
-      <div class="sticky-sidebar"> <!-- الكلاس ده هو سر الثبات -->
+      <div class="sticky-sidebar"> 
         <div class="card border-0 shadow rounded-4 p-4 text-center">
           <div class="bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3 shadow" style="width: 70px; height: 70px;">
             <i class="bi bi-person-badge fs-2"></i>
           </div>
           <h5 class="fw-bold mb-1">{{ prop.brokerName }}</h5>
-          <p class="text-muted small mb-4">Certified Real Estate Agent</p>
-
-          <a [href]="'tel:' + prop.brokerPhone" class="btn btn-outline-dark btn-lg w-100 rounded-pill mb-3 fw-bold shadow-sm py-2">
-            <i class="bi bi-telephone-fill me-2"></i> Call Now
-          </a>
-
-          <a [href]="getWhatsAppLink(prop.brokerPhone)" target="_blank" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow py-2">
-            <i class="bi bi-whatsapp me-2"></i> WhatsApp
-          </a>
-          
-          
+          <p class="text-muted small mb-4">Real Estate Consultant</p>
+          <a [href]="'tel:' + prop.brokerPhone" class="btn btn-outline-dark btn-lg w-100 rounded-pill mb-3 fw-bold py-2 small shadow-sm"><i class="bi bi-telephone-fill me-2"></i> Call Now</a>
+          <a [href]="getWhatsAppLink(prop.brokerPhone)" target="_blank" class="btn btn-success btn-lg w-100 rounded-pill fw-bold py-2 small shadow"><i class="bi bi-whatsapp me-2"></i> WhatsApp</a>
         </div>
       </div>
     </div>
 
+  </div>
+
+  <!-- قسمProvided By (في آخر عمود التفاصيل col-lg-8) -->
+<div class="bg-white p-4 rounded-4 shadow-sm border border-light mt-4 mb-5">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div class="d-flex align-items-center">
+      <div class="bg-danger-subtle text-danger rounded-circle p-3 me-3">
+        <i class="bi bi-patch-check-fill fs-3"></i>
+      </div>
+      <div>
+        <h4 class="fw-bold mb-0" style="font-size: 0.7rem; letter-spacing: 1px;">Provided By</h4>
+        <h5 class="fw-bold mb-0">{{ prop.brokerName }}</h5>
+      </div>
+    </div>
+
+    <!-- زرار عرض عقارات البروكر -->
+    <button class="btn btn-outline-danger rounded-pill px-4 fw-bold shadow-sm"
+            [routerLink]="['/home']" 
+            [queryParams]="{ brokerId: prop.brokerId }">
+      See agent properties ({{ prop.brokerPropertyCount }})
+    </button>
+  </div>
+</div>
+
+  <!-- المودال (الذي يفتح المعرض الكامل) -->
+  <div class="modal fade" id="fullGalleryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content bg-dark border-0">
+        <div class="modal-header border-0"><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body p-2">
+          <div id="modalCarousel" class="carousel slide">
+            <div class="carousel-inner">
+              @for (photo of prop.photos; track photo.url; let i = $index) {
+                <div class="carousel-item" [class.active]="i === 0">
+                  <img [src]="photo.url">
+                </div>
+              }
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#modalCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
+            <button class="carousel-control-next" type="button" data-bs-target="#modalCarousel" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 }

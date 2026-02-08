@@ -20,6 +20,7 @@ export class EditPropertyComponent implements OnInit {
   existingPhotos = signal<any[]>([]);
   selectedPhotos = signal<{ file: File, preview: string }[]>([]);
 newMainPhotoIndex: number | null = null;
+currentYear = new Date().getFullYear();
 
   regionsMapping: any = {
   1: ['Zamalek', 'El-Qourba', 'Nasr city'], // Cairo
@@ -46,31 +47,35 @@ filteredRegions: string[] = [];
 
   ngOnInit(): void {
     this.editForm = this.fb.group({
-      title: ['', [Validators.required]],
+      title: ['', [Validators.required, Validators.maxLength(200)]],
       description: ['', Validators.required],
-      price: ['', [Validators.required]],
-      area: ['', [Validators.required]],
-      rooms: [0],
-      bathrooms: [0],
-      receptionPieces: [0],
-      floor: [0],
-      city: [1],
-      region: [''],
+      price: ['', [Validators.required, Validators.min(1)]],
+      area: ['', [Validators.required, Validators.min(1)]],
+      rooms: [0, [Validators.min(0)]],
+      bathrooms: [0, [Validators.min(0)]],
+      city: [1, Validators.required], // القيمة الافتراضية القاهرة
+      region: ['', Validators.required],
       address: [''],
-      listingType: [0],
-      propertyType: [0],
+      listingType: [0,  Validators.required],
       distanceFromLandmark: [''],
-      buildYear: [2024],
-      totalFloors: [0],
-      apartmentsPerFloor: [0],
-      elevatorsCount: [0],
-      view: [''],
-      hasMasterRoom: [false],
-      hasHotelEntrance: [false],
-      hasSecurity: [false],
-      hasParking: [false],
-      isFirstOwner: [false],
-      isLegalReconciled: [false]
+  hasMasterRoom: [false],
+  receptionPieces: [0, [Validators.min(0)]],
+  view: [''],
+  floor: [0, [Validators.min(0)]],
+  totalFloors: [2, [Validators.min(2)]],
+  apartmentsPerFloor: [1, [Validators.min(1)]],
+  elevatorsCount: [0, [Validators.min(0)]],
+  buildYear: [ '', [Validators.required, Validators.min(1800), Validators.max(this.currentYear)]],
+  hasHotelEntrance: [false],
+  hasSecurity: [false],
+  isFirstOwner: [false],
+  isLegalReconciled: [false],
+  hasParking: [false], // 0 = Sale, 1 = Rent
+      propertyType: [0, Validators.required],
+      hasBalcony: [false],
+  isFurnished: [false],
+  paymentMethod: ['Full Cash', Validators.required],
+  installmentYears: [1, [Validators.min(1)]]
     });
 
     this.propertyId = Number(this.route.snapshot.paramMap.get('id'));
@@ -80,6 +85,10 @@ filteredRegions: string[] = [];
     this.updateRegions(cityId);
   });
   }
+
+  isInstallmentSelected(): boolean {
+  return this.editForm.get('paymentMethod')?.value === 'Installment';
+}
 
  loadPropertyData() {
     this.propertyService.getPropertyById(this.propertyId).subscribe({
@@ -111,7 +120,9 @@ filteredRegions: string[] = [];
     const control = this.editForm.get(controlName);
     if (control) {
       const newValue = (control.value || 0) + amount;
-      if (newValue >= 0) control.patchValue(newValue);
+      if (newValue >= 0) {
+        control.patchValue(newValue);
+      }
     }
   }
 
@@ -149,28 +160,38 @@ setNewAsMain(index: number) {
   onFileSelect(event: any) { this.selectedFiles = Array.from(event.target.files); }
 
   onSubmit() {
-    if (this.editForm.valid) {
-      this.alertService.showLoading('Saving changes...');
-      const formData = new FormData();
-      Object.keys(this.editForm.value).forEach(key => {
-        // نرسل المفاتيح بأسماء PascalCase لتطابق الـ DTO في الباك اند
-        const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
-        formData.append(pascalKey, this.editForm.value[key]);
-      });
+  if (this.editForm.valid) {
+    this.alertService.showLoading('Saving changes...');
+    const formData = new FormData();
+    const formValues = this.editForm.value;
 
-      if (this.newMainPhotoIndex !== null) {
+    // لوب ذكي لمنع إرسال كلمة "null"
+    Object.keys(formValues).forEach(key => {
+      const value = formValues[key];
+      if (value !== null && value !== undefined) {
+        const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
+        formData.append(pascalKey, value.toString());
+      }
+    });
+
+    if (this.newMainPhotoIndex !== null) {
       formData.append('MainPhotoIndex', this.newMainPhotoIndex.toString());
     }
-      this.selectedPhotos().forEach(p => formData.append('Photos', p.file));
 
-      this.propertyService.updateProperty(this.propertyId, formData).subscribe({
-        next: () => {
-          this.alertService.close();
-          this.alertService.success('Changes saved successfully!');
-          this.router.navigate(['/my-properties']);
-        },
-      error: () => {
+    // إرسال الصور الجديدة لو تم اختيارها
+    this.selectedPhotos().forEach(p => {
+      formData.append('Photos', p.file);
+    });
+
+    this.propertyService.updateProperty(this.propertyId, formData).subscribe({
+      next: () => {
         this.alertService.close();
+        this.alertService.success('Changes saved successfully!');
+        this.router.navigate(['/my-properties']);
+      },
+      error: (err) => {
+        this.alertService.close();
+        console.error(err);
         this.alertService.error('Update failed');
       }
     });

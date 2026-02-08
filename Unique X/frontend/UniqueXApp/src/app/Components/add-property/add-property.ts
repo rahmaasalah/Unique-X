@@ -18,6 +18,7 @@ export class AddPropertyComponent implements OnInit {
   selectedPhotos = signal<{ file: File, preview: string }[]>([]);
 mainPhotoIndex: number = 0;
 isSubmitting = false;
+currentYear = new Date().getFullYear(); 
 
   regionsMapping: any = {
   1: ['Zamalek', 'El-Qourba', 'Nasr city'], // Cairo
@@ -45,29 +46,33 @@ filteredRegions: string[] = [];
     this.propertyForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
       description: ['', Validators.required],
-      price: ['', [Validators.required, Validators.min(0)]],
-      area: ['', [Validators.required, Validators.min(0)]],
-      rooms: [0],
-      bathrooms: [0],
+      price: ['', [Validators.required, Validators.min(1)]],
+      area: ['', [Validators.required, Validators.min(1)]],
+      rooms: [0, [Validators.min(0)]],
+      bathrooms: [0, [Validators.min(0)]],
       city: [1, Validators.required], // القيمة الافتراضية القاهرة
-      region: [''],
+      region: ['', Validators.required],
       address: [''],
-      listingType: [0],
+      listingType: [0,  Validators.required],
       distanceFromLandmark: [''],
   hasMasterRoom: [false],
-  receptionPieces: [0],
+  receptionPieces: [0, [Validators.min(0)]],
   view: [''],
-  floor: [0],
-  totalFloors: [0],
-  apartmentsPerFloor: [0],
-  elevatorsCount: [0],
-  buildYear: [2015],
+  floor: [0, [Validators.min(0)]],
+  totalFloors: [2, [Validators.min(2)]],
+  apartmentsPerFloor: [1, [Validators.min(1)]],
+  elevatorsCount: [0, [Validators.min(0)]],
+  buildYear: [ '', [Validators.required, Validators.min(1800), Validators.max(this.currentYear)]],
   hasHotelEntrance: [false],
   hasSecurity: [false],
   isFirstOwner: [false],
   isLegalReconciled: [false],
   hasParking: [false], // 0 = Sale, 1 = Rent
-      propertyType: [0] // 0 = Apartment, etc.
+      propertyType: [0, Validators.required],
+      hasBalcony: [false],
+  isFurnished: [false],
+  paymentMethod: ['Full Cash', Validators.required],
+  installmentYears: [1, [Validators.min(1)]] // 0 = Apartment, etc.
     });
 
     this.propertyForm.get('city')?.valueChanges.subscribe(cityId => {
@@ -77,6 +82,10 @@ filteredRegions: string[] = [];
   // تشغيلها مرة واحدة في البداية لو فيه قيمة افتراضية
   this.updateRegions(this.propertyForm.get('city')?.value);
   }
+
+  isInstallmentSelected(): boolean {
+  return this.propertyForm.get('paymentMethod')?.value === 'Installment';
+}
 
   updateRegions(cityId: any) {
   // تحويل cityId لرقم للتأكد
@@ -128,49 +137,63 @@ removePhoto(index: number) {
 
 
   onSubmit() {
-    if (this.isSubmitting) return;
-    if (this.propertyForm.valid && this.selectedPhotos().length > 0) {
-       this.isSubmitting = true;
-       this.alertService.showLoading('Uploading images and saving property details...');
+  if (this.isSubmitting) return;
 
-      const formData = new FormData();
-      // إرسال الحقول بأسماء PascalCase لتطابق الـ DTO
-      Object.keys(this.propertyForm.value).forEach(key => {
-        const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
-        formData.append(pascalKey, this.propertyForm.value[key]);
-      });
+  // تأكدي إن فيه صور مختارة
+  if (this.propertyForm.valid && this.selectedPhotos().length > 0) {
+    this.isSubmitting = true;
+    this.alertService.showLoading('Uploading images and saving property details...');
+
+    const formData = new FormData();
+    const formValues = this.propertyForm.value;
+
+    // لوب ذكي: بيبعت البيانات اللي ليها قيمة بس ومبيبعتش الـ null
+    Object.keys(formValues).forEach(key => {
+      const value = formValues[key];
       
-      formData.append('MainPhotoIndex', this.mainPhotoIndex.toString());
-      this.selectedPhotos().forEach(p => formData.append('Photos', p.file));
+      // السطر ده هو الحل: لو القيمة null أو undefined مش هتتبعت أصلاً
+      if (value !== null && value !== undefined) {
+        const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
+        formData.append(pascalKey, value.toString());
+      }
+    });
 
-      this.propertyService.addProperty(formData).subscribe({
-        next: () => {
-          this.alertService.close(); 
-          this.alertService.success('Property Published Successfully!');
-          this.router.navigate(['/home']);
-          this.isSubmitting = false;
-        },
-      error: (err) => {
-        // 4. إغلاق الـ Loader عند الخطأ وإظهار رسالة الخطأ
+    // إرسال ترتيب الصورة الرئيسية
+    formData.append('MainPhotoIndex', this.mainPhotoIndex.toString());
+
+    // إرسال ملفات الصور الفعلية من الـ Signal
+    this.selectedPhotos().forEach(p => {
+      formData.append('Photos', p.file);
+    });
+
+    this.propertyService.addProperty(formData).subscribe({
+      next: () => {
         this.alertService.close();
-        this.alertService.error('Upload failed. Please try again.');
-        console.error(err);
+        this.alertService.success('Property Published Successfully!');
+        this.router.navigate(['/home']);
+        this.isSubmitting = false;
+      },
+      error: (err) => {
+        this.alertService.close();
+        console.error('Full Error Object:', err);
+        // إظهار تفاصيل الخطأ عشان لو فيه حاجة تانية ناقصة نعرفها
+        const msg = err.error?.errors ? JSON.stringify(err.error.errors) : 'Upload failed. Check your connection.';
+        this.alertService.error(msg, 'Server Error');
         this.isSubmitting = false;
       }
     });
+  } else if (this.selectedPhotos().length === 0) {
+    this.alertService.error('Please upload at least one photo.');
   }
 }
 
   updateCounter(controlName: string, amount: number) {
-  const control = this.propertyForm.get(controlName);
-  if (control) {
-    const currentValue = control.value || 0;
-    const newValue = currentValue + amount;
-    
-    // الشرط: لا تسمح بالقيمة إذا كانت أقل من صفر
-    if (newValue >= 0) {
-      control.patchValue(newValue);
+    const control = this.propertyForm.get(controlName);
+    if (control) {
+      const newValue = (control.value || 0) + amount;
+      if (newValue >= 0) {
+        control.patchValue(newValue);
+      }
     }
   }
-}
 }
