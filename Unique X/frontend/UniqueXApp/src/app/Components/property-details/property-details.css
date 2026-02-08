@@ -73,3 +73,30 @@
 .d-flex.align-items-center:hover {
     transform: translateX(5px);
 }
+
+/* كلاس لإخفاء النص بعد سطرين */
+.description-collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* عدد الأسطر المطلوبة */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.see-more-btn {
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 10px 20px;
+    margin-top: 5px;
+    border: none;
+    background-color: #d12b36;
+    border-radius: 10px;
+}
+
+.see-more-btn:hover {
+    color: white;
+    background-color: red;
+    
+}

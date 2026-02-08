@@ -17,6 +17,8 @@ export class PropertyDetailsComponent implements OnInit {
   
   property = signal<Property | null>(null);
   currentSlideIndex = signal(0);
+  isDescriptionExpanded = signal(false);
+
 
   ngOnInit(): void {
     // الحصول على الـ ID من الرابط
@@ -30,6 +32,10 @@ export class PropertyDetailsComponent implements OnInit {
       });
     }
   }
+
+  toggleDescription() {
+  this.isDescriptionExpanded.update(val => !val);
+}
 
   getWhatsAppLink(phone: string): string {
   if (!phone) return '#';

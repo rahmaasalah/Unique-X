@@ -66,9 +66,24 @@
   <div><i class="bi bi-building fs-4 d-block text-danger"></i> <span class="fw-bold text-truncate" style="max-width: 80px;">{{ prop.propertyType }}</span> <small class="text-muted d-block">Type</small></div>
         </div>
 
-        <h5 class="fw-bold mb-3 border-start border-danger border-4 ps-2">Description</h5>
-        <p class="text-muted lh-lg" style="white-space: pre-line;">{{ prop.description }}</p>
-      </div>
+      <!-- كارت الوصف -->
+  <h5 class="fw-bold mb-3 border-start border-danger border-4 ps-2">Description</h5>
+  
+  <!-- نطبق الكلاس description-collapsed فقط إذا كانت الحالة false -->
+  <p class="text-muted lh-lg mb-1" 
+     [class.description-collapsed]="!isDescriptionExpanded()"
+     style="white-space: pre-line;">
+    {{ prop.description }}
+  </p>
+
+  <!-- يظهر الزرار فقط إذا كان النص طويلاً (مثلاً أكثر من 150 حرف) -->
+  @if (prop.description.length > 150) {
+    <button type="button" class="see-more-btn" (click)="toggleDescription()">
+      {{ isDescriptionExpanded() ? 'See less' : 'See full description' }}
+      <i class="bi" [class.bi-chevron-up]="isDescriptionExpanded()" [class.bi-chevron-down]="!isDescriptionExpanded()"></i>
+    </button>
+  }
+</div>
 
       <!-- كارت المواصفات الفنية -->
       <div class="bg-white p-4 rounded-4 shadow-sm border border-light">
