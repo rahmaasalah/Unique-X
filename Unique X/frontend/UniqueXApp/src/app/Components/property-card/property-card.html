@@ -29,10 +29,15 @@
   </div>
 
   <div class="card-body">
+    <div class="mb-2">
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-bold" 
+              style="font-size: 0.7rem; letter-spacing: 0.5px;">
+          <i class="bi bi-building me-1"></i> {{ property.propertyType }}
+        </span>
+    </div>
     <h4 class="fw-bold text-dark mb-1"> {{ property.title }}</h4>
     <!-- السعر (بالخط العريض - Signature Style) -->
     <h6 class=" text-dark mb-1">EGP {{ property.price | number }}</h6>
-    
     <!-- العنوان -->
     <p class="text-truncate text-muted small mb-2">
       <i class="bi bi-geo-alt-fill text-danger me-1"></i>

@@ -1,6 +1,6 @@
 <div class="container py-5">
   <div class="row justify-content-center">
-    <div class="col-lg-10"> <!-- كبرنا المساحة شوية لـ 10 عشان الحقول كتير -->
+    <div class="col-lg-10">
       <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
         
         <!-- الهيدر -->
@@ -12,17 +12,20 @@
         <div class="card-body p-4 p-md-5">
           <form [formGroup]="propertyForm" (ngSubmit)="onSubmit()">
             
-            <!-- القسم الأول: المعلومات الأساسية والنوع -->
+            <!-- القسم الأول: المعلومات الأساسية -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-info-circle me-2 text-danger"></i>General Information</h5>
             
             <div class="row g-3 mb-4">
               <div class="col-md-6">
                 <label class="form-label fw-bold small">Property Title</label>
-                <input type="text" formControlName="title" class="form-control" placeholder="">
+                <input type="text" formControlName="title" class="form-control shadow-sm" placeholder="">
+                @if (propertyForm.get('title')?.touched && propertyForm.get('title')?.invalid) {
+                  <small class="text-danger d-block mt-1">Title is required</small>
+                }
               </div>
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Listing Type</label>
-                <select formControlName="listingType" class="form-select">
+                <select formControlName="listingType" class="form-select shadow-sm">
                   <option [value]="0">Resale</option>
                   <option [value]="1">Rent</option>
                   <option [value]="2">Primary</option>
@@ -31,7 +34,7 @@
               </div>
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Property Type</label>
-                <select formControlName="propertyType" class="form-select">
+                <select formControlName="propertyType" class="form-select shadow-sm">
                   <option [value]="0">Apartment</option>
                   <option [value]="1">Villa</option>
                   <option [value]="2">Shop</option>
@@ -45,26 +48,34 @@
               <div class="col-md-6">
                 <label class="form-label fw-bold small">Price (EGP)</label>
                 <div class="input-group">
-                  <span class="input-group-text bg-white border-end-0">EGP</span>
-                  <input type="number" formControlName="price" class="form-control border-start-0" placeholder="">
+                  <span class="input-group-text bg-white">EGP</span>
+                  <input type="number" formControlName="price" class="form-control" placeholder="">
                 </div>
+                <!-- الجزء الجديد: خطأ السعر -->
+                @if (propertyForm.get('price')?.touched && propertyForm.get('price')?.errors?.['min']) {
+                  <small class="text-danger d-block mt-1">Price must be greater than 0</small>
+                }
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold small">Area (m²)</label>
                 <div class="input-group">
-                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-aspect-ratio"></i></span>
-                  <input type="number" formControlName="area" class="form-control border-start-0" placeholder="">
+                  <span class="input-group-text bg-white"><i class="bi bi-aspect-ratio"></i></span>
+                  <input type="number" formControlName="area" class="form-control" placeholder="">
                 </div>
+                <!-- الجزء الجديد: خطأ المساحة -->
+                @if (propertyForm.get('area')?.touched && propertyForm.get('area')?.errors?.['min']) {
+                  <small class="text-danger d-block mt-1">Area must be greater than 0</small>
+                }
               </div>
             </div>
 
-            <!-- القسم الثاني: الغرف والمواصفات الداخلية -->
+            <!-- القسم الثاني: مواصفات الوحدة -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-house-door me-2 text-danger"></i>Unit Specifications</h5>
             
             <div class="row g-3 mb-4">
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Rooms</label>
-                <div class="input-group input-group-sm shadow-sm">
+                <div class="input-group input-group-sm">
                   <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', -1)">-</button>
                   <input type="number" formControlName="rooms" class="form-control text-center bg-white" readonly>
                   <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', 1)">+</button>
@@ -72,7 +83,7 @@
               </div>
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Bathrooms</label>
-                <div class="input-group input-group-sm shadow-sm">
+                <div class="input-group input-group-sm">
                   <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', -1)">-</button>
                   <input type="number" formControlName="bathrooms" class="form-control text-center bg-white" readonly>
                   <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', 1)">+</button>
@@ -80,21 +91,26 @@
               </div>
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Reception Pieces</label>
-                <input type="number" formControlName="receptionPieces" class="form-control" placeholder="0">
+                <input type="number" formControlName="receptionPieces" class="form-control" min="0">
+                @if (propertyForm.get('receptionPieces')?.errors?.['min']) {
+                  
+                }
               </div>
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Floor Number</label>
-                <input type="number" formControlName="floor" class="form-control" placeholder="">
+                <input type="number" formControlName="floor" class="form-control" min="0">
+                @if (propertyForm.get('floor')?.errors?.['min']) {
+                  
+                }
               </div>
             </div>
 
-            <!-- القسم الثالث: تفاصيل الموقع -->
+            <!-- القسم الثالث: الموقع -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-geo-alt me-2 text-danger"></i>Location Details</h5>
-            
             <div class="row g-3 mb-4">
               <div class="col-md-4">
                 <label class="form-label fw-bold small">City</label>
-                <select formControlName="city" class="form-select">
+                <select formControlName="city" class="form-select shadow-sm">
                   <option [value]="1">Cairo</option>
                   <option [value]="2">Alexandria</option>
                   <option [value]="3">North Coast</option>
@@ -102,7 +118,7 @@
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-bold small">Region</label>
-                <select formControlName="region" class="form-select">
+                <select formControlName="region" class="form-select shadow-sm">
                   <option value="">-- Select Region --</option>
                   @for (region of filteredRegions; track region) {
                     <option [value]="region">{{ region }}</option>
@@ -111,50 +127,63 @@
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-bold small">Landmark</label>
-                <input type="text" formControlName="distanceFromLandmark" class="form-control" placeholder="">
+                <input type="text" formControlName="distanceFromLandmark" class="form-control shadow-sm" placeholder="">
               </div>
             </div>
 
-            <!-- القسم الرابع: مواصفات العقار (المبنى) -->
+            <!-- القسم الرابع: تفاصيل المبنى -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-building me-2 text-danger"></i>Building Details</h5>
-            
             <div class="row g-3 mb-4">
               <div class="col-md-3">
                 <label class="small fw-bold">Build Year</label>
-                <input type="number" formControlName="buildYear" class="form-control" placeholder="">
+                <!-- الجزء الجديد: منع سنة في المستقبل -->
+                <input type="number" formControlName="buildYear" class="form-control" [max]="currentYear">
+                @if (propertyForm.get('buildYear')?.errors?.['max']) {
+                  <small class="text-danger d-block mt-1">Year cannot exceed {{ currentYear }}</small>
+                }
+                @if (propertyForm.get('buildYear')?.errors?.['min']) {
+                  <small class="text-danger d-block mt-1">Must be after 1800</small>
+                }
               </div>
               <div class="col-md-3">
-                <label class="small fw-bold">Building Total Floors</label>
-                <input type="number" formControlName="totalFloors" class="form-control" placeholder="">
+                <label class="small fw-bold">Total Floors</label>
+                <input type="number" formControlName="totalFloors" class="form-control" [min]="2">
+                @if (propertyForm.get('totalFloors')?.errors?.['min']) {
+                  
+                }
               </div>
               <div class="col-md-3">
-  <label class="small fw-bold">Units Per Floor</label>
-  <input type="number" formControlName="apartmentsPerFloor" class="form-control">
-</div>
+                <label class="small fw-bold">Units Per Floor</label>
+                <input type="number" formControlName="apartmentsPerFloor" class="form-control" min="0">
+                @if (propertyForm.get('apartmentsPerFloor')?.errors?.['min']) {
+                  
+                }
+              </div>
               <div class="col-md-3">
                 <label class="small fw-bold">Elevators Count</label>
-                <input type="number" formControlName="elevatorsCount" class="form-control" placeholder="">
+                <input type="number" formControlName="elevatorsCount" class="form-control" min="0">
+                @if (propertyForm.get('elevatorsCount')?.errors?.['min']) {
+                  
+                }
               </div>
             </div>
 
             <div class="mb-4">
-              <label class="small fw-bold">View</label>
-              <input type="text" formControlName="view" class="form-control" placeholder="">
+              <label class="small fw-bold">View </label>
+              <input type="text" formControlName="view" class="form-control shadow-sm" placeholder="">
             </div>
 
-            <!-- القسم الخامس: المميزات والوضع القانوني (Switches) -->
-            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-check-square me-2 text-danger"></i>Features & Legal Status</h5>
-            
-            <!-- تجميع الـ Switches في صفوف لتوفير المساحة -->
-            <div class="row g-3 mb-2">
+            <!-- القسم الخامس: المميزات والحالات القانونية -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-shield-check me-2 text-danger"></i>Status & Amenities</h5>
+            <div class="row g-3 mb-3">
               <div class="col-md-6">
-                <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center">
+                <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm">
                   <label class="form-check-label small fw-bold mb-0" for="firstOwner">First Owner</label>
                   <input class="form-check-input ms-0" type="checkbox" formControlName="isFirstOwner" id="firstOwner">
                 </div>
               </div>
               <div class="col-md-6">
-                <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center">
+                <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm">
                   <label class="form-check-label small fw-bold mb-0" for="reconciled">Legal Reconciled</label>
                   <input class="form-check-input ms-0" type="checkbox" formControlName="isLegalReconciled" id="reconciled">
                 </div>
@@ -162,90 +191,78 @@
             </div>
 
             <div class="row g-3 mb-4">
-              <div class="col-md-3">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" formControlName="hasMasterRoom" id="master">
-                  <label class="form-check-label small" for="master">Master Room</label>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" formControlName="hasHotelEntrance" id="entrance">
-                  <label class="form-check-label small" for="entrance">Hotel Entrance</label>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" formControlName="hasSecurity" id="security">
-                  <label class="form-check-label small" for="security">24/7 Security</label>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" formControlName="hasParking" id="parking">
-                  <label class="form-check-label small" for="parking">Parking Available</label>
-                </div>
-              </div>
+              <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" formControlName="hasMasterRoom" id="master"><label class="form-check-label small fw-bold" for="master">Master Room</label></div></div>
+              <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" formControlName="hasHotelEntrance" id="entrance"><label class="form-check-label small fw-bold" for="entrance">Hotel Entrance</label></div></div>
+              <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" formControlName="hasSecurity" id="security"><label class="form-check-label small fw-bold" for="security">24/7 Security</label></div></div>
+              <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" formControlName="hasParking" id="parking"><label class="form-check-label small fw-bold" for="parking">Parking</label></div></div>
             </div>
 
-            <!-- القسم السادس: الميديا والوصف -->
-            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-images me-2 text-danger"></i>Media & Description</h5>
-            
-           <div class="mb-4">
-  <label class="form-label fw-bold small"><i class="bi bi-images text-danger me-1"></i> Property Photos</label>
-  
-  <!-- منطقة الرفع -->
-  <div class="upload-box border border-dashed rounded-4 p-4 text-center bg-light mb-3">
-    <i class="bi bi-cloud-arrow-up fs-1 text-danger d-block mb-2"></i>
-    <input type="file" (change)="onFileSelect($event)" multiple class="form-control mx-auto shadow-sm" style="max-width: 350px;" accept="image/*">
-    <p class="text-muted small mt-2 mb-0">Select all photos at once. Click on any photo below to set it as <b>Main</b>.</p>
-  </div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" formControlName="hasBalcony" id="balcony"><label class="form-check-label small fw-bold" for="balcony">Balcony</label></div></div>
+              <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" formControlName="isFurnished" id="furnished"><label class="form-check-label small fw-bold" for="furnished">Furnished</label></div></div>
+            </div>
 
-  <!-- عرض الصور المختار فوراً -->
-  <div class="row g-3 mt-2">
-  <!-- لاحظي القوسين بعد اسم المتغير: selectedPhotos() -->
-  @for (photo of selectedPhotos(); track $index) {
-    <div class="col-md-3 col-6">
-      <div class="photo-preview-card position-relative rounded-3 overflow-hidden shadow-sm border"
-           [class.main-selected]="mainPhotoIndex === $index"
-           (click)="setMainPhoto($index)">
-        
-        <img [src]="photo.preview" class="w-100 object-fit-cover" style="height: 140px;">
+            <!-- القسم السادس: الدفع -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-credit-card me-2 text-danger"></i>Payment Options</h5>
+            <div class="row g-3 mb-4 align-items-start">
+              <div class="col-md-6">
+                <label class="small fw-bold">Payment Method</label>
+                <select formControlName="paymentMethod" class="form-select shadow-sm">
+                  <option value="Cash">Full Cash</option>
+                  <option value="Installment">Installment</option>
+                </select>
+              </div>
+              @if (isInstallmentSelected()) {
+                <div class="col-md-6 animate__animated animate__fadeIn">
+                  <label class="small fw-bold">Years of Installment</label>
+                  <input type="number" formControlName="installmentYears" class="form-control" min="1">
+                  @if (propertyForm.get('installmentYears')?.errors?.['min']) {
+                    <small class="text-danger d-block mt-1">Must be at least 1 year</small>
+                  }
+                </div>
+              }
+            </div>
 
-        <!-- طبقة الـ Hover -->
-        <div class="photo-overlay d-flex align-items-center justify-content-center">
-           <span class="text-white small fw-bold">Click to set Main</span>
-        </div>
+            <!-- الميديا والوصف -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-images me-2 text-danger"></i>Media Gallery</h5>
+            <div class="upload-box border border-dashed rounded-4 p-4 text-center bg-light mb-4 shadow-sm">
+              <i class="bi bi-cloud-arrow-up fs-1 text-danger d-block mb-2"></i>
+              <input type="file" (change)="onFileSelect($event)" multiple class="form-control mx-auto" style="max-width: 400px;" accept="image/*">
+              <p class="text-muted small mt-2">Click on a photo below to set it as <b>Main</b></p>
+            </div>
 
-        @if (mainPhotoIndex === $index) {
-          <div class="main-badge bg-danger text-white">
-            <i class="bi bi-star-fill me-1"></i> MAIN
-          </div>
-        }
-
-        <button type="button" class="btn-remove-photo" (click)="removePhoto($index); $event.stopPropagation()">
-          <i class="bi bi-x-circle-fill"></i>
-        </button>
-      </div>
-    </div>
-  }
-</div>
-           </div>
+            <!-- معاينة الصور -->
+            <div class="row g-3 mb-4">
+              @for (photo of selectedPhotos(); track $index) {
+                <div class="col-md-3 col-6">
+                  <div class="photo-preview-card position-relative rounded-3 overflow-hidden shadow-sm border"
+                       [class.main-selected]="mainPhotoIndex === $index" (click)="setMainPhoto($index)">
+                    <img [src]="photo.preview" class="w-100 object-fit-cover" style="height: 140px;">
+                    @if (mainPhotoIndex === $index) {
+                      <div class="main-badge bg-danger text-white px-2 py-1 small position-absolute top-0 start-0">MAIN</div>
+                    }
+                    <button type="button" class="btn-remove-photo" (click)="removePhoto($index); $event.stopPropagation()">
+                      <i class="bi bi-x-circle-fill text-white fs-5"></i>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
 
             <div class="mb-4">
               <label class="form-label fw-bold small">Detailed Description</label>
-              <textarea formControlName="description" class="form-control" rows="5" placeholder="Include finishing, special features, etc."></textarea>
+              <textarea formControlName="description" class="form-control shadow-sm" rows="5" placeholder="Finishing details, special view..."></textarea>
             </div>
 
             <!-- زر النشر -->
-            <div class="d-grid pt-3">
-              <button type="submit" [disabled]="propertyForm.invalid || isSubmitting" class="btn btn-danger btn-lg w-100 rounded-pill py-3 fw-bold shadow">
-    @if (isSubmitting) {
-       <span class="spinner-border spinner-border-sm me-2"></span> Publishing...
-    } @else {
-       <i class="bi bi-cloud-upload me-2"></i> Publish Property
-    }
-</button>
+            <div class="d-grid mt-4">
+              <button type="submit" [disabled]="propertyForm.invalid || isSubmitting" class="btn btn-danger btn-lg rounded-pill py-3 fw-bold shadow">
+                @if (isSubmitting) {
+                  <span class="spinner-border spinner-border-sm me-2"></span> Publishing Your Ad...
+                } @else {
+                  <i class="bi bi-megaphone-fill me-2"></i> Publish My Listing
+                }
+              </button>
             </div>
 
           </form>

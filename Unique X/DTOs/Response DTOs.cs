@@ -36,9 +36,15 @@
         public bool IsLegalReconciled { get; set; }       // مدفوع تصالح
         public bool HasParking { get; set; }              // متاح جراج
         public decimal CommissionPercentage { get; set; } = 2.5m; // العمولة
+        public bool HasBalcony { get; set; }
+        public bool IsFurnished { get; set; }
+        public string PaymentMethod { get; set; } // "Cash" or "Installment"
+        public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
         public string ListingType { get; set; }
         public string PropertyType { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public string BrokerId { get; set; } // ضروري جداً للربط
+        public int BrokerPropertyCount { get; set; }
         public List<PhotoResponseDto> Photos { get; set; }
 
         public string BrokerName { get; set; } 
@@ -54,5 +60,6 @@
         public int? Rooms { get; set; }
         public int? PropertyType { get; set; }
         public int? ListingType { get; set; }
+        public string? BrokerId { get; set; }
     }
 }

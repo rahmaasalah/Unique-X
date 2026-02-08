@@ -10,3 +10,9 @@
 .text-danger {
   color: #ef3341 !important; /* اللون الأحمر بتاع بروبرتي فايندر */
 }
+
+.bg-primary-subtle {
+    background-color: #eef4ff !important;
+    color: red !important;
+    border-color: #d0e3ff !important;
+}

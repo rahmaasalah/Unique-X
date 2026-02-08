@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common'; // مهم جداً للأوام�
 import { PropertyCardComponent } from '../property-card/property-card'; // مهم لكي يتعرف على الكارت
 import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
-import { ActivatedRoute } from '@angular/router'
+import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -16,6 +17,7 @@ import { ActivatedRoute } from '@angular/router'
 export class HomeComponent implements OnInit {
   properties = signal<Property[]>([]); 
   message = signal<string>('');
+
   isLoading = signal<boolean>(false);
   private route = inject(ActivatedRoute);
   constructor(private propertyService: PropertyService) {}
@@ -66,4 +68,5 @@ export class HomeComponent implements OnInit {
       }
     });
   }
+  
 }

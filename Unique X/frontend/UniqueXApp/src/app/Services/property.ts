@@ -19,6 +19,7 @@ export class PropertyService {
       if (filters.maxPrice) params = params.append('maxPrice', filters.maxPrice);
       if (filters.listingType !== undefined && filters.listingType !== null) 
         params = params.append('listingType', filters.listingType);
+      if (filters.brokerId) params = params.append('brokerId', filters.brokerId);
 
        if (filters.searchTerm) params = params.append('searchTerm', filters.searchTerm);
     }

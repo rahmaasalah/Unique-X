@@ -44,7 +44,10 @@ namespace Unique_X.Models
         public bool IsLegalReconciled { get; set; }       // مدفوع تصالح
         public bool HasParking { get; set; }              // متاح جراج
         public decimal CommissionPercentage { get; set; } = 2.5m; // العمولة
-
+        public bool HasBalcony { get; set; }
+        public bool IsFurnished { get; set; }
+        public string PaymentMethod { get; set; } // "Cash" or "Installment"
+        public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Foreign Key for Broker (User)

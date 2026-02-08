@@ -1,0 +1,76 @@
+<footer class="bg-white border-top pt-5 pb-3 mt-5">
+  <div class="container">
+    <div class="row g-4">
+      
+      <!-- العمود 1: عن الموقع -->
+      <div class="col-lg-4 col-md-6">
+        <a class="navbar-brand fw-bold text-danger fs-3 mb-3 d-block" routerLink="/home">
+          UniQue <span class="text-dark">X</span>
+        </a>
+        <p class="text-muted small lh-lg pe-lg-5">
+          Unique X is Egypt's premier real estate platform, connecting buyers, renters, and professional brokers in one seamless experience. Find your perfect property with us.
+        </p>
+        <div class="d-flex gap-3 mt-3">
+          <a href="#" class="text-secondary fs-5"><i class="bi bi-facebook"></i></a>
+          <a href="#" class="text-secondary fs-5"><i class="bi bi-instagram"></i></a>
+          <a href="#" class="text-secondary fs-5"><i class="bi bi-linkedin"></i></a>
+        </div>
+      </div>
+
+      <!-- العمود 2: تصفح العقارات -->
+      <div class="col-lg-2 col-md-6 col-6">
+        <h6 class="fw-bold mb-3 text-uppercase small" style="letter-spacing: 1px;">Discover</h6>
+        <ul class="list-unstyled footer-links">
+          <li class="mb-2"><a [routerLink]="['/home']" [queryParams]="{ listingType: 0 }">Buy Property</a></li>
+          <li class="mb-2"><a [routerLink]="['/home']" [queryParams]="{ listingType: 1 }">Rent Property</a></li>
+          <li class="mb-2"><a routerLink="/home">All Listings</a></li>
+        </ul>
+      </div>
+
+      <!-- العمود 3: روابط المستخدم -->
+      <div class="col-lg-2 col-md-6 col-6">
+        <h6 class="fw-bold mb-3 text-uppercase small" style="letter-spacing: 1px;">Account</h6>
+        <ul class="list-unstyled footer-links">
+          @if (authService.loggedIn()) {
+            <li class="mb-2"><a routerLink="/profile">My Profile</a></li>
+            @if (authService.getUserType() === 0) {
+                <li class="mb-2"><a routerLink="/wishlist">My Wishlist</a></li>
+            } @else {
+                <li class="mb-2"><a routerLink="/my-properties">Broker Dashboard</a></li>
+            }
+          } @else {
+            <li class="mb-2"><a routerLink="/login">Login</a></li>
+            <li class="mb-2"><a routerLink="/register">Register</a></li>
+          }
+        </ul>
+      </div>
+
+      <!-- العمود 4: التواصل -->
+      <div class="col-lg-4 col-md-6">
+        <h6 class="fw-bold mb-3 text-uppercase small" style="letter-spacing: 1px;">Contact Us</h6>
+        <ul class="list-unstyled small text-muted">
+          <li class="mb-3 d-flex align-items-center">
+            <i class="bi bi-geo-alt-fill text-danger me-2 fs-5"></i>
+            123 Real Estate St, Maadi, Cairo, Egypt
+          </li>
+          <li class="mb-3 d-flex align-items-center">
+            <i class="bi bi-telephone-fill text-danger me-2 fs-5"></i>
+            +20 100 000 0000
+          </li>
+          <li class="mb-3 d-flex align-items-center">
+            <i class="bi bi-envelope-fill text-danger me-2 fs-5"></i>
+            info@uniquex.com
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- الجزء السفلي: حقوق الملكية -->
+    <div class="border-top mt-5 pt-3 text-center">
+      <p class="text-muted small mb-0">
+        &copy; {{ currentYear }} <span class="fw-bold text-danger">UniQue X </span>. All Rights Reserved.
+      </p>
+    </div>
+  </div>
+</footer>

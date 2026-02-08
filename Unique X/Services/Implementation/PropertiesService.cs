@@ -41,6 +41,10 @@ namespace Unique_X.Services.Implementation
                 ApartmentsPerFloor = dto.ApartmentsPerFloor ?? 0,
                 ElevatorsCount = dto.ElevatorsCount ?? 0,
                 ReceptionPieces = dto.ReceptionPieces ?? 0,
+                PaymentMethod = dto.PaymentMethod ?? "Cash", 
+                InstallmentYears = dto.InstallmentYears ?? 0,
+                HasBalcony = dto.HasBalcony ?? false,
+                IsFurnished = dto.IsFurnished ?? false,
 
                 HasMasterRoom = dto.HasMasterRoom ?? false,
                 HasHotelEntrance = dto.HasHotelEntrance ?? false,
@@ -66,7 +70,6 @@ namespace Unique_X.Services.Implementation
                         {
                             Url = result.SecureUrl.AbsoluteUri,
                             PublicId = result.PublicId,
-                            // السطر السحري: لو الترتيب الحالي هو نفس اللي البروكر اختاره، خليها IsMain
                             IsMain = (i == dto.MainPhotoIndex)
                         });
                     }
@@ -75,7 +78,6 @@ namespace Unique_X.Services.Implementation
 
             await _context.Properties.AddAsync(property);
             await _context.SaveChangesAsync();
-            // نحتاج لعمل Reload للبيانات لجلب بيانات البروكر للرد
             await _context.Entry(property).Reference(p => p.Broker).LoadAsync();
 
             return MapToResponseDto(property);
@@ -113,6 +115,9 @@ namespace Unique_X.Services.Implementation
             if (filter.PropertyType.HasValue)
                 query = query.Where(p => p.PropertyType == (PropertyType)filter.PropertyType.Value);
 
+            if (!string.IsNullOrEmpty(filter.BrokerId))
+                query = query.Where(p => p.BrokerId == filter.BrokerId);
+
             if (filter.ListingType.HasValue)
             {
                 if (filter.ListingType.Value == 1)
@@ -142,7 +147,7 @@ namespace Unique_X.Services.Implementation
 
             return properties.Select(p => {
                 var dto = MapToResponseDto(p);
-                dto.IsFavorite = userFavorites.Contains(p.Id); // لو الـ ID موجود في لستة المفضلات يبقى True
+                dto.IsFavorite = userFavorites.Contains(p.Id); 
                 return dto;
             });
         }
@@ -154,7 +159,6 @@ namespace Unique_X.Services.Implementation
 
             if (property == null) return false;
 
-            // دي أهم حتة: لو true تبقى false ولو false تبقى true
             property.IsSold = !property.IsSold;
 
             return await _context.SaveChangesAsync() > 0;
@@ -174,6 +178,7 @@ namespace Unique_X.Services.Implementation
 
         public async Task<PropertyResponseDto> GetPropertyByIdAsync(int id)
         {
+            // 1. جلب العقار أولاً
             var property = await _context.Properties
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
@@ -181,7 +186,14 @@ namespace Unique_X.Services.Implementation
 
             if (property == null) return null;
 
-            return MapToResponseDto(property);
+            var count = await _context.Properties.CountAsync(p => p.BrokerId == property.BrokerId && !p.IsSold);
+
+            var dto = MapToResponseDto(property);
+
+            dto.BrokerPropertyCount = count;
+            dto.BrokerId = property.BrokerId;
+
+            return dto;
         }
 
         public async Task<PropertyResponseDto> UpdatePropertyAsync(int id, UpdatePropertyDto dto, string brokerId)
@@ -228,6 +240,7 @@ namespace Unique_X.Services.Implementation
 
             if (!string.IsNullOrEmpty(dto.DistanceFromLandmark)) property.DistanceFromLandmark = dto.DistanceFromLandmark;
             if (!string.IsNullOrEmpty(dto.View)) property.View = dto.View;
+            if (!string.IsNullOrEmpty(dto.PaymentMethod)) property.PaymentMethod = dto.PaymentMethod;
 
             // أرقام (باستخدام HasValue لأنها Nullable في الـ DTO)
             if (dto.BuildYear.HasValue) property.BuildYear = dto.BuildYear.Value;
@@ -244,6 +257,9 @@ namespace Unique_X.Services.Implementation
             if (dto.IsFirstOwner.HasValue) property.IsFirstOwner = dto.IsFirstOwner.Value;
             if (dto.IsLegalReconciled.HasValue) property.IsLegalReconciled = dto.IsLegalReconciled.Value;
             if (dto.HasParking.HasValue) property.HasParking = dto.HasParking.Value;
+            if (dto.InstallmentYears.HasValue) property.InstallmentYears = dto.InstallmentYears.Value;
+            if (dto.HasBalcony.HasValue) property.HasBalcony = dto.HasBalcony.Value;
+            if (dto.IsFurnished.HasValue) property.IsFurnished = dto.IsFurnished.Value;
 
 
             property.Region = !string.IsNullOrEmpty(dto.Region) && dto.Region != "string"
@@ -343,6 +359,10 @@ namespace Unique_X.Services.Implementation
                 IsFirstOwner = property.IsFirstOwner,
                 IsLegalReconciled = property.IsLegalReconciled,
                 HasParking = property.HasParking,
+                HasBalcony = property.HasBalcony,
+                IsFurnished = property.IsFurnished,
+                PaymentMethod = property.PaymentMethod,
+                InstallmentYears = property.InstallmentYears,
                 CommissionPercentage = property.CommissionPercentage,
                 Address = property.Address,
                 CreatedAt = property.CreatedAt,
