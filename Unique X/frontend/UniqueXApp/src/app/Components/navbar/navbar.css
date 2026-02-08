@@ -15,5 +15,5 @@
 
 .profile-nav-icon:hover i, .wishlist-nav-icon:hover i {
   transform: scale(1.15);
-  color: #ef3341 !important; /* لون أحمر عند الوقوف بالماوس */
+  color: darkblue; /* لون أحمر عند الوقوف بالماوس */
 }
