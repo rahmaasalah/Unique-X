@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Unique_X.Data;
 
@@ -11,9 +12,11 @@ using Unique_X.Data;
 namespace Unique_X.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260209151912_lisence")]
+    partial class lisence
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -297,9 +300,6 @@ namespace Unique_X.Migrations
                     b.Property<int>("City")
                         .HasColumnType("int");
 
-                    b.Property<string>("Code")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<decimal>("CommissionPercentage")
                         .HasColumnType("decimal(18,2)");
 
@@ -319,13 +319,7 @@ namespace Unique_X.Migrations
                     b.Property<string>("DistanceFromLandmark")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("DownPayment")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int>("ElevatorsCount")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Finishing")
                         .HasColumnType("int");
 
                     b.Property<int>("Floor")
@@ -341,9 +335,6 @@ namespace Unique_X.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("HasHotelEntrance")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("HasLandShare")
                         .HasColumnType("bit");
 
                     b.Property<bool>("HasMasterRoom")
@@ -379,9 +370,6 @@ namespace Unique_X.Migrations
                     b.Property<int>("ListingType")
                         .HasColumnType("int");
 
-                    b.Property<decimal?>("MonthlyRent")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -392,9 +380,6 @@ namespace Unique_X.Migrations
                     b.Property<int>("PropertyType")
                         .HasColumnType("int");
 
-                    b.Property<decimal?>("QuarterInstallment")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int>("ReceptionPieces")
                         .HasColumnType("int");
 
@@ -404,9 +389,6 @@ namespace Unique_X.Migrations
 
                     b.Property<int>("Rooms")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("SecurityDeposit")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Title")
                         .IsRequired()

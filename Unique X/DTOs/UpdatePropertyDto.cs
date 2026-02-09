@@ -1,4 +1,7 @@
-﻿namespace Unique_X.DTOs
+﻿using Unique_X.Models;
+using static Unique_X.Models.PropEnums;
+
+namespace Unique_X.DTOs
 {
     public class UpdatePropertyDto
     {
@@ -33,6 +36,19 @@
         public int? ListingType { get; set; }
         public int? PropertyType { get; set; }
         public int MainPhotoIndex { get; set; } = 0;
+        public DeliveryStatus DeliveryStatus { get; set; } = DeliveryStatus.Ready;
+        public int? DeliveryYear { get; set; } // Nullable لأنه يظهر فقط لو تحت الإنشاء
+        public bool? IsLicensed { get; set; }        // هل الشقة مرخصة؟
+        public bool? HasWaterMeter { get; set; }      // عداد مياه
+        public bool? HasElectricityMeter { get; set; } // عداد كهرباء
+        public bool? HasGasMeter { get; set; }
+        public bool? HasLandShare { get; set; }
+        public decimal? DownPayment { get; set; }        // المقدم
+        public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
+        public decimal? SecurityDeposit { get; set; }    // مبلغ التأمين (للإيجار)
+        public decimal? MonthlyRent { get; set; }
+        public string? Code { get; set; } // AR#123
+        public FinishingType Finishing { get; set; }
         public List<IFormFile>? Photos { get; set; }
     }
 }

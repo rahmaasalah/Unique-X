@@ -17,3 +17,56 @@
   transform: scale(1.15);
   color: darkblue; /* لون أحمر عند الوقوف بالماوس */
 }
+
+.custom-link {
+  position: relative;
+  color: #555 !important;
+  transition: all 0.3s ease;
+  padding-bottom: 12px !important; /* زيادة المساحة للخط */
+  text-decoration: none !important;
+}
+
+/* حالة الـ Hover */
+.custom-link:hover {
+  color: #000 !important;
+}
+
+/* شكل اللينك لما يكون نشط */
+.active-nav-link {
+  color: #000 !important;
+  font-weight: 800 !important;
+}
+
+/* رسم الخط الأسود تحت اللينك النشط */
+.custom-link::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0; /* يبدأ من صفر */
+  height: 4px; /* سمك الخط */
+  background-color: #000;
+  border-radius: 50px;
+  transition: width 0.3s ease-in-out, left 0.3s ease-in-out;
+}
+
+/* تفعيل الخط لما الكلاس يكون موجود */
+.active-nav-link::after {
+  width: 100%; /* يتمدد ليملأ العرض */
+}
+
+/* تأثير تحريك الخط بشكل ناعم عند التنقل */
+.nav-item {
+    display: flex;
+    align-items: center;
+}
+
+/* الأيقونات */
+.wishlist-nav-icon i, .profile-nav-icon i {
+  transition: transform 0.2s ease-in-out, color 0.2s;
+}
+
+.wishlist-nav-icon:hover i, .profile-nav-icon:hover i {
+  transform: scale(1.2);
+  color: #ef3341 !important;
+}

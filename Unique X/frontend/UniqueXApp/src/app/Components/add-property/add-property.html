@@ -16,13 +16,17 @@
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-info-circle me-2 text-danger"></i>General Information</h5>
             
             <div class="row g-3 mb-4">
-              <div class="col-md-6">
+              <div class="col-md-4">
                 <label class="form-label fw-bold small">Property Title</label>
                 <input type="text" formControlName="title" class="form-control shadow-sm" placeholder="">
                 @if (propertyForm.get('title')?.touched && propertyForm.get('title')?.invalid) {
                   <small class="text-danger d-block mt-1">Title is required</small>
                 }
               </div>
+              <div class="col-md-2">
+    <label class="form-label fw-bold small">Code</label>
+    <input type="text" formControlName="code" class="form-control shadow-sm" placeholder="e.g. AR#123">
+  </div>
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Listing Type</label>
                 <select formControlName="listingType" class="form-select shadow-sm">
@@ -32,6 +36,9 @@
                   <option [value]="3">Resale Project</option>
                 </select>
               </div>
+
+
+              
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Property Type</label>
                 <select formControlName="propertyType" class="form-select shadow-sm">
@@ -40,20 +47,51 @@
                   <option [value]="2">Shop</option>
                   <option [value]="3">Office</option>
                   <option [value]="4">Chalet</option>
+                  <option [value]="5">Full Floor</option>
                 </select>
               </div>
             </div>
+
+            @if (showDeliveryMenu()) {
+  <div class="row g-3 mb-4 animate__animated animate__fadeIn">
+    
+    <!-- قائمة اختيار حالة التسليم -->
+    <div class="col-md-6">
+      <label class="form-label fw-bold small">Delivery Status</label>
+      <select formControlName="deliveryStatus" class="form-select shadow-sm border-danger">
+        <option [value]="0">Immediate Delivery (Ready)</option>
+        <option [value]="1">Under Construction</option>
+      </select>
+    </div>
+
+    <!-- حقل سنة التسليم: يظهر فقط لو اختار Under Construction -->
+    @if (isUnderConstruction()) {
+      <div class="col-md-6 animate__animated animate__fadeInRight">
+        <label class="form-label fw-bold small">Delivery Year</label>
+        <div class="input-group">
+            <span class="input-group-text bg-white"><i class="bi bi-calendar-event"></i></span>
+            <input type="number" formControlName="deliveryYear" class="form-control" 
+                   [min]="currentYear" placeholder="e.g. 2027">
+        </div>
+        @if (propertyForm.get('deliveryYear')?.errors?.['min']) {
+            <small class="text-danger">Delivery year cannot be in the past</small>
+        }
+      </div>
+    }
+
+  </div>
+}
 
             <div class="row g-3 mb-4">
               <div class="col-md-6">
                 <label class="form-label fw-bold small">Price (EGP)</label>
                 <div class="input-group">
                   <span class="input-group-text bg-white">EGP</span>
-                  <input type="number" formControlName="price" class="form-control" placeholder="">
+                  <input type="number" formControlName="price" class="form-control" min="1000000" placeholder="1,000,000 EGP">
                 </div>
                 <!-- الجزء الجديد: خطأ السعر -->
                 @if (propertyForm.get('price')?.touched && propertyForm.get('price')?.errors?.['min']) {
-                  <small class="text-danger d-block mt-1">Price must be greater than 0</small>
+                  <small class="text-danger d-block mt-1">Price must be greater than 1,000,000 EGP</small>
                 }
               </div>
               <div class="col-md-6">
@@ -72,12 +110,12 @@
             <!-- القسم الثاني: مواصفات الوحدة -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-house-door me-2 text-danger"></i>Unit Specifications</h5>
             
-            <div class="row g-3 mb-4">
+            <div class="row g-3 mb-4 align-items-end">
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Rooms</label>
                 <div class="input-group input-group-sm">
                   <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', -1)">-</button>
-                  <input type="number" formControlName="rooms" class="form-control text-center bg-white" readonly>
+                  <input type="number" formControlName="rooms" class="form-control text-center bg-white" min="0">
                   <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('rooms', 1)">+</button>
                 </div>
               </div>
@@ -85,7 +123,7 @@
                 <label class="form-label fw-bold small">Bathrooms</label>
                 <div class="input-group input-group-sm">
                   <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', -1)">-</button>
-                  <input type="number" formControlName="bathrooms" class="form-control text-center bg-white" readonly>
+                  <input type="number" formControlName="bathrooms" class="form-control text-center bg-white" min="0">
                   <button class="btn btn-outline-secondary" type="button" (click)="updateCounter('bathrooms', 1)">+</button>
                 </div>
               </div>
@@ -97,12 +135,27 @@
                 }
               </div>
               <div class="col-md-3">
-                <label class="form-label fw-bold small">Floor Number</label>
-                <input type="number" formControlName="floor" class="form-control" min="0">
-                @if (propertyForm.get('floor')?.errors?.['min']) {
-                  
+                <label class="small fw-bold">Build Year</label>
+                <!-- الجزء الجديد: منع سنة في المستقبل -->
+                <input type="number" formControlName="buildYear" class="form-control" min="1950" [max]="currentYear">
+                @if (propertyForm.get('buildYear')?.errors?.['max']) {
+                  <small class="text-danger d-block mt-1">Year cannot exceed {{ currentYear }}</small>
+                }
+                @if (propertyForm.get('buildYear')?.errors?.['min']) {
+                  <small class="text-danger d-block mt-1">Must be after 1950</small>
                 }
               </div>
+
+              <div class="col-md-3">
+    <label class="form-label fw-bold small">Finishing Type</label>
+    <select formControlName="finishing" class="form-select shadow-sm">
+      <option [value]="0">Core and Shell</option>
+      <option [value]="1">Semi-finished</option>
+      <option [value]="2">Fully finished</option>
+      <option [value]="3">Semi-furnished</option>
+      <option [value]="4">Fully furnished</option>
+    </select>
+  </div>
             </div>
 
             <!-- القسم الثالث: الموقع -->
@@ -135,16 +188,10 @@
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-building me-2 text-danger"></i>Building Details</h5>
             <div class="row g-3 mb-4">
               <div class="col-md-3">
-                <label class="small fw-bold">Build Year</label>
-                <!-- الجزء الجديد: منع سنة في المستقبل -->
-                <input type="number" formControlName="buildYear" class="form-control" [max]="currentYear">
-                @if (propertyForm.get('buildYear')?.errors?.['max']) {
-                  <small class="text-danger d-block mt-1">Year cannot exceed {{ currentYear }}</small>
-                }
-                @if (propertyForm.get('buildYear')?.errors?.['min']) {
-                  <small class="text-danger d-block mt-1">Must be after 1800</small>
-                }
-              </div>
+  <label class="small fw-bold">Floor Number</label>
+  <input type="number" formControlName="floor" class="form-control" min="0" (change)="validateFloorInput()">
+</div>
+              
               <div class="col-md-3">
                 <label class="small fw-bold">Total Floors</label>
                 <input type="number" formControlName="totalFloors" class="form-control" [min]="2">
@@ -154,7 +201,7 @@
               </div>
               <div class="col-md-3">
                 <label class="small fw-bold">Units Per Floor</label>
-                <input type="number" formControlName="apartmentsPerFloor" class="form-control" min="0">
+                <input type="number" formControlName="apartmentsPerFloor" class="form-control" min="1">
                 @if (propertyForm.get('apartmentsPerFloor')?.errors?.['min']) {
                   
                 }
@@ -176,13 +223,20 @@
             <!-- القسم الخامس: المميزات والحالات القانونية -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-shield-check me-2 text-danger"></i>Status & Amenities</h5>
             <div class="row g-3 mb-3">
-              <div class="col-md-6">
+              <div class="col-md-4">
                 <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm">
                   <label class="form-check-label small fw-bold mb-0" for="firstOwner">First Owner</label>
                   <input class="form-check-input ms-0" type="checkbox" formControlName="isFirstOwner" id="firstOwner">
                 </div>
               </div>
-              <div class="col-md-6">
+              
+              <div class="col-md-4">
+    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm">
+      <label class="form-check-label small fw-bold mb-0" for="landShare">Land Share</label>
+      <input class="form-check-input ms-0" type="checkbox" formControlName="hasLandShare" id="landShare">
+    </div>
+  </div>
+              <div class="col-md-4">
                 <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm">
                   <label class="form-check-label small fw-bold mb-0" for="reconciled">Legal Reconciled</label>
                   <input class="form-check-input ms-0" type="checkbox" formControlName="isLegalReconciled" id="reconciled">
@@ -202,26 +256,128 @@
               <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" formControlName="isFurnished" id="furnished"><label class="form-check-label small fw-bold" for="furnished">Furnished</label></div></div>
             </div>
 
+            <!-- قسم المرافق والترخيص (Utilities & Legal) -->
+<h5 class="fw-bold text-dark border-bottom pb-2 my-4"><i class="bi bi-plug me-2 text-danger"></i>Utilities & Licensing</h5>
+<div class="row g-3 mb-4">
+  <!-- الترخيص -->
+  <div class="col-md-3">
+    <div class="form-check form-switch border rounded p-2 ps-5 bg-light shadow-sm">
+      <input class="form-check-input" type="checkbox" formControlName="isLicensed" id="licensed">
+      <label class="form-check-label small fw-bold" for="licensed">Licensed Unit</label>
+    </div>
+  </div>
+  <!-- عداد الكهرباء -->
+  <div class="col-md-3">
+    <div class="form-check form-switch border rounded p-2 ps-5 bg-light shadow-sm">
+      <input class="form-check-input" type="checkbox" formControlName="hasElectricityMeter" id="elec">
+      <label class="form-check-label small fw-bold" for="elec">Electricity Meter</label>
+    </div>
+  </div>
+  <!-- عداد المياه -->
+  <div class="col-md-3">
+    <div class="form-check form-switch border rounded p-2 ps-5 bg-light shadow-sm">
+      <input class="form-check-input" type="checkbox" formControlName="hasWaterMeter" id="water">
+      <label class="form-check-label small fw-bold" for="water">Water Meter</label>
+    </div>
+  </div>
+  <!-- عداد الغاز -->
+  <div class="col-md-3">
+    <div class="form-check form-switch border rounded p-2 ps-5 bg-light shadow-sm">
+      <input class="form-check-input" type="checkbox" formControlName="hasGasMeter" id="gas">
+      <label class="form-check-label small fw-bold" for="gas">Natural Gas</label>
+    </div>
+  </div>
+</div>
+
             <!-- القسم السادس: الدفع -->
-            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-credit-card me-2 text-danger"></i>Payment Options</h5>
-            <div class="row g-3 mb-4 align-items-start">
-              <div class="col-md-6">
-                <label class="small fw-bold">Payment Method</label>
-                <select formControlName="paymentMethod" class="form-select shadow-sm">
-                  <option value="Cash">Full Cash</option>
-                  <option value="Installment">Installment</option>
-                </select>
-              </div>
-              @if (isInstallmentSelected()) {
-                <div class="col-md-6 animate__animated animate__fadeIn">
-                  <label class="small fw-bold">Years of Installment</label>
-                  <input type="number" formControlName="installmentYears" class="form-control" min="1">
-                  @if (propertyForm.get('installmentYears')?.errors?.['min']) {
-                    <small class="text-danger d-block mt-1">Must be at least 1 year</small>
-                  }
-                </div>
+<!-- ================== حالة البيع والمشاريع (Resale / Primary) ================== -->
+<h5 class="fw-bold border-bottom pb-2 mb-4 text-danger">
+  <i class="bi bi-wallet2 me-2"></i>Pricing & Payment Information
+</h5>
+
+<div class="row g-3 mb-4 align-items-start">
+  
+  <!-- ================== الحالة الأولى: الإيجار (Rent) ================== -->
+  @if (isRent()) {
+    <div class="col-md-6 animate__animated animate__fadeIn">
+      <label class="small fw-bold">Monthly Rent Amount</label>
+      <input type="number" formControlName="monthlyRent" class="form-control shadow-sm border-danger" min="0">
+      @if (propertyForm.get('monthlyRent')?.touched && propertyForm.get('monthlyRent')?.errors?.['min']) {
+        
+      }
+    </div>
+    <div class="col-md-6 animate__animated animate__fadeIn">
+      <label class="small fw-bold">Security Deposit</label>
+      <input type="number" formControlName="securityDeposit" class="form-control shadow-sm border-danger" min="0">
+    </div>
+  }
+
+  <!-- ================== الحالة الثانية: البيع (Resale / Project) ================== -->
+  @else {
+    <!-- 1. اختيار طريقة الدفع -->
+    <div class="col-md-3">
+      <label class="small fw-bold">Payment Method</label>
+      <select formControlName="paymentMethod" class="form-select shadow-sm">
+        <option value="Cash">Full Cash</option>
+        <option value="Installment">Installment Plan</option>
+      </select>
+    </div>
+
+    <!-- 2. لو اختار تقسيط (Installment) -->
+    @if (isInstallment()) {
+      
+      <!-- لو هو مشروع (Primary أو Resale Project) نعرض الـ 3 حقول جنب بعض -->
+      @if (isProject()) {
+        <div class="col-md-9 animate__animated animate__fadeIn">
+          <div class="row g-2">
+            <!-- سنوات التقسيط -->
+            <div class="col-md-4">
+              <label class="small fw-bold">Installment Years</label>
+              <input type="number" formControlName="installmentYears" class="form-control shadow-sm" min="1">
+              @if (propertyForm.get('installmentYears')?.errors?.['min']) {
+                <small class="text-danger d-block">Min 1 year</small>
               }
             </div>
+
+            <!-- المقدم -->
+            <div class="col-md-4">
+              <label class="small fw-bold">Down Payment</label>
+              <input type="number" formControlName="downPayment" class="form-control shadow-sm" min="0">
+              <!-- شرط: المقدم أقل من السعر الكلي -->
+              @if (propertyForm.get('downPayment')?.value >= propertyForm.get('price')?.value) {
+                <small class="text-danger d-block">Cannot exceed Total Price</small>
+              }
+              @if (propertyForm.get('downPayment')?.errors?.['min']) {
+                
+              }
+            </div>
+
+            <!-- القسط الربع سنوي -->
+            <div class="col-md-4">
+              <label class="small fw-bold">Quarterly Installment</label>
+              <input type="number" formControlName="quarterInstallment" class="form-control shadow-sm" min="0">
+              <!-- شرط: القسط أقل من السعر الكلي -->
+              @if (propertyForm.get('quarterInstallment')?.value >= propertyForm.get('price')?.value) {
+                <small class="text-danger d-block">Cannot exceed Total Price</small>
+              }
+              @if (propertyForm.get('quarterInstallment')?.errors?.['min']) {
+                
+              }
+            </div>
+          </div>
+        </div>
+      } 
+      
+      <!-- لو هو Resale عادي (مش مشروع) نكتفي بسنوات التقسيط فقط في سطر واحد -->
+      @else {
+        <div class="col-md-4 animate__animated animate__fadeIn">
+          <label class="small fw-bold">Years of Installment</label>
+          <input type="number" formControlName="installmentYears" class="form-control shadow-sm" min="1">
+        </div>
+      }
+    }
+  }
+</div>
 
             <!-- الميديا والوصف -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-images me-2 text-danger"></i>Media Gallery</h5>
