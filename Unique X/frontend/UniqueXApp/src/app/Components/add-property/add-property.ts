@@ -46,7 +46,7 @@ filteredRegions: string[] = [];
     this.propertyForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
       description: ['', Validators.required],
-      price: ['', [Validators.required, Validators.min(1)]],
+      price: ['', [Validators.required, Validators.min(1000000)]],
       area: ['', [Validators.required, Validators.min(1)]],
       rooms: [0, [Validators.min(0)]],
       bathrooms: [0, [Validators.min(0)]],
@@ -62,7 +62,7 @@ filteredRegions: string[] = [];
   totalFloors: [2, [Validators.min(2)]],
   apartmentsPerFloor: [1, [Validators.min(1)]],
   elevatorsCount: [0, [Validators.min(0)]],
-  buildYear: [ '', [Validators.required, Validators.min(1800), Validators.max(this.currentYear)]],
+  buildYear: [ '', [Validators.required, Validators.min(1950), Validators.max(this.currentYear)]],
   hasHotelEntrance: [false],
   hasSecurity: [false],
   isFirstOwner: [false],
@@ -72,7 +72,20 @@ filteredRegions: string[] = [];
       hasBalcony: [false],
   isFurnished: [false],
   paymentMethod: ['Full Cash', Validators.required],
-  installmentYears: [1, [Validators.min(1)]] // 0 = Apartment, etc.
+  installmentYears: [1, [Validators.min(1)]],
+  deliveryStatus: [0], 
+  deliveryYear: [null],
+  isLicensed: [false],
+  hasWaterMeter: [false],
+  hasElectricityMeter: [false],
+  hasGasMeter: [false],
+  hasLandShare: [false],
+  downPayment: [0, [Validators.min(0)]],
+  quarterInstallment: [0, [Validators.min(0)]],
+  securityDeposit: [0, [Validators.min(0)]],
+  monthlyRent: [0, [Validators.min(0)]],
+  code: ['', Validators.required],
+  finishing: [2]
     });
 
     this.propertyForm.get('city')?.valueChanges.subscribe(cityId => {
@@ -85,6 +98,16 @@ filteredRegions: string[] = [];
 
   isInstallmentSelected(): boolean {
   return this.propertyForm.get('paymentMethod')?.value === 'Installment';
+}
+
+showDeliveryMenu(): boolean {
+  const type = Number(this.propertyForm.get('listingType')?.value);
+  return type === 2 || type === 3;
+}
+
+// 3. دالة للتأكد هل الاستلام تحت الإنشاء
+isUnderConstruction(): boolean {
+  return Number(this.propertyForm.get('deliveryStatus')?.value) === 1;
 }
 
   updateRegions(cityId: any) {
@@ -135,6 +158,21 @@ removePhoto(index: number) {
   if (this.mainPhotoIndex === index) this.mainPhotoIndex = 0;
 }
 
+isRent(): boolean {
+  return Number(this.propertyForm.get('listingType')?.value) === 1;
+}
+
+// هل النوع مشروع (Primary/Resale Project)؟
+isProject(): boolean {
+  const type = Number(this.propertyForm.get('listingType')?.value);
+  return type === 2 || type === 3;
+}
+
+// هل تم اختيار تقسيط؟
+isInstallment(): boolean {
+  return this.propertyForm.get('paymentMethod')?.value === 'Installment';
+}
+
 
   onSubmit() {
   if (this.isSubmitting) return;
@@ -160,6 +198,17 @@ removePhoto(index: number) {
 
     // إرسال ترتيب الصورة الرئيسية
     formData.append('MainPhotoIndex', this.mainPhotoIndex.toString());
+    formData.append('DeliveryStatus', formValues.deliveryStatus.toString());
+if (formValues.deliveryYear) {
+    formData.append('DeliveryYear', formValues.deliveryYear.toString());
+}
+formData.append('IsLicensed', formValues.isLicensed.toString());
+formData.append('HasWaterMeter', formValues.hasWaterMeter.toString());
+formData.append('HasElectricityMeter', formValues.hasElectricityMeter.toString());
+formData.append('HasGasMeter', formValues.hasGasMeter.toString());
+formData.append('HasLandShare', formValues.hasLandShare.toString());
+formData.append('Code', formValues.code);
+formData.append('Finishing', formValues.finishing.toString());
 
     // إرسال ملفات الصور الفعلية من الـ Signal
     this.selectedPhotos().forEach(p => {
@@ -188,12 +237,33 @@ removePhoto(index: number) {
 }
 
   updateCounter(controlName: string, amount: number) {
-    const control = this.propertyForm.get(controlName);
-    if (control) {
-      const newValue = (control.value || 0) + amount;
-      if (newValue >= 0) {
-        control.patchValue(newValue);
-      }
+  const control = this.propertyForm.get(controlName);
+  const totalFloors = this.propertyForm.get('totalFloors')?.value || 0;
+
+  if (control) {
+    const newValue = (control.value || 0) + amount;
+
+    // منع القيم السالبة
+    if (newValue < 0) return;
+
+    // شرط: رقم الدور لا يتخطى إجمالي أدوار البناية
+    if (controlName === 'floor' && newValue > totalFloors) {
+      this.alertService.error("Floor number cannot exceed total building floors!");
+      return;
     }
+
+    control.patchValue(newValue);
   }
+}
+
+// 3. دالة تفحص المدخلات اليدوية (عند الكتابة بالكيبورد)
+validateFloorInput() {
+  const floor = this.propertyForm.get('floor')?.value;
+  const total = this.propertyForm.get('totalFloors')?.value;
+
+  if (floor > total) {
+    this.propertyForm.get('floor')?.patchValue(total);
+    this.alertService.error(`Adjusted: Floor cannot be higher than ${total}`);
+  }
+}
 }

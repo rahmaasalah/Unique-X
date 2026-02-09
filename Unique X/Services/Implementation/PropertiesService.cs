@@ -45,7 +45,10 @@ namespace Unique_X.Services.Implementation
                 InstallmentYears = dto.InstallmentYears ?? 0,
                 HasBalcony = dto.HasBalcony ?? false,
                 IsFurnished = dto.IsFurnished ?? false,
-
+                QuarterInstallment = dto.QuarterInstallment ?? 0,
+                DownPayment = dto.DownPayment ?? 0,
+                MonthlyRent = dto.MonthlyRent ?? 0,
+                SecurityDeposit = dto.SecurityDeposit ?? 0,
                 HasMasterRoom = dto.HasMasterRoom ?? false,
                 HasHotelEntrance = dto.HasHotelEntrance ?? false,
                 HasSecurity = dto.HasSecurity ?? false,
@@ -55,6 +58,13 @@ namespace Unique_X.Services.Implementation
                 CommissionPercentage = 2.5m, 
                 Region = dto.Region ?? string.Empty,
                 Address = dto.Address ?? string.Empty,
+                HasLandShare = dto.HasLandShare ?? false,
+                HasElectricityMeter = dto.HasElectricityMeter ?? false,
+                HasGasMeter = dto.HasGasMeter ?? false,
+                HasWaterMeter = dto.HasWaterMeter ?? false,
+                IsLicensed = dto.IsLicensed ?? false,
+                Code = dto.Code ?? string.Empty,
+                
                 BrokerId = brokerId,
                 Photos = new List<Photo>()
             };
@@ -120,15 +130,8 @@ namespace Unique_X.Services.Implementation
 
             if (filter.ListingType.HasValue)
             {
-                if (filter.ListingType.Value == 1)
-                {
-                    query = query.Where(p => p.ListingType == ListingType.Rent);
-                }
-                else
-                {
-                    
-                    query = query.Where(p => p.ListingType != ListingType.Rent);
-                }
+                // سيبحث عن النوع المختار بدقة (0 أو 1 أو 2 أو 3)
+                query = query.Where(p => p.ListingType == (ListingType)filter.ListingType.Value);
             }
             query = query.Where(p => !p.IsSold);
 
@@ -260,6 +263,16 @@ namespace Unique_X.Services.Implementation
             if (dto.InstallmentYears.HasValue) property.InstallmentYears = dto.InstallmentYears.Value;
             if (dto.HasBalcony.HasValue) property.HasBalcony = dto.HasBalcony.Value;
             if (dto.IsFurnished.HasValue) property.IsFurnished = dto.IsFurnished.Value;
+            if (dto.HasLandShare.HasValue) property.HasLandShare = dto.HasLandShare.Value;
+            if (dto.HasElectricityMeter.HasValue) property.HasElectricityMeter = dto.HasElectricityMeter.Value;
+            if (dto.HasGasMeter.HasValue) property.HasGasMeter = dto.HasGasMeter.Value;
+            if (dto.HasWaterMeter.HasValue) property.HasWaterMeter = dto.HasWaterMeter.Value;
+            if (dto.IsLicensed.HasValue) property.IsLicensed = dto.IsLicensed.Value;
+            if (dto.MonthlyRent.HasValue) property.MonthlyRent = dto.MonthlyRent.Value;
+            if (dto.DownPayment.HasValue) property.DownPayment = dto.DownPayment.Value;
+            if (dto.QuarterInstallment.HasValue) property.QuarterInstallment = dto.QuarterInstallment.Value;
+            if (dto.SecurityDeposit.HasValue) property.SecurityDeposit = dto.SecurityDeposit.Value;
+
 
 
             property.Region = !string.IsNullOrEmpty(dto.Region) && dto.Region != "string"
@@ -365,6 +378,15 @@ namespace Unique_X.Services.Implementation
                 InstallmentYears = property.InstallmentYears,
                 CommissionPercentage = property.CommissionPercentage,
                 Address = property.Address,
+                HasWaterMeter = property.HasWaterMeter,
+                HasElectricityMeter = property.HasElectricityMeter,
+                HasGasMeter = property.HasGasMeter,
+                HasLandShare = property.HasLandShare,
+                IsLicensed = property.IsLicensed,
+                MonthlyRent = property.MonthlyRent,
+                DownPayment = property.DownPayment,
+                QuarterInstallment = property.QuarterInstallment,
+                SecurityDeposit = property.SecurityDeposit,
                 CreatedAt = property.CreatedAt,
                 Photos = property.Photos.Select(p => new PhotoResponseDto
                 {

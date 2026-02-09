@@ -37,6 +37,20 @@ hasBalcony: boolean;
 isFurnished: boolean;
 paymentMethod: string;
 installmentYears?: number;
+isLicensed: boolean;
+hasWaterMeter: boolean;
+hasElectricityMeter: boolean;
+hasGasMeter: boolean;
+hasLandShare: boolean;
+code: string;
+monthlyRent: number;
+downPayment: number;
+quarterInstallment: number;
+securityDeposit: number;
+deliveryStatus: string;
+deliveryYear?: number;
+commissionPercentage: number;
+finishing: string;
 }
 
 export interface Photo {

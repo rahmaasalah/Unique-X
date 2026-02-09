@@ -10,13 +10,40 @@
 
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center">
-        <li class="nav-item">
-          <a class="nav-link px-3 fw-semibold" routerLink="/home" [queryParams]="{ listingType: 0 }">Buy</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link px-3 fw-semibold" routerLink="/home" [queryParams]="{ listingType: 1 }">Rent</a>
-        </li>
+  @if (authService.loggedIn()) {
+    <!-- Resale (0) -->
+    <li class="nav-item">
+      <a class="nav-link px-3 fw-semibold custom-link" 
+         [routerLink]="['/home']" 
+         [queryParams]="{ listingType: 0 }"
+         [class.active-nav-link]="activeType() === '0'">Resale</a>
+    </li>
+    
+    <!-- Rent (1) -->
+    <li class="nav-item">
+      <a class="nav-link px-3 fw-semibold custom-link" 
+         [routerLink]="['/home']" 
+         [queryParams]="{ listingType: 1 }"
+         [class.active-nav-link]="activeType() === '1'">Rent</a>
+    </li>
 
+    <!-- Primary (2) -->
+    <li class="nav-item">
+      <a class="nav-link px-3 fw-semibold custom-link" 
+         [routerLink]="['/home']" 
+         [queryParams]="{ listingType: 2 }"
+         [class.active-nav-link]="activeType() === '2'">Primary</a>
+    </li>
+
+    <!-- Resale Project (3) -->
+    <li class="nav-item">
+      <a class="nav-link px-3 fw-semibold custom-link" 
+         [routerLink]="['/home']" 
+         [queryParams]="{ listingType: 3 }"
+         [class.active-nav-link]="activeType() === '3'">Resale Project</a>
+    </li>
+  
+    
         <!-- خيارات البروكر فقط -->
         @if (authService.loggedIn() && authService.getUserType() === 1) {
           <li class="nav-item ms-lg-3">
@@ -30,6 +57,7 @@
             </a>
           </li>
         }
+      }
       </ul>
 
       <ul class="navbar-nav ms-auto align-items-center">

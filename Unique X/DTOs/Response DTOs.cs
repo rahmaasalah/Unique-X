@@ -1,4 +1,7 @@
-﻿namespace Unique_X.DTOs
+﻿using Unique_X.Models;
+using static Unique_X.Models.PropEnums;
+
+namespace Unique_X.DTOs
 {
     public class PhotoResponseDto
     {
@@ -42,6 +45,19 @@
         public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
         public string ListingType { get; set; }
         public string PropertyType { get; set; }
+        public DeliveryStatus DeliveryStatus { get; set; } = DeliveryStatus.Ready;
+        public int? DeliveryYear { get; set; } // Nullable لأنه يظهر فقط لو تحت الإنشاء
+        public bool? IsLicensed { get; set; }        // هل الشقة مرخصة؟
+        public bool? HasWaterMeter { get; set; }      // عداد مياه
+        public bool? HasElectricityMeter { get; set; } // عداد كهرباء
+        public bool? HasLandShare { get; set; }
+        public bool? HasGasMeter { get; set; }
+        public decimal? DownPayment { get; set; }        // المقدم
+        public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
+        public decimal? SecurityDeposit { get; set; }    // مبلغ التأمين (للإيجار)
+        public decimal? MonthlyRent { get; set; }
+        public string? Code { get; set; } // AR#123
+        public FinishingType Finishing { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string BrokerId { get; set; } // ضروري جداً للربط
         public int BrokerPropertyCount { get; set; }

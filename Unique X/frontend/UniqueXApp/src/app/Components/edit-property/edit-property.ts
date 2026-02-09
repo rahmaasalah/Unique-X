@@ -49,7 +49,7 @@ filteredRegions: string[] = [];
     this.editForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
       description: ['', Validators.required],
-      price: ['', [Validators.required, Validators.min(1)]],
+      price: ['', [Validators.required, Validators.min(1000000)]],
       area: ['', [Validators.required, Validators.min(1)]],
       rooms: [0, [Validators.min(0)]],
       bathrooms: [0, [Validators.min(0)]],
@@ -65,7 +65,7 @@ filteredRegions: string[] = [];
   totalFloors: [2, [Validators.min(2)]],
   apartmentsPerFloor: [1, [Validators.min(1)]],
   elevatorsCount: [0, [Validators.min(0)]],
-  buildYear: [ '', [Validators.required, Validators.min(1800), Validators.max(this.currentYear)]],
+  buildYear: [ '', [Validators.required, Validators.min(1950), Validators.max(this.currentYear)]],
   hasHotelEntrance: [false],
   hasSecurity: [false],
   isFirstOwner: [false],
@@ -75,7 +75,20 @@ filteredRegions: string[] = [];
       hasBalcony: [false],
   isFurnished: [false],
   paymentMethod: ['Full Cash', Validators.required],
-  installmentYears: [1, [Validators.min(1)]]
+  installmentYears: [1, [Validators.min(1)]],
+  deliveryStatus: [0], // 0 = Ready, 1 = Under Construction
+  deliveryYear: [null],
+  isLicensed: [false],
+  hasWaterMeter: [false],
+  hasElectricityMeter: [false],
+  hasGasMeter: [false],
+  hasLandShare: [false],
+  downPayment: [0, [Validators.min(0)]],
+  quarterInstallment: [0, [Validators.min(0)]],
+  securityDeposit: [0, [Validators.min(0)]],
+  monthlyRent: [0, [Validators.min(0)]],
+  code: ['', Validators.required],
+  finishing: [2]
     });
 
     this.propertyId = Number(this.route.snapshot.paramMap.get('id'));
@@ -85,6 +98,16 @@ filteredRegions: string[] = [];
     this.updateRegions(cityId);
   });
   }
+
+  showDeliveryMenu(): boolean {
+  const type = Number(this.editForm.get('listingType')?.value);
+  return type === 2 || type === 3;
+}
+
+// 3. دالة للتأكد هل الاستلام تحت الإنشاء
+isUnderConstruction(): boolean {
+  return Number(this.editForm.get('deliveryStatus')?.value) === 1;
+}
 
   isInstallmentSelected(): boolean {
   return this.editForm.get('paymentMethod')?.value === 'Installment';
@@ -117,15 +140,35 @@ filteredRegions: string[] = [];
 
   // دالة التحكم في عداد الغرف/الحمامات
   updateCounter(controlName: string, amount: number) {
-    const control = this.editForm.get(controlName);
-    if (control) {
-      const newValue = (control.value || 0) + amount;
-      if (newValue >= 0) {
-        control.patchValue(newValue);
-      }
-    }
-  }
+  const control = this.editForm.get(controlName);
+  const totalFloors = this.editForm.get('totalFloors')?.value || 0;
 
+  if (control) {
+    const newValue = (control.value || 0) + amount;
+
+    // منع القيم السالبة
+    if (newValue < 0) return;
+
+    // شرط: رقم الدور لا يتخطى إجمالي أدوار البناية
+    if (controlName === 'floor' && newValue > totalFloors) {
+      this.alertService.error("Floor number cannot exceed total building floors!");
+      return;
+    }
+
+    control.patchValue(newValue);
+  }
+}
+
+// 3. دالة تفحص المدخلات اليدوية (عند الكتابة بالكيبورد)
+validateFloorInput() {
+  const floor = this.editForm.get('floor')?.value;
+  const total = this.editForm.get('totalFloors')?.value;
+
+  if (floor > total) {
+    this.editForm.get('floor')?.patchValue(total);
+    this.alertService.error(`Adjusted: Floor cannot be higher than ${total}`);
+  }
+}
   setExistingAsMain(photoId: number) {
   this.alertService.showLoading('Updating cover photo...');
   this.propertyService.setMainPhoto(this.propertyId, photoId).subscribe({
@@ -157,6 +200,21 @@ setNewAsMain(index: number) {
     return types[type] ?? 0;
   }
 
+  isRent(): boolean {
+  return Number(this.editForm.get('listingType')?.value) === 1;
+}
+
+// هل النوع مشروع (Primary/Resale Project)؟
+isProject(): boolean {
+  const type = Number(this.editForm.get('listingType')?.value);
+  return type === 2 || type === 3;
+}
+
+// هل تم اختيار تقسيط؟
+isInstallment(): boolean {
+  return this.editForm.get('paymentMethod')?.value === 'Installment';
+}
+
   onFileSelect(event: any) { this.selectedFiles = Array.from(event.target.files); }
 
   onSubmit() {
@@ -177,6 +235,19 @@ setNewAsMain(index: number) {
     if (this.newMainPhotoIndex !== null) {
       formData.append('MainPhotoIndex', this.newMainPhotoIndex.toString());
     }
+
+    formData.append('DeliveryStatus', formValues.deliveryStatus.toString());
+if (formValues.deliveryYear) {
+    formData.append('DeliveryYear', formValues.deliveryYear.toString());
+}
+
+formData.append('IsLicensed', formValues.isLicensed.toString());
+formData.append('HasWaterMeter', formValues.hasWaterMeter.toString());
+formData.append('HasElectricityMeter', formValues.hasElectricityMeter.toString());
+formData.append('HasGasMeter', formValues.hasGasMeter.toString());
+formData.append('HasLandShare', formValues.hasLandShare.toString());
+formData.append('Code', formValues.code);
+formData.append('Finishing', formValues.finishing.toString());
 
     // إرسال الصور الجديدة لو تم اختيارها
     this.selectedPhotos().forEach(p => {
