@@ -10,5 +10,13 @@
         public string? ProfileImageUrl { get; set; }
         public int TotalProperties { get; set; } // لو بروكر: عدد عقاراته
         public int TotalWishlist { get; set; }   // لو كلاينت: عدد مفضلاته
+        public List<UserPropertyInfo>? Properties { get; set; }
+    }
+
+    public class UserPropertyInfo
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public string PropertyType { get; set; }
     }
 }

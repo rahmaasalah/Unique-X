@@ -58,6 +58,7 @@ namespace Unique_X.DTOs
         public decimal? MonthlyRent { get; set; }
         public string? Code { get; set; } // AR#123
         public FinishingType Finishing { get; set; }
+        public string? ProjectName { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string BrokerId { get; set; } // ضروري جداً للربط
         public int BrokerPropertyCount { get; set; }
@@ -77,5 +78,18 @@ namespace Unique_X.DTOs
         public int? PropertyType { get; set; }
         public int? ListingType { get; set; }
         public string? BrokerId { get; set; }
+        public string? Code { get; set; }
+        public int? BuildYear { get; set; }
+        public int? Area { get; set; }
+        public string? ProjectName { get; set; }
+
+        // الحقول الجديدة (Ranges)
+        public int? MinRooms { get; set; }
+        public int? MaxRooms { get; set; }
+        public int? MinBathrooms { get; set; }
+        public int? MaxBathrooms { get; set; }
+        public int? MinFloor { get; set; }
+        public int? MaxFloor { get; set; }
+
     }
 }

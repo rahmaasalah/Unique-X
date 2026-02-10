@@ -3,81 +3,152 @@
     <h2 class="fw-bold">Discover Your Perfect Property</h2>
   </div>
 
-  @if (message()) {
+  <!-- @if (message()) {
     <div class="alert alert-info text-center py-4 rounded-4 shadow-sm">
       <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
       {{ message() }}
     </div>
   }
-
-  <div class="bg-light py-4 border-bottom mb-5 shadow-sm">
+ -->
+  <div class="bg-light py-3 border-bottom mb-5 shadow-sm rounded-4">
   <div class="container">
-    <div class="row g-2 align-items-end">
-
-      <div class="col-md-3">
-  <label class="form-label small fw-bold  mb-1">Search</label>
-  <div class="input-group shadow-sm border rounded-2 bg-white">
-          <span class="input-group-text bg-white border-0"><i class="bi bi-search text-danger small"></i></span>
-          <input type="text" class="form-control border-0 bg-transparent" placeholder="Maadi, Villa..." #searchTerm>
+    
+    <!-- السطر الأول: البحث الأساسي (مسافة mb-2 لتقريب السطور) -->
+    <div class="row g-2 mb-2">
+      <div class="col-md-6">
+        <label class="form-label x-small-bold mb-1 text-dark">Keyword</label>
+        <div class="input-group input-group-sm shadow-sm border rounded-2 bg-white">
+          <span class="input-group-text bg-white border-0"><i class="bi bi-search text-danger"></i></span>
+          <input type="text" class="form-control border-0 bg-transparent" placeholder="e.g. Palm Hills, Maadi, Villa..." #searchTerm>
         </div>
-</div>
-      <!-- المدينة -->
-      <div class="col-md-2">
-        <label class="form-label small fw-bold mb-1">City</label>
-        <select class="form-select border shadow-sm rounded-2" #city>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label x-small-bold mb-1 text-dark">City</label>
+        <select class="form-select form-select-sm border shadow-sm rounded-2" #city>
           <option value="">All Cities</option>
           <option value="1">Cairo</option>
           <option value="2">Alexandria</option>
           <option value="3">North Coast</option>
         </select>
       </div>
-      <!-- السعر الأدنى -->
-      <div class="col-md-2">
-        <label class="form-label small fw-bold mb-1">Min Price</label>
-        <input type="number" class="form-control border shadow-sm rounded-2" placeholder="" #minPrice>
-      </div>
-      <!-- السعر الأقصى -->
-      <div class="col-md-2">
-        <label class="form-label small fw-bold mb-1">Max Price</label>
-        <input type="number" class="form-control border shadow-sm rounded-2" placeholder="" #maxPrice>
-      </div>
-      <!-- زرار البحث -->
       <div class="col-md-3">
-        <button class="btn btn-danger w-100 fw-bold shadow-sm rounded-2 py-2" 
-                (click)="onSearch(city.value, minPrice.value, maxPrice.value , searchTerm.value)">
-          <i class="bi bi-search me-2"></i> Find Properties
+        <label class="form-label x-small-bold mb-1 text-dark">Min Area (m²)</label>
+        <input type="text" class="form-control form-control-sm border shadow-sm rounded-2" 
+               (input)="formatInteger($event)" placeholder="e.g. 150" #area>
+      </div>
+    </div>
+
+    <!-- السطر الثاني: التفاصيل الفنية -->
+    <div class="row g-2 mb-2">
+      <div class="col-md-2">
+        <label class="form-label x-small-bold mb-1 text-dark">Property Code</label>
+        <input type="text" class="form-control form-control-sm border shadow-sm rounded-2" placeholder="AR#000" #code>
+      </div>
+      <div class="col-md-5">
+        <div class="row g-1">
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Min Price</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="Min" #minPrice>
+          </div>
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Max Price</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="Max" #maxPrice>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <div class="row g-1">
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Min Floor</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="Min" #minFloor>
+          </div>
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Max Floor</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="Max" #maxFloor>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- السطر الثالث: الـ Ranges مع عناوين Min/Max منفصلة -->
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <div class="row g-1">
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Min Rooms</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="Min" #minRooms>
+          </div>
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Max Rooms</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="Max" #maxRooms>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="row g-1">
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Min Baths</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="Min" #minBathrooms>
+          </div>
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Max Baths</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="Max" #maxBathrooms>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-danger btn-sm w-100 fw-bold shadow py-2 rounded-3" 
+                (click)="onSearch({
+                  searchTerm: searchTerm.value, city: city.value, area: area.value,
+                  code: code.value, minPrice: minPrice.value, maxPrice: maxPrice.value, 
+                  minFloor: minFloor.value, maxFloor: maxFloor.value,
+                  minRooms: minRooms.value, maxRooms: maxRooms.value, 
+                  minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value
+                })">
+          <i class="bi bi-search me-1"></i> Search Properties
         </button>
       </div>
     </div>
+    </div>
   </div>
-</div>
-
 
 
   <!-- عرض العقارات باستخدام الـ Signal -->
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+  <!-- شبكة عرض العقارات -->
+<div class="row g-4 mt-2">
+    
     @if (isLoading()) {
-    <div class="text-center w-100 py-5">
-      <div class="spinner-border text-danger" role="status"></div>
-      <p class="mt-2 text-muted">Searching for properties...</p>
-    </div>
-  } 
-  @else {
-    <!-- لو خلص تحميل، يلف على العقارات -->
-    @for (prop of properties(); track prop.id) {
-      <div class="col">
-        <app-property-card [property]="prop"></app-property-card>
+      <div class="col-12 text-center py-5">
+        <div class="spinner-border text-danger" style="width: 3rem; height: 3rem;" role="status"></div>
+        <p class="mt-3 text-muted fw-bold">Searching...</p>
       </div>
     } 
-    <!-- لو خلص تحميل واللستة فاضية ومافيش رسالة خطأ، يظهر مفيش نتايج -->
-    @empty {
-      @if (!message()) {
-        <div class="text-center w-100 py-5">
-           <i class="bi bi-search fs-1 text-muted"></i>
-           <p class="mt-2 text-muted">No properties found with this search.</p>
+    @else if (properties().length > 0) {
+      @for (prop of properties(); track prop.id) {
+        <div class="col-md-6 col-lg-4">
+          <app-property-card [property]="prop"></app-property-card>
         </div>
       }
+    } 
+    @else {
+      <!-- حالة عدم وجود نتائج: تم تكبيرها وتوسيطها -->
+      <div class="col-12 d-flex justify-content-center align-items-center" style="min-height: 400px;">
+        <div class="no-results-card text-center shadow-lg rounded-5 bg-white border-0 animate__animated animate__zoomIn">
+          <div class="icon-circle-large bg-danger-subtle text-danger mx-auto mb-4 shadow-sm">
+            <i class="bi bi-house-x-fill" style="font-size: 3.5rem;"></i>
+          </div>
+          
+          <h2 class="fw-bold text-dark mb-3">No Results Found</h2>
+          
+          <p class="text-muted mb-5 px-md-5 fs-5">
+            {{ message() || "We couldn't find any properties matching your search. Please try broading your filters or search terms." }}
+          </p>
+
+          <button class="btn btn-danger btn-lg rounded-pill px-5 py-3 fw-bold shadow transition-all" (click)="clearFilters()">
+            <i class="bi bi-arrow-counterclockwise me-2"></i> Reset All Filters
+          </button>
+        </div>
+      </div>
     }
-  }
   </div>
 </div>

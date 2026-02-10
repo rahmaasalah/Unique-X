@@ -38,11 +38,24 @@
       <div class="bg-white p-4 rounded-4 shadow-sm mb-4 border border-light">
         
         <!-- العنوان (Title) - الآن واضح وتحت الصور بمسافة مريحة -->
-        <h2 class="fw-bold text-dark mb-2">{{ prop.title }}</h2>
+        <h2 class="fw-bold text-dark mb-2">
+            {{ prop.title }} 
+             @if (prop.projectName) {
+    <h4 class="text-danger fw-bold mb-3 d-flex align-items-center animate__animated animate__fadeIn">
+      <i class="bi bi-building-fill-check me-2"></i>
+      <span>{{ prop.projectName }}</span>
+    </h4>
+  } 
+      @if (prop.code) { <h6 class="text-dark fs-6 fw-normal ms-2">{{ prop.code }}</h6> }
+        </h2>
         
-        <div class="d-flex align-items-center gap-3 mb-3">
-            <h3 class="fw-bold text-danger mb-0">EGP {{ prop.price | number }}</h3>
-            <span class="badge bg-danger rounded-pill px-3 py-2 fw-bold small">{{ prop.listingType }}</span>
+         <div class="d-flex align-items-center gap-3 mb-3">
+            @if (prop.listingType === 'Rent') {
+                <h3 class="fw-bold text-danger mb-0">EGP {{ prop.monthlyRent | number }} <small class="fs-6 text-muted fw-normal">/ month</small></h3>
+            } @else {
+                <h3 class="fw-bold text-danger mb-0">EGP {{ prop.price | number }}</h3>
+            }
+            <span class="badge bg-danger rounded-pill px-3 py-2 fw-bold small shadow-sm">{{ prop.listingType }}</span>
         </div>
 
         <p class="text-muted small mb-4">
@@ -86,11 +99,11 @@
 </div>
 
       <!-- كارت المواصفات الفنية -->
-      <div class="bg-white p-4 rounded-4 shadow-sm border border-light">
+      <div class="bg-white p-4 rounded-4 shadow-sm border border-light mb-4">
         <h5 class="fw-bold mb-4 border-bottom pb-2">Property Specifications</h5>
-        <div class="row g-4 mb-4">
-          <div class="col-md-6">
-            <ul class="list-unstyled">
+        <div class="row g-4">
+          <div class="col-md-6 border-end-md">
+            <ul class="list-unstyled mb-0">
         @if (prop.distanceFromLandmark) {
           <li class="mb-3 small"><i class="bi bi-geo text-danger me-2"></i> <strong>Landmark:</strong> {{ prop.distanceFromLandmark }}</li>
         }
@@ -98,6 +111,9 @@
         <!-- إظهار الدور فقط لو أكبر من 0 -->
         @if (prop.floor > 0) {
           <li class="mb-3 small"><i class="bi bi-layers text-danger me-2"></i> <strong>Floor:</strong> {{ prop.floor }} @if(prop.totalFloors > 0) { of {{ prop.totalFloors }} }</li>
+        }
+        @if (prop.totalFloors > 0) {
+          <li class="mb-3 small"><i class="bi bi-layers text-danger me-2"></i> <strong>Total Floors:</strong> {{ prop.totalFloors }}</li>
         }
 
         @if (prop.apartmentsPerFloor > 0) {
@@ -112,7 +128,7 @@
 
     <div class="col-md-6">
       <ul class="list-unstyled">
-        @if (prop.view && prop.view !== 'string') {
+       @if (prop.view && prop.view !== 'string') {
           <li class="mb-3 small"><i class="bi bi-eye text-danger me-2"></i> <strong>View:</strong> {{ prop.view }}</li>
         }
 
@@ -124,95 +140,150 @@
            <li class="mb-3 small"><i class="bi bi-grid-3x3-gap text-danger me-2"></i> <strong>Reception:</strong> {{ prop.receptionPieces }} Pieces</li>
         }
 
-        <li class="mb-3 small"><i class="bi bi-cash-stack text-danger me-2"></i> <strong>Commission:</strong> 2.5%</li>
+        <li class="mb-3 small"><i class="bi bi-paint-bucket text-danger me-2"></i> <strong>Finishing:</strong> {{ prop.finishing }}</li>
+              
+              @if (prop.listingType !== 'Rent') {
+                <li class="mb-3 small"><i class="bi bi-cash-stack text-danger me-2"></i> <strong>Commission:</strong> 2.5%</li>
+              }
       </ul>
           </div>
         </div>
 
-        <div class="mt-4 p-3 rounded-3 bg-danger-subtle border border-danger border-opacity-10">
-  <div class="d-flex align-items-center">
-    <i class="bi bi-wallet2 fs-4 text-danger me-3"></i>
-    <div>
-      <h6 class="mb-0 fw-bold">Payment Method: {{ prop.paymentMethod }}</h6>
-      
-      <!-- إظهار سنوات التقسيط فقط لو المختارة Installment والقيمة أكبر من 0 -->
-      @if (prop.paymentMethod === 'Installment') {
-        <small class="text-danger fw-bold">Flexible plans up to {{ prop.installmentYears }} years available</small>
-      } @else if (prop.paymentMethod === 'Cash') {
-        <small class="text-muted">Direct cash payment required for this unit</small>
-      }
+         @if (prop.listingType === 'Primary' || prop.listingType === 'ResaleProject') {
+            <div class="alert alert-light border mt-2 py-3 small d-flex align-items-center shadow-sm">
+                <i class="bi bi-truck text-danger me-3 fs-4"></i>
+                <div>
+                    <span class="d-block fw-bold text-dark">Handover Status: {{ prop.deliveryStatus }}</span>
+                    @if (prop.deliveryYear) { <small class="d-block text-danger fw-bold">Expected completion by {{ prop.deliveryYear }}</small> }
+                </div>
+            </div>
+        }
+
+        <div class="mt-4 p-3 rounded-3 bg-danger-subtle border border-danger border-opacity-10 shadow-sm">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-wallet2 fs-4 text-danger me-3"></i>
+            <div>
+              @if (prop.listingType === 'Rent') {
+                <h6 class="mb-0 fw-bold">Rental Terms</h6>
+                @if (prop.securityDeposit > 0) { <small class="text-danger fw-bold">Security Deposit: EGP {{ prop.securityDeposit | number }}</small> }
+              } @else {
+                <h6 class="mb-0 fw-bold">Payment Plan: {{ prop.paymentMethod }}</h6>
+                @if (prop.paymentMethod === 'Installment') {
+                   <div class="mt-1">
+                      <small class="d-block text-dark"><strong>Installment Years:</strong> {{ prop.installmentYears }} Years</small>
+                      @if (prop.downPayment > 0) {
+                        <small class="d-block text-danger fw-bold">Down Payment: EGP {{ prop.downPayment | number }}</small>
+                      }
+                      @if (prop.quarterInstallment > 0) {
+                        <small class="d-block text-danger fw-bold">Quarterly Installment: EGP {{ prop.quarterInstallment | number }}</small>
+                      }
+                   </div>
+                } @else {
+                    <small class="text-muted">Full cash payment </small>
+                }
+              }
+            </div>
+          </div>
+        </div>
+
+<br>
+        <!-- قسم المميزات والخدمات (Key Features & Amenities) -->
+<div class="mt-5">
+  <h6 class="fw-bold small text-muted mb-4 text-uppercase" style="letter-spacing: 1px;">Key Features & Amenities</h6>
+  
+  <div class="row g-0"> <!-- صف لتقسيم المساحة إلى عمودين -->
+    
+    <!-- العمود الأول: يحتوي على أول 5 عناصر (جهة اليسار) -->
+    <div class="col-md-6">
+      <ul class="list-unstyled mb-0">
+        @if(prop.hasMasterRoom) { 
+          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
+            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+            <span class="text-dark fw-medium">Master Bedroom</span>
+          </li> 
+        }
+        @if(prop.hasHotelEntrance) { 
+          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
+            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+            <span class="text-dark fw-medium">Hotel Entrance</span>
+          </li> 
+        }
+        @if(prop.hasSecurity) { 
+          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
+            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+            <span class="text-dark fw-medium">24/7 Security</span>
+          </li> 
+        }
+        @if(prop.hasParking) { 
+          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
+            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+            <span class="text-dark fw-medium">Parking Slot Available</span>
+          </li> 
+        }
+        @if(prop.hasBalcony) { 
+          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
+            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+            <span class="text-dark fw-medium">Spacious Balcony</span>
+          </li> 
+        }
+      </ul>
+    </div>
+
+    <!-- العمود الثاني: يحتوي على الـ 4 عناصر المتبقية (جهة اليمين) -->
+    <div class="col-md-6">
+      <ul class="list-unstyled mb-0">
+        @if(prop.isFirstOwner) { 
+          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInRight">
+            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+            <span class="text-dark fw-medium">First Owner</span>
+          </li> 
+        }
+        @if(prop.hasLandShare) { 
+          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInRight">
+            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+            <span class="text-dark fw-medium">Ownership includes Land Share</span>
+          </li> 
+        }
+        @if(prop.isLegalReconciled) { 
+          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInRight">
+            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+            <span class="text-dark fw-medium">Legal Reconciliation Available</span>
+          </li> 
+        }
+        @if(prop.isLicensed) { 
+          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInRight">
+            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+            <span class="text-dark fw-medium">Licensed Residential Unit</span>
+          </li> 
+        }
+      </ul>
     </div>
   </div>
 </div>
 
-<br>
-        <div class="mt-4">
-  <h6 class="fw-bold small text-muted mb-3 text-uppercase" style="letter-spacing: 1px;">Key Features</h6>
-  
-  <div class="d-flex flex-column gap-3">
-    
-    @if(prop.hasHotelEntrance) { 
-      <div class="d-flex align-items-center">
-        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-        <span class="text-dark fw-medium">Hotel Entrance</span>
-      </div>
-    }
-    @if(prop.hasMasterRoom) { 
-      <div class="d-flex align-items-center">
-        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-        <span class="text-dark fw-medium">Master Room Available</span>
-      </div>
-    }
-    @if(prop.hasLandShare) { 
-  <div class="d-flex align-items-center">
-    <i class="bi bi-file-earmark-check text-danger fs-5 me-2"></i>
-    <span class="text-dark fw-medium">Ownership includes Land Share</span>
+<!-- قسم المرافق (Utilities) المحدث -->
+@if(prop.hasElectricityMeter || prop.hasWaterMeter || prop.hasGasMeter) {
+  <div class="border-top pt-4 mt-4">
+    <h6 class="fw-bold small text-muted mb-3 text-uppercase" style="letter-spacing: 1px;">Utilities Connected</h6>
+    <div class="d-flex gap-2 flex-wrap">
+      @if(prop.hasElectricityMeter) { 
+        <span class="badge bg-light text-dark border px-3 py-2 small fw-normal shadow-sm">
+          <i class="bi bi-lightning-charge text-warning me-1"></i> Electricity Meter
+        </span> 
+      }
+      @if(prop.hasWaterMeter) { 
+        <span class="badge bg-light text-dark border px-3 py-2 small fw-normal shadow-sm">
+          <i class="bi bi-droplet text-primary me-1"></i> Water Meter
+        </span> 
+      }
+      @if(prop.hasGasMeter) { 
+        <span class="badge bg-light text-dark border px-3 py-2 small fw-normal shadow-sm">
+          <i class="bi bi-fire text-danger me-1"></i> Natural Gas
+        </span> 
+      }
+    </div>
   </div>
 }
-
-    @if(prop.hasSecurity) { 
-      <div class="d-flex align-items-center">
-        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-        <span class="text-dark fw-medium">24/7 Security Service</span>
-      </div>
-    }
-
-    @if(prop.isFirstOwner) { 
-      <div class="d-flex align-items-center">
-        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-        <span class="text-dark fw-medium">First Owner Property</span>
-      </div>
-    }
-
-    @if(prop.hasParking) { 
-      <div class="d-flex align-items-center">
-        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-        <span class="text-dark fw-medium">Parking Slot Available</span>
-      </div>
-    }
-
-    @if(prop.hasBalcony) { 
-      <div class="d-flex align-items-center">
-        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-        <span class="text-dark fw-medium">Balcony Available</span>
-      </div>
-    }
-
-    @if(prop.isFurnished) { 
-      <div class="d-flex align-items-center">
-        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-        <span class="text-dark fw-medium">Fully Furnished Unit</span>
-      </div>
-    }
-    @if(prop.isLegalReconciled) { 
-      <div class="d-flex align-items-center">
-        <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-        <span class="text-dark fw-medium">Legal Reconciled</span>
-      </div>
-    }
-
-  </div>
-</div>
       </div>
     </div>
 

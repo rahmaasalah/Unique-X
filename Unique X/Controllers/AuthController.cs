@@ -80,7 +80,15 @@ namespace Unique_X.Controllers
                 ProfileImageUrl = user.ProfileImageUrl,
                 // حساب الإحصائيات سريعاً
                 TotalProperties = _context.Properties.Count(p => p.BrokerId == userId),
-                TotalWishlist = _context.Wishlists.Count(w => w.UserId == userId)
+                TotalWishlist = _context.Wishlists.Count(w => w.UserId == userId),
+                Properties = _context.Properties
+            .Where(p => p.BrokerId == userId)
+            .Select(p => new UserPropertyInfo
+            {
+                Id = p.Id,
+                Title = p.Title,
+                PropertyType = p.PropertyType.ToString()
+            }).ToList()
             };
 
             return Ok(model);

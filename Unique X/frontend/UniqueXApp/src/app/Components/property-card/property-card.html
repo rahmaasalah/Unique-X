@@ -7,9 +7,22 @@
          class="card-img-top object-fit-cover" 
          style="height: 200px;" alt="Property Image">
     
-    <span class="badge bg-danger position-absolute top-0 start-0 m-3 rounded-pill px-3 py-2">
-      {{ property.listingType }}
-    </span>
+    <div class="position-absolute top-0 start-0 m-3 d-flex flex-column gap-1" style="z-index: 5;">
+      <!-- نوع المعاملة -->
+      <span class="badge bg-danger rounded-pill px-3 py-2 shadow-sm">
+        {{ property.listingType }}
+      </span>
+
+      <!-- حالة التسليم (Ready / Off) -->
+      <span class="badge rounded-pill px-3 py-1 shadow-sm fw-bold text-uppercase"
+            [class.bg-danger]="property.deliveryStatus === 'Ready'"
+            [class.bg-secondary]="property.deliveryStatus !== 'Ready'"
+            style="font-size: 0.65rem; width: fit-content;">
+        <i class="bi" [class.bi-check-circle]="property.deliveryStatus === 'Ready'" 
+                     [class.bi-clock]="property.deliveryStatus !== 'Ready'"></i>
+        {{ property.deliveryStatus === 'Ready' ? 'Ready' : 'Off' }}
+      </span>
+    </div>
 
     @if (authService.loggedIn() && authService.getUserType() === 0) {
   <button class="btn btn-light rounded-circle position-absolute top-0 end-0 m-2 shadow-sm border-0 wishlist-btn"
@@ -36,6 +49,11 @@
         </span>
     </div>
     <h4 class="fw-bold text-dark mb-1"> {{ property.title }}</h4>
+    @if (property.projectName) {
+      <p class="text-danger fw-bold small mb-1 animate__animated animate__fadeIn">
+        <i class="bi bi-building-fill-check me-1"></i> {{ property.projectName }}
+      </p>
+    }
     <!-- السعر (بالخط العريض - Signature Style) -->
     <h6 class=" text-dark mb-1">EGP {{ property.price | number }}</h6>
     <!-- العنوان -->
@@ -49,6 +67,16 @@
       <span><i class="bi bi-door-open me-1"></i> {{ property.rooms }} Beds</span>
       <span><i class="bi bi-droplet me-1"></i> {{ property.bathrooms }} Baths</span>
       <span><i class="bi bi-aspect-ratio me-1"></i> {{ property.area }} m²</span>
+    </div>
+    <br>
+    <br>
+    <div class="mt-auto">
+      <a [href]="getWhatsAppLink(property.brokerPhone, property.code)" 
+         target="_blank"
+         (click)="$event.stopPropagation()"
+         class="btn btn-success w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center">
+        <i class="bi bi-whatsapp me-2 fs-5"></i> WhatsApp
+      </a>
     </div>
   </div>
 </div>

@@ -30,45 +30,60 @@ namespace Unique_X.Services.Implementation
                 Area = dto.Area ?? 0,
                 Rooms = dto.Rooms ?? 0,
                 Bathrooms = dto.Bathrooms ?? 0,
-                City = (City)(dto.City ?? 0),
+                Code = dto.Code ?? string.Empty,
+
+                // التصنيفات (Enums)
+                City = (City)(dto.City ?? 1),
                 ListingType = (ListingType)(dto.ListingType ?? 0),
                 PropertyType = (PropertyType)(dto.PropertyType ?? 0),
+                Finishing = dto.Finishing ?? FinishingType.FullyFinished,
+                DeliveryStatus = dto.DeliveryStatus ?? DeliveryStatus.Ready,
+
+                // الموقع
+                Region = dto.Region ?? string.Empty,
+                Address = dto.Address ?? string.Empty,
                 DistanceFromLandmark = dto.DistanceFromLandmark,
                 View = dto.View,
-                BuildYear = dto.BuildYear ?? 2015,
+                ProjectName = dto.ProjectName,
+
+                // تفاصيل البناء
                 Floor = dto.Floor ?? 0,
                 TotalFloors = dto.TotalFloors ?? 0,
                 ApartmentsPerFloor = dto.ApartmentsPerFloor ?? 0,
                 ElevatorsCount = dto.ElevatorsCount ?? 0,
+                BuildYear = dto.BuildYear ?? DateTime.UtcNow.Year,
                 ReceptionPieces = dto.ReceptionPieces ?? 0,
-                PaymentMethod = dto.PaymentMethod ?? "Cash", 
-                InstallmentYears = dto.InstallmentYears ?? 0,
-                HasBalcony = dto.HasBalcony ?? false,
-                IsFurnished = dto.IsFurnished ?? false,
-                QuarterInstallment = dto.QuarterInstallment ?? 0,
-                DownPayment = dto.DownPayment ?? 0,
-                MonthlyRent = dto.MonthlyRent ?? 0,
-                SecurityDeposit = dto.SecurityDeposit ?? 0,
+                DeliveryYear = dto.DeliveryYear,
+
+                // البيانات المالية
+                PaymentMethod = dto.PaymentMethod ?? "Cash",
+                InstallmentYears = dto.InstallmentYears,
+                DownPayment = dto.DownPayment,
+                QuarterInstallment = dto.QuarterInstallment,
+                MonthlyRent = dto.MonthlyRent,
+                SecurityDeposit = dto.SecurityDeposit,
+                CommissionPercentage = 2.5m, // قيمة ثابتة أو يمكن أخذها من dto.CommissionPercentage
+
+                // الحالات والخدمات (Booleans)
                 HasMasterRoom = dto.HasMasterRoom ?? false,
                 HasHotelEntrance = dto.HasHotelEntrance ?? false,
                 HasSecurity = dto.HasSecurity ?? false,
+                HasParking = dto.HasParking ?? false,
+                HasBalcony = dto.HasBalcony ?? false,
+                IsFurnished = dto.IsFurnished ?? false,
                 IsFirstOwner = dto.IsFirstOwner ?? false,
                 IsLegalReconciled = dto.IsLegalReconciled ?? false,
-                HasParking = dto.HasParking ?? false,
-                CommissionPercentage = 2.5m, 
-                Region = dto.Region ?? string.Empty,
-                Address = dto.Address ?? string.Empty,
+                IsLicensed = dto.IsLicensed ?? false,
                 HasLandShare = dto.HasLandShare ?? false,
+                HasWaterMeter = dto.HasWaterMeter ?? false,
                 HasElectricityMeter = dto.HasElectricityMeter ?? false,
                 HasGasMeter = dto.HasGasMeter ?? false,
-                HasWaterMeter = dto.HasWaterMeter ?? false,
-                IsLicensed = dto.IsLicensed ?? false,
-                Code = dto.Code ?? string.Empty,
-                
+
                 BrokerId = brokerId,
                 Photos = new List<Photo>()
             };
 
+            // معالجة رفع الصور
             if (dto.Photos != null && dto.Photos.Count > 0)
             {
                 for (int i = 0; i < dto.Photos.Count; i++)
@@ -85,6 +100,7 @@ namespace Unique_X.Services.Implementation
                     }
                 }
             }
+
 
             await _context.Properties.AddAsync(property);
             await _context.SaveChangesAsync();
@@ -124,9 +140,37 @@ namespace Unique_X.Services.Implementation
 
             if (filter.PropertyType.HasValue)
                 query = query.Where(p => p.PropertyType == (PropertyType)filter.PropertyType.Value);
+            
+
+            // فلترة الكود (Exact match)
+            if (!string.IsNullOrEmpty(filter.Code))
+                query = query.Where(p => p.Code == filter.Code);
+
+            // فلترة سنة البناء (اكبر من او يساوي)
+            if (filter.BuildYear.HasValue)
+                query = query.Where(p => p.BuildYear >= filter.BuildYear.Value);
+
+            // فلترة المساحة (اكبر من او يساوي)
+            if (filter.Area.HasValue)
+                query = query.Where(p => p.Area >= filter.Area.Value);
+
+            // فلترة الغرف (Range)
+            if (filter.MinRooms.HasValue) query = query.Where(p => p.Rooms >= filter.MinRooms.Value);
+            if (filter.MaxRooms.HasValue) query = query.Where(p => p.Rooms <= filter.MaxRooms.Value);
+
+            // فلترة الحمامات (Range)
+            if (filter.MinBathrooms.HasValue) query = query.Where(p => p.Bathrooms >= filter.MinBathrooms.Value);
+            if (filter.MaxBathrooms.HasValue) query = query.Where(p => p.Bathrooms <= filter.MaxBathrooms.Value);
+
+            // فلترة الدور (Range)
+            if (filter.MinFloor.HasValue) query = query.Where(p => p.Floor >= filter.MinFloor.Value);
+            if (filter.MaxFloor.HasValue) query = query.Where(p => p.Floor <= filter.MaxFloor.Value);
 
             if (!string.IsNullOrEmpty(filter.BrokerId))
                 query = query.Where(p => p.BrokerId == filter.BrokerId);
+
+            if (!string.IsNullOrEmpty(filter.ProjectName))
+                query = query.Where(p => p.ProjectName != null && p.ProjectName.ToLower().Contains(filter.ProjectName.ToLower()));
 
             if (filter.ListingType.HasValue)
             {
@@ -142,7 +186,8 @@ namespace Unique_X.Services.Implementation
                 query = query.Where(p =>
                     p.Title.ToLower().Contains(search) ||
                     p.Region.ToLower().Contains(search) ||
-                    p.PropertyType.ToString().ToLower().Contains(search)
+                    p.PropertyType.ToString().ToLower().Contains(search) ||
+                    (p.ProjectName != null && p.ProjectName.ToLower().Contains(search))
                 );
             }
 
@@ -203,49 +248,37 @@ namespace Unique_X.Services.Implementation
         {
             var property = await _context.Properties
                 .Include(p => p.Photos)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (property == null || property.BrokerId != brokerId)
-                return null;
-
+                .Include(p => p.Broker)
+                .FirstOrDefaultAsync(p => p.Id == id && p.BrokerId == brokerId);
            
 
             if (property == null || property.BrokerId != brokerId)
                 return null;
 
 
-            property.Title = !string.IsNullOrEmpty(dto.Title) && dto.Title != "string"
-                                     ? dto.Title : property.Title;
-
-            property.Description = !string.IsNullOrEmpty(dto.Description) && dto.Description != "string"
-                                           ? dto.Description : property.Description;
-
-            if (dto.Price.HasValue && dto.Price > 0)
-                property.Price = dto.Price.Value;
-
-            if (dto.Area.HasValue && dto.Area > 0)
-                property.Area = dto.Area.Value;
-
-            if (dto.Rooms.HasValue)
-                property.Rooms = dto.Rooms.Value;
-
-            if (dto.Bathrooms.HasValue)
-                property.Bathrooms = dto.Bathrooms.Value;
-
-            if (dto.City.HasValue)
-                property.City = (City)dto.City.Value;
-
-            if (dto.ListingType.HasValue)
-                property.ListingType = (ListingType)dto.ListingType.Value;
-
-            if (dto.PropertyType.HasValue)
-                property.PropertyType = (PropertyType)dto.PropertyType.Value;
-
+            if (!string.IsNullOrEmpty(dto.Title) && dto.Title != "string") property.Title = dto.Title;
+            if (!string.IsNullOrEmpty(dto.Description) && dto.Description != "string") property.Description = dto.Description;
+            if (!string.IsNullOrEmpty(dto.Code) && dto.Code != "string") property.Code = dto.Code;
+            if (!string.IsNullOrEmpty(dto.Region) && dto.Region != "string") property.Region = dto.Region;
+            if (!string.IsNullOrEmpty(dto.Address) && dto.Address != "string") property.Address = dto.Address;
+            if (!string.IsNullOrEmpty(dto.View) && dto.View != "string") property.View = dto.View;
             if (!string.IsNullOrEmpty(dto.DistanceFromLandmark)) property.DistanceFromLandmark = dto.DistanceFromLandmark;
-            if (!string.IsNullOrEmpty(dto.View)) property.View = dto.View;
             if (!string.IsNullOrEmpty(dto.PaymentMethod)) property.PaymentMethod = dto.PaymentMethod;
+            if (!string.IsNullOrEmpty(dto.ProjectName) && dto.ProjectName != "string") property.ProjectName = dto.ProjectName;
 
-            // أرقام (باستخدام HasValue لأنها Nullable في الـ DTO)
+            // تحديث الأرقام والـ Enums (فقط إذا كان لها قيمة)
+            if (dto.Price.HasValue && dto.Price > 0) property.Price = dto.Price.Value;
+            if (dto.Area.HasValue && dto.Area > 0) property.Area = dto.Area.Value;
+            if (dto.Rooms.HasValue) property.Rooms = dto.Rooms.Value;
+            if (dto.Bathrooms.HasValue) property.Bathrooms = dto.Bathrooms.Value;
+            if (dto.City.HasValue) property.City = (City)dto.City.Value;
+            if (dto.ListingType.HasValue) property.ListingType = (ListingType)dto.ListingType.Value;
+            if (dto.PropertyType.HasValue) property.PropertyType = (PropertyType)dto.PropertyType.Value;
+            if (dto.Finishing.HasValue) property.Finishing = dto.Finishing.Value;
+            if (dto.DeliveryStatus.HasValue) property.DeliveryStatus = dto.DeliveryStatus.Value;
+            if (dto.DeliveryYear.HasValue) property.DeliveryYear = dto.DeliveryYear.Value;
+
+            // تحديث تفاصيل البناء
             if (dto.BuildYear.HasValue) property.BuildYear = dto.BuildYear.Value;
             if (dto.Floor.HasValue) property.Floor = dto.Floor.Value;
             if (dto.TotalFloors.HasValue) property.TotalFloors = dto.TotalFloors.Value;
@@ -253,14 +286,20 @@ namespace Unique_X.Services.Implementation
             if (dto.ElevatorsCount.HasValue) property.ElevatorsCount = dto.ElevatorsCount.Value;
             if (dto.ReceptionPieces.HasValue) property.ReceptionPieces = dto.ReceptionPieces.Value;
 
-            // حالات (Booleans)
+            // تحديث البيانات المالية (Nullable Decimals)
+            if (dto.MonthlyRent.HasValue) property.MonthlyRent = dto.MonthlyRent.Value;
+            if (dto.DownPayment.HasValue) property.DownPayment = dto.DownPayment.Value;
+            if (dto.QuarterInstallment.HasValue) property.QuarterInstallment = dto.QuarterInstallment.Value;
+            if (dto.SecurityDeposit.HasValue) property.SecurityDeposit = dto.SecurityDeposit.Value;
+            if (dto.InstallmentYears.HasValue) property.InstallmentYears = dto.InstallmentYears.Value;
+
+            // تحديث الـ Booleans
             if (dto.HasMasterRoom.HasValue) property.HasMasterRoom = dto.HasMasterRoom.Value;
             if (dto.HasHotelEntrance.HasValue) property.HasHotelEntrance = dto.HasHotelEntrance.Value;
             if (dto.HasSecurity.HasValue) property.HasSecurity = dto.HasSecurity.Value;
             if (dto.IsFirstOwner.HasValue) property.IsFirstOwner = dto.IsFirstOwner.Value;
             if (dto.IsLegalReconciled.HasValue) property.IsLegalReconciled = dto.IsLegalReconciled.Value;
             if (dto.HasParking.HasValue) property.HasParking = dto.HasParking.Value;
-            if (dto.InstallmentYears.HasValue) property.InstallmentYears = dto.InstallmentYears.Value;
             if (dto.HasBalcony.HasValue) property.HasBalcony = dto.HasBalcony.Value;
             if (dto.IsFurnished.HasValue) property.IsFurnished = dto.IsFurnished.Value;
             if (dto.HasLandShare.HasValue) property.HasLandShare = dto.HasLandShare.Value;
@@ -268,21 +307,8 @@ namespace Unique_X.Services.Implementation
             if (dto.HasGasMeter.HasValue) property.HasGasMeter = dto.HasGasMeter.Value;
             if (dto.HasWaterMeter.HasValue) property.HasWaterMeter = dto.HasWaterMeter.Value;
             if (dto.IsLicensed.HasValue) property.IsLicensed = dto.IsLicensed.Value;
-            if (dto.MonthlyRent.HasValue) property.MonthlyRent = dto.MonthlyRent.Value;
-            if (dto.DownPayment.HasValue) property.DownPayment = dto.DownPayment.Value;
-            if (dto.QuarterInstallment.HasValue) property.QuarterInstallment = dto.QuarterInstallment.Value;
-            if (dto.SecurityDeposit.HasValue) property.SecurityDeposit = dto.SecurityDeposit.Value;
 
-
-
-            property.Region = !string.IsNullOrEmpty(dto.Region) && dto.Region != "string"
-                                      ? dto.Region : property.Region;
-
-            property.Address = !string.IsNullOrEmpty(dto.Address) && dto.Address != "string"
-                                       ? dto.Address : property.Address;
-
-
-
+            // معالجة الصور الجديدة إذا رُفعت
             if (dto.Photos != null && dto.Photos.Count > 0)
             {
                 for (int i = 0; i < dto.Photos.Count; i++)
@@ -294,7 +320,6 @@ namespace Unique_X.Services.Implementation
                         {
                             Url = result.SecureUrl.AbsoluteUri,
                             PublicId = result.PublicId,
-                            // السطر السحري: لو الترتيب الحالي هو نفس اللي البروكر اختاره، خليها IsMain
                             IsMain = (i == dto.MainPhotoIndex)
                         });
                     }
@@ -353,20 +378,41 @@ namespace Unique_X.Services.Implementation
                 Area = property.Area,
                 Rooms = property.Rooms,
                 Bathrooms = property.Bathrooms,
+                Code = property.Code,
+
+                // تحويل الـ Enums لنصوص مفهومة للـ UI
                 City = property.City.ToString(),
                 ListingType = property.ListingType.ToString(),
                 PropertyType = property.PropertyType.ToString(),
+                Finishing = property.Finishing,
+                DeliveryStatus = property.DeliveryStatus,
                 Region = property.Region,
+                Address = property.Address,
                 IsSold = property.IsSold,
                 DistanceFromLandmark = property.DistanceFromLandmark,
-                HasMasterRoom = property.HasMasterRoom,
-                ReceptionPieces = property.ReceptionPieces,
                 View = property.View,
+                ProjectName = property.ProjectName,
+
+                // البيانات الفنية
                 Floor = property.Floor,
                 TotalFloors = property.TotalFloors,
                 ApartmentsPerFloor = property.ApartmentsPerFloor,
                 ElevatorsCount = property.ElevatorsCount,
                 BuildYear = property.BuildYear,
+                ReceptionPieces = property.ReceptionPieces,
+                DeliveryYear = property.DeliveryYear,
+
+                // البيانات المالية والخدمات
+                PaymentMethod = property.PaymentMethod,
+                InstallmentYears = property.InstallmentYears,
+                DownPayment = property.DownPayment,
+                QuarterInstallment = property.QuarterInstallment,
+                SecurityDeposit = property.SecurityDeposit,
+                MonthlyRent = property.MonthlyRent,
+                CommissionPercentage = property.CommissionPercentage,
+
+                // المميزات (Booleans)
+                HasMasterRoom = property.HasMasterRoom,
                 HasHotelEntrance = property.HasHotelEntrance,
                 HasSecurity = property.HasSecurity,
                 IsFirstOwner = property.IsFirstOwner,
@@ -374,28 +420,23 @@ namespace Unique_X.Services.Implementation
                 HasParking = property.HasParking,
                 HasBalcony = property.HasBalcony,
                 IsFurnished = property.IsFurnished,
-                PaymentMethod = property.PaymentMethod,
-                InstallmentYears = property.InstallmentYears,
-                CommissionPercentage = property.CommissionPercentage,
-                Address = property.Address,
                 HasWaterMeter = property.HasWaterMeter,
                 HasElectricityMeter = property.HasElectricityMeter,
                 HasGasMeter = property.HasGasMeter,
                 HasLandShare = property.HasLandShare,
                 IsLicensed = property.IsLicensed,
-                MonthlyRent = property.MonthlyRent,
-                DownPayment = property.DownPayment,
-                QuarterInstallment = property.QuarterInstallment,
-                SecurityDeposit = property.SecurityDeposit,
+
                 CreatedAt = property.CreatedAt,
-                Photos = property.Photos.Select(p => new PhotoResponseDto
+                BrokerId = property.BrokerId,
+                BrokerName = property.Broker != null ? $"{property.Broker.FirstName} {property.Broker.LastName}" : "System Agent",
+                BrokerPhone = property.Broker?.PhoneNumber ?? "N/A",
+
+                Photos = property.Photos?.Select(p => new PhotoResponseDto
                 {
                     Id = p.Id,
                     Url = p.Url,
                     IsMain = p.IsMain
-                }).ToList(),
-                BrokerName = property.Broker != null ? property.Broker.FirstName + " " + property.Broker.LastName : "Unknown",
-                BrokerPhone = property.Broker?.PhoneNumber ?? "N/A"
+                }).ToList() ?? new List<PhotoResponseDto>()
             };
         }
     }

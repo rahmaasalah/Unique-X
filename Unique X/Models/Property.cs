@@ -61,6 +61,7 @@ namespace Unique_X.Models
         public decimal? MonthlyRent { get; set; }
         public string? Code { get; set; } // AR#123
         public FinishingType Finishing { get; set; }
+        public string? ProjectName { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Foreign Key for Broker (User)

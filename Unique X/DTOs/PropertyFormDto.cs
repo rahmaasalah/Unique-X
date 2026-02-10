@@ -37,7 +37,7 @@ namespace Unique_X.DTOs
         public bool? IsFurnished { get; set; }
         public string? PaymentMethod { get; set; } // "Cash" or "Installment"
         public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
-        public DeliveryStatus DeliveryStatus { get; set; } = DeliveryStatus.Ready;
+        public DeliveryStatus? DeliveryStatus { get; set; }
         public int? DeliveryYear { get; set; } // Nullable لأنه يظهر فقط لو تحت الإنشاء
         public bool? IsLicensed { get; set; }        // هل الشقة مرخصة؟
         public bool? HasWaterMeter { get; set; }      // عداد مياه
@@ -50,7 +50,9 @@ namespace Unique_X.DTOs
         public decimal? MonthlyRent { get; set; }
 
         public string? Code { get; set; } // AR#123
-        public FinishingType Finishing { get; set; }
+        public FinishingType? Finishing { get; set; }
+        public string? ProjectName { get; set; }
+
         [Required]
         public int? City { get; set; }
         public string? Region { get; set; }
