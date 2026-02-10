@@ -77,12 +77,13 @@
 /* كلاس لإخفاء النص بعد سطرين */
 .description-collapsed {
     display: -webkit-box;
-    -webkit-line-clamp: 2; /* عدد الأسطر المطلوبة */
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    /* ضيفي دي كمان للتأكيد */
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
-
 .see-more-btn {
     color: white;
     font-weight: bold;
@@ -99,4 +100,20 @@
     color: white;
     background-color: red;
     
+}
+
+/* منع النصوص من الخروج عن الحدود (حل مشكلة الحروف الطويلة المتصلة) */
+.description-text {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word; /* يضمن كسر الكلمة لو كانت طويلة جداً */
+    hyphens: auto;
+    max-width: 100%;
+    display: block;
+}
+
+/* تنسيق زرار See full description */
+.btn-danger.btn-sm {
+    font-size: 0.75rem;
+    font-weight: 600;
 }

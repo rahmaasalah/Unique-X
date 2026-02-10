@@ -12,20 +12,16 @@ export class PropertyService {
   constructor(private http: HttpClient) { }
 
   getProperties(filters?: any): Observable<any> {
-    let params = new HttpParams();
-    if (filters) {
-      if (filters.city) params = params.append('city', filters.city);
-      if (filters.minPrice) params = params.append('minPrice', filters.minPrice);
-      if (filters.maxPrice) params = params.append('maxPrice', filters.maxPrice);
-      if (filters.listingType !== undefined && filters.listingType !== null) 
-        params = params.append('listingType', filters.listingType);
-      if (filters.brokerId) params = params.append('brokerId', filters.brokerId);
-
-       if (filters.searchTerm) params = params.append('searchTerm', filters.searchTerm);
-    }
-    
-    return this.http.get<any>(this.baseUrl, { params });
+  let params = new HttpParams();
+  if (filters) {
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+        params = params.append(key, filters[key]);
+      }
+    });
   }
+  return this.http.get<any>(this.baseUrl, { params });
+}
 
   getPropertyById(id: number): Observable<Property> {
     return this.http.get<Property>(`${this.baseUrl}/${id}`);

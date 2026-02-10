@@ -106,7 +106,8 @@ namespace Unique_X.Services
                 Email = user.Email,
                 Username = user.FirstName,
                 Roles = userRoles.ToList(),
-                ExpiresOn = token.ValidTo
+                ExpiresOn = token.ValidTo,
+                ProfileImageUrl = user.ProfileImageUrl
             };
         }
     }

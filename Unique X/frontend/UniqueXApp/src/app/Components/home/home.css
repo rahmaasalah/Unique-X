@@ -1,0 +1,60 @@
+/* تصغير الخط للعناوين عشان السطور متوسعش */
+.x-small-bold {
+    font-size: 0.75rem;
+    font-weight: 700;
+    
+    letter-spacing: 0.3px;
+}
+
+/* التأكد من وجود مسافة مريحة تحت السيرش بار قبل معرض الصور */
+.bg-light.shadow-sm.rounded-4 {
+    margin-bottom: 3rem !important; /* دي هتحل مشكلة التداخل مع الصور */
+}
+
+/* تنسيق الحقول لتكون مضغوطة */
+.form-control-sm, .form-select-sm {
+    height: 35px;
+}
+
+/* منع تداخل الـ inputs في الموبايل */
+@media (max-width: 768px) {
+    .col-md-3, .col-md-2, .col-md-4 {
+        margin-bottom: 10px;
+    }
+}
+
+/* كارت "لا توجد نتائج" المطور */
+.no-results-card {
+    max-width: 700px;
+    padding: 80px 40px !important;
+    border: 1px solid #f1f1f1 !important;
+}
+
+/* تكبير دائرة الأيقونة */
+.icon-circle-large {
+    width: 130px;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: transform 0.5s ease;
+}
+
+.no-results-card:hover .icon-circle-large {
+    transform: rotate(-10deg) scale(1.1);
+}
+
+.bg-danger-subtle {
+    background-color: #ffeef0 !important;
+}
+
+/* تحسين زرار الـ Reset */
+.btn-danger.btn-lg {
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+}
+
+.transition-all {
+    transition: all 0.3s ease-in-out;
+}

@@ -30,6 +30,18 @@ export class PropertyCardComponent {
   }
 }
 
+getWhatsAppLink(phone: string, code: string): string {
+  if (!phone) return '#';
+  // تنظيف الرقم وإضافة كود مصر
+  let cleanedPhone = phone.replace(/\D/g, '');
+  if (cleanedPhone.startsWith('0')) {
+    cleanedPhone = '2' + cleanedPhone;
+  }
+  // الرسالة تشمل كود العقار لسهولة التواصل
+  const message = encodeURIComponent(`Hello, I'm interested in property code: #${code}`);
+  return `https://wa.me/${cleanedPhone}?text=${message}`;
+}
+
 onToggleWishlist(event: Event) {
   event.stopPropagation();
   
