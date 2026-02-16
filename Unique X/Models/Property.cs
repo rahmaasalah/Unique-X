@@ -67,6 +67,7 @@ namespace Unique_X.Models
         // Foreign Key for Broker (User)
         public string BrokerId { get; set; }
         public ApplicantUser Broker { get; set; }
+        public bool IsActive { get; set; } = true;
 
         // العلاقة مع الصور
         public ICollection<Photo> Photos { get; set; }

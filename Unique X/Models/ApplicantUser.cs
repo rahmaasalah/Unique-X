@@ -10,5 +10,6 @@ namespace Unique_X.Models
         public int UserType { get; set; }
         public string? ProfileImageUrl { get; set; }
         public string? ProfileImagePublicId { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }

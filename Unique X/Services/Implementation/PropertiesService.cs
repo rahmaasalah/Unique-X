@@ -177,7 +177,8 @@ namespace Unique_X.Services.Implementation
                 // سيبحث عن النوع المختار بدقة (0 أو 1 أو 2 أو 3)
                 query = query.Where(p => p.ListingType == (ListingType)filter.ListingType.Value);
             }
-            query = query.Where(p => !p.IsSold);
+            query = query.Where(p => !p.IsSold && p.IsActive); // شرط إضافي
+
 
             if (!string.IsNullOrEmpty(filter.SearchTerm))
             {

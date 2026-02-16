@@ -10,10 +10,18 @@ import { MyPropertiesComponent } from './Components/my-properties/my-properties'
 import { EditPropertyComponent } from './Components/edit-property/edit-property';
 import { WishlistComponent } from './Components/wishlist/wishlist';
 import { ProfileComponent } from './Components/profile/profile';
+import {adminGuard } from './Guards/admin-guard';
+import { AdminDashboardComponent } from './Components/admin-dashboard/admin-dashboard';
 
 export const routes: Routes = [
   //{ path: 'login', component: LoginComponent },
   //{ path: 'register', component: RegisterComponent },
+
+  { 
+    path: 'admin', 
+    component: AdminDashboardComponent, // الكومبوننت اللي هتعمليه للأدمن
+    canActivate: [adminGuard] // تفعيل الحماية
+  },
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
 
