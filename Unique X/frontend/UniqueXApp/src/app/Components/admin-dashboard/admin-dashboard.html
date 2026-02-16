@@ -1,0 +1,136 @@
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark">System <span class="text-danger">Administration</span></h2>
+    <button class="btn btn-outline-dark rounded-pill px-4 shadow-sm" (click)="loadAllData()">
+      <i class="bi bi-arrow-clockwise me-1"></i> Refresh Data
+    </button>
+  </div>
+
+  <!-- 1. كروت الإحصائيات (تستخدم Computed Signals) -->
+  <div class="row g-3 mb-5 animate__animated animate__fadeIn">
+    <div class="col-md-4">
+      <div class="card p-4 shadow-sm border-0 bg-dark text-white rounded-4">
+        <h6 class="small opacity-75 text-uppercase fw-bold">Total Users</h6>
+        <h2 class="fw-bold mb-0">{{ totalUsers() }}</h2>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card p-4 shadow-sm border-0 bg-danger text-white rounded-4">
+        <h6 class="small opacity-75 text-uppercase fw-bold">Total Properties</h6>
+        <h2 class="fw-bold mb-0">{{ totalProperties() }}</h2>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card p-4 shadow-sm border-0 bg-warning text-dark rounded-4">
+        <h6 class="small opacity-75 text-uppercase fw-bold">Suspended Accounts</h6>
+        <h2 class="fw-bold mb-0">{{ suspendedUsersCount() }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. أزرار التبديل بين الجداول -->
+  <ul class="nav nav-pills mb-4 gap-2">
+    <li class="nav-item">
+      <button class="btn rounded-pill px-4 fw-bold" 
+              [class.btn-danger]="activeTab() === 'users'" 
+              [class.btn-outline-secondary]="activeTab() !== 'users'"
+              (click)="switchTab('users')">
+        <i class="bi bi-people-fill me-2"></i> Manage Users
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="btn rounded-pill px-4 fw-bold" 
+              [class.btn-danger]="activeTab() === 'props'" 
+              [class.btn-outline-secondary]="activeTab() !== 'props'"
+              (click)="switchTab('props')">
+        <i class="bi bi-houses-fill me-2"></i> Manage Properties
+      </button>
+    </li>
+  </ul>
+
+  <!-- 3. جدول المستخدمين -->
+  @if (activeTab() === 'users') {
+    <div class="table-responsive bg-white shadow-sm rounded-4 p-3 border animate__animated animate__fadeIn">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="ps-3 py-3">User Name</th>
+            <th>Email</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td class="ps-3 fw-bold text-dark">{{ user.firstName }} {{ user.lastName }}</td>
+              <td>{{ user.email }}</td>
+              <td><span class="badge bg-light text-dark border">{{ getUserTypeLabel(user.userType) }}</span></td>
+              <td>
+                <span class="badge rounded-pill px-3" [class]="user.isActive ? 'bg-success' : 'bg-danger'">
+                  {{ user.isActive ? 'Active' : 'Suspended' }}
+                </span>
+              </td>
+              <td class="text-end pe-3">
+                <!-- حل مشكلة الـ 2 arguments هنا -->
+                <button class="btn btn-sm rounded-pill px-3 fw-bold" 
+                        [class]="user.isActive ? 'btn-outline-danger' : 'btn-success'"
+                        (click)="toggleUser(user.id, user.isActive)">
+                  {{ user.isActive ? 'Suspend' : 'Activate' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- 4. جدول العقارات -->
+  @if (activeTab() === 'props') {
+    <div class="table-responsive bg-white shadow-sm rounded-4 p-3 border animate__animated animate__fadeIn">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="ps-3 py-3">Property Title</th>
+            <th>Broker Name</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (prop of properties(); track prop.id) {
+            <tr>
+              <td class="ps-3 fw-bold text-dark">{{ prop.title }}</td>
+              <td>{{ prop.brokerName }}</td>
+              <td class="text-danger fw-bold">EGP {{ prop.price | number }}</td>
+              <td>
+                <span class="badge rounded-pill px-3" [class]="prop.isActive ? 'bg-primary' : 'bg-secondary'">
+                  {{ prop.isActive ? 'Live' : 'Hidden' }}
+                </span>
+              </td>
+              <td class="text-end pe-3">
+                <!-- حل مشكلة الـ 2 arguments هنا برضه -->
+                <button class="btn btn-sm rounded-pill px-3 fw-bold" 
+                        [class]="prop.isActive ? 'btn-outline-secondary' : 'btn-primary'"
+                        (click)="toggleProperty(prop.id, prop.isActive)">
+                  {{ prop.isActive ? 'Deactivate' : 'Approve' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- حالة التحميل -->
+  @if (isLoading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-danger" role="status"></div>
+      <p class="mt-2 text-muted">Processing system data...</p>
+    </div>
+  }
+</div>
