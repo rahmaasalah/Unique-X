@@ -12,16 +12,25 @@ export class AuthService {
   constructor(private http: HttpClient) { }
 
   login(model: any) {
-    return this.http.post<any>(this.baseUrl + 'login', model).pipe(
-      map((response: any) => {
-        const user = response;
-        if (user) {
-          localStorage.setItem('token', user.token); 
-          localStorage.setItem('user', JSON.stringify(user));
-        }
-      })
-    );
-  }
+  return this.http.post<any>(this.baseUrl + 'login', model).pipe(
+    map((response: any) => {
+      if (response && response.token) {
+        // التخزين لازم يحصل هنا فوراً
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response));
+      }
+      return response;
+    })
+  );
+}
+
+getBrokers(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}brokers`);
+}
+
+getAdminContact(): Observable<any> {
+  return this.http.get(`${this.baseUrl}admin-contact`);
+}
 
   register(model: any) {
     return this.http.post(this.baseUrl + 'register', model);

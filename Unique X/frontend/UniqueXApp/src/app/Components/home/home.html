@@ -1,15 +1,36 @@
 <div class="container py-5">
-  <div class="d-flex justify-content-between align-items-center mb-5">
-    <h2 class="fw-bold">Discover Your Perfect Property</h2>
-  </div>
+  
 
-  <!-- @if (message()) {
-    <div class="alert alert-info text-center py-4 rounded-4 shadow-sm">
-      <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
-      {{ message() }}
+  <div class="container-fluid p-0 mb-5">
+  <!-- Ads Carousel -->
+  <div id="adsCarousel" class="carousel slide shadow-sm" data-bs-ride="carousel">
+    <div class="carousel-inner rounded-bottom-5 overflow-hidden">
+      
+      @for (ad of ads; track ad.image; let i = $index) {
+        <div class="carousel-item" [class.active]="i === 0" (click)="onAdClick(ad.message)" style="cursor: pointer;">
+          <!-- استبدلي بمسارات صورك الحقيقية -->
+          <img [src]="ad.image" class="d-block w-100 object-fit-cover ad-banner" 
+               alt="Special Offer" style="height: 400px;">
+          
+          <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-25 rounded-3 p-3">
+             <h4 class="fw-bold mb-0">Exclusive Deals <i class="bi bi-whatsapp ms-2 text-success"></i></h4>
+             <small>Click to chat with our agents</small>
+          </div>
+        </div>
+      }
+
     </div>
-  }
- -->
+    
+    <button class="carousel-control-prev" type="button" data-bs-target="#adsCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon shadow-sm rounded-circle p-3"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#adsCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon shadow-sm rounded-circle p-3"></span>
+    </button>
+  </div>
+</div>
+
+  
   <div class="bg-light py-3 border-bottom mb-5 shadow-sm rounded-4">
   <div class="container">
     
@@ -141,12 +162,13 @@
           <h2 class="fw-bold text-dark mb-3">No Results Found</h2>
           
           <p class="text-muted mb-5 px-md-5 fs-5">
-            {{ message() || "We couldn't find any properties matching your search. Please try broading your filters or search terms." }}
-          </p>
+    {{ message() }}
+  </p>
 
-          <button class="btn btn-danger btn-lg rounded-pill px-5 py-3 fw-bold shadow transition-all" (click)="clearFilters()">
-            <i class="bi bi-arrow-counterclockwise me-2"></i> Reset All Filters
-          </button>
+  <!-- زرار الرجوع لعرض كل العقارات -->
+  <button class="btn btn-danger btn-lg rounded-pill px-5 py-3 fw-bold shadow" (click)="clearFilters()">
+    <i class="bi bi-arrow-left me-2"></i> Back to All Properties
+  </button>
         </div>
       </div>
     }

@@ -51,7 +51,7 @@ deliveryStatus: string;
 deliveryYear?: number;
 commissionPercentage: number;
 finishing: string;
-projectName: string;
+projectName?: string;
 }
 
 export interface Photo {

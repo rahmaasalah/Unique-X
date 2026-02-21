@@ -5,6 +5,7 @@ import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
 import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
+import { AuthService } from '../../Services/auth';
 
 
 @Component({
@@ -18,35 +19,76 @@ export class HomeComponent implements OnInit {
   properties = signal<Property[]>([]); 
   message = signal<string>('');
 
+  adminPhone = signal<string>('');
+ads = [
+  { 
+    image: 'https://th.bing.com/th/id/R.703c1580dd8de27f32ef89574aff3adb?rik=zOsxkXRIpkC%2fZw&riu=http%3a%2f%2fwww.justinhavre.com%2fuploads%2fagent-1%2fmultiple-offers-header.png&ehk=gKELJJ1d1MFgnS%2fDMdafCRozl%2fEjKDbnAk5O6qsFZvM%3d&risl=&pid=ImgRaw&r=0', 
+    message: 'Hello, I am interested in the Yearly Luxury Offers!' 
+  },
+  { 
+    image: 'assets/banners/offer2.jpg', 
+    message: 'I want to know more about the New Projects Installment plans.' 
+  },
+  { 
+    image: 'assets/banners/offer3.jpg', 
+    message: 'Interested in the Cash Discount for this month!' 
+  }
+];
+
   isLoading = signal<boolean>(false);
   private route = inject(ActivatedRoute);
-  constructor(private propertyService: PropertyService, private router: Router, private activatedRoute: ActivatedRoute) {}
+  constructor(private propertyService: PropertyService, private router: Router, private activatedRoute: ActivatedRoute, private authService: AuthService) {}
 
   ngOnInit(): void {
      this.route.queryParams.subscribe(params => {
       this.loadProperties(params);
     });
+
+    this.authService.getAdminContact().subscribe(res => {
+  this.adminPhone.set(res.phoneNumber);
+});
   }
 
+  onAdClick(message: string) {
+  if (!this.adminPhone()) return;
+  
+  // تنسيق الرقم (إضافة 2 لمصر)
+  let phone = this.adminPhone().replace(/\D/g, '');
+  if (phone.startsWith('0')) phone = '2' + phone;
+
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  window.open(url, '_blank');
+}
+
   loadProperties(filters: any = {}) {
-    this.isLoading.set(true);
-    this.propertyService.getProperties(filters).subscribe({
-      next: (response: any) => {
-       this.isLoading.set(false); // 3. وقف التحميل لما الداتا تيجي
-        if (response.message) {
-          this.message.set(response.message);
-          this.properties.set([]);
+  this.isLoading.set(true);
+  this.propertyService.getProperties(filters).subscribe({
+    next: (response: any) => {
+      this.isLoading.set(false);
+      
+      // 1. استخراج البيانات (سواء كانت مصفوفة أو كائن فيه رسالة)
+      const data = response.message ? response.data : response;
+      this.properties.set(data || []);
+
+      // 2. تحديث الرسالة بناءً على الحالة
+      if (!data || data.length === 0) {
+        if (filters.brokerId) {
+          // لو فيه brokerId في الرابط، اظهر الرسالة المخصصة
+          this.message.set("This agent hasn't listed any properties yet.");
         } else {
-          this.properties.set(response);
-          this.message.set('');
+          // لو بحث عادي، اظهر الرسالة العادية
+          this.message.set("No properties match your search criteria.");
         }
-      },
-      error: (err) => {
-        this.isLoading.set(false); // 4. وقف التحميل حتى لو فيه خطأ
-        console.error(err);
+      } else {
+        this.message.set(''); // مسح الرسالة لو فيه نتائج
       }
-    });
-  }
+    },
+    error: (err) => {
+      this.isLoading.set(false);
+      console.error(err);
+    }
+  });
+}
 
   formatInteger(event: any) {
     const input = event.target;
