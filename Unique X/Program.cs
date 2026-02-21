@@ -103,7 +103,47 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+
+
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicantUser>>();
+
+    // التأكد من وجود رول الأدمن
+    if (!await roleManager.RoleExistsAsync("Admin"))
+    {
+        await roleManager.CreateAsync(new IdentityRole("Admin"));
+    }
+
+    string adminEmail = "admin@test.com";
+    string adminPass = "Admin@1234";
+
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+    if (adminUser == null)
+    {
+        var newAdmin = new ApplicantUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            FirstName = "System",
+            LastName = "Admin",
+            UserType = 2,
+            EmailConfirmed = true,
+            PhoneNumber = "0100000000"
+        };
+
+        var createResult = await userManager.CreateAsync(newAdmin, adminPass);
+        if (createResult.Succeeded)
+        {
+            await userManager.AddToRoleAsync(newAdmin, "Admin");
+        }
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {

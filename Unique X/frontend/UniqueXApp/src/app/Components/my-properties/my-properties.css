@@ -26,3 +26,38 @@
     background-color: #000;
     transform: translateY(-2px);
 }
+
+/* تنسيق زرار Clear Filters المطلوب */
+.btn-link.text-danger {
+    text-decoration: none !important; /* إزالة الخط */
+}
+
+/* حالة عدم وجود نتائج بحث */
+.no-search-results {
+    border: 2px dashed #dee2e6 !important;
+}
+
+.no-search-results .btn-danger {
+    background-color: #ef3341 !important;
+    transition: all 0.3s ease;
+}
+
+.no-search-results .btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(239, 51, 65, 0.3) !important;
+}
+
+/* كارت الترحيب (لما يكون معندوش داتا خالص) */
+.empty-state-card {
+    margin-top: 50px;
+    border: 1px solid #f1f1f1 !important;
+}
+
+.bg-danger-subtle {
+    background-color: #ffeef0 !important;
+}
+
+.status-toggle-btn {
+    min-width: 125px;
+    transition: all 0.3s ease;
+}

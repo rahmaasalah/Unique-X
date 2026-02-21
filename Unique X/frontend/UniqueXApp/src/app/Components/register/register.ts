@@ -14,6 +14,7 @@ import { AlertService } from '../../Services/alert';
 })
 export class RegisterComponent implements OnInit {
   registerForm!: FormGroup;
+  
 
   constructor(
     private fb: FormBuilder,
@@ -28,8 +29,10 @@ export class RegisterComponent implements OnInit {
       lastName: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
       phoneNumber: ['', [Validators.required]],
-      password: ['', [Validators.required, 
-        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/)]],
+      password: ['', [
+  Validators.required, 
+  Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W]).{6,}$/)
+]],
       userType: [0, [Validators.required]] // 0 = Client, 1 = Broker
     });
   }

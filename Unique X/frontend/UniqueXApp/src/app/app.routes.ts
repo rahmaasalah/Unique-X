@@ -12,6 +12,7 @@ import { WishlistComponent } from './Components/wishlist/wishlist';
 import { ProfileComponent } from './Components/profile/profile';
 import {adminGuard } from './Guards/admin-guard';
 import { AdminDashboardComponent } from './Components/admin-dashboard/admin-dashboard';
+import { FindAgentComponent } from './Components/find-agent/find-agent';
 
 export const routes: Routes = [
   //{ path: 'login', component: LoginComponent },
@@ -25,7 +26,7 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
 
-
+  { path: 'find-agent', component: FindAgentComponent },
   { path: 'home', component: HomeComponent, canActivate: [authGuard] },
   { path: 'add-property', component: AddPropertyComponent, canActivate: [authGuard] },
   { path: 'property-details/:id', component: PropertyDetailsComponent, canActivate: [authGuard] },

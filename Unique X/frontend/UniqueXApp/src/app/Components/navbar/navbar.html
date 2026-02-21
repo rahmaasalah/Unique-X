@@ -16,7 +16,7 @@
       <a class="nav-link px-3 fw-semibold custom-link" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 0 }"
-         [class.active-nav-link]="activeType() === '0'">Resale</a>
+         [class.active-tab]="activeType() === '0'">Resale</a>
     </li>
     
     <!-- Rent (1) -->
@@ -24,7 +24,7 @@
       <a class="nav-link px-3 fw-semibold custom-link" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 1 }"
-         [class.active-nav-link]="activeType() === '1'">Rent</a>
+         [class.active-tab]="activeType() === '1'">Rent</a>
     </li>
 
     <!-- Primary (2) -->
@@ -32,7 +32,7 @@
       <a class="nav-link px-3 fw-semibold custom-link" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 2 }"
-         [class.active-nav-link]="activeType() === '2'">Primary</a>
+         [class.active-tab]="activeType() === '2'">Primary</a>
     </li>
 
     <!-- Resale Project (3) -->
@@ -40,8 +40,15 @@
       <a class="nav-link px-3 fw-semibold custom-link" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 3 }"
-         [class.active-nav-link]="activeType() === '3'">Resale Project</a>
+         [class.active-tab]="activeType() === '3'">Resale Project</a>
     </li>
+
+    <li class="nav-item ">
+      <a class="nav-link custom-link px-3 fw-semibold" 
+         routerLink="/find-agent"
+         routerLinkActive="active-tab">Agents</a>
+    </li>
+
   
     
         <!-- خيارات البروكر فقط -->

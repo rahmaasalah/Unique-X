@@ -301,22 +301,27 @@ isUnderConstruction(): boolean {
  onFileSelect(event: any) {
   const files = event.target.files;
   if (files) {
-    this.selectedPhotos.set([]); // مسح الصور القديمة
-    this.mainPhotoIndex = 0;
+    // 1. حساب العدد الحالي للصور التي تم اختيارها مسبقاً
+    const currentCount = this.selectedPhotos().length;
+    
+    // 2. التحقق لو العدد الإجمالي (الحالي + الجديد) تخطى 10
+    if (currentCount + files.length > 10) {
+      this.alertService.error(`You can only upload a maximum of 10 photos. You already have ${currentCount}.`, 'Limit Reached');
+      // تصفير مدخل الملفات في الـ HTML عشان ميفتكرش إنه اختارهم
+      event.target.value = ''; 
+      return;
+    }
 
+    // 3. لو العدد مسموح به، كمل عملية القراءة والـ Preview
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const reader = new FileReader();
-      
       reader.onload = (e: any) => {
-        // 2. تحديث الـ Signal باستخدام .update()
-        // ده بيخلي الأنجولار "يفوق" ويرسم الصورة فوراً
         this.selectedPhotos.update(prev => [...prev, {
           file: file,
           preview: e.target.result
         }]);
       };
-      
       reader.readAsDataURL(file);
     }
   }

@@ -1,0 +1,61 @@
+.admin-container {
+    background-color: #f4f7f6;
+    display: flex;
+    min-height: 100vh;
+    overflow: visible;
+}
+
+.admin-sidebar {
+    width: 280px;
+    min-width: 280px;
+    height: 100vh;
+    position: sticky;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: #1a1d20 !important;
+    overflow-y: auto; 
+}
+
+.sidebar-link {
+    color: #94999f;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    background: transparent;
+}
+
+.sidebar-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+.sidebar-link.active {
+    background-color: #ef3341 !important;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(239, 51, 65, 0.3);
+}
+
+.stat-card {
+    border: 1px solid #f0f0f0 !important;
+    transition: transform 0.3s ease;
+}
+main {
+    flex: 1;
+    background-color: #f8f9fa;
+}
+
+.stat-card:hover { transform: translateY(-5px); }
+
+/* مودال التفتيش الاحترافي */
+.modal-xl { max-width: 95vw; }
+.inspection-card { border: 1px solid #f8f9fa; }
+
+/* سكرول داخلي منمق */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }

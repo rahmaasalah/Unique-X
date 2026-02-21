@@ -58,3 +58,21 @@
 .transition-all {
     transition: all 0.3s ease-in-out;
 }
+
+.ad-banner {
+    transition: filter 0.3s ease;
+}
+
+.carousel-item:hover .ad-banner {
+    filter: brightness(0.9); /* تغميق بسيط عند الوقوف بالماوس */
+}
+
+/* جعل الكاراسول يأخذ عرض الشاشة بالكامل */
+.container-fluid.p-0 {
+    margin-top: -24px; /* ليلتصق بالـ Navbar لو حابة */
+}
+
+.rounded-bottom-5 {
+    border-bottom-left-radius: 40px !important;
+    border-bottom-right-radius: 40px !important;
+}

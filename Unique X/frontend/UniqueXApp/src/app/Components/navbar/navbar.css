@@ -19,16 +19,18 @@
 }
 
 .custom-link {
-  position: relative;
   color: #555 !important;
   transition: all 0.3s ease;
-  padding-bottom: 12px !important; /* زيادة المساحة للخط */
+  padding: 8px 20px !important; /* زيادة المساحة حول الكلمة عشان الخلفية تبان */
+  border-radius: 50px; /* جعل الحواف دائرية تماماً (Pill Shape) */
   text-decoration: none !important;
+  margin: 0 2px;
 }
 
 /* حالة الـ Hover */
 .custom-link:hover {
-  color: #000 !important;
+  background-color: rgba(239, 51, 65, 0.05); /* لون أحمر خفيف جداً عند المرور */
+  color: #ef3341 !important;
 }
 
 /* شكل اللينك لما يكون نشط */
@@ -39,15 +41,7 @@
 
 /* رسم الخط الأسود تحت اللينك النشط */
 .custom-link::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0; /* يبدأ من صفر */
-  height: 4px; /* سمك الخط */
-  background-color: #000;
-  border-radius: 50px;
-  transition: width 0.3s ease-in-out, left 0.3s ease-in-out;
+  display: none !important;
 }
 
 /* تفعيل الخط لما الكلاس يكون موجود */
@@ -69,4 +63,11 @@
 .wishlist-nav-icon:hover i, .profile-nav-icon:hover i {
   transform: scale(1.2);
   color: #ef3341 !important;
+}
+
+.active-tab {
+  background-color: #ef3341 !important; /* اللون الأحمر الأساسي */
+  color: #fff !important; /* تحويل النص للون الأبيض للوضوح */
+  font-weight: 700 !important;
+  box-shadow: 0 4px 10px rgba(239, 51, 65, 0.3); /* ظل خفيف عشان تنطق */
 }

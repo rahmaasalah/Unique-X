@@ -1,136 +1,393 @@
-<div class="container py-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold text-dark">System <span class="text-danger">Administration</span></h2>
-    <button class="btn btn-outline-dark rounded-pill px-4 shadow-sm" (click)="loadAllData()">
-      <i class="bi bi-arrow-clockwise me-1"></i> Refresh Data
-    </button>
+<div class="d-flex admin-container min-vh-100 bg-light">
+  
+  <!-- 1. الـ Sidebar الثابت (الجهة اليسرى) -->
+  <aside class="admin-sidebar bg-dark text-white shadow-lg d-flex flex-column p-4">
+    <div class="sidebar-header mb-5 text-center">
+      <h3 class="fw-bold text-danger mb-0">UNIQUE <span class="text-white">X</span></h3>
+      <p class="text-muted small text-uppercase mt-1" style="letter-spacing: 2px; font-size: 0.6rem;">Admin Management</p>
+    </div>
+
+    <nav class="flex-grow-1">
+      <ul class="list-unstyled">
+        <li class="mb-3">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
+                  [class.active]="activeTab() === 'users'" (click)="switchTab('users')">
+            <i class="bi bi-people-fill me-3 fs-5"></i> User Accounts
+          </button>
+        </li>
+        <li class="mb-3">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
+                  [class.active]="activeTab() === 'props'" (click)="switchTab('props')">
+            <i class="bi bi-houses-fill me-3 fs-5"></i> Property Listings
+          </button>
+        </li>
+        <li class="mb-3">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
+                  [class.active]="activeTab() === 'settings'" (click)="switchTab('settings')">
+            <i class="bi bi-person-gear me-3 fs-5"></i> My Account
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- زر تسجيل الخروج في أسفل السايد بار -->
+    <div class="sidebar-footer mt-auto pt-4 border-top border-secondary">
+      <button class="btn btn-outline-danger rounded-pill w-100 py-2 fw-bold d-flex align-items-center justify-content-center" (click)="onLogout()">
+        <i class="bi bi-box-arrow-left me-2"></i> Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- 2. المحتوى الرئيسي (الجهة اليمنى) مع سكرول داخلي -->
+  <main class="flex-grow-1 p-4 p-md-5">
+    
+    <!-- قسم الإحصائيات (يختفي في صفحة الإعدادات) -->
+    @if (activeTab() !== 'settings') {
+      <div class="row g-3 mb-5 animate__animated animate__fadeIn">
+        <div class="col-md-3">
+          <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-danger border-5 rounded-4">
+            <small class="text-muted fw-bold text-uppercase">Total Users</small>
+            <h2 class="fw-bold mb-0 text-dark">{{ stats().totalUsers || 0 }}</h2>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-primary border-5 rounded-4">
+            <small class="text-muted fw-bold text-uppercase">Active Properties</small>
+            <h2 class="fw-bold mb-0 text-primary">{{ stats().totalProperties || 0 }}</h2>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-warning border-5 rounded-4">
+            <small class="text-muted fw-bold text-uppercase">Suspended Accounts</small>
+            <h2 class="fw-bold mb-0 text-warning">{{ stats().suspendedUsers || 0 }}</h2>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-success border-5 rounded-4">
+            <small class="text-muted fw-bold text-uppercase">Sold Properties</small>
+            <h2 class="fw-bold mb-0 text-success">{{ stats().soldProperties || 0 }}</h2>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- تبويب إدارة المستخدمين -->
+    @if (activeTab() === 'users') {
+      <section class="animate__animated animate__fadeIn">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0"><i class="bi bi-people me-2"></i>Users Data</h4>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+          <div class="row g-2">
+            <div class="col-md-8">
+              <div class="input-group">
+                <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control bg-light border-0" placeholder="Search users by name or email..."
+                       [ngModel]="userSearchText()" (ngModelChange)="userSearchText.set($event)">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <select class="form-select bg-light border-0" [ngModel]="userTypeFilter()" (ngModelChange)="userTypeFilter.set($event)">
+                <option value="">All Account Types</option>
+                <option value="0">Clients</option>
+                <option value="1">Brokers</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light border-0">
+               <tr>
+                   <th class="ps-4 py-3">NAME</th>
+                   <th>EMAIL</th>
+                   <th>ROLE</th>
+                   <th>STATUS</th>
+                   <th class="text-end pe-4">ACTION</th>
+               </tr>
+            </thead>
+            <tbody>
+              @for (user of filteredUsers(); track user.id) {
+                <tr>
+                  <td class="ps-4">
+                    <div class="fw-bold text-dark">{{ user.firstName }} {{ user.lastName }}</div>
+                    <small class="text-muted">{{ user.phoneNumber }}</small>
+                  </td>
+                  <td class="small">{{ user.email }}</td>
+                  <td><span class="badge bg-light text-dark border">{{ getUserTypeLabel(user.userType) }}</span></td>
+                  <td>
+                    <span class="badge rounded-pill px-3" [class]="user.isActive ? 'bg-success' : 'bg-danger'">
+                        {{ user.isActive ? 'Active' : 'Suspended' }}
+                    </span>
+                  </td>
+                  <td class="text-end pe-4">
+                    <button class="btn btn-sm rounded-pill px-3 fw-bold" 
+                            [class]="user.isActive ? 'btn-outline-danger' : 'btn-success'"
+                            (click)="toggleUser(user.id, user.isActive)">
+                      {{ user.isActive ? 'Suspend User' : 'Activate User' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
+    <!-- تبويب مراجعة العقارات (المطور) -->
+    @if (activeTab() === 'props') {
+      <section class="animate__animated animate__fadeIn">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0"><i class="bi bi-houses me-2"></i>Full Listing</h4>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <input type="text" class="form-control bg-light border-0" placeholder="Search by title or code..."
+                     [ngModel]="propSearchText()" (ngModelChange)="propSearchText.set($event)">
+            </div>
+            <div class="col-md-4">
+              <select class="form-select bg-light border-0" [ngModel]="propListingFilter()" (ngModelChange)="propListingFilter.set($event)">
+                <option value="">All Listing Types</option>
+                <option value="Resale">Resale</option>
+                <option value="Rent">Rent</option>
+                <option value="Primary">Primary</option>
+                <option value="ResaleProject">Resale Project</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <select class="form-select bg-light border-0" [ngModel]="propTypeFilter()" (ngModelChange)="propTypeFilter.set($event)">
+                <option value="">All Property Types</option>
+                <option value="Apartment">Apartment</option>
+                <option value="Villa">Villa</option>
+                <option value="Shop">Shop</option>
+                <option value="Office">Office</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="card border-0 shadow-sm rounded-4 ">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-4 py-3">PROPERTY & OWNER</th>
+                <th>CODE</th>
+                <th>PRICE</th>
+                <th class="text-center">VISIBILITY</th>
+                <th class="text-end pe-4">REVIEW & CONTROL</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (prop of filteredProperties(); track prop.id) {
+                <tr>
+                  <td class="ps-4 py-3">
+                    <div class="d-flex align-items-center">
+                       <img [src]="prop.photos[0]?.url" class="rounded-3 me-3 border shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">
+                       <div>
+                          <h6 class="mb-0 fw-bold text-dark">{{ prop.title }}</h6>
+                          <small class="text-danger fw-bold"><i class="bi bi-person"></i> {{ prop.broker?.firstName }} {{ prop.broker?.lastName }}</small>
+                       </div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-light text-dark border">{{ prop.code }}</span></td>
+                  <td class="fw-bold text-dark">EGP {{ prop.price | number }}</td>
+                  <td class="text-center">
+                    <span class="badge rounded-pill px-3" [class]="prop.isActive ? 'bg-success' : 'bg-secondary'">
+                      {{ prop.isActive ? 'Active' : 'Suspended' }}
+                    </span>
+                    @if(prop.isSold) { <span class="badge bg-dark rounded-pill px-2 ms-1">SOLD</span> }
+                  </td>
+                  <td class="text-end pe-4">
+                    <button class="btn btn-outline-dark btn-sm rounded-pill px-3 me-2 fw-bold shadow-sm" (click)="viewPropertyDetails(prop)">
+                      <i class="bi bi-search me-1"></i> View
+                    </button>
+                    <button class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm" 
+                            [class]="prop.isActive ? 'btn-danger' : 'btn-success'" 
+                            (click)="toggleProperty(prop.id, prop.isActive)">
+                      {{ prop.isActive ? 'Suspend' : 'Activate' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
+    <!-- تبويب إعدادات الحساب (Settings) -->
+    @if (activeTab() === 'settings') {
+      <section class="animate__animated animate__fadeIn">
+        <h4 class="fw-bold mb-4">Admin Profile Settings</h4>
+        <div class="row g-4">
+          <div class="col-md-5">
+             <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white h-100">
+                <div class="position-relative d-inline-block mx-auto">
+                    <img [src]="userData()?.profileImageUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" 
+                         class="rounded-circle border border-5 border-white shadow-sm mb-3" style="width: 160px; height: 160px; object-fit: cover;">
+                    <label for="adminUpload" class="btn btn-danger btn-sm rounded-circle position-absolute bottom-0 end-0 shadow" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 3px solid white; cursor: pointer;">
+                        <i class="bi bi-camera-fill"></i>
+                        <input type="file" id="adminUpload" class="d-none" (change)="onImageChange($event)">
+                    </label>
+                </div>
+                <h4 class="fw-bold mt-3 mb-0">{{ userData()?.firstName }} {{ userData()?.lastName }}</h4>
+                <p class="text-muted">Master Administrator</p>
+                
+             </div>
+          </div>
+          <div class="col-md-7">
+             <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white h-100">
+               <h5 class="fw-bold mb-4"><i class="bi bi-pencil-square me-2 text-danger"></i>Update System Identity</h5>
+               <form [formGroup]="adminForm" (ngSubmit)="onUpdateProfile()">
+                 <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">FIRST NAME</label>
+                        <input type="text" formControlName="firstName" class="form-control form-control-lg bg-light border-0 rounded-3">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">LAST NAME</label>
+                        <input type="text" formControlName="lastName" class="form-control form-control-lg bg-light border-0 rounded-3">
+                    </div>
+                 </div>
+                 <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted">EMAIL ADDRESS</label>
+                    <input type="email" formControlName="email" class="form-control form-control-lg bg-white border-0 text-muted" readonly>
+                 </div>
+                 <div class="mb-5">
+                    <label class="form-label small fw-bold text-muted">PHONE NUMBER</label>
+                    <input type="text" formControlName="phoneNumber" class="form-control form-control-lg bg-light border-0 rounded-3">
+                 </div>
+                 <button type="submit" [disabled]="adminForm.invalid" class="btn btn-danger w-100 rounded-pill py-3 fw-bold shadow">
+                    <i class="bi bi-save2 me-2"></i> Update Admin Account
+                 </button>
+               </form>
+             </div>
+          </div>
+        </div>
+      </section>
+    }
+
+  </main>
+
+  <!-- ================== مودال فحص العقار الشامل ( Inspection Report ) ================== -->
+  <div class="modal fade" id="adminPropModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden" style="max-height: 90vh;">
+        
+        @if (selectedProperty(); as p) {
+          <div class="modal-header border-0 bg-dark text-white p-4 d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="modal-title fw-bold mb-1">{{ p.title }}</h4>
+              <p class="mb-0 small opacity-75">
+                <i class="bi bi-person-circle me-1"></i> Broker: {{ p.broker?.firstName }} {{ p.broker?.lastName }} 
+                <span class="mx-2">|</span> 
+                <i class="bi bi-hash me-1"></i> Code: {{ p.code }}
+              </p>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body p-0 bg-light overflow-auto">
+            <div class="row g-0">
+              
+              <!-- الجزء الأيسر: كل الصور (Gallery) -->
+              <div class="col-lg-5 bg-white border-end p-4">
+                <h6 class="fw-bold text-muted mb-4 text-uppercase small" style="letter-spacing: 1px;">Photos ({{ p.photos.length }} Images)</h6>
+                <div class="row g-2">
+                  @for (img of p.photos; track img.url) {
+                    <div class="col-6">
+                      <div class="position-relative border rounded-3 overflow-hidden shadow-sm h-100 bg-light d-flex align-items-center">
+                        <img [src]="img.url" class="w-100 h-100 object-fit-cover" style="min-height: 160px; max-height: 200px;">
+                        @if (img.isMain) { <span class="badge bg-danger position-absolute top-0 start-0 m-2 shadow">MAIN COVER</span> }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- الجزء الأيمن: التقرير الفني والمالي الكامل -->
+              <div class="col-lg-7 p-4 p-md-5">
+                
+                <!-- 1. البيانات المالية -->
+                <div class="inspection-card mb-4 bg-white p-4 rounded-4 shadow-sm border-start border-success border-5">
+                  <h6 class="fw-bold text-success mb-3"><i class="bi bi-cash-stack me-2"></i>Payment Specs</h6>
+                  <div class="row g-3 small">
+                     <div class="col-md-6"><b>Listing Type:</b> {{ p.listingType }}</div>
+                     <div class="col-md-6"><b>Price:</b> EGP {{ p.price | number }}</div>
+                     <div class="col-md-6"><b>Payment Method:</b> <span class="badge bg-light text-dark border">{{ p.paymentMethod }}</span></div>
+                     <div class="col-md-6"><b>Commission:</b> <span class="text-danger fw-bold">{{ p.commissionPercentage }}%</span></div>
+
+                     @if(p.listingType === 'Rent') {
+                       <div class="col-md-6"><b>Monthly Rent:</b> EGP {{ p.monthlyRent | number }}</div>
+                       <div class="col-md-6"><b>Security Deposit:</b> EGP {{ p.securityDeposit | number }}</div>
+                     }
+                     @if(p.paymentMethod === 'Installment') {
+                       <div class="col-md-6"><b>Down Payment:</b> EGP {{ p.downPayment | number }}</div>
+                       <div class="col-md-6"><b>Quarterly:</b> EGP {{ p.quarterInstallment | number }}</div>
+                       <div class="col-md-6"><b>Plan Duration:</b> {{ p.installmentYears }} Years</div>
+                     }
+                  </div>
+                </div>
+
+                <!-- 2. المواصفات الفنية والإنشائية -->
+                <div class="inspection-card mb-4 bg-white p-4 rounded-4 shadow-sm border-start border-primary border-5">
+                  <h6 class="fw-bold text-primary mb-3"><i class="bi bi-building me-2"></i>Structural Specs </h6>
+                  <div class="row g-3 small">
+                    <div class="col-md-6"><b>Project Name:</b> <span class="text-danger fw-bold">{{ p.projectName || 'N/A' }}</span></div>
+           <div class="col-md-6"><b>Landmark:</b> {{ p.distanceFromLandmark || 'N/A' }}</div>
+                     <div class="col-md-6"><b>Unit Type:</b> {{ p.propertyType }}</div>
+                     <div class="col-md-6"><b>Area:</b> {{ p.area }} m²</div>
+                     <div class="col-md-6"><b>Finishing:</b> {{ p.finishing }}</div>
+                     <div class="col-md-6"><b>Handover:</b> {{ p.deliveryStatus }} @if(p.deliveryYear) { ({{ p.deliveryYear }}) }</div>
+                     <div class="col-md-6"><b>Floor:</b> {{ p.floor }} / {{ p.totalFloors }}</div>
+                     <div class="col-md-6"><b>Units Per Floor:</b> {{ p.apartmentsPerFloor }}</div>
+                     <div class="col-md-6"><b>Rooms/Baths:</b> {{ p.rooms }} R / {{ p.bathrooms }} B</div>
+                     <div class="col-md-6"><b>Build Year:</b> {{ p.buildYear }}</div>
+                     <div class="col-md-6"><b>View:</b> {{ p.view || 'N/A' }}</div>
+                     <div class="col-md-6"><b>Elevators:</b> {{ p.elevatorsCount }}</div>
+                  </div>
+                </div>
+
+                <!-- 3. المراجعة القانونية والمرافق -->
+                <div class="inspection-card mb-4 bg-white p-4 rounded-4 shadow-sm border-start border-warning border-5">
+                  <h6 class="fw-bold text-warning mb-3"><i class="bi bi-shield-check me-2"></i>Legal & Utility Specs</h6>
+                  <div class="row g-2 small">
+                     <div class="col-md-4"><b>Licensed:</b> {{ p.isLicensed ? '✅' : '❌' }}</div>
+                     <div class="col-md-4"><b>Land Share:</b> {{ p.hasLandShare ? '✅' : '❌' }}</div>
+                     <div class="col-md-4"><b>Security:</b> {{ p.hasSecurity ? '✅' : '❌' }}</div>
+                     <div class="col-md-4"><b>Gas:</b> {{ p.hasGasMeter ? '✅' : '❌' }}</div>
+                     <div class="col-md-4"><b>Water:</b> {{ p.hasWaterMeter ? '✅' : '❌' }}</div>
+                     <div class="col-md-4"><b>Elec:</b> {{ p.hasElectricityMeter ? '✅' : '❌' }}</div>
+                     <div class="col-md-4"><b>Reconciled:</b> {{ p.isLegalReconciled ? '✅' : '❌' }}</div>
+           <div class="col-md-4"><b>First Owner:</b> {{ p.isFirstOwner ? '✅' : '❌' }}</div>
+           <div class="col-md-4"><b>Master Room:</b> {{ p.hasMasterRoom ? '✅' : '❌' }}</div>
+           <div class="col-md-4"><b>Parking:</b> {{ p.hasParking ? '✅' : '❌' }}</div>
+           <div class="col-md-4"><b>Balcony:</b> {{ p.hasBalcony ? '✅' : '❌' }}</div>
+           <div class="col-md-4"><b>Hotel Entry:</b> {{ p.hasHotelEntrance ? '✅' : '❌' }}</div>
+                     
+                  </div>
+                </div>
+
+                <!-- 4. الوصف الكامل -->
+                <div class="p-3 bg-dark text-white-50 rounded-3 small">
+                  <small class="text-white fw-bold text-uppercase d-block mb-1" style="font-size: 0.6rem;">Broker Description:</small>
+                  <p class="mb-0 lh-base" style="white-space: pre-line;">{{ p.description }}</p>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        }
+
+        <div class="modal-footer bg-white border-0 shadow-sm p-3">
+          <button type="button" class="btn btn-secondary rounded-pill px-5 fw-bold" data-bs-dismiss="modal">Close Report</button>
+        </div>
+
+      </div>
+    </div>
   </div>
 
-  <!-- 1. كروت الإحصائيات (تستخدم Computed Signals) -->
-  <div class="row g-3 mb-5 animate__animated animate__fadeIn">
-    <div class="col-md-4">
-      <div class="card p-4 shadow-sm border-0 bg-dark text-white rounded-4">
-        <h6 class="small opacity-75 text-uppercase fw-bold">Total Users</h6>
-        <h2 class="fw-bold mb-0">{{ totalUsers() }}</h2>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card p-4 shadow-sm border-0 bg-danger text-white rounded-4">
-        <h6 class="small opacity-75 text-uppercase fw-bold">Total Properties</h6>
-        <h2 class="fw-bold mb-0">{{ totalProperties() }}</h2>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card p-4 shadow-sm border-0 bg-warning text-dark rounded-4">
-        <h6 class="small opacity-75 text-uppercase fw-bold">Suspended Accounts</h6>
-        <h2 class="fw-bold mb-0">{{ suspendedUsersCount() }}</h2>
-      </div>
-    </div>
-  </div>
-
-  <!-- 2. أزرار التبديل بين الجداول -->
-  <ul class="nav nav-pills mb-4 gap-2">
-    <li class="nav-item">
-      <button class="btn rounded-pill px-4 fw-bold" 
-              [class.btn-danger]="activeTab() === 'users'" 
-              [class.btn-outline-secondary]="activeTab() !== 'users'"
-              (click)="switchTab('users')">
-        <i class="bi bi-people-fill me-2"></i> Manage Users
-      </button>
-    </li>
-    <li class="nav-item">
-      <button class="btn rounded-pill px-4 fw-bold" 
-              [class.btn-danger]="activeTab() === 'props'" 
-              [class.btn-outline-secondary]="activeTab() !== 'props'"
-              (click)="switchTab('props')">
-        <i class="bi bi-houses-fill me-2"></i> Manage Properties
-      </button>
-    </li>
-  </ul>
-
-  <!-- 3. جدول المستخدمين -->
-  @if (activeTab() === 'users') {
-    <div class="table-responsive bg-white shadow-sm rounded-4 p-3 border animate__animated animate__fadeIn">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="bg-light">
-          <tr>
-            <th class="ps-3 py-3">User Name</th>
-            <th>Email</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th class="text-end pe-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (user of users(); track user.id) {
-            <tr>
-              <td class="ps-3 fw-bold text-dark">{{ user.firstName }} {{ user.lastName }}</td>
-              <td>{{ user.email }}</td>
-              <td><span class="badge bg-light text-dark border">{{ getUserTypeLabel(user.userType) }}</span></td>
-              <td>
-                <span class="badge rounded-pill px-3" [class]="user.isActive ? 'bg-success' : 'bg-danger'">
-                  {{ user.isActive ? 'Active' : 'Suspended' }}
-                </span>
-              </td>
-              <td class="text-end pe-3">
-                <!-- حل مشكلة الـ 2 arguments هنا -->
-                <button class="btn btn-sm rounded-pill px-3 fw-bold" 
-                        [class]="user.isActive ? 'btn-outline-danger' : 'btn-success'"
-                        (click)="toggleUser(user.id, user.isActive)">
-                  {{ user.isActive ? 'Suspend' : 'Activate' }}
-                </button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  }
-
-  <!-- 4. جدول العقارات -->
-  @if (activeTab() === 'props') {
-    <div class="table-responsive bg-white shadow-sm rounded-4 p-3 border animate__animated animate__fadeIn">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="bg-light">
-          <tr>
-            <th class="ps-3 py-3">Property Title</th>
-            <th>Broker Name</th>
-            <th>Price</th>
-            <th>Status</th>
-            <th class="text-end pe-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (prop of properties(); track prop.id) {
-            <tr>
-              <td class="ps-3 fw-bold text-dark">{{ prop.title }}</td>
-              <td>{{ prop.brokerName }}</td>
-              <td class="text-danger fw-bold">EGP {{ prop.price | number }}</td>
-              <td>
-                <span class="badge rounded-pill px-3" [class]="prop.isActive ? 'bg-primary' : 'bg-secondary'">
-                  {{ prop.isActive ? 'Live' : 'Hidden' }}
-                </span>
-              </td>
-              <td class="text-end pe-3">
-                <!-- حل مشكلة الـ 2 arguments هنا برضه -->
-                <button class="btn btn-sm rounded-pill px-3 fw-bold" 
-                        [class]="prop.isActive ? 'btn-outline-secondary' : 'btn-primary'"
-                        (click)="toggleProperty(prop.id, prop.isActive)">
-                  {{ prop.isActive ? 'Deactivate' : 'Approve' }}
-                </button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  }
-
-  <!-- حالة التحميل -->
-  @if (isLoading()) {
-    <div class="text-center py-5">
-      <div class="spinner-border text-danger" role="status"></div>
-      <p class="mt-2 text-muted">Processing system data...</p>
-    </div>
-  }
 </div>

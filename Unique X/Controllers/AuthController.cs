@@ -50,9 +50,18 @@ namespace Unique_X.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> LoginAsync([FromBody] LoginDto model)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            // 1. البحث عن المستخدم أولاً قبل محاولة تسجيل الدخول
+            var user = await _userManager.FindByEmailAsync(model.Email);
 
+            if (user == null)
+                return BadRequest("Invalid Email or Password!");
+
+            // 2. الفحص الجوهري: هل الحساب موقوف (Suspended)؟
+            if (!user.IsActive)
+            {
+                return BadRequest("Your account has been suspended by the administrator.");
+            }
+            // 4. لو كل شيء تمام، كمل عملية اللوجين العادية
             var result = await _authService.LoginAsync(model);
 
             if (!result.IsAuthenticated)
@@ -130,6 +139,36 @@ namespace Unique_X.Controllers
             await _userManager.UpdateAsync(user);
 
             return Ok(new { url = user.ProfileImageUrl });
+        }
+
+        [HttpGet("brokers")]
+        [AllowAnonymous] // الكل يقدر يشوف البروكرز
+        public async Task<IActionResult> GetBrokers()
+        {
+            var brokers = await _userManager.Users
+                .Where(u => u.UserType == 1 && u.IsActive) // البروكرز النشطين فقط
+                .Select(u => new BrokerListDto
+                {
+                    Id = u.Id,
+                    FullName = u.FirstName + " " + u.LastName,
+                    ProfileImageUrl = u.ProfileImageUrl,
+                    PropertiesCount = _context.Properties.Count(p => p.BrokerId == u.Id && !p.IsSold)
+                }).ToListAsync();
+
+            return Ok(brokers);
+        }
+
+        [HttpGet("admin-contact")]
+        [AllowAnonymous] // مسموح للجميع لمعرفة رقم التواصل
+        public async Task<IActionResult> GetAdminContact()
+        {
+            // البحث عن أول مستخدم يملك صلاحية Admin
+            var admin = await _userManager.GetUsersInRoleAsync("Admin");
+            var adminUser = admin.FirstOrDefault();
+
+            if (adminUser == null) return NotFound();
+
+            return Ok(new { PhoneNumber = adminUser.PhoneNumber });
         }
 
     }

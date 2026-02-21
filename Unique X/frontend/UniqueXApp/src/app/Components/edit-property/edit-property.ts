@@ -299,15 +299,36 @@ isFinanceExceeded(controlName: string): boolean {
 
   // معالجة الصور
   onFileSelect(event: any) {
-    const files = event.target.files;
-    if (files) {
-      for (let file of files) {
-        const reader = new FileReader();
-        reader.onload = (e: any) => this.selectedPhotos.update(p => [...p, { file, preview: e.target.result }]);
-        reader.readAsDataURL(file);
-      }
+  const files = event.target.files;
+  if (files) {
+    // حساب (الموجود فعلاً على السيرفر + المختار حديثاً في القائمة)
+    const existingCount = this.existingPhotos().length;
+    const newlySelectedCount = this.selectedPhotos().length;
+    const totalCurrent = existingCount + newlySelectedCount;
+    
+    const remainingLimit = 10 - totalCurrent;
+
+    if (files.length > remainingLimit) {
+      this.alertService.error(
+        `Limit Reached! You have ${existingCount} existing and ${newlySelectedCount} new photos. You can only add ${remainingLimit} more.`,
+        'Upload Limit'
+      );
+      event.target.value = '';
+      return;
+    }
+
+    // إكمال العملية إذا كان العدد ضمن الحد المسموح
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.selectedPhotos.update(prev => [...prev, { file: file, preview: e.target.result }]);
+      };
+      reader.readAsDataURL(file);
     }
   }
+}
+
 
   setExistingAsMain(photoId: number) {
     this.alertService.showLoading('Updating...');

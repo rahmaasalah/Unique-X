@@ -18,6 +18,13 @@ export class AdminService {
   getAllUsers(): Observable<any[]> {
     return this.http.get<any[]>(this.baseUrl + 'users');
   }
+  getStats(): Observable<any> {
+  return this.http.get(this.baseUrl + 'stats');
+}
+
+getDetailedProperties(): Observable<any[]> {
+  return this.http.get<any[]>(this.baseUrl + 'properties-detailed');
+}
 
   // تبديل حالة المستخدم (Active / Suspended)
   toggleUserStatus(userId: string): Observable<any> {

@@ -6,120 +6,135 @@
     </button>
   </div>
 
-  <!-- بار البحث مع زرار البحث -->
-  <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-light">
-    <div class="row g-2 align-items-center">
-      <div class="col-md-3">
-        <input type="text" class="form-control border-0 shadow-sm" placeholder="Title, Code or Project..." 
-               [(ngModel)]="searchText">
-      </div>
-      <div class="col-md-2">
-        <select class="form-select border-0 shadow-sm" [(ngModel)]="cityFilter">
-          <option value="">All Cities</option>
-          <option value="Cairo">Cairo</option>
-          <option value="Alexandria">Alexandria</option>
-          <option value="NorthCoast">North Coast</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <select class="form-select border-0 shadow-sm" [(ngModel)]="listingFilter">
-          <option value="">All Categories</option>
-          <option value="Resale">Resale</option>
-          <option value="Rent">Rent</option>
-          <option value="Primary">Primary</option>
-          <option value="ResaleProject">Resale Project</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <select class="form-select border-0 shadow-sm" [(ngModel)]="typeFilter">
-          <option value="">All Types</option>
-          <option value="Apartment">Apartment</option>
-          <option value="Villa">Villa</option>
-          <option value="Shop">Shop</option>
-          <option value="Office">Office</option>
-          <option value="Chalet">Chalet</option>
-          <option value="FullFloor">Full Floor</option>
-        </select>
-      </div>
-      
-      <!-- أزرار التحكم في البحث -->
-      <div class="col-md-3 d-flex gap-2">
-        <button class="btn btn-danger flex-grow-1 fw-bold rounded-3 shadow-sm" (click)="onSearch()">
-          <i class="bi bi-search me-1"></i> Search
-        </button>
-        <button class="btn btn-outline-secondary rounded-3 shadow-sm" (click)="resetFilters()" title="Reset">
-          <i class="bi bi-arrow-counterclockwise"></i>
-        </button>
+  <!-- لا نظهر بار البحث إلا إذا كان لدى البروكر عقارات فعلاً -->
+  @if (myProperties().length > 0) {
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-light">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-3">
+          <input type="text" class="form-control border-0 shadow-sm" placeholder="Title, Code or Project..." 
+                 [(ngModel)]="searchText">
+        </div>
+        <div class="col-md-2">
+          <select class="form-select border-0 shadow-sm" [(ngModel)]="cityFilter">
+            <option value="">All Cities</option>
+            <option value="Cairo">Cairo</option>
+            <option value="Alexandria">Alexandria</option>
+            <option value="NorthCoast">North Coast</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select border-0 shadow-sm" [(ngModel)]="listingFilter">
+            <option value="">All Categories</option>
+            <option value="Resale">Resale</option>
+            <option value="Rent">Rent</option>
+            <option value="Primary">Primary</option>
+            <option value="ResaleProject">Resale Project</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select border-0 shadow-sm" [(ngModel)]="typeFilter">
+            <option value="">All Types</option>
+            <option value="Apartment">Apartment</option>
+            <option value="Villa">Villa</option>
+            <option value="Shop">Shop</option>
+            <option value="Office">Office</option>
+            <option value="Chalet">Chalet</option>
+            <option value="FullFloor">Full Floor</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+          <button class="btn btn-danger flex-grow-1 fw-bold rounded-3 shadow-sm" (click)="onSearch()">
+            <i class="bi bi-search me-1"></i> Search
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- عرض الجدول (نستخدم displayedProperties) -->
-  @if (displayedProperties().length > 0) {
-    <div class="table-responsive bg-white shadow-sm rounded-4 p-3 border">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th class="ps-3">Property</th>
-            <th>Code</th>
-            <th>Project</th>
-            <th>City</th>
-            <th>Price</th>
-            <th>Category</th>
-            <th>Type</th>
-            <th class="text-center">Actions</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (prop of displayedProperties(); track prop.id) {
+    <!-- فحص نتائج البحث -->
+    @if (displayedProperties().length > 0) {
+      <div class="table-responsive bg-white shadow-sm rounded-4 p-3 border">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
             <tr>
-              <!-- نفس خلايا الجدول السابقة... -->
-              <td class="ps-3">
-                <div class="d-flex align-items-center">
-                  <img [src]="prop.photos[0]?.url" class="rounded-3 me-3 border" style="width: 55px; height: 55px; object-fit: cover;">
-                  <div>
-                    <h6 class="mb-0 fw-bold text-dark">{{ prop.title }}</h6>
-                    <small class="text-muted">{{ prop.region }}</small>
-                  </div>
-                </div>
-              </td>
-              <td><span class="badge bg-light text-dark border px-2">{{ prop.code }}</span></td>
-              <td>
-            @if (prop.projectName) {
-              <span class="text-danger fw-bold small"><i class="bi bi-building me-1"></i>{{ prop.projectName }}</span>
-            } @else {
-              <span class="text-muted small"></span>
-            }
-          </td>
-              <td class="small fw-semibold text-muted">{{ prop.city }}</td>
-              <td class="fw-bold text-danger">EGP {{ prop.price | number }}</td>
-              <td><span class="badge bg-success-subtle text-success rounded-pill px-3">{{ prop.listingType }}</span></td>
-              <td><span class="badge bg-primary-subtle text-primary rounded-pill px-3">{{ prop.propertyType }}</span></td>
-              <td class="text-center">
-                <div class="d-flex justify-content-center gap-2">
-                  <button class="btn btn-outline-dark btn-sm rounded-pill px-3 shadow-sm" [routerLink]="['/edit-property', prop.id]">Edit</button>
-                  <button class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm" (click)="onDelete(prop.id)">Delete</button>
-                </div>
-              </td>
-              <td>
-                <button class="btn btn-sm rounded-pill px-3 fw-bold status-toggle-btn shadow-sm"
-                        [class.btn-dark]="prop.isSold" [class.btn-outline-danger]="!prop.isSold"
-                        (click)="onMarkAsSold(prop.id)">
-                  {{ prop.isSold ? 'Sold' : 'Mark as sold' }}
-                </button>
-              </td>
+              <th class="ps-3">Property</th>
+              <th>Code</th>
+              <th>Project</th>
+              <th>City</th>
+              <th>Price</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th class="text-center">Actions</th>
+              <th>Status</th>
             </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            @for (prop of displayedProperties(); track prop.id) {
+              <tr>
+                <td class="ps-3">
+                  <div class="d-flex align-items-center">
+                    <img [src]="prop.photos[0]?.url" class="rounded-3 me-3 border shadow-sm" style="width: 55px; height: 55px; object-fit: cover;">
+                    <div>
+                      <h6 class="mb-0 fw-bold text-dark">{{ prop.title }}</h6>
+                      <small class="text-muted">{{ prop.region }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge bg-light text-dark border px-2">{{ prop.code }}</span></td>
+                <td>
+                  @if (prop.projectName) {
+                    <span class="text-danger fw-bold small"><i class="bi bi-building me-1"></i>{{ prop.projectName }}</span>
+                  }
+                </td>
+                <td class="small fw-semibold text-muted">{{ prop.city }}</td>
+                <td class="fw-bold text-danger">EGP {{ prop.price | number }}</td>
+                <td><span class="badge bg-success-subtle text-success rounded-pill px-3">{{ prop.listingType }}</span></td>
+                <td><span class="badge bg-primary-subtle text-primary rounded-pill px-3">{{ prop.propertyType }}</span></td>
+                <td class="text-center">
+                  <div class="d-flex justify-content-center gap-2">
+                    <button class="btn btn-outline-dark btn-sm rounded-pill px-3 shadow-sm" [routerLink]="['/edit-property', prop.id]">Edit</button>
+                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm" (click)="onDelete(prop.id)">Delete</button>
+                  </div>
+                </td>
+                <td>
+                  <button class="btn btn-sm rounded-pill px-3 fw-bold status-toggle-btn shadow-sm"
+                          [class.btn-dark]="prop.isSold" [class.btn-outline-danger]="!prop.isSold"
+                          (click)="onMarkAsSold(prop.id)">
+                    {{ prop.isSold ? 'Sold' : 'Mark as sold' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <!-- الحالة الثانية: لا توجد نتائج للبحث -->
+      <div class="no-search-results text-center py-5 bg-white shadow-sm rounded-5 border border-dashed mt-4">
+        <div class="mb-3">
+            <i class="bi bi-search fs-1 text-muted opacity-25"></i>
+        </div>
+        <h5 class="fw-bold text-dark">No matching properties found</h5>
+        <p class="text-muted mb-4">We couldn't find anything matching your filters in your dashboard.</p>
+        <!-- الزرار المطلوب بتعديل الاستايل -->
+        <button class="btn btn-danger rounded-pill px-5 py-2 fw-bold shadow-sm border-0" (click)="resetFilters()">
+          Clear All Filters
+        </button>
+      </div>
+    }
+
   } @else {
-    <!-- رسالة عدم وجود نتائج -->
-    <div class="text-center py-5 bg-white shadow-sm rounded-5 border border-dashed mt-4">
-      <i class="bi bi-search fs-1 text-muted opacity-25"></i>
-      <h5 class="text-muted mt-3">No matching properties in your dashboard.</h5>
-      <button class="btn btn-link text-danger fw-bold" (click)="resetFilters()">Clear Filters</button>
+    <!-- الحالة الأولى: البروكر معندوش أي عقارات خالص -->
+    <div class="empty-state-card text-center py-5 px-4 rounded-5 bg-white shadow-lg border-0 animate__animated animate__fadeIn">
+      <div class="icon-box bg-danger-subtle text-danger mx-auto mb-4 rounded-circle d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+        <i class="bi bi-house-add fs-1"></i>
+      </div>
+      <h3 class="fw-bold text-dark mb-2">Welcome to your Dashboard!</h3>
+      <p class="text-muted mb-4 mx-auto" style="max-width: 450px;">
+        You haven't listed any properties yet. Start by adding your first property to reach thousands of potential buyers and renters.
+      </p>
+      <button class="btn btn-danger btn-lg rounded-pill px-5 fw-bold shadow" routerLink="/add-property">
+        <i class="bi bi-plus-circle me-2"></i> List Your First Property
+      </button>
     </div>
   }
 </div>

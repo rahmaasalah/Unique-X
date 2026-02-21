@@ -48,19 +48,32 @@ namespace Unique_X.Controllers
             return Ok(new { Status = user.IsActive });
         }
 
-        [HttpGet("properties")]
-        public async Task<IActionResult> GetAllPropertiesAdmin()
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetDashboardStats()
         {
-            // الآن Include و ToListAsync سيعملان بنجاح
-            var props = await _context.Properties.Include(p => p.Broker).Select(p => new {
-                p.Id,
-                p.Title,
-                p.Price,
-                p.IsActive,
-                p.IsSold,
-                BrokerName = p.Broker.FirstName + " " + p.Broker.LastName
-            }).ToListAsync();
-            return Ok(props);
+            var stats = new
+            {
+                TotalUsers = await _userManager.Users.CountAsync(),
+                TotalProperties = await _context.Properties.CountAsync(),
+                SuspendedUsers = await _userManager.Users.CountAsync(u => !u.IsActive),
+                SoldProperties = await _context.Properties.CountAsync(p => p.IsSold),
+                InactiveProperties = await _context.Properties.CountAsync(p => !p.IsActive)
+            };
+            return Ok(stats);
+        }
+
+        [HttpGet("properties")]
+        [HttpGet("properties-detailed")]
+        public async Task<IActionResult> GetAllPropertiesDetailed()
+        {
+            // الأدمن محتاج يشوف "كل حاجة" عشان يحكم على العقار
+            var props = await _context.Properties
+                .Include(p => p.Broker)
+                .Include(p => p.Photos)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            return Ok(props); // هنبعت الـ Entities كاملة للأدمن
         }
 
         [HttpPatch("toggle-property/{id}")]
