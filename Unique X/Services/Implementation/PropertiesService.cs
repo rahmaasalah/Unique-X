@@ -55,6 +55,20 @@ namespace Unique_X.Services.Implementation
                 ReceptionPieces = dto.ReceptionPieces ?? 0,
                 DeliveryYear = dto.DeliveryYear,
 
+
+                AreaType = dto.AreaType,
+                VillaCategory = dto.VillaCategory,
+                VillaSubType = dto.VillaSubType,
+                GroundRooms = dto.GroundRooms,
+                GroundBaths = dto.GroundBaths,
+                GroundReception = dto.GroundReception,
+                FirstRooms = dto.FirstRooms,
+                FirstBaths = dto.FirstBaths,
+                FirstReception = dto.FirstReception,
+                SecondRooms = dto.SecondRooms,
+                SecondBaths = dto.SecondBaths,
+                SecondReception = dto.SecondReception,
+
                 // البيانات المالية
                 PaymentMethod = dto.PaymentMethod ?? "Cash",
                 InstallmentYears = dto.InstallmentYears,
@@ -66,6 +80,8 @@ namespace Unique_X.Services.Implementation
 
                 // الحالات والخدمات (Booleans)
                 HasMasterRoom = dto.HasMasterRoom ?? false,
+                HasGarden = dto.HasGarden ?? false,
+                HasPool = dto.HasPool ?? false,
                 HasHotelEntrance = dto.HasHotelEntrance ?? false,
                 HasSecurity = dto.HasSecurity ?? false,
                 HasParking = dto.HasParking ?? false,
@@ -279,6 +295,16 @@ namespace Unique_X.Services.Implementation
             if (dto.DeliveryStatus.HasValue) property.DeliveryStatus = dto.DeliveryStatus.Value;
             if (dto.DeliveryYear.HasValue) property.DeliveryYear = dto.DeliveryYear.Value;
 
+            if (dto.GroundRooms.HasValue) property.GroundRooms = dto.GroundRooms.Value;
+            if (dto.GroundBaths.HasValue) property.GroundBaths = dto.GroundBaths.Value;
+            if (dto.GroundReception.HasValue) property.GroundReception = dto.GroundReception.Value;
+            if (dto.FirstRooms.HasValue) property.FirstRooms = dto.FirstRooms.Value;
+            if (dto.FirstBaths.HasValue) property.FirstBaths = dto.FirstBaths.Value;
+            if (dto.FirstReception.HasValue) property.FirstReception = dto.FirstReception.Value;
+            if (dto.SecondRooms.HasValue) property.SecondRooms = dto.SecondRooms.Value;
+            if(dto.SecondBaths.HasValue) property.SecondBaths = dto.SecondBaths.Value;
+            if (dto.SecondReception.HasValue) property.SecondReception = dto.SecondReception.Value;
+
             // تحديث تفاصيل البناء
             if (dto.BuildYear.HasValue) property.BuildYear = dto.BuildYear.Value;
             if (dto.Floor.HasValue) property.Floor = dto.Floor.Value;
@@ -286,6 +312,9 @@ namespace Unique_X.Services.Implementation
             if (dto.ApartmentsPerFloor.HasValue) property.ApartmentsPerFloor = dto.ApartmentsPerFloor.Value;
             if (dto.ElevatorsCount.HasValue) property.ElevatorsCount = dto.ElevatorsCount.Value;
             if (dto.ReceptionPieces.HasValue) property.ReceptionPieces = dto.ReceptionPieces.Value;
+
+            if (dto.HasPool.HasValue) property.HasPool = dto.HasPool.Value;
+            if (dto.HasGarden.HasValue) property.HasGarden = dto.HasGarden.Value;
 
             // تحديث البيانات المالية (Nullable Decimals)
             if (dto.MonthlyRent.HasValue) property.MonthlyRent = dto.MonthlyRent.Value;
@@ -426,6 +455,22 @@ namespace Unique_X.Services.Implementation
                 HasGasMeter = property.HasGasMeter,
                 HasLandShare = property.HasLandShare,
                 IsLicensed = property.IsLicensed,
+
+                AreaType = property.AreaType?.ToString(),
+                VillaCategory = property.VillaCategory.ToString(),
+                VillaSubType = property.VillaSubType.ToString(),
+
+                HasGarden = property.HasGarden,
+                HasPool = property.HasPool,
+                GroundBaths = property.GroundBaths,
+                GroundReception = property.GroundReception,
+                GroundRooms = property.GroundRooms,
+                FirstReception = property.FirstReception,
+                FirstBaths = property.FirstBaths,
+                FirstRooms = property.FirstRooms,
+                SecondReception = property.SecondReception,
+                SecondBaths = property.SecondBaths,
+                SecondRooms = property.SecondRooms,
 
                 CreatedAt = property.CreatedAt,
                 BrokerId = property.BrokerId,

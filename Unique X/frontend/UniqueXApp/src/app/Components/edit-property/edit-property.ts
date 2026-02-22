@@ -93,6 +93,16 @@ filteredProjects: string[] = [];
       address: [''],
       listingType: [0, Validators.required],
       propertyType: [0, Validators.required],
+      areaType: [0],
+  villaCategory: [0],
+  villaSubType: [null],
+  // حقول الأدوار
+  groundRooms: [0], groundBaths: [0], groundReception: [0],
+  firstRooms: [0], firstBaths: [0], firstReception: [0],
+  secondRooms: [0], secondBaths: [0], secondReception: [0],
+  // مرافق جديدة
+  hasPool: [false], 
+  hasGarden: [false],
       code: ['', Validators.required],
       finishing: [2],
       buildYear: ['', [Validators.min(1950), Validators.max(this.currentYear)]],
@@ -171,6 +181,10 @@ isSecurityExceeded(): boolean {
   return security > 0 && totalPrice > 0 && security > totalPrice;
 }
 
+isVilla(): boolean {
+  return Number(this.editForm.get('propertyType')?.value) === 1;
+}
+
 // 1. للمبالغ المالية: تقبل أرقام فقط وتعيد رسم الفواصل أوتوماتيكياً
 formatFinancial(event: any, controlName: string) {
   let input = event.target.value;
@@ -241,7 +255,10 @@ isFinanceExceeded(controlName: string): boolean {
           listingType: this.mapListingToId(data.listingType),
           propertyType: this.mapTypeToId(data.propertyType),
           finishing: this.mapFinishingToId(data.finishing),
-          deliveryStatus: this.mapDeliveryToId(data.deliveryStatus)
+          deliveryStatus: this.mapDeliveryToId(data.deliveryStatus),
+          areatype: this.mapAreaTypeToId(data.areaType),
+        villaCategory: this.mapVillaCatToId(data.villaCategory),
+        villaSubType: this.mapVillaSubToId(data.villaSubType),
         });
 
         // 4. تنسيق مبالغ الأسعار بالفواصل فوراً عند التحميل
@@ -288,6 +305,16 @@ isFinanceExceeded(controlName: string): boolean {
     const id = cId || Number(this.editForm.get('city')?.value);
     this.filteredRegions = this.regionsMapping[id] || [];
   }
+
+  mapAreaTypeToId(val: string) { return val === 'LandArea' ? 0 : 1; }
+mapVillaCatToId(val: string) {
+  const cats: any = { 'Standalone': 0, 'TwinHouse': 1, 'TownHouse': 2, 'TiesseraLower': 3, 'TiesseraUpper': 4, 'SkyVilla': 5 };
+  return cats[val] ?? 0;
+}
+mapVillaSubToId(val: string) {
+  if (!val) return null;
+  return val === 'Basement' ? 0 : 1;
+}
 
   updateProjectsList(cId?: number, rName?: string) {
     const id = cId || Number(this.editForm.get('city')?.value);
@@ -350,6 +377,28 @@ isFinanceExceeded(controlName: string): boolean {
       this.alertService.showLoading('Saving changes...');
       const formData = new FormData();
       const vals = this.editForm.value;
+
+
+      formData.append('GroundRooms', (vals.groundRooms || 0).toString());
+    formData.append('GroundBaths', (vals.groundBaths || 0).toString());
+    formData.append('GroundReception', (vals.groundReception || 0).toString());
+    formData.append('FirstRooms', (vals.firstRooms || 0).toString());
+    formData.append('FirstBaths', (vals.firstBaths || 0).toString());
+    formData.append('FirstReception', (vals.firstReception || 0).toString());
+    formData.append('SecondRooms', (vals.secondRooms || 0).toString());
+    formData.append('SecondBaths', (vals.secondBaths || 0).toString());
+    formData.append('SecondReception', (vals.secondReception || 0).toString());
+
+    formData.append('ProjectName', vals.projectName || '');
+formData.append('AreaType', vals.areaType?.toString() || '0');
+formData.append('VillaCategory', vals.villaCategory?.toString() || '0');
+if (vals.villaSubType !== null) {
+  formData.append('VillaSubType', vals.villaSubType.toString());
+}
+
+    // المميزات الجديدة
+    formData.append('HasPool', vals.hasPool.toString());
+    formData.append('HasGarden', vals.hasGarden.toString());
 
       Object.keys(vals).forEach(key => {
         let value = vals[key];

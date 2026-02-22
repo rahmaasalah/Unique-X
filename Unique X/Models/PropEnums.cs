@@ -39,5 +39,25 @@
             Ready = 0,
             UnderConstruction = 1
         }
+
+        public enum AreaType 
+        { 
+            LandArea = 0, 
+            BuiltUpArea = 1 
+        }
+        public enum VillaCategory 
+        { 
+            Standalone = 0, 
+            TwinHouse = 1, 
+            TownHouse = 2, 
+            TiesseraLower = 3, 
+            TiesseraUpper = 4, 
+            SkyVilla = 5 
+        }
+        public enum VillaType 
+        { 
+            Basement = 0, 
+            Penthouse = 1 
+        }
     }
 }
