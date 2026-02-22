@@ -62,6 +62,30 @@ namespace Unique_X.DTOs
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string BrokerId { get; set; } // ضروري جداً للربط
         public int BrokerPropertyCount { get; set; }
+
+        // أنواع الفيلا والمساحة
+        public string? AreaType { get; set; }
+        public string? VillaCategory { get; set; }
+        public string? VillaSubType { get; set; }
+
+        // حقول الأدوار (Ground Floor)
+        public int? GroundRooms { get; set; }
+        public int? GroundBaths { get; set; }
+        public int? GroundReception { get; set; }
+
+        // حقول الأدوار (First Floor)
+        public int? FirstRooms { get; set; }
+        public int? FirstBaths { get; set; }
+        public int? FirstReception { get; set; }
+
+        // حقول الأدوار (Second Floor)
+        public int? SecondRooms { get; set; }
+        public int? SecondBaths { get; set; }
+        public int? SecondReception { get; set; }
+
+        // مرافق جديدة
+        public bool? HasPool { get; set; }
+        public bool? HasGarden { get; set; }
         public List<PhotoResponseDto> Photos { get; set; }
 
         public string BrokerName { get; set; } 

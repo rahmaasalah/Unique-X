@@ -48,6 +48,30 @@ namespace Unique_X.DTOs
         public decimal? SecurityDeposit { get; set; }    // مبلغ التأمين (للإيجار)
         public decimal? MonthlyRent { get; set; }
         public string? Code { get; set; } // AR#123
+
+        // أنواع الفيلا والمساحة
+        public AreaType? AreaType { get; set; }
+        public VillaCategory? VillaCategory { get; set; }
+        public VillaType? VillaSubType { get; set; }
+
+        // حقول الأدوار (Ground Floor)
+        public int? GroundRooms { get; set; }
+        public int? GroundBaths { get; set; }
+        public int? GroundReception { get; set; }
+
+        // حقول الأدوار (First Floor)
+        public int? FirstRooms { get; set; }
+        public int? FirstBaths { get; set; }
+        public int? FirstReception { get; set; }
+
+        // حقول الأدوار (Second Floor)
+        public int? SecondRooms { get; set; }
+        public int? SecondBaths { get; set; }
+        public int? SecondReception { get; set; }
+
+        // مرافق جديدة
+        public bool? HasPool { get; set; }
+        public bool? HasGarden { get; set; }
         public FinishingType? Finishing { get; set; }
         public string? ProjectName { get; set; }
         public List<IFormFile>? Photos { get; set; }

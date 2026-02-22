@@ -52,6 +52,75 @@
               </div>
             </div>
 
+            <!-- ================== الجزء المعدل: حقول الفيلا المتقدمة ================== -->
+            @if (isVilla()) {
+              <div class="bg-light p-4 rounded-4 border mb-5 animate__animated animate__fadeIn">
+                <h5 class="fw-bold text-danger mb-4"><i class="bi bi-gem me-2"></i>Villa Specifications</h5>
+                
+                <div class="row g-3 mb-4">
+                  <div class="col-md-4">
+                    <label class="small fw-bold">Area Type</label>
+                    <select formControlName="areaType" class="form-select shadow-sm">
+                      <option [value]="0">Land Area</option>
+                      <option [value]="1">Built-up Area</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="small fw-bold">Villa Category</label>
+                    <select formControlName="villaCategory" class="form-select shadow-sm">
+                      <option [value]="0">Standalone</option>
+                      <option [value]="1">Twin House</option>
+                      <option [value]="2">Town House</option>
+                      <option [value]="3">Tiessera Lower</option>
+                      <option [value]="4">Tiessera Upper</option>
+                      <option [value]="5">Sky Villa</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="small fw-bold">Sub-Type</label>
+                    <select formControlName="villaSubType" class="form-select shadow-sm">
+                      <option [value]="null">No Sub-Type</option>
+                      <option [value]="0">Basement</option>
+                      <option [value]="1">Penthouse</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- تقسيم الأدوار 3 في سطر -->
+                <div class="row g-3">
+                  <!-- Ground Floor -->
+                  <div class="col-md-4">
+                    <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
+                      <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">GROUND FLOOR</h6>
+                      <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatInteger($event, 'groundRooms')" formControlName="groundRooms" class="form-control form-control-sm"></div>
+                      <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatInteger($event, 'groundBaths')" formControlName="groundBaths" class="form-control form-control-sm"></div>
+                      <div><label class="x-small fw-bold">Reception (Pcs)</label><input type="text" (input)="formatInteger($event, 'groundReception')" formControlName="groundReception" class="form-control form-control-sm"></div>
+                    </div>
+                  </div>
+                  <!-- First Floor -->
+                  <div class="col-md-4">
+                    <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
+                      <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">FIRST FLOOR</h6>
+                      <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatInteger($event, 'firstRooms')" formControlName="firstRooms" class="form-control form-control-sm"></div>
+                      <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatInteger($event, 'firstBaths')" formControlName="firstBaths" class="form-control form-control-sm"></div>
+                      <div><label class="x-small fw-bold">Reception (Pcs)</label><input type="text" (input)="formatInteger($event, 'firstReception')" formControlName="firstReception" class="form-control form-control-sm"></div>
+                    </div>
+                  </div>
+                  <!-- Second Floor -->
+                  <div class="col-md-4">
+                    <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
+                      <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">SECOND FLOOR</h6>
+                      <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatInteger($event, 'secondRooms')" formControlName="secondRooms" class="form-control form-control-sm"></div>
+                      <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatInteger($event, 'secondBaths')" formControlName="secondBaths" class="form-control form-control-sm"></div>
+                      <div><label class="x-small fw-bold">Reception (Pcs)</label><input type="text" (input)="formatInteger($event, 'secondReception')" formControlName="secondReception" class="form-control form-control-sm"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+            <!-- ====================================================================== -->
+
+
             @if (showDeliveryMenu()) {
   <div class="row g-3 mb-4 animate__animated animate__fadeIn">
     
@@ -322,6 +391,19 @@
     <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
       <label class="form-check-label small fw-bold mb-0">Natural Gas Meter</label>
       <input class="form-check-input ms-0" type="checkbox" formControlName="hasGasMeter">
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
+      <label class="form-check-label small fw-bold mb-0">Private Pool</label>
+      <input class="form-check-input ms-0" type="checkbox" formControlName="hasPool">
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
+      <label class="form-check-label small fw-bold mb-0">Garden Area</label>
+      <input class="form-check-input ms-0" type="checkbox" formControlName="hasGarden">
     </div>
   </div>
 

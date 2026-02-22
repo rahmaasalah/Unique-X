@@ -98,6 +98,37 @@
   }
 </div>
 
+
+<!-- [جديد] كارت تقسيم أدوار الفيلا (يظهر فقط لو النوع Villa) -->
+      @if (prop.propertyType === 'Villa') {
+        <div class="bg-white p-4 rounded-4 shadow-sm border border-light mb-4 animate__animated animate__fadeIn">
+          <h5 class="fw-bold mb-4 border-bottom pb-2"><i class="bi bi-layers-half me-2 text-danger"></i>Villa Layout</h5>
+          <div class="row g-4 text-center">
+            @if (prop.groundRooms > 0 || prop.groundBaths > 0) {
+              <div class="col-md-4 border-end">
+                <h6 class="fw-bold text-danger small text-uppercase">Ground Floor</h6>
+                <div class="small fw-bold">{{ prop.groundRooms }} Rooms | {{ prop.groundBaths }} Baths</div>
+                <div class="small text-muted">{{ prop.groundReception }} Reception Pcs</div>
+              </div>
+            }
+            @if (prop.firstRooms > 0 || prop.firstBaths > 0) {
+              <div class="col-md-4 border-end">
+                <h6 class="fw-bold text-danger small text-uppercase">First Floor</h6>
+                <div class="small fw-bold">{{ prop.firstRooms }} Rooms | {{ prop.firstBaths }} Baths</div>
+                <div class="small text-muted">{{ prop.firstReception }} Reception Pcs</div>
+              </div>
+            }
+            @if (prop.secondRooms > 0 || prop.secondBaths > 0) {
+              <div class="col-md-4">
+                <h6 class="fw-bold text-danger small text-uppercase">Second Floor</h6>
+                <div class="small fw-bold">{{ prop.secondRooms }} Rooms | {{ prop.secondBaths }} Baths</div>
+                <div class="small text-muted">{{ prop.secondReception }} Reception Pcs</div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
       <!-- كارت المواصفات الفنية -->
       <div class="bg-white p-4 rounded-4 shadow-sm border border-light mb-4">
         <h5 class="fw-bold mb-4 border-bottom pb-2">Property Specifications</h5>
@@ -105,8 +136,12 @@
           <div class="col-md-6 border-end-md">
             <ul class="list-unstyled mb-0">
         @if (prop.distanceFromLandmark) {
-          <li class="mb-3 small"><i class="bi bi-geo text-danger me-2"></i> <strong>Landmark:</strong> {{ prop.distanceFromLandmark }}</li>
+          <li class="mb-3 small">
+            <i class="bi bi-geo text-danger me-2"></i> 
+            <strong>Landmark:</strong> {{ prop.distanceFromLandmark }}
+          </li>
         }
+
         
         <!-- إظهار الدور فقط لو أكبر من 0 -->
         @if (prop.floor > 0) {
@@ -220,6 +255,13 @@
             <span class="text-dark fw-medium">Parking Slot Available</span>
           </li> 
         }
+         @if(prop.hasPool) 
+         { 
+          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
+            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+            <span class="text-dark fw-medium">Private Swimming Pool</span>
+          </li> 
+        }
         @if(prop.hasBalcony) { 
           <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
             <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
@@ -256,6 +298,14 @@
             <span class="text-dark fw-medium">Licensed Residential Unit</span>
           </li> 
         }
+
+          @if(prop.hasGarden) 
+          {
+            <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInRight">
+              <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+              <span class="text-dark fw-medium">Garden Area</span>
+            </li> 
+          }
       </ul>
     </div>
   </div>

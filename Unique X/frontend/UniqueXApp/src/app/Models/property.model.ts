@@ -52,6 +52,27 @@ deliveryYear?: number;
 commissionPercentage: number;
 finishing: string;
 projectName?: string;
+// بيانات الفيلا والأدوار
+  groundRooms: number;
+  groundBaths: number;
+  groundReception: number;
+  
+  firstRooms: number;
+  firstBaths: number;
+  firstReception: number;
+  
+  secondRooms: number;
+  secondBaths: number;
+  secondReception: number;
+
+  // أنواع الفيلا والمساحة
+  areaType: string;
+  villaCategory: string;
+  villaSubType: string | null;
+
+  // المميزات الجديدة
+  hasPool: boolean;
+  hasGarden: boolean;
 }
 
 export interface Photo {

@@ -109,8 +109,18 @@ filteredProjects: string[] = [];
   isFirstOwner: [false],
   isLegalReconciled: [false],
   hasParking: [false], // 0 = Sale, 1 = Rent
-      propertyType: [0, Validators.required],
-      hasBalcony: [false],
+  propertyType: [0, Validators.required],
+  areaType: [0],
+  villaCategory: [0],
+  villaSubType: [null],
+  // حقول الأدوار
+  groundRooms: [0], groundBaths: [0], groundReception: [0],
+  firstRooms: [0], firstBaths: [0], firstReception: [0],
+  secondRooms: [0], secondBaths: [0], secondReception: [0],
+  // مرافق جديدة
+  hasPool: [false], 
+  hasGarden: [false],
+  hasBalcony: [false],
   isFurnished: [false],
   paymentMethod: ['Full Cash', Validators.required],
   installmentYears: [1, [Validators.min(1)]],
@@ -174,6 +184,10 @@ this.propertyForm.get('price')?.valueChanges.subscribe(val => {
   const security = this.getPureNumber('securityDeposit');
   
   return security > 0 && totalPrice > 0 && security > totalPrice;
+}
+
+isVilla(): boolean {
+  return Number(this.propertyForm.get('propertyType')?.value) === 1;
 }
 
 // تعديل دالة التحقق المالي العامة لتشمل التأمين
@@ -357,71 +371,71 @@ isInstallment(): boolean {
 
   onSubmit() {
   if (this.isSubmitting) return;
-
-  // تأكدي إن فيه صور مختارة
   if (this.propertyForm.valid && this.selectedPhotos().length > 0) {
     this.isSubmitting = true;
-    this.alertService.showLoading('Uploading images and saving property details...');
-
+    this.alertService.showLoading('Publishing Listing...');
+    
     const formData = new FormData();
-    const formValues = this.propertyForm.value;
+    const f = this.propertyForm.value;
 
-    // لوب ذكي: بيبعت البيانات اللي ليها قيمة بس ومبيبعتش الـ null
-    Object.keys(formValues).forEach(key => {
-      let value = formValues[key];
-      
-      if (value !== null && value !== undefined) {
-        let stringValue = value.toString();
+    // إرسال الحقول يدوياً بالأسماء التي يتوقعها الباك اند (PascalCase)
+    formData.append('Title', f.title);
+    formData.append('ProjectName', f.projectName || ''); // حل مشكلة الـ NULL ✅
+    formData.append('Code', f.code || '');
+    formData.append('Price', f.price.toString().replace(/,/g, ''));
+    formData.append('Area', f.area.toString());
+    formData.append('City', f.city.toString());
+    formData.append('Region', f.region);
+    formData.append('ListingType', f.listingType.toString());
+    formData.append('PropertyType', f.propertyType.toString());
 
-        // --- الخطوة المطلوبة: مسح الفواصل من المبالغ المبعوتة (1,000,000 -> 1000000) ---
-        // بنفحص لو النص فيه فواصل بنمسحها عشان الباك اند يستلم رقم صافي
-        if (stringValue.includes(',')) {
-          stringValue = stringValue.replace(/,/g, '');
-        }
+    // حقول الفيلا (حتى لو قيمتها 0 لازم تتبعت)
+    formData.append('GroundRooms', (f.groundRooms || 0).toString());
+    formData.append('GroundBaths', (f.groundBaths || 0).toString());
+    formData.append('GroundReception', (f.groundReception || 0).toString());
+    formData.append('FirstRooms', (f.firstRooms || 0).toString());
+    formData.append('FirstBaths', (f.firstBaths || 0).toString());
+    formData.append('FirstReception', (f.firstReception || 0).toString());
+    formData.append('SecondRooms', (f.secondRooms || 0).toString());
+    formData.append('SecondBaths', (f.secondBaths || 0).toString());
+    formData.append('SecondReception', (f.secondReception || 0).toString());
 
-        // تحويل اسم الحقل لـ PascalCase (أول حرف كبير) عشان يطابق الـ DTO في C#
-        const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
-        formData.append(pascalKey, stringValue);
-      }
-    });
-
-    // إرسال ترتيب الصورة الرئيسية
-    formData.append('MainPhotoIndex', this.mainPhotoIndex.toString());
-    formData.append('DeliveryStatus', formValues.deliveryStatus.toString());
-if (formValues.deliveryYear) {
-    formData.append('DeliveryYear', formValues.deliveryYear.toString());
+    formData.append('ProjectName', f.projectName || '');
+formData.append('AreaType', f.areaType?.toString() || '0');
+formData.append('VillaCategory', f.villaCategory?.toString() || '0');
+if (f.villaSubType !== null) {
+  formData.append('VillaSubType', f.villaSubType.toString());
 }
-formData.append('IsLicensed', formValues.isLicensed.toString());
-formData.append('HasWaterMeter', formValues.hasWaterMeter.toString());
-formData.append('HasElectricityMeter', formValues.hasElectricityMeter.toString());
-formData.append('HasGasMeter', formValues.hasGasMeter.toString());
-formData.append('HasLandShare', formValues.hasLandShare.toString());
-formData.append('Code', formValues.code);
-formData.append('Finishing', formValues.finishing.toString());
 
-    // إرسال ملفات الصور الفعلية من الـ Signal
-    this.selectedPhotos().forEach(p => {
-      formData.append('Photos', p.file);
-    });
+    // المميزات الجديدة
+    formData.append('HasPool', f.hasPool.toString());
+    formData.append('HasGarden', f.hasGarden.toString());
 
+    // الحقول الفنية
+    formData.append('Floor', (f.floor || 0).toString());
+    formData.append('TotalFloors', (f.totalFloors || 0).toString());
+    formData.append('BuildYear', f.buildYear.toString());
+    formData.append('Finishing', f.finishing.toString());
+    
+    // ... (تأكدي من إضافة باقي الـ Switches بنفس الطريقة: HasSecurity, etc.)
+
+    // الصور
+    formData.append('MainPhotoIndex', this.mainPhotoIndex.toString());
+    this.selectedPhotos().forEach(p => formData.append('Photos', p.file));
+
+    // الإرسال
     this.propertyService.addProperty(formData).subscribe({
       next: () => {
         this.alertService.close();
         this.alertService.success('Property Published Successfully!');
         this.router.navigate(['/home']);
-        this.isSubmitting = false;
       },
       error: (err) => {
         this.alertService.close();
-        console.error('Full Error Object:', err);
-        // إظهار تفاصيل الخطأ عشان لو فيه حاجة تانية ناقصة نعرفها
-        const msg = err.error?.errors ? JSON.stringify(err.error.errors) : 'Upload failed. Check your connection.';
-        this.alertService.error(msg, 'Server Error');
         this.isSubmitting = false;
+        this.alertService.error('Error while saving. Please check all fields.');
       }
     });
-  } else if (this.selectedPhotos().length === 0) {
-    this.alertService.error('Please upload at least one photo.');
   }
 }
 

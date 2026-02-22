@@ -53,6 +53,43 @@
               </div>
             </div>
 
+            <!-- ================== الجزء المعدل: منطق الفيلا vs الشقة ================== -->
+            @if (isVilla()) {
+              <div class="bg-light p-4 rounded-4 border mb-5 animate__animated animate__fadeIn">
+                <h6 class="fw-bold text-danger mb-4"><i class="bi bi-gem me-2"></i>Villa Configuration</h6>
+                <div class="row g-3 mb-4">
+                  <div class="col-md-4"><label class="small fw-bold">Area Type</label><select formControlName="areaType" class="form-select shadow-sm"><option [value]="0">Land Area</option><option [value]="1">Built-up Area</option></select></div>
+                  <div class="col-md-4"><label class="small fw-bold">Villa Category</label><select formControlName="villaCategory" class="form-select shadow-sm"><option [value]="0">Standalone</option><option [value]="1">Twin House</option><option [value]="2">Town House</option><option [value]="3">Tiessera Lower</option><option [value]="4">Tiessera Upper</option><option [value]="5">Sky Villa</option></select></div>
+                  <div class="col-md-4"><label class="small fw-bold">Sub-Type</label><select formControlName="villaSubType" class="form-select shadow-sm"><option [value]="null">None</option><option [value]="0">Basement</option><option [value]="1">Penthouse</option></select></div>
+                </div>
+
+                <div class="row g-3">
+                  <!-- Ground, First, Second Floors -->
+                  @for (floor of ['ground', 'first', 'second']; track floor) {
+                    <div class="col-md-4">
+                      <div class="p-3 bg-white border rounded-3 shadow-sm h-100 text-center">
+                        <h6 class="fw-bold text-danger border-bottom pb-2 mb-3 text-uppercase">{{floor}} Floor</h6>
+                        <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatInteger($event, floor+'Rooms')" [formControlName]="floor+'Rooms'" class="form-control form-control-sm text-center"></div>
+                        <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatInteger($event, floor+'Baths')" [formControlName]="floor+'Baths'" class="form-control form-control-sm text-center"></div>
+                        <div><label class="x-small fw-bold">Reception</label><input type="text" (input)="formatInteger($event, floor+'Reception')" [formControlName]="floor+'Reception'" class="form-control form-control-sm text-center"></div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            } @else {
+              <!-- حقول الشقة العادية (تظهر فقط لو مش فيلا) -->
+              <h5 class="fw-bold border-bottom pb-2 mb-4 text-danger"><i class="bi bi-house-door me-2"></i>Unit Specs</h5>
+              <div class="row g-3 mb-4">
+                <div class="col-md-3"><label class="small fw-bold">Floor No.</label><input type="text" (input)="formatInteger($event, 'floor')" formControlName="floor" class="form-control"></div>
+                <div class="col-md-3"><label class="small fw-bold">Total Floors</label><input type="text" (input)="formatInteger($event, 'totalFloors')" formControlName="totalFloors" class="form-control"></div>
+                <div class="col-md-3"><label class="small fw-bold">Units / Floor</label><input type="text" (input)="formatInteger($event, 'apartmentsPerFloor')" formControlName="apartmentsPerFloor" class="form-control"></div>
+                <div class="col-md-3"><label class="small fw-bold">Elevators</label><input type="text" (input)="formatInteger($event, 'elevatorsCount')" formControlName="elevatorsCount" class="form-control"></div>
+              </div>
+            }
+            <!-- ====================================================================== -->
+
+
 
             @if (showDeliveryMenu()) {
   <div class="row g-3 mb-4 animate__animated animate__fadeIn">
@@ -328,6 +365,20 @@
       <input class="form-check-input ms-0" type="checkbox" formControlName="hasGasMeter">
     </div>
   </div>
+
+  <div class="col-md-4">
+    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
+      <label class="form-check-label small fw-bold mb-0">Private Pool</label>
+      <input class="form-check-input ms-0" type="checkbox" formControlName="hasPool">
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
+      <label class="form-check-label small fw-bold mb-0">Garden Area</label>
+      <input class="form-check-input ms-0" type="checkbox" formControlName="hasGarden">
+    </div>
+  </div>
+  
 
 </div>
 
