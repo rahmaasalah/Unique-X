@@ -76,3 +76,33 @@
     border-bottom-left-radius: 40px !important;
     border-bottom-right-radius: 40px !important;
 }
+
+
+
+/* حاوية الكاراسول الإعلاني */
+#adsCarousel {
+    background-color: #f8f9fa; /* لون خلفية رمادي فاتح للمساحات الفاضية */
+    height: 450px; /* ثبتي الارتفاع اللي يريحك */
+    overflow: hidden;
+}
+
+/* تنسيق صورة الإعلان */
+.ad-banner {
+    height: 450px; /* لازم نفس ارتفاع الحاوية */
+    width: 100%;
+    /* contain: تضمن ظهور الصورة كاملة بدون قص، ولو فيه فراغ بياخد لون الخلفية */
+    object-fit: contain; 
+    display: block;
+}
+
+/* تحسين شكل الأسهم عشان متبقاش مدارية على الكلام */
+.carousel-control-prev-icon, .carousel-control-next-icon {
+    filter: invert(1); /* بيخلي الأسهم غامقة لو الخلفية فاتحة */
+}
+
+/* للموبايل: نقلل الارتفاع عشان التناسب */
+@media (max-width: 768px) {
+    #adsCarousel, .ad-banner {
+        height: 250px;
+    }
+}

@@ -304,6 +304,9 @@ namespace Unique_X.Services.Implementation
             if (dto.SecondRooms.HasValue) property.SecondRooms = dto.SecondRooms.Value;
             if(dto.SecondBaths.HasValue) property.SecondBaths = dto.SecondBaths.Value;
             if (dto.SecondReception.HasValue) property.SecondReception = dto.SecondReception.Value;
+            if (dto.AreaType.HasValue) property.AreaType = dto.AreaType.Value;
+            if (dto.VillaCategory.HasValue) property.VillaCategory = dto.VillaCategory.Value;
+            if (dto.VillaSubType.HasValue) property.VillaSubType = dto.VillaSubType.Value;
 
             // تحديث تفاصيل البناء
             if (dto.BuildYear.HasValue) property.BuildYear = dto.BuildYear.Value;
@@ -456,9 +459,9 @@ namespace Unique_X.Services.Implementation
                 HasLandShare = property.HasLandShare,
                 IsLicensed = property.IsLicensed,
 
-                AreaType = property.AreaType?.ToString(),
-                VillaCategory = property.VillaCategory.ToString(),
-                VillaSubType = property.VillaSubType.ToString(),
+                AreaType = property.AreaType,
+                VillaCategory = property.VillaCategory,
+                VillaSubType = property.VillaSubType,
 
                 HasGarden = property.HasGarden,
                 HasPool = property.HasPool,

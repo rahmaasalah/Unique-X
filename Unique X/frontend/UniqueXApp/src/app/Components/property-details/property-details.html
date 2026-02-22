@@ -129,6 +129,40 @@
         </div>
       }
 
+      @if (prop.propertyType === 'Villa') {
+  <div class="bg-white p-4 rounded-4 shadow-sm border border-light mb-4 animate__animated animate__fadeIn">
+    <h5 class="fw-bold mb-4 border-bottom pb-2">
+      <i class="bi bi-info-square me-2 text-danger"></i>Villa Specifications
+    </h5>
+    
+    <div class="row g-4 text-center">
+      <!-- 1. نوع المساحة -->
+      @if (prop.areaType) {
+        <div class="col-md-4 border-end">
+          <h6 class="fw-bold text-muted small text-uppercase" style="letter-spacing: 1px;">Area Type</h6>
+          <div class="text-danger fw-bold fs-5">{{ prop.areaType }}</div>
+        </div>
+      }
+
+      <!-- 2. تصنيف الفيلا -->
+      @if (prop.villaCategory) {
+        <div class="col-md-4 border-end">
+          <h6 class="fw-bold text-muted small text-uppercase" style="letter-spacing: 1px;">Villa Category</h6>
+          <div class="text-danger fw-bold fs-5">{{ prop.villaCategory }}</div>
+        </div>
+      }
+
+      <!-- 3. النوع الفرعي (Penthouse / Basement) -->
+      @if (prop.villaSubType && prop.villaSubType !== 'null') {
+        <div class="col-md-4">
+          <h6 class="fw-bold text-muted small text-uppercase" style="letter-spacing: 1px;">Villa Type</h6>
+          <div class="text-danger fw-bold fs-5">{{ prop.villaSubType }}</div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
       <!-- كارت المواصفات الفنية -->
       <div class="bg-white p-4 rounded-4 shadow-sm border border-light mb-4">
         <h5 class="fw-bold mb-4 border-bottom pb-2">Property Specifications</h5>
@@ -147,11 +181,11 @@
         @if (prop.floor > 0) {
           <li class="mb-3 small"><i class="bi bi-layers text-danger me-2"></i> <strong>Floor:</strong> {{ prop.floor }} @if(prop.totalFloors > 0) { of {{ prop.totalFloors }} }</li>
         }
-        @if (prop.totalFloors > 0) {
+        @if (prop.totalFloors > 0 && prop.propertyType !== 'Villa') {
           <li class="mb-3 small"><i class="bi bi-layers text-danger me-2"></i> <strong>Total Floors:</strong> {{ prop.totalFloors }}</li>
         }
 
-        @if (prop.apartmentsPerFloor > 0) {
+        @if (prop.apartmentsPerFloor > 0 && prop.propertyType !== 'Villa') {
           <li class="mb-3 small"><i class="bi bi-people text-danger me-2"></i> <strong>Units per floor:</strong> {{ prop.apartmentsPerFloor }}</li>
         }
 
