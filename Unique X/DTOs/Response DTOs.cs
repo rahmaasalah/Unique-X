@@ -64,9 +64,9 @@ namespace Unique_X.DTOs
         public int BrokerPropertyCount { get; set; }
 
         // أنواع الفيلا والمساحة
-        public string? AreaType { get; set; }
-        public string? VillaCategory { get; set; }
-        public string? VillaSubType { get; set; }
+        public AreaType? AreaType { get; set; }
+        public VillaCategory? VillaCategory { get; set; }
+        public VillaType? VillaSubType { get; set; }
 
         // حقول الأدوار (Ground Floor)
         public int? GroundRooms { get; set; }

@@ -3,19 +3,16 @@
 
   <div class="container-fluid p-0 mb-5">
   <!-- Ads Carousel -->
-  <div id="adsCarousel" class="carousel slide shadow-sm" data-bs-ride="carousel">
-    <div class="carousel-inner rounded-bottom-5 overflow-hidden">
+  <div id="adsCarousel" class="carousel slide shadow-sm mb-5" data-bs-ride="carousel">
+    <div class="carousel-inner rounded-bottom-4 ">
       
       @for (ad of ads; track ad.image; let i = $index) {
         <div class="carousel-item" [class.active]="i === 0" (click)="onAdClick(ad.message)" style="cursor: pointer;">
           <!-- استبدلي بمسارات صورك الحقيقية -->
-          <img [src]="ad.image" class="d-block w-100 object-fit-cover ad-banner" 
-               alt="Special Offer" style="height: 400px;">
+          <img [src]="ad.image" class="d-block w-100 ad-banner" 
+               alt="Special Offer" >
           
-          <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-25 rounded-3 p-3">
-             <h4 class="fw-bold mb-0">Exclusive Deals <i class="bi bi-whatsapp ms-2 text-success"></i></h4>
-             <small>Click to chat with our agents</small>
-          </div>
+          
         </div>
       }
 

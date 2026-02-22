@@ -26,11 +26,11 @@ ads = [
     message: 'Hello, I am interested in the Yearly Luxury Offers!' 
   },
   { 
-    image: 'assets/banners/offer2.jpg', 
+    image: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/db483d201999007.667e38210b0b8.png', 
     message: 'I want to know more about the New Projects Installment plans.' 
   },
   { 
-    image: 'assets/banners/offer3.jpg', 
+    image: 'https://mir-s3-cdn-cf.behance.net/projects/404/2313f6165481709.Y3JvcCwxMjAwLDkzOCwwLDEzMA.png', 
     message: 'Interested in the Cash Discount for this month!' 
   }
 ];
