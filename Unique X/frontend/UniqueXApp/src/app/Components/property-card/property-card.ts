@@ -30,6 +30,24 @@ export class PropertyCardComponent {
   }
 }
 
+get displayRooms(): number {
+    if (this.property.propertyType === 'Villa') {
+      return (this.property.groundRooms || 0) + 
+             (this.property.firstRooms || 0) + 
+             (this.property.secondRooms || 0);
+    }
+    return this.property.rooms || 0;
+  }
+
+  get displayBaths(): number {
+    if (this.property.propertyType === 'Villa') {
+      return (this.property.groundBaths || 0) + 
+             (this.property.firstBaths || 0) + 
+             (this.property.secondBaths || 0);
+    }
+    return this.property.bathrooms || 0;
+  }
+
 getWhatsAppLink(phone: string, code: string): string {
   if (!phone) return '#';
   // تنظيف الرقم وإضافة كود مصر

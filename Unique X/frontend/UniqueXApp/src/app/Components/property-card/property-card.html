@@ -49,11 +49,13 @@
         </span>
     </div>
     <h4 class="fw-bold text-dark mb-1"> {{ property.title }}</h4>
-    @if (property.projectName) {
-      <p class="text-danger fw-bold small mb-1 animate__animated animate__fadeIn">
-        <i class="bi bi-building-fill-check me-1"></i> {{ property.projectName }}
-      </p>
-    }
+    <div class="project-slot">
+        @if (property.projectName) {
+          <p class="text-danger fw-bold small mb-0 animate__animated animate__fadeIn">
+            <i class="bi bi-building-fill-check me-1"></i> {{ property.projectName }}
+          </p>
+        }
+    </div>
     <!-- السعر (بالخط العريض - Signature Style) -->
     <h6 class=" text-dark mb-1">EGP {{ property.price | number }}</h6>
     <!-- العنوان -->
@@ -63,13 +65,22 @@
     </p>
 
     <!-- التفاصيل (الأيقونات) -->
-    <div class="d-flex justify-content-between border-top pt-3 text-muted small">
-      <span><i class="bi bi-door-open me-1"></i> {{ property.rooms }} Beds</span>
-      <span><i class="bi bi-droplet me-1"></i> {{ property.bathrooms }} Baths</span>
+    <div class="d-flex justify-content-between border-top pt-3 text-muted small mb-3">
+      <!-- يظهر فقط إذا كان الإجمالي أكبر من 0 -->
+      @if (displayRooms > 0) {
+        <span><i class="bi bi-door-open me-1"></i> {{ displayRooms }} Beds</span>
+      }
+      
+      @if (displayBaths > 0) {
+        <span><i class="bi bi-droplet me-1"></i> {{ displayBaths }} Baths</span>
+      }
+      
+      <!-- المساحة تظهر دائماً -->
       <span><i class="bi bi-aspect-ratio me-1"></i> {{ property.area }} m²</span>
     </div>
-    <br>
-    <br>
+    <!-- ===================================================================== -->
+
+    
     <div class="mt-auto">
       <a [href]="getWhatsAppLink(property.brokerPhone, property.code)" 
          target="_blank"

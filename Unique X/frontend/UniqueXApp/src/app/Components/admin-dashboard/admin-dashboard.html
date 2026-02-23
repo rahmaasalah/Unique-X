@@ -151,11 +151,12 @@
             </div>
             <div class="col-md-4">
               <select class="form-select bg-light border-0" [ngModel]="propListingFilter()" (ngModelChange)="propListingFilter.set($event)">
-                <option value="">All Listing Types</option>
+                <option value="">All Categories</option>
                 <option value="Resale">Resale</option>
                 <option value="Rent">Rent</option>
                 <option value="Primary">Primary</option>
                 <option value="ResaleProject">Resale Project</option>
+                
               </select>
             </div>
             <div class="col-md-4">
@@ -165,6 +166,8 @@
                 <option value="Villa">Villa</option>
                 <option value="Shop">Shop</option>
                 <option value="Office">Office</option>
+                <option value="Chalet">Chalet</option>
+                <option value="FullFloor">Full Floor</option>
               </select>
             </div>
           </div>
@@ -175,6 +178,7 @@
               <tr>
                 <th class="ps-4 py-3">PROPERTY & OWNER</th>
                 <th>CODE</th>
+                <th>TYPE</th>
                 <th>PRICE</th>
                 <th class="text-center">VISIBILITY</th>
                 <th class="text-end pe-4">REVIEW & CONTROL</th>
@@ -193,6 +197,9 @@
                     </div>
                   </td>
                   <td><span class="badge bg-light text-dark border">{{ prop.code }}</span></td>
+                  <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 ms-1 small">
+                        {{ prop.propertyType }}
+                    </span></td>
                   <td class="fw-bold text-dark">EGP {{ prop.price | number }}</td>
                   <td class="text-center">
                     <span class="badge rounded-pill px-3" [class]="prop.isActive ? 'bg-success' : 'bg-secondary'">
@@ -278,14 +285,10 @@
       <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden" style="max-height: 90vh;">
         
         @if (selectedProperty(); as p) {
-          <div class="modal-header border-0 bg-dark text-white p-4 d-flex justify-content-between align-items-center">
+          <div class="modal-header border-0 bg-dark text-white p-4">
             <div>
               <h4 class="modal-title fw-bold mb-1">{{ p.title }}</h4>
-              <p class="mb-0 small opacity-75">
-                <i class="bi bi-person-circle me-1"></i> Broker: {{ p.broker?.firstName }} {{ p.broker?.lastName }} 
-                <span class="mx-2">|</span> 
-                <i class="bi bi-hash me-1"></i> Code: {{ p.code }}
-              </p>
+              <p class="mb-0 small opacity-75">Broker: {{ p.broker?.firstName }} | Code: #{{ p.code }} | Type: {{ p.propertyType }}</p>
             </div>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
@@ -293,87 +296,107 @@
           <div class="modal-body p-0 bg-light overflow-auto">
             <div class="row g-0">
               
-              <!-- الجزء الأيسر: كل الصور (Gallery) -->
+              <!-- الجزء الأيسر: كل الصور -->
               <div class="col-lg-5 bg-white border-end p-4">
-                <h6 class="fw-bold text-muted mb-4 text-uppercase small" style="letter-spacing: 1px;">Photos ({{ p.photos.length }} Images)</h6>
+                <h6 class="fw-bold text-muted mb-4 text-uppercase small">Photo Audit ({{ p.photos?.length }} Images)</h6>
                 <div class="row g-2">
                   @for (img of p.photos; track img.url) {
                     <div class="col-6">
-                      <div class="position-relative border rounded-3 overflow-hidden shadow-sm h-100 bg-light d-flex align-items-center">
-                        <img [src]="img.url" class="w-100 h-100 object-fit-cover" style="min-height: 160px; max-height: 200px;">
-                        @if (img.isMain) { <span class="badge bg-danger position-absolute top-0 start-0 m-2 shadow">MAIN COVER</span> }
+                      <div class="position-relative border rounded-3 overflow-hidden shadow-sm h-100">
+                        <img [src]="img.url" class="w-100 h-100 object-fit-cover" style="min-height: 150px; max-height: 150px;">
+                        @if (img.isMain) { <span class="badge bg-danger position-absolute top-0 start-0 m-2">COVER</span> }
                       </div>
                     </div>
                   }
                 </div>
               </div>
 
-              <!-- الجزء الأيمن: التقرير الفني والمالي الكامل -->
+              <!-- الجزء الأيمن: التقرير الفني والمالي -->
               <div class="col-lg-7 p-4 p-md-5">
                 
-                <!-- 1. البيانات المالية -->
+                <!-- 1. المالية -->
                 <div class="inspection-card mb-4 bg-white p-4 rounded-4 shadow-sm border-start border-success border-5">
-                  <h6 class="fw-bold text-success mb-3"><i class="bi bi-cash-stack me-2"></i>Payment Specs</h6>
+                  <h6 class="fw-bold text-success mb-3"><i class="bi bi-cash-stack me-2"></i>Financial Audit</h6>
                   <div class="row g-3 small">
-                     <div class="col-md-6"><b>Listing Type:</b> {{ p.listingType }}</div>
-                     <div class="col-md-6"><b>Price:</b> EGP {{ p.price | number }}</div>
-                     <div class="col-md-6"><b>Payment Method:</b> <span class="badge bg-light text-dark border">{{ p.paymentMethod }}</span></div>
-                     <div class="col-md-6"><b>Commission:</b> <span class="text-danger fw-bold">{{ p.commissionPercentage }}%</span></div>
+                     <div class="col-md-6"><b>Category:</b> {{ p.listingType }}</div>
+                     <div class="col-md-6"><b>Total Price:</b> EGP {{ p.price | number }}</div>
+                     <div class="col-md-6"><b>Payment:</b> {{ p.paymentMethod }}</div>
+                     @if(p.listingType !== 'Rent') { <div class="col-md-6"><b>Commission:</b> <span class="text-danger fw-bold">2.5%</span></div> }
 
                      @if(p.listingType === 'Rent') {
-                       <div class="col-md-6"><b>Monthly Rent:</b> EGP {{ p.monthlyRent | number }}</div>
-                       <div class="col-md-6"><b>Security Deposit:</b> EGP {{ p.securityDeposit | number }}</div>
+                       <div class="col-md-6"><b>Rent:</b> EGP {{ p.monthlyRent | number }}</div>
+                       <div class="col-md-6"><b>Security:</b> EGP {{ p.securityDeposit | number }}</div>
                      }
                      @if(p.paymentMethod === 'Installment') {
                        <div class="col-md-6"><b>Down Payment:</b> EGP {{ p.downPayment | number }}</div>
                        <div class="col-md-6"><b>Quarterly:</b> EGP {{ p.quarterInstallment | number }}</div>
-                       <div class="col-md-6"><b>Plan Duration:</b> {{ p.installmentYears }} Years</div>
+                       <div class="col-md-6"><b>Duration:</b> {{ p.installmentYears }} Years</div>
                      }
                   </div>
                 </div>
 
-                <!-- 2. المواصفات الفنية والإنشائية -->
+                <!-- 2. المواصفات الفنية (تتغير لو فيلا) -->
                 <div class="inspection-card mb-4 bg-white p-4 rounded-4 shadow-sm border-start border-primary border-5">
-                  <h6 class="fw-bold text-primary mb-3"><i class="bi bi-building me-2"></i>Structural Specs </h6>
+                  <h6 class="fw-bold text-primary mb-3"><i class="bi bi-building me-2"></i>Structural Specifications</h6>
                   <div class="row g-3 small">
-                    <div class="col-md-6"><b>Project Name:</b> <span class="text-danger fw-bold">{{ p.projectName || 'N/A' }}</span></div>
-           <div class="col-md-6"><b>Landmark:</b> {{ p.distanceFromLandmark || 'N/A' }}</div>
-                     <div class="col-md-6"><b>Unit Type:</b> {{ p.propertyType }}</div>
-                     <div class="col-md-6"><b>Area:</b> {{ p.area }} m²</div>
-                     <div class="col-md-6"><b>Finishing:</b> {{ p.finishing }}</div>
-                     <div class="col-md-6"><b>Handover:</b> {{ p.deliveryStatus }} @if(p.deliveryYear) { ({{ p.deliveryYear }}) }</div>
-                     <div class="col-md-6"><b>Floor:</b> {{ p.floor }} / {{ p.totalFloors }}</div>
-                     <div class="col-md-6"><b>Units Per Floor:</b> {{ p.apartmentsPerFloor }}</div>
-                     <div class="col-md-6"><b>Rooms/Baths:</b> {{ p.rooms }} R / {{ p.bathrooms }} B</div>
-                     <div class="col-md-6"><b>Build Year:</b> {{ p.buildYear }}</div>
-                     <div class="col-md-6"><b>View:</b> {{ p.view || 'N/A' }}</div>
-                     <div class="col-md-6"><b>Elevators:</b> {{ p.elevatorsCount }}</div>
+                    <div class="col-md-6"><b>Area:</b> {{ p.area }} m²</div>
+                    <div class="col-md-6"><b>Type:</b> {{ p.propertyType }}</div>
+                    @if(p.projectName) { <div class="col-md-6"><b>Project:</b> <span class="text-danger fw-bold">{{ p.projectName }}</span></div> }
+                    @if(p.distanceFromLandmark) { <div class="col-md-6"><b>Landmark:</b> {{ p.distanceFromLandmark }}</div> }
+                    <div class="col-md-6"><b>Finishing:</b> {{ p.finishing }}</div>
+
+                    <!-- حقول تظهر فقط لو مش فيلا ولها قيمة -->
+                    @if(p.propertyType !== 'Villa') {
+                        @if(p.rooms > 0) { <div class="col-md-6"><b>Rooms:</b> {{ p.rooms }}</div> }
+                        @if(p.bathrooms > 0) { <div class="col-md-6"><b>Baths:</b> {{ p.bathrooms }}</div> }
+                        @if(p.floor > 2) { <div class="col-md-6"><b>Floor:</b> {{ p.floor }} of {{ p.totalFloors }}</div> }
+                        @if(p.apartmentsPerFloor > 1) { <div class="col-md-6"><b>Units/Floor:</b> {{ p.apartmentsPerFloor }}</div> }
+                        @if(p.elevatorsCount > 0) { <div class="col-md-6"><b>Elevators:</b> {{ p.elevatorsCount }}</div> }
+                    }
+
+                    <div class="col-md-6"><b>Build Year:</b> {{ p.buildYear }}</div>
+                    @if(p.view) { <div class="col-md-6"><b>View:</b> {{ p.view }}</div> }
+                    @if(p.deliveryStatus) { <div class="col-md-12"><b>Handover:</b> {{ p.deliveryStatus }} @if(p.deliveryYear) { ({{ p.deliveryYear }}) }</div> }
                   </div>
                 </div>
 
-                <!-- 3. المراجعة القانونية والمرافق -->
+                <!-- 3. الجزء الجديد: تفاصيل الفيلا (تظهر فقط للفيلا) -->
+                @if(p.propertyType === 'Villa') {
+                    <div class="inspection-card mb-4 bg-white p-4 rounded-4 shadow-sm border-start border-info border-5">
+                        <h6 class="fw-bold text-info mb-3"><i class="bi bi-layers-half me-2"></i>Villa Special Layout</h6>
+                        <div class="row g-3 small mb-3">
+                            @if(p.areaType) { <div class="col-md-4"><b>Area Type:</b> {{ p.areaType }}</div> }
+                            @if(p.villaCategory) { <div class="col-md-4"><b>Category:</b> {{ p.villaCategory }}</div> }
+                            @if(p.villaSubType) { <div class="col-md-4"><b>Sub-Type:</b> {{ p.villaSubType }}</div> }
+                        </div>
+                        <div class="row g-2 text-center border-top pt-2">
+                            @if(p.groundRooms > 0) { <div class="col-4 border-end"><b>Ground:</b> {{p.groundRooms}}Rooms / {{p.groundBaths}}Baths</div> }
+                            @if(p.firstRooms > 0) { <div class="col-4 border-end"><b>First:</b> {{p.firstRooms}}Rooms / {{p.firstBaths}}Baths</div> }
+                            @if(p.secondRooms > 0) { <div class="col-4"><b>Second:</b> {{p.secondRooms}}Rooms / {{p.secondBaths}}Baths</div> }
+                        </div>
+                    </div>
+                }
+
+                <!-- 4. المميزات والعدادات (تظهر فقط المحقق منها) -->
                 <div class="inspection-card mb-4 bg-white p-4 rounded-4 shadow-sm border-start border-warning border-5">
-                  <h6 class="fw-bold text-warning mb-3"><i class="bi bi-shield-check me-2"></i>Legal & Utility Specs</h6>
+                  <h6 class="fw-bold text-warning mb-3"><i class="bi bi-shield-check me-2"></i>Amenities & Utilities Audit</h6>
                   <div class="row g-2 small">
-                     <div class="col-md-4"><b>Licensed:</b> {{ p.isLicensed ? '✅' : '❌' }}</div>
-                     <div class="col-md-4"><b>Land Share:</b> {{ p.hasLandShare ? '✅' : '❌' }}</div>
-                     <div class="col-md-4"><b>Security:</b> {{ p.hasSecurity ? '✅' : '❌' }}</div>
-                     <div class="col-md-4"><b>Gas:</b> {{ p.hasGasMeter ? '✅' : '❌' }}</div>
-                     <div class="col-md-4"><b>Water:</b> {{ p.hasWaterMeter ? '✅' : '❌' }}</div>
-                     <div class="col-md-4"><b>Elec:</b> {{ p.hasElectricityMeter ? '✅' : '❌' }}</div>
-                     <div class="col-md-4"><b>Reconciled:</b> {{ p.isLegalReconciled ? '✅' : '❌' }}</div>
-           <div class="col-md-4"><b>First Owner:</b> {{ p.isFirstOwner ? '✅' : '❌' }}</div>
-           <div class="col-md-4"><b>Master Room:</b> {{ p.hasMasterRoom ? '✅' : '❌' }}</div>
-           <div class="col-md-4"><b>Parking:</b> {{ p.hasParking ? '✅' : '❌' }}</div>
-           <div class="col-md-4"><b>Balcony:</b> {{ p.hasBalcony ? '✅' : '❌' }}</div>
-           <div class="col-md-4"><b>Hotel Entry:</b> {{ p.hasHotelEntrance ? '✅' : '❌' }}</div>
-                     
+                     @if(p.isLicensed) { <div class="col-md-4">✅ Licensed</div> }
+                     @if(p.hasLandShare) { <div class="col-md-4">✅ Land Share</div> }
+                     @if(p.isLegalReconciled) { <div class="col-md-4">✅ Reconciled</div> }
+                     @if(p.isFirstOwner) { <div class="col-md-4">✅ First Owner</div> }
+                     @if(p.hasSecurity) { <div class="col-md-4">✅ Security</div> }
+                     @if(p.hasParking) { <div class="col-md-4">✅ Parking</div> }
+                     @if(p.hasPool) { <div class="col-md-4">✅ Swimming Pool</div> }
+                     @if(p.hasGarden) { <div class="col-md-4">✅ Garden</div> }
+                     @if(p.hasElectricityMeter) { <div class="col-md-4 text-warning fw-bold">⚡ Elec Meter</div> }
+                     @if(p.hasWaterMeter) { <div class="col-md-4 text-primary fw-bold">💧 Water Meter</div> }
+                     @if(p.hasGasMeter) { <div class="col-md-4 text-danger fw-bold">🔥 Gas Meter</div> }
                   </div>
                 </div>
 
-                <!-- 4. الوصف الكامل -->
                 <div class="p-3 bg-dark text-white-50 rounded-3 small">
-                  <small class="text-white fw-bold text-uppercase d-block mb-1" style="font-size: 0.6rem;">Broker Description:</small>
+                  <small class="text-white fw-bold text-uppercase d-block mb-1">Description:</small>
                   <p class="mb-0 lh-base" style="white-space: pre-line;">{{ p.description }}</p>
                 </div>
 
@@ -383,7 +406,7 @@
         }
 
         <div class="modal-footer bg-white border-0 shadow-sm p-3">
-          <button type="button" class="btn btn-secondary rounded-pill px-5 fw-bold" data-bs-dismiss="modal">Close Report</button>
+          <button type="button" class="btn btn-secondary rounded-pill px-5 fw-bold" data-bs-dismiss="modal">Close Audit</button>
         </div>
 
       </div>

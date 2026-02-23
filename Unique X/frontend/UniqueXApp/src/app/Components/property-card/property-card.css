@@ -16,3 +16,19 @@
     color: red !important;
     border-color: #d0e3ff !important;
 }
+
+/* حجز مساحة ثابتة لاسم المشروع لمنع اهتزاز التصميم */
+.project-slot {
+    min-height: 22px; /* ارتفاع سطر واحد من الخط الصغير */
+    margin-bottom: 4px;
+}
+
+/* تحسين المسافات عشان الخط يثبت */
+.card-body h5 {
+    height: 24px; /* تثبيت ارتفاع العنوان */
+    margin-bottom: 2px !important;
+}
+
+.price-text {
+    height: 24px; /* تثبيت ارتفاع السعر */
+}
