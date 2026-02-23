@@ -74,7 +74,13 @@
   }
 
   <!-- المساحة دائماً تظهر لأنها أساسية لكل أنواع العقارات -->
-  <div><i class="bi bi-aspect-ratio fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.area }}</span> <small class="text-muted d-block small">m²</small></div>
+   <div>
+  <i class="bi bi-aspect-ratio fs-4 d-block text-danger"></i> 
+  <span class="fw-bold">{{ prop.area }} m² </span> 
+  <small class="text-muted d-block small">
+     @if(prop.areaType) { <span class="text-danger fw-bold ms-1">{{ prop.areaType }}</span> }
+  </small>
+</div>
   
   <div><i class="bi bi-building fs-4 d-block text-danger"></i> <span class="fw-bold text-truncate" style="max-width: 80px;">{{ prop.propertyType }}</span> <small class="text-muted d-block">Type</small></div>
         </div>
@@ -137,12 +143,7 @@
     
     <div class="row g-4 text-center">
       <!-- 1. نوع المساحة -->
-      @if (prop.areaType) {
-        <div class="col-md-4 border-end">
-          <h6 class="fw-bold text-muted small text-uppercase" style="letter-spacing: 1px;">Area Type</h6>
-          <div class="text-danger fw-bold fs-5">{{ prop.areaType }}</div>
-        </div>
-      }
+     
 
       <!-- 2. تصنيف الفيلا -->
       @if (prop.villaCategory) {
@@ -231,9 +232,9 @@
 
          @if (prop.listingType === 'Primary' || prop.listingType === 'ResaleProject') {
             <div class="alert alert-light border mt-2 py-3 small d-flex align-items-center shadow-sm">
-                <i class="bi bi-truck text-danger me-3 fs-4"></i>
+                <i class="bi bi-key text-danger me-3 fs-4"></i>
                 <div>
-                    <span class="d-block fw-bold text-dark">Handover Status: {{ prop.deliveryStatus }}</span>
+                    <span class="d-block fw-bold text-dark">Delivery Status: {{ prop.deliveryStatus }}</span>
                     @if (prop.deliveryYear) { <small class="d-block text-danger fw-bold">Expected completion by {{ prop.deliveryYear }}</small> }
                 </div>
             </div>
@@ -250,12 +251,15 @@
                 <h6 class="mb-0 fw-bold">Payment Plan: {{ prop.paymentMethod }}</h6>
                 @if (prop.paymentMethod === 'Installment') {
                    <div class="mt-1">
-                      <small class="d-block text-dark"><strong>Installment Years:</strong> {{ prop.installmentYears }} Years</small>
-                      @if (prop.downPayment > 0) {
-                        <small class="d-block text-danger fw-bold">Down Payment: EGP {{ prop.downPayment | number }}</small>
+                    @if (prop.downPayment > 0) {
+                        <small class="d-block  fw-bold text-danger">Down Payment: EGP {{ prop.downPayment | number }}</small>
                       }
                       @if (prop.quarterInstallment > 0) {
-                        <small class="d-block text-danger fw-bold">Quarterly Installment: EGP {{ prop.quarterInstallment | number }}</small>
+                        <small class="d-block  fw-bold text-danger">Quarterly Installment: EGP {{ prop.quarterInstallment | number }}</small>
+                      }
+                      <small class="d-block text-danger"><strong>Installment Years:</strong> {{ prop.installmentYears }} Years</small>
+                       @if (prop.price > 0) {
+                        <small class="d-block text-danger fw-bold">Total Price: EGP {{ prop.price | number }}</small>
                       }
                    </div>
                 } @else {
@@ -412,8 +416,16 @@
           </div>
           <h5 class="fw-bold mb-1">{{ prop.brokerName }}</h5>
           <p class="text-muted small mb-4">Real Estate Consultant</p>
-          <a [href]="'tel:' + prop.brokerPhone" class="btn btn-outline-dark btn-lg w-100 rounded-pill mb-3 fw-bold py-2 small shadow-sm"><i class="bi bi-telephone-fill me-2"></i> Call Now</a>
-          <a [href]="getWhatsAppLink(prop.brokerPhone)" target="_blank" class="btn btn-success btn-lg w-100 rounded-pill fw-bold py-2 small shadow"><i class="bi bi-whatsapp me-2"></i> WhatsApp</a>
+         <a href="javascript:void(0)" (click)="handleContact($event, 'call')" 
+   class="btn btn-outline-dark btn-lg w-100 rounded-pill mb-3 fw-bold py-2 small shadow-sm">
+   <i class="bi bi-telephone-fill me-2"></i> Call Now
+</a>
+
+<!-- زر الواتساب -->
+<a href="javascript:void(0)" (click)="handleContact($event, 'whatsapp')" 
+   class="btn btn-success btn-lg w-100 rounded-pill fw-bold py-2 small shadow">
+   <i class="bi bi-whatsapp me-2"></i> WhatsApp
+</a>
         </div>
       </div>
     </div>

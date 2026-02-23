@@ -27,9 +27,9 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
 
   { path: 'find-agent', component: FindAgentComponent },
-  { path: 'home', component: HomeComponent, canActivate: [authGuard] },
+  { path: 'home', component: HomeComponent },
   { path: 'add-property', component: AddPropertyComponent, canActivate: [authGuard] },
-  { path: 'property-details/:id', component: PropertyDetailsComponent, canActivate: [authGuard] },
+  { path: 'property-details/:id', component: PropertyDetailsComponent },
   { path: 'my-properties', component: MyPropertiesComponent, canActivate: [authGuard] },
   { path: 'edit-property/:id', component: EditPropertyComponent, canActivate: [authGuard] },
   { path: 'wishlist', component: WishlistComponent, canActivate: [authGuard] },
@@ -38,6 +38,6 @@ export const routes: Routes = [
   //{ path: 'home', component: HomeComponent, canActivate: [authGuard] },
   //{ path: 'property-details/:id', component: PropertyDetailsComponent, canActivate: [authGuard] },
   //{ path: 'add-property', component: AddPropertyComponent, canActivate: [authGuard] },
-  { path: '', redirectTo: '/login', pathMatch: 'full' }, 
+ { path: '', component: HomeComponent, pathMatch: 'full' }, 
   { path: '**', redirectTo: '/login' }
 ];

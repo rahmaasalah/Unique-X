@@ -106,3 +106,57 @@
         height: 250px;
     }
 }
+
+
+/* حاوية الأزرار العائمة */
+.floating-contact-wrap {
+    position: fixed;
+    bottom: 30px;   /* المسافة من أسفل الشاشة */
+    right: 30px;    /* المسافة من يمين الشاشة */
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;  /* لضمان الظهور فوق الصور والكاراسول */
+}
+
+/* التنسيق العام للزرار الدائري */
+.float-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 28px;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* الألوان الخاصة بكل زر */
+.whatsapp-bg {
+    background-color: #25d366; /* لون واتساب الأصلي */
+}
+
+.call-bg {
+    background-color: #ef3341; /* لون براند الموقع الأحمر */
+}
+
+/* تأثير عند الوقوف بالماوس */
+.float-btn:hover {
+    transform: scale(1.1) translateY(-5px);
+    color: white;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* للموبايل: نصغر الحجم شوية */
+@media (max-width: 768px) {
+    .floating-contact-wrap {
+        bottom: 20px;
+        right: 20px;
+    }
+    .float-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 22px;
+    }
+}

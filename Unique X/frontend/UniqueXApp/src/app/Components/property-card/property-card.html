@@ -24,7 +24,7 @@
       </span>
     </div>
 
-    @if (authService.loggedIn() && authService.getUserType() === 0) {
+    @if (authService.getUserType() === 0) {
   <button class="btn btn-light rounded-circle position-absolute top-0 end-0 m-2 shadow-sm border-0 wishlist-btn"
           (click)="onToggleWishlist($event)" 
           style="z-index: 10; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: white;">
@@ -81,14 +81,22 @@
     <!-- ===================================================================== -->
 
     
-    <div class="mt-auto">
-      <a [href]="getWhatsAppLink(property.brokerPhone, property.code)" 
-         target="_blank"
-         (click)="$event.stopPropagation()"
-         class="btn btn-success w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center">
-        
-        <i class="bi bi-whatsapp me-2 fs-5"></i> WhatsApp
-      </a>
+   <div class="mt-auto pt-2">
+      
+      <!-- زر الاتصال (Call Now) -->
+      <a href="javascript:void(0)" 
+     (click)="handleContact($event, 'call')"
+     class="btn btn-outline-dark w-100 rounded-pill fw-bold py-2 mb-2 shadow-sm d-flex align-items-center justify-content-center transition-all">
+    <i class="bi bi-telephone-fill me-2 fs-6"></i> Call Now
+  </a>
+
+  <!-- زر الواتساب -->
+  <a href="javascript:void(0)" 
+     (click)="handleContact($event, 'whatsapp')"
+     class="btn btn-success w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center transition-all">
+    <i class="bi bi-whatsapp me-2 fs-5"></i> WhatsApp
+  </a>
+
     </div>
   </div>
 </div>

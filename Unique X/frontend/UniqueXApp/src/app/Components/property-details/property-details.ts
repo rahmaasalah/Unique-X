@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
+import { AuthService } from '../../Services/auth';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-property-details',
@@ -14,6 +16,8 @@ import { Property } from '../../Models/property.model';
 export class PropertyDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private propertyService = inject(PropertyService);
+  public authService = inject(AuthService);
+  private router = inject(Router);
   
   property = signal<Property | null>(null);
   currentSlideIndex = signal(0);
@@ -35,6 +39,25 @@ export class PropertyDetailsComponent implements OnInit {
 
   toggleDescription() {
   this.isDescriptionExpanded.update(val => !val);
+}
+
+handleContact(event: Event, type: 'call' | 'whatsapp') {
+  event.preventDefault(); // منع المتصفح من فتح أي روابط تلقائياً
+
+  if (!this.authService.loggedIn()) {
+    this.router.navigate(['/login']); // لو مش مسجل واديه للوجين ✅
+    return;
+  }
+
+  const phone = this.property()?.brokerPhone;
+  if (!phone) return;
+
+  if (type === 'call') {
+    window.location.href = 'tel:' + phone; // فتح الاتصال للمسجلين فقط
+  } else {
+    const link = this.getWhatsAppLink(phone);
+    window.open(link, '_blank'); // فتح واتساب للمسجلين فقط
+  }
 }
 
   getWhatsAppLink(phone: string): string {

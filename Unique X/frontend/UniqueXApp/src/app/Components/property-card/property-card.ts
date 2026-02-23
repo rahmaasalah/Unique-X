@@ -60,8 +60,31 @@ getWhatsAppLink(phone: string, code: string): string {
   return `https://wa.me/${cleanedPhone}?text=${message}`;
 }
 
+handleContact(event: Event, type: 'whatsapp' | 'call') {
+  event.stopPropagation(); // منع فتح صفحة التفاصيل
+  event.preventDefault();  // منع فتح الرابط لو مش مسجل
+
+  if (!this.authService.loggedIn()) {
+    this.router.navigate(['/login']); // حماية التواصل ✅
+    return;
+  }
+
+  const phone = this.property.brokerPhone;
+  if (type === 'call') {
+    window.location.href = 'tel:' + phone;
+  } else {
+    window.open(this.getWhatsAppLink(phone, this.property.code), '_blank');
+  }
+}
+
+
 onToggleWishlist(event: Event) {
   event.stopPropagation();
+
+  if (!this.authService.loggedIn()) {
+    this.router.navigate(['/login']); // لو مش مسجل واديه للوجين فوراً ✅
+    return;
+  }
   
   this.propertyService.toggleWishlist(this.property.id).subscribe({
       next: (res: any) => {
