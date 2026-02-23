@@ -171,3 +171,24 @@
     }
   </div>
 </div>
+
+
+<div class="floating-contact-wrap animate__animated animate__fadeInUp animate__delay-1s">
+  
+  <!-- زر الواتساب -->
+  <a href="javascript:void(0)" 
+     (click)="handleAdminContact($event, 'whatsapp')" 
+     class="float-btn whatsapp-bg mb-3 shadow-lg" 
+     title="Chat with Us">
+    <i class="bi bi-whatsapp"></i>
+  </a>
+
+  <!-- زر الاتصال المباشر -->
+  <a href="javascript:void(0)" 
+     (click)="handleAdminContact($event, 'call')" 
+     class="float-btn call-bg shadow-lg" 
+     title="Call Us">
+    <i class="bi bi-telephone-fill"></i>
+  </a>
+
+</div>

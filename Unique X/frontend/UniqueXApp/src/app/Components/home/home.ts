@@ -123,4 +123,35 @@ clearFilters() {
   this.router.navigate(['/home']);
   
 }
+
+getAdminWhatsApp(): string {
+  if (!this.adminPhone()) return '#';
+  let phone = this.adminPhone().replace(/\D/g, '');
+  if (phone.startsWith('0')) phone = '2' + phone;
+  const msg = encodeURIComponent("Hello, I have an inquiry regarding Unique X properties.");
+  return `https://wa.me/${phone}?text=${msg}`;
+}
+
+// أضيفي هذه الدالة داخل كلاس HomeComponent في ملف home.ts
+
+handleAdminContact(event: Event, type: 'whatsapp' | 'call') {
+  event.preventDefault(); // منع المتصفح من فتح الرابط تلقائياً
+
+  // 1. فحص هل المستخدم مسجل دخول؟
+  if (!this.authService.loggedIn()) {
+    // 2. توجيه لصفحة اللوجن لو مش مسجل
+    this.router.navigate(['/login']);
+    return;
+  }
+
+  // 3. لو مسجل، نفذ عملية التواصل
+  const phone = this.adminPhone();
+  if (!phone) return;
+
+  if (type === 'call') {
+    window.location.href = 'tel:' + phone;
+  } else {
+    window.open(this.getAdminWhatsApp(), '_blank');
+  }
+}
 }
