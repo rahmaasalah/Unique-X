@@ -181,13 +181,24 @@
         @if (prop.floor > 0) {
           <li class="mb-3 small"><i class="bi bi-layers text-danger me-2"></i> <strong>Floor:</strong> {{ prop.floor }} @if(prop.totalFloors > 0) { of {{ prop.totalFloors }} }</li>
         }
-        @if (prop.totalFloors > 0 && prop.propertyType !== 'Villa') {
-          <li class="mb-3 small"><i class="bi bi-layers text-danger me-2"></i> <strong>Total Floors:</strong> {{ prop.totalFloors }}</li>
-        }
+       @if (prop.totalFloors > 2 && prop.propertyType !== 'Villa') {
+  <li class="mb-3 small ">
+    <strong><i class="bi bi-layers text-danger me-2"></i> Total Floors:</strong> 
+    <span>{{ prop.totalFloors }}</span>
+  </li>
+}
 
-        @if (prop.apartmentsPerFloor > 0 && prop.propertyType !== 'Villa') {
-          <li class="mb-3 small"><i class="bi bi-people text-danger me-2"></i> <strong>Units per floor:</strong> {{ prop.apartmentsPerFloor }}</li>
-        }
+<!-- 2. عدد الشقق في الدور -->
+<!-- يظهر للمحلات والمكاتب والـ Full Floor فقط لو البروكر كتب رقم أكبر من 0 -->
+<!-- ويختفي تماماً في حالة الفيلا -->
+@if (prop.apartmentsPerFloor > 1 && prop.propertyType !== 'Villa') {
+  <li class="mb-3 small ">
+    <strong><i class="bi bi-people text-danger me-2"></i> Units per floor:</strong> 
+    <span>{{ prop.apartmentsPerFloor }}</span>
+  </li>
+}
+
+        
 
         @if (prop.buildYear > 0) {
           <li class="mb-3 small"><i class="bi bi-calendar-check text-danger me-2"></i> <strong>Built in:</strong> {{ prop.buildYear }}</li>
@@ -258,97 +269,116 @@
 <br>
         <!-- قسم المميزات والخدمات (Key Features & Amenities) -->
 <div class="mt-5">
-  <h6 class="fw-bold small text-muted mb-4 text-uppercase" style="letter-spacing: 1px;">Key Features & Amenities</h6>
+  <h6 class="fw-bold small text-muted mb-4 " style="letter-spacing: 1px;">Key Features & Amenities</h6>
   
-  <div class="row g-0"> <!-- صف لتقسيم المساحة إلى عمودين -->
+  <div class="row g-3 animate__animated animate__fadeInUp"> <!-- صف لتقسيم المساحة إلى عمودين -->
     
     <!-- العمود الأول: يحتوي على أول 5 عناصر (جهة اليسار) -->
-    <div class="col-md-6">
-      <ul class="list-unstyled mb-0">
-        @if(prop.hasMasterRoom) { 
-          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
-            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-            <span class="text-dark fw-medium">Master Bedroom</span>
-          </li> 
-        }
-        @if(prop.hasHotelEntrance) { 
-          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
-            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-            <span class="text-dark fw-medium">Hotel Entrance</span>
-          </li> 
-        }
-        @if(prop.hasSecurity) { 
-          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
-            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-            <span class="text-dark fw-medium">24/7 Security</span>
-          </li> 
-        }
-        @if(prop.hasParking) { 
-          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
-            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-            <span class="text-dark fw-medium">Parking Slot Available</span>
-          </li> 
-        }
-         @if(prop.hasPool) 
-         { 
-          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
-            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-            <span class="text-dark fw-medium">Private Swimming Pool</span>
-          </li> 
-        }
-        @if(prop.hasBalcony) { 
-          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInLeft">
-            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-            <span class="text-dark fw-medium">Spacious Balcony</span>
-          </li> 
-        }
-      </ul>
-    </div>
+    @if(prop.hasMasterRoom) { 
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+          <span class="text-dark fw-medium">Master Bedroom</span>
+        </div>
+      </div>
+    }
 
-    <!-- العمود الثاني: يحتوي على الـ 4 عناصر المتبقية (جهة اليمين) -->
-    <div class="col-md-6">
-      <ul class="list-unstyled mb-0">
-        @if(prop.isFirstOwner) { 
-          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInRight">
-            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-            <span class="text-dark fw-medium">First Owner</span>
-          </li> 
-        }
-        @if(prop.hasLandShare) { 
-          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInRight">
-            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-            <span class="text-dark fw-medium">Ownership includes Land Share</span>
-          </li> 
-        }
-        @if(prop.isLegalReconciled) { 
-          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInRight">
-            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-            <span class="text-dark fw-medium">Legal Reconciliation Available</span>
-          </li> 
-        }
-        @if(prop.isLicensed) { 
-          <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInRight">
-            <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-            <span class="text-dark fw-medium">Licensed Residential Unit</span>
-          </li> 
-        }
+    @if(prop.hasHotelEntrance) { 
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+          <span class="text-dark fw-medium">Hotel Entrance</span>
+        </div>
+      </div>
+    }
 
-          @if(prop.hasGarden) 
-          {
-            <li class="mb-3 d-flex align-items-center animate__animated animate__fadeInRight">
-              <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-              <span class="text-dark fw-medium">Garden Area</span>
-            </li> 
-          }
-      </ul>
-    </div>
+    @if(prop.hasSecurity) { 
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+          <span class="text-dark fw-medium">24/7 Security</span>
+        </div>
+      </div>
+    }
+
+    @if(prop.hasParking) { 
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+          <span class="text-dark fw-medium">Parking Slot Available</span>
+        </div>
+      </div>
+    }
+
+    @if(prop.hasPool) { 
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+          <span class="text-dark fw-medium">Private Swimming Pool</span>
+        </div>
+      </div>
+    }
+
+    @if(prop.hasBalcony) { 
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+          <span class="text-dark fw-medium">Spacious Balcony</span>
+        </div>
+      </div>
+    }
+
+    @if(prop.isFirstOwner) { 
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+          <span class="text-dark fw-medium">First Owner</span>
+        </div>
+      </div>
+    }
+
+    @if(prop.hasLandShare) { 
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+          <span class="text-dark fw-medium">Ownership includes Land Share</span>
+        </div>
+      </div>
+    }
+
+    @if(prop.isLegalReconciled) { 
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+          <span class="text-dark fw-medium">Legal Reconciliation Available</span>
+        </div>
+      </div>
+    }
+
+    @if(prop.isLicensed) { 
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+          <span class="text-dark fw-medium">Licensed Residential Unit</span>
+        </div>
+      </div>
+    }
+
+    @if(prop.hasGarden) {
+      <div class="col-md-6">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
+          <span class="text-dark fw-medium">Garden Area</span>
+        </div>
+      </div>
+    }
   </div>
 </div>
 
 <!-- قسم المرافق (Utilities) المحدث -->
 @if(prop.hasElectricityMeter || prop.hasWaterMeter || prop.hasGasMeter) {
   <div class="border-top pt-4 mt-4">
-    <h6 class="fw-bold small text-muted mb-3 text-uppercase" style="letter-spacing: 1px;">Utilities Connected</h6>
+    <h6 class="fw-bold small text-muted mb-3 " style="letter-spacing: 1px;">Utilities Connected</h6>
     <div class="d-flex gap-2 flex-wrap">
       @if(prop.hasElectricityMeter) { 
         <span class="badge bg-light text-dark border px-3 py-2 small fw-normal shadow-sm">
