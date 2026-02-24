@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore; // تأكدي من وجود السطر ده
+using System.Security.Claims;
 using Unique_X.Data;
 using Unique_X.DTOs;
 using Unique_X.Models;
@@ -62,7 +63,9 @@ namespace Unique_X.Controllers
                 TotalProperties = await _context.Properties.CountAsync(),
                 SuspendedUsers = await _userManager.Users.CountAsync(u => !u.IsActive),
                 SoldProperties = await _context.Properties.CountAsync(p => p.IsSold),
-                InactiveProperties = await _context.Properties.CountAsync(p => !p.IsActive)
+                InactiveProperties = await _context.Properties.CountAsync(p => !p.IsActive),
+                TotalWhatsAppClicks = await _context.AnalyticsRecords.CountAsync(r => r.ActionType == "WhatsAppClick"),
+                TotalCallClicks = await _context.AnalyticsRecords.CountAsync(r => r.ActionType == "CallClick")
             };
             return Ok(stats);
         }
@@ -131,6 +134,100 @@ namespace Unique_X.Controllers
             // أحياناً الـ 500 يكون بسبب عدم وجود بيانات، نرجع مصفوفة فارغة بدلاً من Null
             var banners = await _context.HomeBanners.ToListAsync();
             return Ok(banners ?? new List<HomeBanner>());
+        }
+
+        [HttpPost("track")]
+        [AllowAnonymous] // مسموح للكل حتى اللي مش مسجل عشان نحسبه
+        public async Task<IActionResult> TrackAction(string action, int? propertyId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var record = new AnalyticsRecord
+            {
+                ActionType = action,
+                PropertyId = propertyId,
+                UserId = userId
+            };
+
+            _context.AnalyticsRecords.Add(record);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpGet("properties-sold")]
+        public async Task<IActionResult> GetSoldProperties()
+        {
+            var props = await _context.Properties
+                .Include(p => p.Broker)
+                .Where(p => p.IsSold)
+                .Select(p => new {
+                    p.Id,
+                    p.Title,
+                    p.Code,
+                    p.PropertyType,
+                    BrokerName = p.Broker.FirstName + " " + p.Broker.LastName
+                }).ToListAsync();
+            return Ok(props);
+        }
+
+        // 2. جلب سجلات التفاعل (الواتساب والمكالمات) مع بيانات المستخدم والعقار
+        [HttpGet("activity-logs/{type}")]
+        public async Task<IActionResult> GetActivityLogs(string type)
+        {
+            // type هيكون إما "WhatsAppClick" أو "CallClick"
+            var logs = await _context.AnalyticsRecords
+                .Where(r => r.ActionType == type)
+                .OrderByDescending(r => r.Timestamp)
+                .Select(r => new {
+                    r.Timestamp,
+                    // جلب بيانات الشخص اللي ضغط (لو موجود)
+                    UserWhoClicked = _context.Users.Where(u => u.Id == r.UserId)
+                                     .Select(u => u.FirstName + " " + u.LastName + " (" + u.PhoneNumber + ")")
+                                     .FirstOrDefault() ?? "Guest User",
+                    // جلب بيانات العقار اللي انضغط عليه
+                    Property = _context.Properties.Where(p => p.Id == r.PropertyId)
+                               .Select(p => new { p.Title, p.Code, p.PropertyType,
+                                   BrokerFullName = p.Broker.FirstName + " " + p.Broker.LastName
+                               }).FirstOrDefault()
+                }).ToListAsync();
+
+            return Ok(logs);
+        }
+
+        [HttpGet("suspended-users")]
+        public async Task<IActionResult> GetSuspendedUsers()
+        {
+            var users = await _userManager.Users
+                .Where(u => !u.IsActive)
+                .Select(u => new {
+                    u.Id,
+                    u.FirstName,
+                    u.LastName,
+                    u.Email,
+                    u.UserType,
+                    u.IsActive,
+                    u.PhoneNumber
+                }).ToListAsync();
+            return Ok(users);
+        }
+
+        // 3. جلب العقارات الموقوفة (Suspended Properties) ✅
+        [HttpGet("suspended-properties")]
+        public async Task<IActionResult> GetSuspendedProperties()
+        {
+            var props = await _context.Properties
+                .Include(p => p.Broker)
+                .Where(p => !p.IsActive)
+                .Select(p => new {
+                    p.Id,
+                    p.Title,
+                    p.Code,
+                    p.Price,
+                    p.IsActive,
+                    p.IsSold,
+                    BrokerName = p.Broker.FirstName + " " + p.Broker.LastName
+                }).ToListAsync();
+            return Ok(props);
         }
     }
 }

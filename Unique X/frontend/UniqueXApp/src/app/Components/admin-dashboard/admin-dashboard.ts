@@ -32,7 +32,9 @@ export class AdminDashboardComponent implements OnInit {
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
   homeBanners = signal<any[]>([]);
-  activeTab = signal<'users' | 'props' | 'settings' |'banners'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps'>('users');
+
+  detailData = signal<any[]>([]);
 
   adminForm!: FormGroup;
 
@@ -194,9 +196,26 @@ export class AdminDashboardComponent implements OnInit {
     }
   }
 
-  switchTab(tab: 'users' | 'props' | 'settings' | 'banners') {
-    this.activeTab.set(tab);
+  switchTab(tab: any) {
+  this.activeTab.set(tab);
+  
+  if (tab === 'sold') {
+    this.adminService.getSoldProperties().subscribe(data => this.detailData.set(data));
+  } 
+  else if (tab === 'whatsapp') {
+    this.adminService.getActivityLogs('WhatsAppClick').subscribe(data => this.detailData.set(data));
   }
+  else if (tab === 'calls') {
+    this.adminService.getActivityLogs('CallClick').subscribe(data => this.detailData.set(data));
+  }
+
+  else if (tab === 'suspUsers') {
+    this.adminService.getSuspendedUsers().subscribe(data => this.detailData.set(data));
+  }
+  else if (tab === 'suspProps') {
+    this.adminService.getSuspendedProperties().subscribe(data => this.detailData.set(data));
+  }
+}
 
   toggleUser(userId: string, currentStatus: boolean) {
     this.adminService.toggleUserStatus(userId).subscribe({

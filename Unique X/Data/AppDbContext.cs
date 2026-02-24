@@ -14,6 +14,7 @@ namespace Unique_X.Data
         public DbSet<Photo> Photos { get; set; }
         public DbSet<Wishlist> Wishlists { get; set; }
         public DbSet<HomeBanner> HomeBanners { get; set; }
+        public DbSet<AnalyticsRecord> AnalyticsRecords { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

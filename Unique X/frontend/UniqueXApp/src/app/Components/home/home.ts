@@ -7,6 +7,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
 import { AuthService } from '../../Services/auth';
 import { AdminService } from '../../Services/admin';
+import { GoogleAnalyticsService } from 'ngx-google-analytics';
+
 
 
 @Component({
@@ -22,6 +24,8 @@ export class HomeComponent implements OnInit {
   ads = signal<any[]>([]);
 
   adminPhone = signal<string>('');
+  private gaService = inject(GoogleAnalyticsService);
+
 /* ads = [
   { 
     image: 'https://th.bing.com/th/id/R.703c1580dd8de27f32ef89574aff3adb?rik=zOsxkXRIpkC%2fZw&riu=http%3a%2f%2fwww.justinhavre.com%2fuploads%2fagent-1%2fmultiple-offers-header.png&ehk=gKELJJ1d1MFgnS%2fDMdafCRozl%2fEjKDbnAk5O6qsFZvM%3d&risl=&pid=ImgRaw&r=0', 
@@ -41,7 +45,7 @@ export class HomeComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef); 
   constructor(private propertyService: PropertyService, 
-    private router: Router, private activatedRoute: ActivatedRoute, private authService: AuthService,
+  private router: Router, private activatedRoute: ActivatedRoute, private authService: AuthService,
   private adminService: AdminService) {}
 
   // تأكدي من عمل inject للـ ChangeDetectorRef فوق مع باقي الخدمات
@@ -198,6 +202,9 @@ handleAdminContact(event: Event, type: 'whatsapp' | 'call') {
     this.router.navigate(['/login']);
     return;
   }
+
+      this.gaService.event('contact_click', type, this.adminPhone() || '0');
+
 
   // 3. لو مسجل، نفذ عملية التواصل
   const phone = this.adminPhone();

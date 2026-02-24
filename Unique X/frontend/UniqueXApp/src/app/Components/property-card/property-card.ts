@@ -6,6 +6,8 @@ import { PropertyService } from '../../Services/property';
 import { AlertService } from '../../Services/alert';
 import { Router } from '@angular/router';
 import { AuthService } from '../../Services/auth';
+import { AdminService } from '../../Services/admin';
+import { GoogleAnalyticsService } from 'ngx-google-analytics';
 
 @Component({
   selector: 'app-property-card',
@@ -21,6 +23,8 @@ export class PropertyCardComponent {
   private alertService = inject(AlertService);
   public authService = inject(AuthService); 
   private router = inject(Router);
+  private adminService = inject(AdminService);
+  private gaService = inject(GoogleAnalyticsService);
 
 
    ngOnInit() {
@@ -68,6 +72,9 @@ handleContact(event: Event, type: 'whatsapp' | 'call') {
     this.router.navigate(['/login']); // حماية التواصل ✅
     return;
   }
+
+  this.adminService.trackAction(type === 'whatsapp' ? 'WhatsAppClick' : 'CallClick', this.property.id).subscribe();
+  this.gaService.event('contact_click', type, this.property.id.toString());
 
   const phone = this.property.brokerPhone;
   if (type === 'call') {

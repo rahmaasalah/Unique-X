@@ -5,6 +5,9 @@ import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
 import { AuthService } from '../../Services/auth';
 import { Router } from '@angular/router';
+import { AdminService } from '../../Services/admin';
+import { GoogleAnalyticsService } from 'ngx-google-analytics';
+
 
 @Component({
   selector: 'app-property-details',
@@ -18,6 +21,9 @@ export class PropertyDetailsComponent implements OnInit {
   private propertyService = inject(PropertyService);
   public authService = inject(AuthService);
   private router = inject(Router);
+  private adminService = inject(AdminService);
+  private gaService = inject(GoogleAnalyticsService);
+
   
   property = signal<Property | null>(null);
   currentSlideIndex = signal(0);
@@ -48,6 +54,9 @@ handleContact(event: Event, type: 'call' | 'whatsapp') {
     this.router.navigate(['/login']); // لو مش مسجل واديه للوجين ✅
     return;
   }
+
+  this.adminService.trackAction(type === 'whatsapp' ? 'WhatsAppClick' : 'CallClick', this.property()?.id).subscribe();
+  this.gaService.event('contact_click', type, this.property()?.id?.toString() || '0');
 
   const phone = this.property()?.brokerPhone;
   if (!phone) return;
