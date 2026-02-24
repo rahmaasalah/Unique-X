@@ -112,6 +112,7 @@ using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicantUser>>();
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
     // التأكد من وجود رول الأدمن
     if (!await roleManager.RoleExistsAsync("Admin"))
@@ -119,8 +120,8 @@ using (var scope = app.Services.CreateScope())
         await roleManager.CreateAsync(new IdentityRole("Admin"));
     }
 
-    string adminEmail = "admin@test.com";
-    string adminPass = "Admin@1234";
+    string adminEmail = config["AdminSettings:Email"];
+    string adminPass = config["AdminSettings:Password"];
 
     var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
