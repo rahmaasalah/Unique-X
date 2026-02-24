@@ -63,4 +63,25 @@ getDetailedProperties(): Observable<any[]> {
   deleteBanner(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/delete-banner/${id}`);
   }
+
+
+  trackAction(action: string, propId?: number): Observable<any> {
+  return this.http.post(`${this.baseUrl}/track?action=${action}&propertyId=${propId || ''}`, {});
+}
+
+getSoldProperties(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/properties-sold`);
+}
+
+getActivityLogs(type: string): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/activity-logs/${type}`);
+}
+
+getSuspendedUsers(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/suspended-users`);
+}
+
+getSuspendedProperties(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/suspended-properties`);
+}
 }
