@@ -13,6 +13,7 @@ namespace Unique_X.Data
         public DbSet<Property> Properties { get; set; }
         public DbSet<Photo> Photos { get; set; }
         public DbSet<Wishlist> Wishlists { get; set; }
+        public DbSet<HomeBanner> HomeBanners { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -56,6 +57,11 @@ namespace Unique_X.Data
             builder.Entity<Property>()
                 .Property(p => p.Price)
                 .HasColumnType("decimal(18,2)");
+
+            builder.Entity<Property>().Property(p => p.MonthlyRent).HasColumnType("decimal(18,2)");
+            builder.Entity<Property>().Property(p => p.SecurityDeposit).HasColumnType("decimal(18,2)");
+            builder.Entity<Property>().Property(p => p.DownPayment).HasColumnType("decimal(18,2)");
+            builder.Entity<Property>().Property(p => p.QuarterInstallment).HasColumnType("decimal(18,2)");
         }
     }
 }

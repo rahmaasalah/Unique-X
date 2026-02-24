@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common'; // مهم جداً للأوامر مثل *ngIf
 import { PropertyCardComponent } from '../property-card/property-card'; // مهم لكي يتعرف على الكارت
 import { PropertyService } from '../../Services/property';
@@ -6,6 +6,7 @@ import { Property } from '../../Models/property.model';
 import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
 import { AuthService } from '../../Services/auth';
+import { AdminService } from '../../Services/admin';
 
 
 @Component({
@@ -18,9 +19,10 @@ import { AuthService } from '../../Services/auth';
 export class HomeComponent implements OnInit {
   properties = signal<Property[]>([]); 
   message = signal<string>('');
+  ads = signal<any[]>([]);
 
   adminPhone = signal<string>('');
-ads = [
+/* ads = [
   { 
     image: 'https://th.bing.com/th/id/R.703c1580dd8de27f32ef89574aff3adb?rik=zOsxkXRIpkC%2fZw&riu=http%3a%2f%2fwww.justinhavre.com%2fuploads%2fagent-1%2fmultiple-offers-header.png&ehk=gKELJJ1d1MFgnS%2fDMdafCRozl%2fEjKDbnAk5O6qsFZvM%3d&risl=&pid=ImgRaw&r=0', 
     message: 'Hello, I am interested in the Yearly Luxury Offers!' 
@@ -33,32 +35,85 @@ ads = [
     image: 'https://mir-s3-cdn-cf.behance.net/projects/404/2313f6165481709.Y3JvcCwxMjAwLDkzOCwwLDEzMA.png', 
     message: 'Interested in the Cash Discount for this month!' 
   }
-];
+]; */
 
   isLoading = signal<boolean>(false);
   private route = inject(ActivatedRoute);
-  constructor(private propertyService: PropertyService, private router: Router, private activatedRoute: ActivatedRoute, private authService: AuthService) {}
+  private cdr = inject(ChangeDetectorRef); 
+  constructor(private propertyService: PropertyService, 
+    private router: Router, private activatedRoute: ActivatedRoute, private authService: AuthService,
+  private adminService: AdminService) {}
 
-  ngOnInit(): void {
-     this.route.queryParams.subscribe(params => {
-      this.loadProperties(params);
-    });
+  // تأكدي من عمل inject للـ ChangeDetectorRef فوق مع باقي الخدمات
+//private cdr = inject(ChangeDetectorRef); 
 
-    this.authService.getAdminContact().subscribe(res => {
-  this.adminPhone.set(res.phoneNumber);
-});
+ngOnInit(): void {
+  // 1. مراقبة فلاتر البحث في الرابط
+  this.route.queryParams.subscribe(params => {
+    this.loadProperties(params);
+  });
+
+  // 2. سحب الإعلانات (Banners) من الباك اند
+  this.adminService.getPublicBanners().subscribe({
+    next: (data: any[]) => {
+      
+      // تحويل البيانات لشكل الكاراسول
+      const formattedAds = data.map((b: any) => ({
+        image: b.imageUrl, // تأكدي أن الحرف i صغير
+        message: `Hello, I am interested in your Ad: ${b.messageTitle}`
+      }));
+
+      // تحديث السجنل بالبيانات الجديدة
+      this.ads.set(formattedAds);
+
+      // ================== الجزء المطور لحل مشكلة الظهور ==================
+      // ننتظر 100 ملي ثانية لضمان أن @for رسم الصور في الصفحة
+      setTimeout(() => {
+        this.cdr.detectChanges(); // إجبار الأنجولار على رؤية الصور الجديدة
+        
+        // تشغيل الكاراسول يدوياً لضمان أنه سيعرض أول صورة ويبدأ الحركة
+        const bootstrap = (window as any).bootstrap;
+        const carouselElement = document.querySelector('#adsCarousel');
+        if (carouselElement && bootstrap) {
+          const carousel = new bootstrap.Carousel(carouselElement, {
+            interval: 3000,
+            ride: 'carousel',
+            pause: 'hover'
+          });
+          carousel.cycle();
+        }
+      }, 100);
+      // =============================================================
+    },
+    error: (err) => console.error('Banners Error:', err)
+  });
+
+  // 3. جلب رقم الأدمن للتواصل
+  this.authService.getAdminContact().subscribe(res => {
+    this.adminPhone.set(res.phoneNumber);
+  });
+}
+
+  initCarousel() {
+    const bootstrap = (window as any).bootstrap;
+    const carouselElement = document.querySelector('#adsCarousel');
+    if (carouselElement && bootstrap) {
+      const carousel = new bootstrap.Carousel(carouselElement, {
+        interval: 3000,
+        ride: 'carousel'
+      });
+      carousel.cycle();
+    }
   }
 
   onAdClick(message: string) {
-  if (!this.adminPhone()) return;
-  
-  // تنسيق الرقم (إضافة 2 لمصر)
-  let phone = this.adminPhone().replace(/\D/g, '');
-  if (phone.startsWith('0')) phone = '2' + phone;
+    if (!this.adminPhone()) return;
+    let phone = this.adminPhone().replace(/\D/g, '');
+    if (phone.startsWith('0')) phone = '2' + phone;
+    // فتح واتساب الأدمن بالرسالة المخصصة للبنر ده
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+  }
 
-  const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-  window.open(url, '_blank');
-}
 
   loadProperties(filters: any = {}) {
   this.isLoading.set(true);

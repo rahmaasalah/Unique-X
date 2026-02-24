@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore; // تأكدي من وجود السطر ده
 using Unique_X.Data;
+using Unique_X.DTOs;
 using Unique_X.Models;
+using Unique_X.Services.Implementation;
+using Unique_X.Services.Interface;
 
 namespace Unique_X.Controllers
 {
@@ -15,11 +18,13 @@ namespace Unique_X.Controllers
     {
         private readonly UserManager<ApplicantUser> _userManager;
         private readonly AppDbContext _context;
+        private readonly IPhotoService _photoService;
 
-        public AdminController(UserManager<ApplicantUser> userManager, AppDbContext context)
+        public AdminController(UserManager<ApplicantUser> userManager, AppDbContext context, IPhotoService photoService)
         {
             _userManager = userManager;
             _context = context;
+            _photoService = photoService;
         }
 
         [HttpGet("users")]
@@ -62,7 +67,7 @@ namespace Unique_X.Controllers
             return Ok(stats);
         }
 
-        [HttpGet("properties")]
+        //[HttpGet("properties")]
         [HttpGet("properties-detailed")]
         public async Task<IActionResult> GetAllPropertiesDetailed()
         {
@@ -84,6 +89,48 @@ namespace Unique_X.Controllers
             prop.IsActive = !prop.IsActive;
             await _context.SaveChangesAsync();
             return Ok(new { Status = prop.IsActive });
+        }
+
+        // --- إدارة بنرات الهوم ---
+        [HttpPost("add-banner")]
+        public async Task<IActionResult> AddBanner([FromForm] BannerUploadDto dto) // تعديل هنا
+        {
+            // استخدام dto.File و dto.Title
+            var result = await _photoService.AddPhotoAsync(dto.File);
+            if (result.Error != null) return BadRequest(result.Error.Message);
+
+            var banner = new HomeBanner
+            {
+                ImageUrl = result.SecureUrl.AbsoluteUri,
+                PublicId = result.PublicId,
+                MessageTitle = dto.Title
+            };
+
+            _context.HomeBanners.Add(banner);
+            await _context.SaveChangesAsync();
+            return Ok(banner);
+        }
+
+        [HttpDelete("delete-banner/{id}")]
+        public async Task<IActionResult> DeleteBanner(int id)
+        {
+            var banner = await _context.HomeBanners.FindAsync(id);
+            if (banner == null) return NotFound();
+
+            await _photoService.DeletePhotoAsync(banner.PublicId);
+            _context.HomeBanners.Remove(banner);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Deleted" });
+        }
+
+        // أكشن عام للهوم (بدون Authorize)
+        [HttpGet("banners")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetBanners()
+        {
+            // أحياناً الـ 500 يكون بسبب عدم وجود بيانات، نرجع مصفوفة فارغة بدلاً من Null
+            var banners = await _context.HomeBanners.ToListAsync();
+            return Ok(banners ?? new List<HomeBanner>());
         }
     }
 }

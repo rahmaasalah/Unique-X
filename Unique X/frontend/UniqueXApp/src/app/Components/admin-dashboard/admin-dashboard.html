@@ -27,6 +27,12 @@
             <i class="bi bi-person-gear me-3 fs-5"></i> My Account
           </button>
         </li>
+        <li class="mb-3">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
+          [class.active]="activeTab() === 'banners'" (click)="switchTab('banners')">
+    <i class="bi bi-image-fill me-3 fs-5"></i> Manage Banners
+  </button>
+</li>
       </ul>
     </nav>
 
@@ -276,6 +282,49 @@
         </div>
       </section>
     }
+
+    @if (activeTab() === 'banners') {
+  <section class="animate__animated animate__fadeIn">
+    <h4 class="fw-bold mb-4">Homepage Carousel Manager</h4>
+    
+    <!-- فورم الرفع -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+      <h6 class="fw-bold mb-3">Upload New Banner</h6>
+      <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+          <label class="small fw-bold">WhatsApp Message Title</label>
+          <input type="text" #bannerTitle class="form-control bg-light border-0" placeholder="e.g. Yearly Offers">
+        </div>
+        <div class="col-md-5">
+          <label class="small fw-bold">Banner Image</label>
+          <input type="file" #bannerFile class="form-control bg-light border-0">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-danger w-100 rounded-pill fw-bold" 
+                  (click)="onAddBanner(bannerTitle.value, bannerFile)">Upload</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- عرض البنرات الحالية للحذف -->
+    <div class="row g-3">
+  @for (b of homeBanners(); track b.id) { <!-- أضفنا القوسين هنا ✅ -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden position-relative h-100 bg-white">
+        <img [src]="b.imageUrl" class="w-100" style="height: 180px; object-fit: contain; background: #eee;">
+        <div class="p-3 d-flex justify-content-between align-items-center">
+          <span class="fw-bold small">{{ b.messageTitle }}</span>
+          <button class="btn btn-sm btn-outline-danger border-0" (click)="onDeleteBanner(b.id)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+  </section>
+}
 
   </main>
 
