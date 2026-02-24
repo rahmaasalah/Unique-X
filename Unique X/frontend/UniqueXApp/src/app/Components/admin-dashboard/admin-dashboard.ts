@@ -31,7 +31,8 @@ export class AdminDashboardComponent implements OnInit {
 
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
-  activeTab = signal<'users' | 'props' | 'settings'>('users');
+  homeBanners = signal<any[]>([]);
+  activeTab = signal<'users' | 'props' | 'settings' |'banners'>('users');
 
   adminForm!: FormGroup;
 
@@ -84,14 +85,63 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   loadAllData() {
-    this.isLoading.set(true);
-    this.adminService.getStats().subscribe(data => this.stats.set(data));
-    this.adminService.getAllUsers().subscribe(data => this.users.set(data));
-    this.adminService.getDetailedProperties().subscribe(data => {
+  this.isLoading.set(true);
+  
+  // نستخدم subscribe بذكاء لضمان تحميل البيانات
+  this.adminService.getStats().subscribe({
+    next: (data: any) => this.stats.set(data),
+    error: (err) => console.error('Stats Error:', err)
+  });
+
+  this.adminService.getAllUsers().subscribe({
+    next: (data: any[]) => this.users.set(data),
+    error: (err) => console.error('Users Error:', err)
+  });
+
+  this.adminService.getDetailedProperties().subscribe({
+    next: (data: any[]) => {
       this.properties.set(data);
+      this.isLoading.set(false); // وقف التحميل هنا
+    },
+    error: (err) => {
       this.isLoading.set(false);
+      console.error('Properties Error:', err);
+    }
+  });
+
+  this.loadBanners(); 
+}
+
+  loadBanners() {
+    this.adminService.getBanners().subscribe((data: any[]) => { // إضافة :any[] ✅
+        this.homeBanners.set(data);
     });
   }
+
+  onAddBanner(title: string, fileInput: any) {
+    const file = fileInput.files[0];
+    if (!file || !title) {
+        this.alertService.error('Please provide a title and select an image.');
+        return;
+    }
+
+    this.alertService.showLoading('Uploading banner...');
+    this.adminService.addBanner(file, title).subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success('Banner added successfully!');
+        this.loadBanners(); // ريفريش للقائمة
+        fileInput.value = ''; // تصفير الـ input
+      }
+    });
+  }
+
+  onDeleteBanner(id: number) {
+    this.alertService.confirm('Delete this banner from homepage?', () => {
+      this.adminService.deleteBanner(id).subscribe(() => this.loadBanners());
+    });
+  }
+
 
   loadAdminProfile() {
     this.authService.getProfile().subscribe(data => {
@@ -144,7 +194,7 @@ export class AdminDashboardComponent implements OnInit {
     }
   }
 
-  switchTab(tab: 'users' | 'props' | 'settings') {
+  switchTab(tab: 'users' | 'props' | 'settings' | 'banners') {
     this.activeTab.set(tab);
   }
 
