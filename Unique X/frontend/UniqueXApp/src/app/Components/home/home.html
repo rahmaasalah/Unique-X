@@ -31,14 +31,17 @@
   <div class="bg-light py-3 border-bottom mb-5 shadow-sm rounded-4">
   <div class="container">
     
-    <!-- السطر الأول: البحث الأساسي (مسافة mb-2 لتقريب السطور) -->
-    <div class="row g-2 mb-2">
+    <div class="row g-2 mb-3">
       <div class="col-md-6">
         <label class="form-label x-small-bold mb-1 text-dark">Keyword</label>
         <div class="input-group input-group-sm shadow-sm border rounded-2 bg-white">
           <span class="input-group-text bg-white border-0"><i class="bi bi-search text-danger"></i></span>
-          <input type="text" class="form-control border-0 bg-transparent" placeholder="e.g. Palm Hills, Maadi, Villa..." #searchTerm>
+          <input type="text" class="form-control border-0 bg-transparent" placeholder="e.g. Palm Hills, Maadi..." #searchTerm>
         </div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label x-small-bold mb-1 text-dark">Property Code</label>
+        <input type="text" class="form-control form-control-sm border shadow-sm rounded-2" #code>
       </div>
       <div class="col-md-3">
         <label class="form-label x-small-bold mb-1 text-dark">City</label>
@@ -46,71 +49,63 @@
           <option value="">All Cities</option>
           <option value="1">Cairo</option>
           <option value="2">Alexandria</option>
-          <option value="3">North Coast</option>
         </select>
       </div>
+    </div>
+
+    <div class="row g-2 mb-3">
       <div class="col-md-3">
         <label class="form-label x-small-bold mb-1 text-dark">Min Area (m²)</label>
-        <input type="text" class="form-control form-control-sm border shadow-sm rounded-2" 
-               (input)="formatInteger($event)" placeholder="e.g. 150" #area>
+        <input type="text" class="form-control form-control-sm border shadow-sm rounded-2" (input)="formatInteger($event)" placeholder="e.g. 150" #area>
       </div>
-    </div>
-
-    <!-- السطر الثاني: التفاصيل الفنية -->
-    <div class="row g-2 mb-2">
-      <div class="col-md-2">
-        <label class="form-label x-small-bold mb-1 text-dark">Property Code</label>
-        <input type="text" class="form-control form-control-sm border shadow-sm rounded-2" placeholder="" #code>
-      </div>
-      <div class="col-md-5">
-        <div class="row g-1">
-          <div class="col-6">
-            <label class="form-label x-small-bold mb-1 text-muted">Min Price</label>
-            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="" #minPrice>
-          </div>
-          <div class="col-6">
-            <label class="form-label x-small-bold mb-1 text-muted">Max Price</label>
-            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="" #maxPrice>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-5">
-        <div class="row g-1">
-          <div class="col-6">
-            <label class="form-label x-small-bold mb-1 text-muted">Min Floor</label>
-            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="" #minFloor>
-          </div>
-          <div class="col-6">
-            <label class="form-label x-small-bold mb-1 text-muted">Max Floor</label>
-            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="" #maxFloor>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- السطر الثالث: الـ Ranges مع عناوين Min/Max منفصلة -->
-    <div class="row g-2 align-items-end">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="row g-1">
           <div class="col-6">
             <label class="form-label x-small-bold mb-1 text-muted">Min Rooms</label>
-            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="" #minRooms>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" #minRooms>
           </div>
           <div class="col-6">
             <label class="form-label x-small-bold mb-1 text-muted">Max Rooms</label>
-            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="" #maxRooms>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" #maxRooms>
           </div>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="row g-1">
           <div class="col-6">
             <label class="form-label x-small-bold mb-1 text-muted">Min Baths</label>
-            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="" #minBathrooms>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" #minBathrooms>
           </div>
           <div class="col-6">
             <label class="form-label x-small-bold mb-1 text-muted">Max Baths</label>
-            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="" #maxBathrooms>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" #maxBathrooms>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="row g-1">
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Min Floor</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" #minFloor>
+          </div>
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Max Floor</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" #maxFloor>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-2 align-items-end">
+      <div class="col-md-8">
+        <div class="row g-1">
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Min Price</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" #minPrice>
+          </div>
+          <div class="col-6">
+            <label class="form-label x-small-bold mb-1 text-muted">Max Price</label>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" #maxPrice>
           </div>
         </div>
       </div>
@@ -127,8 +122,9 @@
         </button>
       </div>
     </div>
-    </div>
+
   </div>
+</div>
 
 
   <!-- عرض العقارات باستخدام الـ Signal -->
