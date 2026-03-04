@@ -19,7 +19,6 @@ footer {
 }
 
 i.bi:hover {
-    color: #ef3341 !important;
     transform: translateY(-2px);
     display: inline-block;
     transition: all 0.3s ease;

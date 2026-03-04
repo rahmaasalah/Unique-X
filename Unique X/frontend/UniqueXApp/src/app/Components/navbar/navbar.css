@@ -44,6 +44,8 @@
   display: none !important;
 }
 
+
+
 /* تفعيل الخط لما الكلاس يكون موجود */
 .active-nav-link::after {
   width: 100%; /* يتمدد ليملأ العرض */
@@ -71,3 +73,5 @@
   font-weight: 700 !important;
   box-shadow: 0 4px 10px rgba(239, 51, 65, 0.3); /* ظل خفيف عشان تنطق */
 }
+
+
