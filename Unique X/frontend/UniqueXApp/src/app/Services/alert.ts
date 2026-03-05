@@ -39,7 +39,7 @@ export class AlertService {
       confirmButtonColor: '#ef3341',
       cancelButtonColor: '#6c757d',
       confirmButtonText: 'Yes, do it!'
-    }).then((result) => {
+    }).then((result: any) => {
       if (result.isConfirmed) {
         callback();
       }
