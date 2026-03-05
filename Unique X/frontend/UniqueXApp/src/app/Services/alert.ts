@@ -28,6 +28,7 @@ export class AlertService {
       confirmButtonColor: '#002b52' // لون أزرق داكن للتباين
     });
   }
+  
 
   // رسالة تنبيه أو تأكيد (زي "هل أنت متأكد من الحذف؟")
   confirm(message: string, callback: () => void) {
