@@ -25,6 +25,7 @@ jobs:
           file: "./Unique X/Dockerfile"
           push: true
           tags: rahma324ssalah/unique-x-backend:latest
+          no-cache: true
 
       - name: Build and Push Frontend
         uses: docker/build-push-action@v4
