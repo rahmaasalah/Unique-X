@@ -11,6 +11,11 @@ services:
       # ركزي هنا: غيرنا الـ IP لـ IP السيرفر واسم الداتابيز لـ Betk
       - ConnectionStrings__DefaultConnection=Server=37.60.230.225;Database=Betk;User=sa;Password=ABDO@menna2026;TrustServerCertificate=True;
 
+      - CloudinarySettings__CloudName=${CLOUDINARY_CLOUD_NAME}
+      - CloudinarySettings__ApiKey=${CLOUDINARY_API_KEY}
+      - CloudinarySettings__ApiSecret=${CLOUDINARY_API_SECRET}
+      - JWT__Key=${JWT_KEY}
+
   frontend:
     image: rahma324ssalah/unique-x-frontend:latest
     container_name: unique-x-frontend
