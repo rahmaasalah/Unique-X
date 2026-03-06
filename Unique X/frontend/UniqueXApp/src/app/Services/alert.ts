@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 //import Swal from 'sweetalert2';
-import Swal from 'sweetalert2/dist/sweetalert2.js';
+//import Swal from 'sweetalert2/dist/sweetalert2.js';
+declare const Swal: any;
+
 
 
 
