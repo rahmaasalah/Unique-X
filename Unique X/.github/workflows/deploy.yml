@@ -3,7 +3,7 @@ name: Deploy to Contabo
 on:
   push:
     branches:
-      - master # لو البرانش بتاعك اسمه master غيري الكلمة دي لـ master
+      - master
 
 jobs:
   build-and-push:
@@ -34,37 +34,44 @@ jobs:
           file: "./Unique X/frontend/UniqueXApp/Dockerfile"
           push: true
           tags: rahma324ssalah/unique-x-frontend:latest
+          no-cache: true
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Copy docker-compose to Server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          source: "docker-compose.yml"
-          target: "/root/unique-x"
-
-      - name: Execute deployment on Server
+      - name: Deploy to Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            cd /root/unique-x
+            # Frontend
+            docker pull rahma324ssalah/unique-x-frontend:latest
+            docker stop unique-x-frontend || true
+            docker rm unique-x-frontend || true
+            docker run -d \
+              --name unique-x-frontend \
+              --restart unless-stopped \
+              -p 3000:80 \
+              rahma324ssalah/unique-x-frontend:latest
 
-            echo "CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}" > .env
-            echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> .env
-            echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> .env
-            echo "JWT_KEY=${{ secrets.JWT_KEY }}" >> .env
-            
-            docker compose pull
-            docker compose down
-            docker compose up -d
+            # Backend
+            docker pull rahma324ssalah/unique-x-backend:latest
+            docker stop unique-x-backend || true
+            docker rm unique-x-backend || true
+            docker run -d \
+              --name unique-x-backend \
+              --restart unless-stopped \
+              -p 5000:8080 \
+              -e "JWT__Key=${{ secrets.JWT_KEY }}" \
+              -e "JWT__Issuer=UniqueX" \
+              -e "JWT__Audience=UniqueXUsers" \
+              -e "ConnectionStrings__DefaultConnection=Server=37.60.230.225;Database=Betk;User=sa;Password=ABDO@menna2026;TrustServerCertificate=True;" \
+              -e "CloudinarySettings__CloudName=${{ secrets.CLOUDINARY_CLOUD_NAME }}" \
+              -e "CloudinarySettings__ApiKey=${{ secrets.CLOUDINARY_API_KEY }}" \
+              -e "CloudinarySettings__ApiSecret=${{ secrets.CLOUDINARY_API_SECRET }}" \
+              -e "AdminSettings__Email=admin@betk.property" \
+              -e "AdminSettings__Password=Admin@123456" \
+              rahma324ssalah/unique-x-backend:latest
