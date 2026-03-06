@@ -441,17 +441,20 @@ if (f.villaSubType !== null) {
 
   updateCounter(controlName: string, amount: number) {
   const control = this.propertyForm.get(controlName);
-  const totalFloors = this.propertyForm.get('totalFloors')?.value || 0;
+  // تحويل التوتال لرقم ✅
+  const totalFloors = Number(this.propertyForm.get('totalFloors')?.value) || 0;
 
   if (control) {
-    const newValue = (control.value || 0) + amount;
+    // تحويل القيمة الحالية لرقم ✅
+    const currentValue = Number(control.value) || 0;
+    const newValue = currentValue + amount;
 
     // منع القيم السالبة
     if (newValue < 0) return;
 
-    // شرط: رقم الدور لا يتخطى إجمالي أدوار البناية
-    if (controlName === 'floor' && newValue > totalFloors) {
-      this.alertService.error("Floor number cannot exceed total building floors!");
+    // شرط منطق الأدوار
+    if (controlName === 'floor' && totalFloors > 0 && newValue > totalFloors) {
+      this.alertService.error(`Floor number cannot exceed ${totalFloors}!`);
       return;
     }
 
@@ -461,12 +464,14 @@ if (f.villaSubType !== null) {
 
 // 3. دالة تفحص المدخلات اليدوية (عند الكتابة بالكيبورد)
 validateFloorInput() {
-  const floor = this.propertyForm.get('floor')?.value;
-  const total = this.propertyForm.get('totalFloors')?.value;
+  // استخدام Number() لضمان إننا بنقارن أرقام مش نصوص ✅
+  const floor = Number(this.propertyForm.get('floor')?.value) || 0;
+  const total = Number(this.propertyForm.get('totalFloors')?.value) || 0;
 
-  if (floor > total) {
-    this.propertyForm.get('floor')?.patchValue(0);
-    this.alertService.error(`Floor cannot be higher than ${total}`);
+  if (total > 0 && floor > total) {
+    // لو الدور أكبر من الإجمالي، نرجعه لأقصى دور مسموح (اللي هو التوتال) بدل الصفر لراحة المستخدم
+    this.propertyForm.get('floor')?.patchValue(total);
+    this.alertService.error(`Floor cannot be higher than total building floors (${total})`);
   }
 }
 }
