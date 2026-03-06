@@ -1,13 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AdminService {
   // تأكدي أن البورت يطابق البورت الخاص بمشروع الـ Backend عندك
-  private baseUrl = 'https://localhost:7294/api/Admin';
+  private baseUrl = environment.apiUrl + '/Admin';
   private http = inject(HttpClient);
 
   constructor() { }

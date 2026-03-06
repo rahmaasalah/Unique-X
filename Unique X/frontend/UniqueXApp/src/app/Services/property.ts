@@ -2,12 +2,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Property } from '../Models/property.model';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PropertyService {
-  baseUrl = 'https://localhost:7294/api/properties';
+  baseUrl = environment.apiUrl + '/properties';
 
   constructor(private http: HttpClient) { }
 
@@ -51,11 +52,11 @@ updateProperty(id: number, formData: FormData): Observable<any> {
 }
 
 toggleWishlist(propertyId: number): Observable<any> {
-  return this.http.post(`https://localhost:7294/api/wishlist/toggle/${propertyId}`, {});
+  return this.http.post(`${environment.apiUrl}/wishlist/toggle/${propertyId}`, {});
 }
 
 getWishlist(): Observable<Property[]> {
-  return this.http.get<Property[]>(`https://localhost:7294/api/wishlist`);
+  return this.http.get<Property[]>(`${environment.apiUrl}/wishlist`);
 }
 
 markAsSold(id: number): Observable<any> {
