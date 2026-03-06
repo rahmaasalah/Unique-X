@@ -380,6 +380,7 @@ isInstallment(): boolean {
 
     // إرسال الحقول يدوياً بالأسماء التي يتوقعها الباك اند (PascalCase)
     formData.append('Title', f.title);
+    formData.append('Description', f.description);
     formData.append('ProjectName', f.projectName || ''); // حل مشكلة الـ NULL ✅
     formData.append('Code', f.code || '');
     formData.append('Price', f.price.toString().replace(/,/g, ''));
@@ -400,7 +401,6 @@ isInstallment(): boolean {
     formData.append('SecondBaths', (f.secondBaths || 0).toString());
     formData.append('SecondReception', (f.secondReception || 0).toString());
 
-    formData.append('ProjectName', f.projectName || '');
 formData.append('AreaType', f.areaType?.toString() || '0');
 formData.append('VillaCategory', f.villaCategory?.toString() || '0');
 if (f.villaSubType !== null) {
@@ -410,14 +410,47 @@ if (f.villaSubType !== null) {
     // المميزات الجديدة
     formData.append('HasPool', f.hasPool.toString());
     formData.append('HasGarden', f.hasGarden.toString());
+    formData.append('HasLandShare', (f.hasLandShare || false).toString());
+    formData.append('IsLicensed', (f.isLicensed || false).toString());
+    formData.append('IsLegalReconciled', (f.isLegalReconciled || false).toString());
+    formData.append('IsFirstOwner', (f.isFirstOwner || false).toString());
+    formData.append('HasMasterRoom', (f.hasMasterRoom || false).toString());
+    formData.append('HasHotelEntrance', (f.hasHotelEntrance || false).toString());
+    formData.append('HasSecurity', (f.hasSecurity || false).toString());
+    formData.append('HasParking', (f.hasParking || false).toString());
+    formData.append('HasBalcony', (f.hasBalcony || false).toString());
+    formData.append('HasElectricityMeter', (f.hasElectricityMeter || false).toString());
+    formData.append('HasWaterMeter', (f.hasWaterMeter || false).toString());
+    formData.append('HasGasMeter', (f.hasGasMeter || false).toString());
+
+    // 9. الدفع والأسعار التفصيلية (الحقول التي كانت ناقصة مع تنظيفها من الفواصل)
+    formData.append('PaymentMethod', f.paymentMethod || 'Full Cash');
+    formData.append('InstallmentYears', (f.installmentYears || 0).toString());
+    formData.append('DownPayment', (f.downPayment || '').toString().replace(/,/g, '') || '0');
+    formData.append('QuarterInstallment', (f.quarterInstallment || '').toString().replace(/,/g, '') || '0');
+    formData.append('SecurityDeposit', (f.securityDeposit || '').toString().replace(/,/g, '') || '0');
+    formData.append('MonthlyRent', (f.monthlyRent || '').toString().replace(/,/g, '') || '0');
 
     // الحقول الفنية
     formData.append('Floor', (f.floor || 0).toString());
     formData.append('TotalFloors', (f.totalFloors || 0).toString());
     formData.append('BuildYear', f.buildYear.toString());
     formData.append('Finishing', f.finishing.toString());
+     formData.append('Rooms', (f.rooms || 0).toString());
+    formData.append('Bathrooms', (f.bathrooms || 0).toString());
+    formData.append('ReceptionPieces', (f.receptionPieces || 0).toString());
+    formData.append('DistanceFromLandmark', f.distanceFromLandmark || '');
+    formData.append('View', f.view || '');
+    formData.append('ApartmentsPerFloor', (f.apartmentsPerFloor || 1).toString());
+    formData.append('ElevatorsCount', (f.elevatorsCount || 0).toString());
+
+
+    formData.append('DeliveryStatus', (f.deliveryStatus || 0).toString());
+    if (f.deliveryYear !== null && f.deliveryYear !== '') {
+      formData.append('DeliveryYear', f.deliveryYear.toString());
+    }
+
     
-    // ... (تأكدي من إضافة باقي الـ Switches بنفس الطريقة: HasSecurity, etc.)
 
     // الصور
     formData.append('MainPhotoIndex', this.mainPhotoIndex.toString());
