@@ -3,7 +3,7 @@ name: Deploy to Contabo
 on:
   push:
     branches:
-      - master # لو البرانش بتاعك اسمه master غيري الكلمة دي لـ master
+      - master
 
 jobs:
   build-and-push:
@@ -25,6 +25,7 @@ jobs:
           file: "./Unique X/Dockerfile"
           push: true
           tags: rahma324ssalah/unique-x-backend:latest
+          no-cache: true
 
       - name: Build and Push Frontend
         uses: docker/build-push-action@v4
@@ -33,24 +34,13 @@ jobs:
           file: "./Unique X/frontend/UniqueXApp/Dockerfile"
           push: true
           tags: rahma324ssalah/unique-x-frontend:latest
+          no-cache: true
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Copy docker-compose to Server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          source: "docker-compose.yml"
-          target: "/root/unique-x"
-
-      - name: Execute deployment on Server
+      - name: Deploy to Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -58,12 +48,6 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             cd /root/unique-x
-
-            echo "CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}" > .env
-            echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> .env
-            echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> .env
-            echo "JWT_KEY=${{ secrets.JWT_KEY }}" >> .env
-            
             docker compose pull
             docker compose down
             docker compose up -d
