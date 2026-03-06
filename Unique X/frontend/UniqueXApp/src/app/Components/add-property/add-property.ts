@@ -465,8 +465,8 @@ validateFloorInput() {
   const total = this.propertyForm.get('totalFloors')?.value;
 
   if (floor > total) {
-    this.propertyForm.get('floor')?.patchValue(total);
-    this.alertService.error(`Adjusted: Floor cannot be higher than ${total}`);
+    this.propertyForm.get('floor')?.patchValue(0);
+    this.alertService.error(`Floor cannot be higher than ${total}`);
   }
 }
 }
