@@ -269,15 +269,23 @@
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-building me-2 text-danger"></i>Building Details</h5>
             <div class="row g-3 mb-4">
               <div class="col-md-3">
-                <label class="small fw-bold">Total Floors</label>
-                <input type="text" (input)="formatInteger($event, 'totalFloors')" formControlName="totalFloors" class="form-control" [min]="2">
-                @if (propertyForm.get('totalFloors')?.errors?.['min']) {
-                  
-                }
-              </div>
-              <div class="col-md-3">
+  <label class="small fw-bold">Total Floors</label>
+  <input type="text" 
+    (input)="formatInteger($event, 'totalFloors')" 
+    (change)="validateFloorInput()"
+    formControlName="totalFloors" 
+    class="form-control" 
+    [min]="2">
+</div>
+
+<div class="col-md-3">
   <label class="small fw-bold">Floor Number</label>
-  <input type="text" (input)="formatInteger($event, 'floor')" formControlName="floor" class="form-control" min="0" (change)="validateFloorInput()">
+  <input type="text" 
+    (input)="formatInteger($event, 'floor')" 
+    (change)="validateFloorInput()"
+    formControlName="floor" 
+    class="form-control" 
+    min="0">
 </div>
               
               
