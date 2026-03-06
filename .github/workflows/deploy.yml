@@ -48,6 +48,13 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             cd /root/unique-x
+            echo "CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}" > .env
+            echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> .env
+            echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> .env
+            echo "JWT_KEY=${{ secrets.JWT_KEY }}" >> .env
+            docker compose pull
+            docker compose down
+            docker compose up -d
             docker compose pull
             docker compose down
             docker compose up -d
