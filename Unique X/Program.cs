@@ -58,9 +58,13 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAngularApp",
         policy =>
         {
-            policy.WithOrigins("http://localhost:4200") // بورت الأنجولار
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+            policy.WithOrigins(
+                "http://localhost:4200",
+                "https://betk.property",
+                "https://www.betk.property"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
         });
 });
 

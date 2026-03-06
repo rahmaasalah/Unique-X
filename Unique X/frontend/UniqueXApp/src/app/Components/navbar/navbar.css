@@ -57,6 +57,23 @@
     align-items: center;
 }
 
+.navbar-brand img {
+    transition: transform 0.3s ease;
+    /* لو الصورة ليها حواف بيضاء زيادة ممكن تستخدمي object-fit */
+    object-fit: contain; 
+}
+
+.navbar-brand:hover img {
+    transform: scale(1.05); /* حركة خفيفة لما المستخدم يلمس اللوجو */
+}
+
+/* تعديل الارتفاع للموبايل عشان ميبقاش ضخم */
+@media (max-width: 768px) {
+    .navbar-brand img {
+        height: 40px;
+    }
+}
+
 /* الأيقونات */
 .wishlist-nav-icon i, .profile-nav-icon i {
   transition: transform 0.2s ease-in-out, color 0.2s;
