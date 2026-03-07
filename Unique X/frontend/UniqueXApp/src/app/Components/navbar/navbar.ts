@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { AuthService } from '../../Services/auth';
 import { Router, RouterModule, ActivatedRoute} from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -18,17 +18,23 @@ export class NavbarComponent {
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      const type = params['listingType'];
-      console.log('Current Active ListingType:', type); // للـ Debugging: شوفي الكونسول هل الرقم بيتغير؟
-      
+      const type = params['listingType'];      
       // نستخدم الـ toString للتأكد من مطابقة النوع في الـ HTML
       this.activeType.set(type !== undefined ? type.toString() : null);
     });
   }
 
+  closeMenu() {
+    const navbarCollapse = document.getElementById('navbarNav');
+    if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+      navbarCollapse.classList.remove('show');
+    }
+  }
+
   onLogout() {
     this.authService.logout();
     localStorage.clear();
+    this.closeMenu();
     this.router.navigate(['/login']);
   }
 }
