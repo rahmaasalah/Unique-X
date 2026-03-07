@@ -1,16 +1,16 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
-  <div class="container">
+  <div class="container position-relative">
     <!-- <a class="navbar-brand brand-logo fs-3" routerLink="/home">
   <span class="brand-bold">BET</span><span class="text-dark brand-light">K</span>
 </a> -->
 
-<a class="navbar-brand d-flex align-items-center" routerLink="/home">
+<a class="navbar-brand d-flex align-items-center" routerLink="/home" (click)="closeMenu()">
   <!-- عرض اللوجو -->
   <img src="logo.jpeg" alt="Betk Logo" height="50" class="me-2">
 </a>
 
-    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
+    <button class="navbar-toggler border-0 shadow-none px-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <i class="bi bi-three-dots-vertical fs-1 text-dark"></i>
     </button>
 
     <div class="collapse navbar-collapse" id="navbarNav">
@@ -21,7 +21,9 @@
       <a class="nav-link px-3 fw-semibold custom-link" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 0 }"
-         [class.active-tab]="activeType() === '0'">Resale</a>
+         [class.active-tab]="activeType() === '0'"
+               (click)="closeMenu()">Resale</a>
+         
     </li>
     
     <!-- Rent (1) -->
@@ -29,7 +31,8 @@
       <a class="nav-link px-3 fw-semibold custom-link" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 1 }"
-         [class.active-tab]="activeType() === '1'">Rent</a>
+         [class.active-tab]="activeType() === '1'"
+        (click)="closeMenu()">Rent</a>
     </li>
 
     <!-- Primary (2) -->
@@ -37,7 +40,8 @@
       <a class="nav-link px-3 fw-semibold custom-link" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 2 }"
-         [class.active-tab]="activeType() === '2'">Primary</a>
+         [class.active-tab]="activeType() === '2'"
+        (click)="closeMenu()">Primary</a>
     </li>
 
     <!-- Resale Project (3) -->
@@ -45,13 +49,15 @@
       <a class="nav-link px-3 fw-semibold custom-link" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 3 }"
-         [class.active-tab]="activeType() === '3'">Resale Project</a>
+         [class.active-tab]="activeType() === '3'"
+        (click)="closeMenu()">Resale Project</a>
     </li>
 
     <li class="nav-item ">
       <a class="nav-link custom-link px-3 fw-semibold" 
          routerLink="/find-agent"
-         routerLinkActive="active-tab">Agents</a>
+         routerLinkActive="active-tab"
+         (click)="closeMenu()">Agents</a>
     </li>
 
   
@@ -59,12 +65,12 @@
         <!-- خيارات البروكر فقط -->
         @if (authService.loggedIn() && authService.getUserType() === 1) {
           <li class="nav-item ms-lg-3">
-            <a class="nav-link text-danger fw-bold d-flex align-items-center" routerLink="/add-property">
+            <a class="nav-link text-danger fw-bold d-flex align-items-center" routerLink="/add-property" (click)="closeMenu()">
               <i class="bi bi-plus-circle-fill me-2 fs-5"></i> Add Property
             </a>
           </li>
           <li class="nav-item ms-lg-2">
-            <a class="nav-link text-danger fw-bold d-flex align-items-center" routerLink="/my-properties">
+            <a class="nav-link text-danger fw-bold d-flex align-items-center" routerLink="/my-properties" (click)="closeMenu()">
               <i class="bi bi-speedometer2 me-2"></i> My Dashboard
             </a>
           </li>
@@ -76,17 +82,17 @@
         
         @if (!authService.loggedIn()) {
           <li class="nav-item">
-            <button class="btn btn-outline-dark px-4 rounded-pill me-2 fw-semibold" routerLink="/login">Login</button>
+            <button class="btn btn-outline-dark px-4 rounded-pill me-2 fw-semibold" routerLink="/login" (click)="closeMenu()">Login</button>
           </li>
           <li class="nav-item">
-            <button class="btn btn-danger px-4 rounded-pill fw-semibold shadow-sm" routerLink="/register">Sign Up</button>
+            <button class="btn btn-danger px-4 rounded-pill fw-semibold shadow-sm" routerLink="/register" (click)="closeMenu()">Sign Up</button>
           </li>
         } @else {
           
           <!-- 1. أيقونة المفضلة: تظهر فقط للـ Client (UserType === 0) -->
           @if (authService.getUserType() === 0) {
             <li class="nav-item me-3">
-              <a routerLink="/wishlist" class="nav-link wishlist-nav-icon" title="My Wishlist">
+              <a routerLink="/wishlist" class="nav-link wishlist-nav-icon" title="My Wishlist" (click)="closeMenu()">
                 <i class="bi bi-heart-fill text-danger fs-4"></i>
               </a>
             </li>
@@ -94,7 +100,7 @@
 
           <!-- 2. أيقونة البروفايل (الخطوة القادمة) -->
           <li class="nav-item me-3">
-  <a routerLink="/profile" class="nav-link p-0 d-flex align-items-center profile-nav-link">
+  <a routerLink="/profile" class="nav-link p-0 d-flex align-items-center profile-nav-link"(click)="closeMenu()">
     <!-- لو فيه صورة بروفايل اعرضها، لو مفيش اعرض الأيقونة -->
     @if (authService.getUserImage()) {
       <img [src]="authService.getUserImage()" class="rounded-circle border border-2 border-danger shadow-sm" 
