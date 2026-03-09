@@ -32,36 +32,39 @@ export class PropertyDetailsComponent implements OnInit {
 
 
   ngOnInit(): void {
-    // الحصول على الـ ID من الرابط
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (id) {
-      this.propertyService.getPropertyById(id).subscribe({
-        next: (data) => {
-          this.property.set(data);
-          
-          // --- الكود الجديد لتحديث شكل اللينك في المتصفح ---
-          if (data.title) {
-            const slug = this.generateSlug(data.title);
-            // الحصول على اسم المسار الأساسي (مثلاً property-details)
-            const baseUrl = this.router.url.split('/')[1]; 
-            // تحديث اللينك في المتصفح ليصبح: /property-details/123/title-of-property
-            this.location.replaceState(`/${baseUrl}/${data.id}/${slug}`);
-          }
-        },
-        error: (err) => console.error(err)
-      });
-    }
+  const id = Number(this.route.snapshot.paramMap.get('id'));
+  if (id) {
+    this.propertyService.getPropertyById(id).subscribe({
+      next: (data) => {
+        this.property.set(data);
+        
+        // تجميع تفاصيل العقار الإنجليزية لعمل لينك احترافي (النوع + الحالة + المنطقة + الكود)
+        // مثال: Apartment Resale Loran AR123
+        const slugText = `${data.propertyType} ${data.listingType} ${data.region} ${data.code || ''}`;
+        
+        // تحويل النص للينك
+        const slug = this.generateSlug(slugText);
+        
+        // تحديث اللينك في المتصفح
+        const baseUrl = this.router.url.split('/')[1]; 
+        this.location.replaceState(`/${baseUrl}/${data.id}/${slug}`);
+      },
+      error: (err) => console.error(err)
+    });
   }
+}
 
-  generateSlug(text: string): string {
-    if (!text) return '';
-    return text
-      .trim()
-      .replace(/\s+/g, '-') // استبدال المسافات بشرطة
-      .replace(/[^a-zA-Z0-9\u0621-\u064A\-]/g, '') // الاحتفاظ بالحروف العربية والإنجليزية والأرقام والشرط
-      .replace(/-+/g, '-') // منع تكرار الشرطات المتتالية
-      .toLowerCase();
-  }
+  // دالة لعمل اللينك بالإنجليزي فقط لضمان عدم ظهور رموز الـ %
+generateSlug(text: string): string {
+  if (!text) return '';
+  return text
+    .trim()
+    .toLowerCase() // تحويل الحروف لـ Small
+    .replace(/\s+/g, '-') // استبدال المسافات بشرطة
+    .replace(/[^a-z0-9\-]/g, '') // مسح أي حروف عربية أو رموز غريبة (الاحتفاظ بالإنجليزي والأرقام والشرط فقط)
+    .replace(/-+/g, '-') // منع تكرار الشرطات المتتالية (مثال: --)
+    .replace(/^-|-$/g, ''); // مسح أي شرطة في أول أو آخر اللينك
+}
 
   toggleDescription() {
   this.isDescriptionExpanded.update(val => !val);
