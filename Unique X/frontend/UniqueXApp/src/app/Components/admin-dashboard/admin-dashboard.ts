@@ -48,7 +48,9 @@ export class AdminDashboardComponent implements OnInit {
   // إحصائيات سريعة
   totalUsers = computed(() => this.users().length);
   totalProperties = computed(() => this.properties().length);
+  activePropertiesCount = computed(() => this.properties().filter(p => p.isActive).length); // حساب النشط فقط
   suspendedUsersCount = computed(() => this.users().filter(u => !u.isActive).length);
+  suspendedPropertiesCount = computed(() => this.properties().filter(p => !p.isActive).length); // حساب الموقوف فقط
   soldPropertiesCount = computed(() => this.properties().filter(p => p.isSold).length);
 
 

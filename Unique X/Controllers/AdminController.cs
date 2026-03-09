@@ -206,7 +206,8 @@ namespace Unique_X.Controllers
                     u.Email,
                     u.UserType,
                     u.IsActive,
-                    u.PhoneNumber
+                    u.PhoneNumber,
+                    u.ProfileImageUrl
                 }).ToListAsync();
             return Ok(users);
         }
@@ -225,7 +226,8 @@ namespace Unique_X.Controllers
                     p.Price,
                     p.IsActive,
                     p.IsSold,
-                    BrokerName = p.Broker.FirstName + " " + p.Broker.LastName
+                    BrokerName = p.Broker.FirstName + " " + p.Broker.LastName,
+                    Photos = p.Photos.Select(img => new { img.Url }).ToList()
                 }).ToListAsync();
             return Ok(props);
         }

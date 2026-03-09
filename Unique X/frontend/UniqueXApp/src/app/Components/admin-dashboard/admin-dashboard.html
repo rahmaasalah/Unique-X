@@ -53,36 +53,37 @@
   <main class="flex-grow-1 p-4 p-md-5">
     
     <!-- قسم الإحصائيات (يختفي في صفحة الإعدادات) -->
+    <!-- قسم الإحصائيات (يختفي في صفحة الإعدادات) -->
     @if (activeTab() !== 'settings') {
       <div class="row g-3 mb-5 animate__animated animate__fadeIn">
         <div class="col-md-3">
           <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-danger border-5 rounded-4">
             <small class="text-muted fw-bold text-uppercase">Total Users</small>
-            <h2 class="fw-bold mb-0 text-dark">{{ stats().totalUsers || 0 }}</h2>
+            <h2 class="fw-bold mb-0 text-dark">{{ totalUsers() }}</h2>
           </div>
         </div>
         <div class="col-md-3">
           <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-primary border-5 rounded-4">
             <small class="text-muted fw-bold text-uppercase">Active Properties</small>
-            <h2 class="fw-bold mb-0 text-primary">{{ stats().totalProperties || 0 }}</h2>
+            <h2 class="fw-bold mb-0 text-primary">{{ activePropertiesCount() }}</h2>
           </div>
         </div>
         <div class="col-md-3" (click)="switchTab('suspUsers')" style="cursor: pointer;">
           <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-warning border-5 rounded-4">
             <small class="text-muted fw-bold text-uppercase">Suspended Accounts</small>
-            <h2 class="fw-bold mb-0 text-warning">{{ stats().suspendedUsers || 0 }}</h2>
+            <h2 class="fw-bold mb-0 text-warning">{{ suspendedUsersCount() }}</h2>
           </div>
         </div>
         <div class="col-md-3" (click)="switchTab('suspProps')" style="cursor: pointer;">
           <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-warning border-5 rounded-4">
             <small class="text-muted fw-bold text-uppercase">Suspended Properties</small>
-            <h2 class="fw-bold mb-0 text-warning">{{ stats().suspendedProperties || 0 }}</h2>
+            <h2 class="fw-bold mb-0 text-warning">{{ suspendedPropertiesCount() }}</h2>
           </div>
         </div>
         <div class="col-md-3 " (click)="switchTab('sold')" style="cursor: pointer;">
           <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-success border-5 rounded-4">
             <small class="text-muted fw-bold text-uppercase">Sold Properties</small>
-            <h2 class="fw-bold mb-0 text-success">{{ stats().soldProperties || 0 }}</h2>
+            <h2 class="fw-bold mb-0 text-success">{{ soldPropertiesCount() }}</h2>
           </div>
         </div>
         <div class="col-md-3" (click)="switchTab('whatsapp')" style="cursor: pointer;">
@@ -91,15 +92,12 @@
             <h2 class="fw-bold mb-0 text-success">{{ stats().totalWhatsAppClicks || 0 }}</h2>
           </div>
         </div>
-
         <div class="col-md-3" (click)="switchTab('calls')" style="cursor: pointer;">
           <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-success border-5 rounded-4">
             <small class="text-muted fw-bold text-uppercase">Direct Calls</small>
             <h2 class="fw-bold mb-0 text-success">{{ stats().totalCallClicks || 0 }}</h2>
           </div>
         </div>
-
-        
       </div>
     }
 
