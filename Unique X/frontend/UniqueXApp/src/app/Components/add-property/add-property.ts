@@ -434,9 +434,13 @@ if (f.villaSubType !== null) {
     // الحقول الفنية
     formData.append('Floor', (f.floor || 0).toString());
     formData.append('TotalFloors', (f.totalFloors || 0).toString());
-    formData.append('BuildYear', f.buildYear.toString());
+    if (this.isUnderConstruction()) {
+  formData.append('BuildYear', '0'); // نبعته 0 لو تحت الإنشاء
+} else {
+  formData.append('BuildYear', (f.buildYear || '').toString());
+}
     formData.append('Finishing', f.finishing.toString());
-     formData.append('Rooms', (f.rooms || 0).toString());
+    formData.append('Rooms', (f.rooms || 0).toString());
     formData.append('Bathrooms', (f.bathrooms || 0).toString());
     formData.append('ReceptionPieces', (f.receptionPieces || 0).toString());
     formData.append('DistanceFromLandmark', f.distanceFromLandmark || '');

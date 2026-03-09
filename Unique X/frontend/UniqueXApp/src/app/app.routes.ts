@@ -30,6 +30,7 @@ export const routes: Routes = [
   { path: 'home', component: HomeComponent },
   { path: 'add-property', component: AddPropertyComponent, canActivate: [authGuard] },
   { path: 'property-details/:id', component: PropertyDetailsComponent },
+  { path: 'property-details/:id/:title', component: PropertyDetailsComponent },
   { path: 'my-properties', component: MyPropertiesComponent, canActivate: [authGuard] },
   { path: 'edit-property/:id', component: EditPropertyComponent, canActivate: [authGuard] },
   { path: 'wishlist', component: WishlistComponent, canActivate: [authGuard] },
@@ -39,5 +40,5 @@ export const routes: Routes = [
   //{ path: 'property-details/:id', component: PropertyDetailsComponent, canActivate: [authGuard] },
   //{ path: 'add-property', component: AddPropertyComponent, canActivate: [authGuard] },
  { path: '', component: HomeComponent, pathMatch: 'full' }, 
-  { path: '**', redirectTo: '/login' }
+ { path: '**', redirectTo: '/login' }
 ];
