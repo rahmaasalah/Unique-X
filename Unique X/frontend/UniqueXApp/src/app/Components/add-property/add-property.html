@@ -200,17 +200,18 @@
                   
                 }
               </div>
-              <div class="col-md-3">
-                <label class="small fw-bold">Build Year</label>
-                <!-- الجزء الجديد: منع سنة في المستقبل -->
-                <input type="text" (input)="formatInteger($event, 'buildYear')" formControlName="buildYear" class="form-control" min="1950" [max]="currentYear">
-                @if (propertyForm.get('buildYear')?.errors?.['max']) {
-                  <small class="text-danger d-block mt-1">Year cannot exceed {{ currentYear }}</small>
-                }
-                @if (propertyForm.get('buildYear')?.errors?.['min']) {
-                  <small class="text-danger d-block mt-1">Must be after 1950</small>
-                }
-              </div>
+              @if (!isUnderConstruction()) {
+  <div class="col-md-3 animate__animated animate__fadeIn">
+    <label class="small fw-bold">Build Year</label>
+    <input type="text" (input)="formatInteger($event, 'buildYear')" formControlName="buildYear" class="form-control" min="1950" [max]="currentYear">
+    @if (propertyForm.get('buildYear')?.errors?.['max']) {
+      <small class="text-danger d-block mt-1">Year cannot exceed {{ currentYear }}</small>
+    }
+    @if (propertyForm.get('buildYear')?.errors?.['min']) {
+      <small class="text-danger d-block mt-1">Must be after 1950</small>
+    }
+  </div>
+}
 
               <div class="col-md-5">
     <label class="form-label fw-bold small">Finishing Type</label>

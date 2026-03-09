@@ -201,9 +201,12 @@
 
         
 
-        @if (prop.buildYear > 0) {
-          <li class="mb-3 small"><i class="bi bi-calendar-check text-danger me-2"></i> <strong>Built in:</strong> {{ prop.buildYear }}</li>
-        }
+        @if (prop.buildYear > 0 && prop.deliveryStatus !== 'Under Construction') {
+  <li class="mb-3 small">
+    <i class="bi bi-calendar-check text-danger me-2"></i> 
+    <strong>Built in:</strong> {{ prop.buildYear }}
+  </li>
+}
       </ul>
     </div>
 

@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
@@ -22,6 +22,7 @@ export class PropertyDetailsComponent implements OnInit {
   public authService = inject(AuthService);
   private router = inject(Router);
   private adminService = inject(AdminService);
+  private location = inject(Location);
   private gaService = inject(GoogleAnalyticsService);
 
   
@@ -35,12 +36,31 @@ export class PropertyDetailsComponent implements OnInit {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
       this.propertyService.getPropertyById(id).subscribe({
-        next: (data) => this.property.set(data),
+        next: (data) => {
+          this.property.set(data);
+          
+          // --- الكود الجديد لتحديث شكل اللينك في المتصفح ---
+          if (data.title) {
+            const slug = this.generateSlug(data.title);
+            // الحصول على اسم المسار الأساسي (مثلاً property-details)
+            const baseUrl = this.router.url.split('/')[1]; 
+            // تحديث اللينك في المتصفح ليصبح: /property-details/123/title-of-property
+            this.location.replaceState(`/${baseUrl}/${data.id}/${slug}`);
+          }
+        },
         error: (err) => console.error(err)
-
-        
       });
     }
+  }
+
+  generateSlug(text: string): string {
+    if (!text) return '';
+    return text
+      .trim()
+      .replace(/\s+/g, '-') // استبدال المسافات بشرطة
+      .replace(/[^a-zA-Z0-9\u0621-\u064A\-]/g, '') // الاحتفاظ بالحروف العربية والإنجليزية والأرقام والشرط
+      .replace(/-+/g, '-') // منع تكرار الشرطات المتتالية
+      .toLowerCase();
   }
 
   toggleDescription() {
