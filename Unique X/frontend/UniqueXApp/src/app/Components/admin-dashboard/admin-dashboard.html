@@ -222,20 +222,24 @@
                        <img [src]="prop.photos[0]?.url" class="rounded-3 me-3 border shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">
                        <div>
                           <h6 class="mb-0 fw-bold text-dark">{{ prop.title }}</h6>
-                          <!-- قائمة نقل ملكية العقار -->
-<div class="input-group input-group-sm mt-1" style="max-width: 220px;">
-  <span class="input-group-text bg-danger-subtle border-0 text-danger" title="Assign to Broker">
-    <i class="bi bi-person-bounding-box"></i>
-  </span>
-  <select class="form-select border-0 bg-light small fw-bold text-dark" 
-          (change)="onReassignBroker(prop.id, $event)">
-    @for (b of brokersList(); track b.id) {
-      <!-- يتم تحديد البروكر الحالي أوتوماتيكياً -->
-      <option [value]="b.id" [selected]="b.id === prop.brokerId">
-        {{ b.firstName }} {{ b.lastName }}
-      </option>
-    }
-  </select>
+                          <!-- قائمة نقل ملكية العقار (بتصميم جديد) -->
+<div class="mt-2">
+  <label class="text-muted d-block mb-1" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">ASSIGNED AGENT:</label>
+  <div class="input-group input-group-sm border border-secondary-subtle rounded-pill overflow-hidden shadow-sm bg-white" style="max-width: 200px; transition: all 0.3s ease;">
+    <span class="input-group-text bg-transparent border-0 text-danger ps-3 pe-1">
+      <i class="bi bi-person-fill-gear"></i>
+    </span>
+    <!-- لاحظي: غيرنا (change) عشان نبعت العقار كله (prop) مش بس الـ id -->
+    <select class="form-select border-0 bg-transparent fw-bold text-dark shadow-none" 
+            style="font-size: 0.8rem; cursor: pointer; outline: none;"
+            (change)="onReassignBroker(prop, $event)">
+      @for (b of brokersList(); track b.id) {
+        <option [value]="b.id" [selected]="b.id === prop.brokerId">
+          {{ b.firstName }} {{ b.lastName }}
+        </option>
+      }
+    </select>
+  </div>
 </div>
                        </div>
                     </div>
