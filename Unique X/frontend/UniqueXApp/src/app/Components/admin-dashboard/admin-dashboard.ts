@@ -262,24 +262,38 @@ export class AdminDashboardComponent implements OnInit {
     return type === 1 ? 'Broker' : type === 2 ? 'Admin' : 'Client';
   }
 
-  onReassignBroker(propertyId: number, event: any) {
+  onReassignBroker(prop: any, event: any) {
     const newBrokerId = event.target.value;
-    if (!newBrokerId) return;
+    const selectElement = event.target; // نحتفظ بالعنصر (Dropdown) للتحكم فيه
+
+    // لو اختار نفس الشخص الحالي، ميعملش حاجة
+    if (!newBrokerId || newBrokerId === prop.brokerId) return;
 
     this.alertService.confirm('Are you sure you want to reassign this property to another broker?', () => {
+      // لو الأدمن داس موافق (OK)
       this.alertService.showLoading('Reassigning property...');
       
-      this.adminService.reassignProperty(propertyId, newBrokerId).subscribe({
+      this.adminService.reassignProperty(prop.id, newBrokerId).subscribe({
         next: () => {
           this.alertService.close();
           this.alertService.success('Property reassigned successfully!');
-          this.loadAllData(); // تحديث الجداول
+          this.loadAllData(); // تحديث الجدول عشان يقرا الداتا الجديدة
         },
         error: () => {
           this.alertService.close();
           this.alertService.error('Failed to reassign property.');
+          selectElement.value = prop.brokerId; // نرجعه للاسم القديم لو حصل مشكلة
         }
       });
     });
+
+    // لو الأدمن داس Cancel في التنبيه (لو الـ alertService بتاعتك مش بتدعم دي، القائمة هتتحدث لوحدها مع ريفريش الصفحة)
+    // بس للاحتياط بنرجع القيمة القديمة يدوياً في حالة إنه مكملش العملية
+    setTimeout(() => {
+      const swalContainer = document.querySelector('.swal2-container');
+      if (!swalContainer) {
+        selectElement.value = prop.brokerId;
+      }
+    }, 500);
   }
 }

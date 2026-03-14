@@ -32,7 +32,7 @@ getDetailedProperties(): Observable<any[]> {
   }
 
   reassignProperty(propertyId: number, newBrokerId: string) {
-  return this.http.patch(`${this.baseUrl}/Admin/reassign-property/${propertyId}/${newBrokerId}`, {});
+  return this.http.patch(`${this.baseUrl}/reassign-property/${propertyId}/${newBrokerId}`, {});
 }
 
   // --- إدارة العقارات ---
