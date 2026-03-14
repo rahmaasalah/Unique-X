@@ -53,6 +53,24 @@ namespace Unique_X.Controllers
             await _userManager.UpdateAsync(user);
             return Ok(new { Status = user.IsActive });
         }
+        [HttpPatch]
+        public async Task<IActionResult> ReassignProperty(int propertyId, string newBrokerId)
+        {
+            // 1. البحث عن العقار
+            var property = await _context.Properties.FindAsync(propertyId);
+            if (property == null) return NotFound("Property not found");
+
+            // 2. التحقق من أن المستخدم الجديد موجود وفعلاً UserType == 1 (بروكر)
+            var newBroker = await _userManager.FindByIdAsync(newBrokerId);
+            if (newBroker == null || newBroker.UserType != 1)
+                return BadRequest("Invalid broker account");
+
+            // 3. تغيير ملكية العقار
+            property.BrokerId = newBrokerId;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Property reassigned successfully" });
+        }
 
         [HttpGet("stats")]
         public async Task<IActionResult> GetDashboardStats()
@@ -74,14 +92,13 @@ namespace Unique_X.Controllers
         [HttpGet("properties-detailed")]
         public async Task<IActionResult> GetAllPropertiesDetailed()
         {
-            // الأدمن محتاج يشوف "كل حاجة" عشان يحكم على العقار
             var props = await _context.Properties
                 .Include(p => p.Broker)
                 .Include(p => p.Photos)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
-            return Ok(props); // هنبعت الـ Entities كاملة للأدمن
+            return Ok(props); 
         }
 
         [HttpPatch("toggle-property/{id}")]
@@ -94,7 +111,6 @@ namespace Unique_X.Controllers
             return Ok(new { Status = prop.IsActive });
         }
 
-        // --- إدارة بنرات الهوم ---
         [HttpPost("add-banner")]
         public async Task<IActionResult> AddBanner([FromForm] BannerUploadDto dto) // تعديل هنا
         {
@@ -126,18 +142,16 @@ namespace Unique_X.Controllers
             return Ok(new { Message = "Deleted" });
         }
 
-        // أكشن عام للهوم (بدون Authorize)
         [HttpGet("banners")]
         [AllowAnonymous]
         public async Task<IActionResult> GetBanners()
         {
-            // أحياناً الـ 500 يكون بسبب عدم وجود بيانات، نرجع مصفوفة فارغة بدلاً من Null
             var banners = await _context.HomeBanners.ToListAsync();
             return Ok(banners ?? new List<HomeBanner>());
         }
 
         [HttpPost("track")]
-        [AllowAnonymous] // مسموح للكل حتى اللي مش مسجل عشان نحسبه
+        [AllowAnonymous] 
         public async Task<IActionResult> TrackAction(string action, int? propertyId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -170,21 +184,17 @@ namespace Unique_X.Controllers
             return Ok(props);
         }
 
-        // 2. جلب سجلات التفاعل (الواتساب والمكالمات) مع بيانات المستخدم والعقار
         [HttpGet("activity-logs/{type}")]
         public async Task<IActionResult> GetActivityLogs(string type)
         {
-            // type هيكون إما "WhatsAppClick" أو "CallClick"
             var logs = await _context.AnalyticsRecords
                 .Where(r => r.ActionType == type)
                 .OrderByDescending(r => r.Timestamp)
                 .Select(r => new {
                     r.Timestamp,
-                    // جلب بيانات الشخص اللي ضغط (لو موجود)
                     UserWhoClicked = _context.Users.Where(u => u.Id == r.UserId)
                                      .Select(u => u.FirstName + " " + u.LastName + " (" + u.PhoneNumber + ")")
                                      .FirstOrDefault() ?? "Guest User",
-                    // جلب بيانات العقار اللي انضغط عليه
                     Property = _context.Properties.Where(p => p.Id == r.PropertyId)
                                .Select(p => new { p.Title, p.Code, p.PropertyType,
                                    BrokerFullName = p.Broker.FirstName + " " + p.Broker.LastName
@@ -212,7 +222,6 @@ namespace Unique_X.Controllers
             return Ok(users);
         }
 
-        // 3. جلب العقارات الموقوفة (Suspended Properties) ✅
         [HttpGet("suspended-properties")]
         public async Task<IActionResult> GetSuspendedProperties()
         {
