@@ -53,6 +53,9 @@ export class AdminDashboardComponent implements OnInit {
   suspendedPropertiesCount = computed(() => this.properties().filter(p => !p.isActive).length); // حساب الموقوف فقط
   soldPropertiesCount = computed(() => this.properties().filter(p => p.isSold).length);
 
+  brokersList = computed(() => this.users().filter(u => u.userType === 1));
+
+
 
   filteredUsers = computed(() => {
     return this.users().filter(u => {
@@ -257,5 +260,26 @@ export class AdminDashboardComponent implements OnInit {
 
   getUserTypeLabel(type: number) {
     return type === 1 ? 'Broker' : type === 2 ? 'Admin' : 'Client';
+  }
+
+  onReassignBroker(propertyId: number, event: any) {
+    const newBrokerId = event.target.value;
+    if (!newBrokerId) return;
+
+    this.alertService.confirm('Are you sure you want to reassign this property to another broker?', () => {
+      this.alertService.showLoading('Reassigning property...');
+      
+      this.adminService.reassignProperty(propertyId, newBrokerId).subscribe({
+        next: () => {
+          this.alertService.close();
+          this.alertService.success('Property reassigned successfully!');
+          this.loadAllData(); // تحديث الجداول
+        },
+        error: () => {
+          this.alertService.close();
+          this.alertService.error('Failed to reassign property.');
+        }
+      });
+    });
   }
 }

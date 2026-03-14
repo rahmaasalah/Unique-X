@@ -31,6 +31,10 @@ getDetailedProperties(): Observable<any[]> {
     return this.http.patch(`${this.baseUrl}/toggle-user/${userId}`, {});
   }
 
+  reassignProperty(propertyId: number, newBrokerId: string) {
+  return this.http.patch(`${this.baseUrl}/Admin/reassign-property/${propertyId}/${newBrokerId}`, {});
+}
+
   // --- إدارة العقارات ---
 
   // جلب كل العقارات الموجودة في النظام للمراجعة

@@ -222,7 +222,21 @@
                        <img [src]="prop.photos[0]?.url" class="rounded-3 me-3 border shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">
                        <div>
                           <h6 class="mb-0 fw-bold text-dark">{{ prop.title }}</h6>
-                          <small class="text-danger fw-bold"><i class="bi bi-person"></i> {{ prop.broker?.firstName }} {{ prop.broker?.lastName }}</small>
+                          <!-- قائمة نقل ملكية العقار -->
+<div class="input-group input-group-sm mt-1" style="max-width: 220px;">
+  <span class="input-group-text bg-danger-subtle border-0 text-danger" title="Assign to Broker">
+    <i class="bi bi-person-bounding-box"></i>
+  </span>
+  <select class="form-select border-0 bg-light small fw-bold text-dark" 
+          (change)="onReassignBroker(prop.id, $event)">
+    @for (b of brokersList(); track b.id) {
+      <!-- يتم تحديد البروكر الحالي أوتوماتيكياً -->
+      <option [value]="b.id" [selected]="b.id === prop.brokerId">
+        {{ b.firstName }} {{ b.lastName }}
+      </option>
+    }
+  </select>
+</div>
                        </div>
                     </div>
                   </td>
