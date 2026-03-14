@@ -53,7 +53,7 @@ namespace Unique_X.Controllers
             await _userManager.UpdateAsync(user);
             return Ok(new { Status = user.IsActive });
         }
-        [HttpPatch]
+        [HttpPatch("reassign-property/{propertyId}/{newBrokerId}")]
         public async Task<IActionResult> ReassignProperty(int propertyId, string newBrokerId)
         {
             // 1. البحث عن العقار
