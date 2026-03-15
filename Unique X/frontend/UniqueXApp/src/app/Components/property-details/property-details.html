@@ -226,7 +226,7 @@
 
         <li class="mb-3 small"><i class="bi bi-paint-bucket text-danger me-2"></i> <strong>Finishing:</strong> {{ prop.finishing }}</li>
               
-              @if (prop.listingType !== 'Rent') {
+              @if (prop.listingType === 'Resale') {
                 <li class="mb-3 small"><i class="bi bi-cash-stack text-danger me-2"></i> <strong>Commission:</strong> 2.5%</li>
               }
       </ul>

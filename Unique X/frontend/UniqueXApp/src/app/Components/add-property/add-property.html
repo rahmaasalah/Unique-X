@@ -152,32 +152,38 @@
 }
 
             <div class="row g-3 mb-4">
-              <div class="col-md-6">
-                <label class="form-label fw-bold small">Total Price</label>
-                <div class="input-group">
-                  <span class="input-group-text bg-white">EGP</span>
-                  <input type="text" (input)="formatFinancial($event, 'price')" formControlName="price" class="form-control" min="1000000" placeholder="1,000,000 EGP">
-                </div>
-                <!-- الجزء الجديد: خطأ السعر -->
-               @if (propertyForm.get('price')?.touched && propertyForm.get('price')?.errors?.['min']) {
-    <!-- الرسالة تتغير حسب النوع المختار -->
-    <small class="text-danger d-block mt-1">
-      Price must be at least {{ isRent() ? '1' : '1,000,000' }} EGP
-    </small>
-  }
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold small">Area (m²)</label>
-                <div class="input-group">
-                  <span class="input-group-text bg-white"><i class="bi bi-aspect-ratio"></i></span>
-                  <input type="text" (input)="formatInteger($event, 'area')" formControlName="area" class="form-control" placeholder="">
-                </div>
-                <!-- الجزء الجديد: خطأ المساحة -->
-                @if (propertyForm.get('area')?.touched && propertyForm.get('area')?.errors?.['min']) {
-                  <small class="text-danger d-block mt-1">Area must be greater than 0</small>
-                }
-              </div>
-            </div>
+  <div class="col-md-4">
+    <label class="form-label fw-bold small">Area (m²)</label>
+    <div class="input-group">
+      <span class="input-group-text bg-white"><i class="bi bi-aspect-ratio"></i></span>
+      <!-- ضفنا calculateTotalPrice هنا -->
+      <input type="text" (input)="formatInteger($event, 'area'); calculateTotalPrice()" formControlName="area" class="form-control" placeholder="">
+    </div>
+    @if (propertyForm.get('area')?.touched && propertyForm.get('area')?.errors?.['min']) {
+      <small class="text-danger d-block mt-1">Area must be greater than 0</small>
+    }
+  </div>
+  
+  <div class="col-md-4 animate__animated animate__fadeIn">
+    <label class="form-label fw-bold small">Price per Meter</label>
+    <div class="input-group">
+      <span class="input-group-text bg-light">EGP</span>
+      <input type="text" (input)="formatFinancial($event, 'pricePerMeter'); calculateTotalPrice()" formControlName="pricePerMeter" class="form-control" placeholder="">
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <label class="form-label fw-bold small">Total Price</label>
+    <div class="input-group">
+      <span class="input-group-text bg-light">EGP</span>
+      <!-- ضفنا onAmountChange عشان لو غير السعر الكلي، يعيد حساب نسب المقدم والقسط -->
+      <input type="text" (input)="formatFinancial($event, 'price'); onAmountChange()" formControlName="price" class="form-control " min="1000000" placeholder="1,000,000">
+    </div>
+    @if (propertyForm.get('price')?.touched && propertyForm.get('price')?.errors?.['min']) {
+      <small class="text-danger d-block mt-1">Price must be at least {{ isRent() ? '1' : '1,000,000' }} EGP</small>
+    }
+  </div>
+</div>
 
             <!-- القسم الثاني: مواصفات الوحدة -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-house-door me-2 text-danger"></i>Unit Specifications</h5>
@@ -460,43 +466,54 @@
       
       <!-- لو هو مشروع (Primary أو Resale Project) نعرض الـ 3 حقول جنب بعض -->
       @if (isProject()) {
-        <div class="col-md-9 animate__animated animate__fadeIn">
-          <div class="row g-2">
-            <!-- سنوات التقسيط -->
-            <div class="col-md-4">
-              <label class="small fw-bold">Installment Years</label>
-              <input type="text" (input)="formatInteger($event, 'installmentYears')" formControlName="installmentYears" class="form-control shadow-sm" min="1">
-              @if (propertyForm.get('installmentYears')?.errors?.['min']) {
-                <small class="text-danger d-block">Min 1 year</small>
-              }
-            </div>
+  <div class="col-md-12 animate__animated animate__fadeIn"> <!-- غيرنا العرض لـ 12 عشان يسيع 4 خانات -->
+    <div class="row g-2 bg-light p-3 rounded-3 border">
+      
+      <!-- سنوات التقسيط -->
+      <div class="col-md-3">
+        <label class="small fw-bold">Installment Years</label>
+        <input type="text" (input)="formatInteger($event, 'installmentYears'); calculateInstallments()" formControlName="installmentYears" class="form-control shadow-sm" min="1">
+        @if (propertyForm.get('installmentYears')?.errors?.['min']) {
+          <small class="text-danger d-block">Min 1 year</small>
+        }
+      </div>
 
-            <!-- المقدم -->
-            <div class="col-md-4">
-              <label class="small fw-bold">Down Payment</label>
-              <input type="text" (input)="formatFinancial($event, 'downPayment')" formControlName="downPayment" class="form-control shadow-sm" min="0">
-              <!-- شرط: المقدم أقل من السعر الكلي -->
-              @if (isFinanceExceeded('downPayment')) {
-        <small class="text-danger d-block mt-1 animate__animated animate__shakeX">
-          Cannot exceed Total Price
-        </small>
-      }
-            </div>
-
-            <!-- القسط الربع سنوي -->
-            <div class="col-md-4">
-              <label class="small fw-bold">Quarterly Installment</label>
-              <input type="text" (input)="formatFinancial($event, 'quarterInstallment')" formControlName="quarterInstallment" class="form-control shadow-sm" min="0">
-              <!-- شرط: القسط أقل من السعر الكلي -->
-              @if (isFinanceExceeded('quarterInstallment')) {
-        <small class="text-danger d-block mt-1 animate__animated animate__shakeX">
-          Cannot exceed Total Price
-        </small>
-      }
-            </div>
-          </div>
+      <!-- نسبة المقدم -->
+      <div class="col-md-3">
+        <label class="small fw-bold">Down Payment %</label>
+        <div class="input-group">
+          <input type="text" (input)="formatPercentage($event, 'downPaymentPercentage'); onPercentageChange()" formControlName="downPaymentPercentage" class="form-control shadow-sm" placeholder="e.g. 10">
+          <span class="input-group-text bg-white">%</span>
         </div>
-      } 
+      </div>
+
+      <!-- المقدم (مبلغ) -->
+      <div class="col-md-3">
+        <label class="small fw-bold">Down Payment Amount</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white">EGP</span>
+          <input type="text" (input)="formatFinancial($event, 'downPayment'); onAmountChange()" formControlName="downPayment" class="form-control shadow-sm" min="0">
+        </div>
+        @if (isFinanceExceeded('downPayment')) {
+          <small class="text-danger d-block mt-1 animate__animated animate__shakeX">Cannot exceed Total Price</small>
+        }
+      </div>
+
+      <!-- القسط الربع سنوي -->
+      <div class="col-md-3">
+        <label class="small fw-bold">Quarterly Installment</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white">EGP</span>
+          <input type="text" (input)="formatFinancial($event, 'quarterInstallment')" formControlName="quarterInstallment" class="form-control shadow-sm" min="0">
+        </div>
+        @if (isFinanceExceeded('quarterInstallment')) {
+          <small class="text-danger d-block mt-1 animate__animated animate__shakeX">Cannot exceed Total Price</small>
+        }
+      </div>
+
+    </div>
+  </div>
+} 
       
       <!-- لو هو Resale عادي (مش مشروع) نكتفي بسنوات التقسيط فقط في سطر واحد -->
       @else {

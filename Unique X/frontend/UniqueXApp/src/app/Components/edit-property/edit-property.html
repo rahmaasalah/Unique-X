@@ -23,11 +23,10 @@
                   <small class="text-danger d-block mt-1">Title is required</small>
                 }
               </div>
-
               <div class="col-md-2">
-    <label class="form-label fw-bold small">Code</label>
-    <input type="text" formControlName="code" class="form-control shadow-sm" placeholder="e.g. AR#123">
-  </div>
+                <label class="form-label fw-bold small">Code</label>
+                <input type="text" formControlName="code" class="form-control shadow-sm">
+              </div>
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Listing Type</label>
                 <select formControlName="listingType" class="form-select shadow-sm">
@@ -37,9 +36,6 @@
                   <option [value]="3">Resale Project</option>
                 </select>
               </div>
-
-
-              
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Property Type</label>
                 <select formControlName="propertyType" class="form-select shadow-sm">
@@ -53,157 +49,167 @@
               </div>
             </div>
 
-            <!-- ================== الجزء المعدل: منطق الفيلا vs الشقة ================== -->
+            <!-- مواصفات الفيلا (تظهر فقط للفيلا) -->
             @if (isVilla()) {
               <div class="bg-light p-4 rounded-4 border mb-5 animate__animated animate__fadeIn">
-                <h6 class="fw-bold text-danger mb-4"><i class="bi bi-gem me-2"></i>Villa Configuration</h6>
+                <h5 class="fw-bold text-danger mb-4"><i class="bi bi-gem me-2"></i>Villa Specifications</h5>
+                
                 <div class="row g-3 mb-4">
-                  <div class="col-md-4"><label class="small fw-bold">Area Type</label><select formControlName="areaType" class="form-select shadow-sm"><option [value]="0">Land Area</option><option [value]="1">Built-up Area</option></select></div>
-                  <div class="col-md-4"><label class="small fw-bold">Villa Category</label><select formControlName="villaCategory" class="form-select shadow-sm"><option [value]="0">Standalone</option><option [value]="1">Twin House</option><option [value]="2">Town House</option><option [value]="3">Tiessera Lower</option><option [value]="4">Tiessera Upper</option><option [value]="5">Sky Villa</option></select></div>
-                  <div class="col-md-4"><label class="small fw-bold">Sub-Type</label><select formControlName="villaSubType" class="form-select shadow-sm"><option [value]="null">None</option><option [value]="0">Basement</option><option [value]="1">Penthouse</option></select></div>
+                  <div class="col-md-4">
+                    <label class="small fw-bold">Area Type</label>
+                    <select formControlName="areaType" class="form-select shadow-sm">
+                      <option [value]="0">Land Area</option>
+                      <option [value]="1">Built-up Area</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="small fw-bold">Villa Category</label>
+                    <select formControlName="villaCategory" class="form-select shadow-sm">
+                      <option [value]="0">Standalone</option>
+                      <option [value]="1">Twin House</option>
+                      <option [value]="2">Town House</option>
+                      <option [value]="3">Tiessera Lower</option>
+                      <option [value]="4">Tiessera Upper</option>
+                      <option [value]="5">Sky Villa</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="small fw-bold">Sub-Type</label>
+                    <select formControlName="villaSubType" class="form-select shadow-sm">
+                      <option [value]="null">No Sub-Type</option>
+                      <option [value]="0">Basement</option>
+                      <option [value]="1">Penthouse</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div class="row g-3">
-                  <!-- Ground, First, Second Floors -->
-                  @for (floor of ['ground', 'first', 'second']; track floor) {
-                    <div class="col-md-4">
-                      <div class="p-3 bg-white border rounded-3 shadow-sm h-100 text-center">
-                        <h6 class="fw-bold text-danger border-bottom pb-2 mb-3 text-uppercase">{{floor}} Floor</h6>
-                        <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatInteger($event, floor+'Rooms')" [formControlName]="floor+'Rooms'" class="form-control form-control-sm text-center"></div>
-                        <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatInteger($event, floor+'Baths')" [formControlName]="floor+'Baths'" class="form-control form-control-sm text-center"></div>
-                        <div><label class="x-small fw-bold">Reception</label><input type="text" (input)="formatInteger($event, floor+'Reception')" [formControlName]="floor+'Reception'" class="form-control form-control-sm text-center"></div>
-                      </div>
+                  <!-- Ground Floor -->
+                  <div class="col-md-4">
+                    <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
+                      <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">GROUND FLOOR</h6>
+                      <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatInteger($event, 'groundRooms')" formControlName="groundRooms" class="form-control form-control-sm"></div>
+                      <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatInteger($event, 'groundBaths')" formControlName="groundBaths" class="form-control form-control-sm"></div>
+                      <div><label class="x-small fw-bold">Reception (Pcs)</label><input type="text" (input)="formatInteger($event, 'groundReception')" formControlName="groundReception" class="form-control form-control-sm"></div>
                     </div>
-                  }
+                  </div>
+                  <!-- First Floor -->
+                  <div class="col-md-4">
+                    <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
+                      <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">FIRST FLOOR</h6>
+                      <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatInteger($event, 'firstRooms')" formControlName="firstRooms" class="form-control form-control-sm"></div>
+                      <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatInteger($event, 'firstBaths')" formControlName="firstBaths" class="form-control form-control-sm"></div>
+                      <div><label class="x-small fw-bold">Reception (Pcs)</label><input type="text" (input)="formatInteger($event, 'firstReception')" formControlName="firstReception" class="form-control form-control-sm"></div>
+                    </div>
+                  </div>
+                  <!-- Second Floor -->
+                  <div class="col-md-4">
+                    <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
+                      <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">SECOND FLOOR</h6>
+                      <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatInteger($event, 'secondRooms')" formControlName="secondRooms" class="form-control form-control-sm"></div>
+                      <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatInteger($event, 'secondBaths')" formControlName="secondBaths" class="form-control form-control-sm"></div>
+                      <div><label class="x-small fw-bold">Reception (Pcs)</label><input type="text" (input)="formatInteger($event, 'secondReception')" formControlName="secondReception" class="form-control form-control-sm"></div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            } @else {
-              <!-- حقول الشقة العادية (تظهر فقط لو مش فيلا) -->
-              <h5 class="fw-bold border-bottom pb-2 mb-4 text-danger"><i class="bi bi-house-door me-2"></i>Unit Specs</h5>
-              <div class="row g-3 mb-4">
-                <div class="col-md-3"><label class="small fw-bold">Floor No.</label><input type="text" (input)="formatInteger($event, 'floor')" formControlName="floor" class="form-control"></div>
-                <div class="col-md-3"><label class="small fw-bold">Total Floors</label><input type="text" (input)="formatInteger($event, 'totalFloors')" formControlName="totalFloors" class="form-control"></div>
-                <div class="col-md-3"><label class="small fw-bold">Units / Floor</label><input type="text" (input)="formatInteger($event, 'apartmentsPerFloor')" formControlName="apartmentsPerFloor" class="form-control"></div>
-                <div class="col-md-3"><label class="small fw-bold">Elevators</label><input type="text" (input)="formatInteger($event, 'elevatorsCount')" formControlName="elevatorsCount" class="form-control"></div>
               </div>
             }
-            <!-- ====================================================================== -->
-
-
 
             @if (showDeliveryMenu()) {
-  <div class="row g-3 mb-4 animate__animated animate__fadeIn">
-    
-    <!-- قائمة اختيار حالة التسليم -->
-    <div class="col-md-6">
-      <label class="form-label fw-bold small">Delivery Status</label>
-      <select formControlName="deliveryStatus" class="form-select shadow-sm">
-        <option [value]="0">Immediate Delivery (Ready)</option>
-        <option [value]="1">Under Construction</option>
-      </select>
-    </div>
-
-    <!-- حقل سنة التسليم: يظهر فقط لو اختار Under Construction -->
-    @if (isUnderConstruction()) {
-      <div class="col-md-6 animate__animated animate__fadeInRight">
-        <label class="form-label fw-bold small">Delivery Year</label>
-        <div class="input-group">
-            <span class="input-group-text bg-white"><i class="bi bi-calendar-event"></i></span>
-            <input type="text" (input)="formatInteger($event, 'deliveryYear')" formControlName="deliveryYear" class="form-control" 
-                   [min]="currentYear" placeholder="e.g. 2027">
-        </div>
-        @if (editForm.get('deliveryYear')?.errors?.['min']) {
-            <small class="text-danger">Delivery year cannot be in the past</small>
-        }
-      </div>
-    }
-
-  </div>
-}
-
-            <div class="row g-3 mb-4">
-              <div class="col-md-6">
-                <label class="form-label fw-bold small">Total Price</label>
-                <div class="input-group">
-                  <span class="input-group-text bg-white">EGP</span>
-                  <input type="text" (input)="formatFinancial($event, 'price')" formControlName="price" class="form-control" min="1000000" placeholder="1,000,000 EGP">
+              <div class="row g-3 mb-4 animate__animated animate__fadeIn">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small">Delivery Status</label>
+                  <select formControlName="deliveryStatus" class="form-select shadow-sm">
+                    <option [value]="0">Immediate Delivery (Ready)</option>
+                    <option [value]="1">Under Construction</option>
+                  </select>
                 </div>
-                @if (editForm.get('price')?.touched && editForm.get('price')?.errors?.['min']) {
-    <!-- الرسالة تتغير حسب النوع المختار -->
-    <small class="text-danger d-block mt-1">
-      Price must be at least {{ isRent() ? '1' : '1,000,000' }} EGP
-    </small>
-  }
+                @if (isUnderConstruction()) {
+                  <div class="col-md-6 animate__animated animate__fadeInRight">
+                    <label class="form-label fw-bold small">Delivery Year</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-calendar-event"></i></span>
+                        <input type="text" (input)="formatInteger($event, 'deliveryYear')" formControlName="deliveryYear" class="form-control" [max]="currentYear + 10" placeholder="e.g. 2027">
+                    </div>
+                  </div>
+                }
               </div>
-              <div class="col-md-6">
+            }
+
+            <!-- المساحة وسعر المتر والسعر الكلي -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
                 <label class="form-label fw-bold small">Area (m²)</label>
                 <div class="input-group">
                   <span class="input-group-text bg-white"><i class="bi bi-aspect-ratio"></i></span>
-                  <input type="text" (input)="formatInteger($event, 'area')" formControlName="area" class="form-control" min="1">
+                  <input type="text" (input)="formatInteger($event, 'area'); calculateTotalPrice()" formControlName="area" class="form-control">
                 </div>
-                @if (editForm.get('area')?.touched && editForm.get('area')?.errors?.['min']) {
-                  <small class="text-danger d-block mt-1">Area must be greater than 0</small>
+              </div>
+              
+              <div class="col-md-4">
+                <label class="form-label fw-bold small">Price per Meter</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light">EGP</span>
+                  <input type="text" (input)="formatFinancial($event, 'pricePerMeter'); calculateTotalPrice()" formControlName="pricePerMeter" class="form-control" placeholder="">
+                </div>
+              </div>
+
+              <div class="col-md-4">
+    <label class="form-label fw-bold small">Total Price</label>
+    <div class="input-group">
+      <span class="input-group-text bg-light">EGP</span>
+      <!-- ضفنا onAmountChange عشان لو غير السعر الكلي، يعيد حساب نسب المقدم والقسط -->
+      <input type="text" (input)="formatFinancial($event, 'price'); onAmountChange()" formControlName="price" class="form-control " min="1000000" placeholder="1,000,000">
+    </div>
+                @if (editForm.get('price')?.touched && editForm.get('price')?.errors?.['min']) {
+                  <small class="text-danger d-block mt-1">Price must be at least {{ isRent() ? '1' : '1,000,000' }} EGP</small>
                 }
               </div>
             </div>
 
-            <!-- القسم الثاني: المواصفات الداخلية -->
+            <!-- القسم الثاني: مواصفات الوحدة -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-house-door me-2 text-danger"></i>Unit Specifications</h5>
             
             <div class="row g-3 mb-4 align-items-end">
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Rooms</label>
-                <div class="input-group input-group-sm shadow-sm">
-                  <input type="text" (input)="formatInteger($event, 'rooms')" formControlName="rooms" class="form-control text-center bg-white"  min="0">
-                </div>
+                <input type="text" (input)="formatInteger($event, 'rooms')" formControlName="rooms" class="form-control shadow-sm" min="0">
               </div>
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Bathrooms</label>
-                <div class="input-group input-group-sm shadow-sm">
-                  <input type="text" (input)="formatInteger($event, 'bathrooms')" formControlName="bathrooms" class="form-control text-center bg-white"  min="0">
-                </div>
+                <input type="text" (input)="formatInteger($event, 'bathrooms')" formControlName="bathrooms" class="form-control shadow-sm" min="0">
               </div>
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Reception Pieces</label>
                 <input type="text" (input)="formatInteger($event, 'receptionPieces')" formControlName="receptionPieces" class="form-control shadow-sm" min="0">
-                @if (editForm.get('receptionPieces')?.errors?.['min']) {
-                  
-                }
               </div>
 
-              <div class="col-md-3">
-                <label class="small fw-bold">Build Year</label>
-                <!-- الجزء الجديد: منع سنة في المستقبل -->
-                <input type="text" (input)="formatInteger($event, 'buildYear')" formControlName="buildYear" class="form-control" [max]="currentYear">
-                @if (editForm.get('buildYear')?.errors?.['max']) {
-                  <small class="text-danger d-block mt-1">Year cannot exceed {{ currentYear }}</small>
-                }
-                @if (editForm.get('buildYear')?.errors?.['min']) {
-                  <small class="text-danger d-block mt-1">Must be after 1950</small>
-                }
-              </div>
+              @if (!isUnderConstruction()) {
+                <div class="col-md-3">
+                  <label class="small fw-bold">Build Year</label>
+                  <input type="text" (input)="formatInteger($event, 'buildYear')" formControlName="buildYear" class="form-control" [max]="currentYear">
+                </div>
+              }
 
               <div class="col-md-5">
-    <label class="form-label fw-bold small">Finishing Type</label>
-    <select formControlName="finishing" class="form-select shadow-sm">
-      <option [value]="0">Core and Shell</option>
-      <option [value]="1">Semi-Finished</option>
-      <option [value]="2">Fully Finished</option>
-      <option [value]="3">Semi-Furnished</option>
-      <option [value]="4">Fully Furnished</option>
-    </select>
-  </div>
+                <label class="form-label fw-bold small">Finishing Type</label>
+                <select formControlName="finishing" class="form-select shadow-sm">
+                  <option [value]="0">Core and Shell</option>
+                  <option [value]="1">Semi-Finished</option>
+                  <option [value]="2">Fully Finished</option>
+                  <option [value]="3">Semi-Furnished</option>
+                  <option [value]="4">Fully Furnished</option>
+                </select>
+              </div>
 
-  <div class="col-md-4">
+              <div class="col-md-4">
                 <label class="form-label fw-bold small">Landmark</label>
                 <input type="text" formControlName="distanceFromLandmark" class="form-control shadow-sm">
               </div>
-              
             </div>
 
             <!-- القسم الثالث: الموقع -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-geo-alt me-2 text-danger"></i>Location Details</h5>
-            
             <div class="row g-3 mb-4">
               <div class="col-md-4">
                 <label class="form-label fw-bold small">City</label>
@@ -216,6 +222,7 @@
               <div class="col-md-4">
                 <label class="form-label fw-bold small">Region</label>
                 <select formControlName="region" class="form-select shadow-sm">
+                  <option value="">-- Select Region --</option>
                   @for (region of filteredRegions; track region) {
                     <option [value]="region">{{ region }}</option>
                   }
@@ -223,260 +230,129 @@
               </div>
 
               @if (isProject()) {
-    <div class="col-md-4 animate__animated animate__fadeIn">
-      <label class="form-label fw-bold small text-dark">Project Name</label>
-      <select formControlName="projectName" class="form-select shadow-sm">
-        <option value="">-- Select Project --</option>
-        @for (project of filteredProjects; track project) {
-          <option [value]="project">{{ project }}</option>
-        }
-      </select>
-    </div>
-  }
-              
+                <div class="col-md-4">
+                  <label class="form-label fw-bold small text-dark">Project Name</label>
+                  <select formControlName="projectName" class="form-select shadow-sm">
+                    <option value="">-- Select Project --</option>
+                    @for (project of filteredProjects; track project) {
+                      <option [value]="project">{{ project }}</option>
+                    }
+                  </select>
+                </div>
+              }
             </div>
 
             <!-- القسم الرابع: تفاصيل المبنى -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-building me-2 text-danger"></i>Building Details</h5>
-            
             <div class="row g-3 mb-4">
-
-                <div class="col-md-3">
-                <label class="small fw-bold">Total Floors</label>
-                <input type="text" (input)="formatInteger($event, 'totalFloors')" formControlName="totalFloors" class="form-control shadow-sm" min="2">
-                @if (editForm.get('totalFloors')?.errors?.['min']) {
-                  
-                }
+              <div class="col-md-3">
+                <label class="small fw-bold">Total Floors </label>
+                <input type="text" (input)="formatInteger($event, 'totalFloors')" (change)="validateFloorInput()" formControlName="totalFloors" class="form-control shadow-sm">
               </div>
               <div class="col-md-3">
-  <label class="small fw-bold">Floor Number</label>
-  <input type="text" (input)="formatInteger($event, 'floor')" formControlName="floor" class="form-control" min="0" (change)="validateFloorInput()">
-</div>
-              
-              <div class="col-md-3">
-                <label class="small fw-bold">Units Per Floor</label>
-                <input type="text" (input)="formatInteger($event, 'apartmentsPerFloor')" formControlName="apartmentsPerFloor" class="form-control shadow-sm" min="1">
-                @if (editForm.get('apartmentsPerFloor')?.errors?.['min']) {
-                  
-                }
+                <label class="small fw-bold">Floor Number </label>
+                <input type="text" (input)="formatInteger($event, 'floor')" (change)="validateFloorInput()" formControlName="floor" class="form-control shadow-sm">
               </div>
               <div class="col-md-3">
-                <label class="small fw-bold">Elevators Count</label>
-                <input type="text" (input)="formatInteger($event, 'elevatorsCount')" formControlName="elevatorsCount" class="form-control shadow-sm" min="0">
-                @if (editForm.get('elevatorsCount')?.errors?.['min']) {
-                  
-                }
+                <label class="small fw-bold">Units Per Floor </label>
+                <input type="text" (input)="formatInteger($event, 'apartmentsPerFloor')" formControlName="apartmentsPerFloor" class="form-control shadow-sm">
+              </div>
+              <div class="col-md-3">
+                <label class="small fw-bold">Elevators Count </label>
+                <input type="text" (input)="formatInteger($event, 'elevatorsCount')" formControlName="elevatorsCount" class="form-control shadow-sm">
               </div>
             </div>
 
             <div class="mb-4">
-                <label class="small fw-bold">View</label>
-                <input type="text" formControlName="view" class="form-control shadow-sm">
+              <label class="small fw-bold">View </label>
+              <input type="text" formControlName="view" class="form-control shadow-sm">
             </div>
 
-                        <!-- القسم الخامس: المميزات والحالات القانونية -->
-            <!-- القسم الموحد: Licensing & Amenities -->
-<h5 class="fw-bold text-dark border-bottom pb-2 mb-4">
-  <i class="bi bi-shield-check me-2 text-danger"></i>Licensing & Amenities
-</h5>
-
-<div class="row g-3 mb-5">
-  
-  <!-- الصف الأول -->
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Land Share</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasLandShare">
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Licensed Unit</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="isLicensed">
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Legal Reconciled</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="isLegalReconciled">
-    </div>
-  </div>
-
-  <!-- الصف الثاني -->
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">First Owner</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="isFirstOwner">
-    </div>
-  </div>
-  
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Master Room</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasMasterRoom">
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Hotel Entrance</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasHotelEntrance">
-    </div>
-  </div>
-  <!-- الصف الثالث -->
-   <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">24/7 Security</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasSecurity">
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Parking Slot</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasParking">
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Balcony</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasBalcony">
-    </div>
-  </div>
-  
-
-  <!-- الصف الرابع -->
-  
-
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Electricity Meter</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasElectricityMeter">
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Water Meter</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasWaterMeter">
-    </div>
-  </div>
-
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Natural Gas Meter</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasGasMeter">
-    </div>
-  </div>
-
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Private Pool</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasPool">
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Garden Area</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasGarden">
-    </div>
-  </div>
-  
-
-</div>
+            <!-- القسم الخامس: المميزات والحالات القانونية -->
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-shield-check me-2 text-danger"></i>Licensing & Amenities</h5>
+            <div class="row g-3 mb-5">
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Land Share</label><input class="form-check-input ms-0" type="checkbox" formControlName="hasLandShare"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Licensed Unit</label><input class="form-check-input ms-0" type="checkbox" formControlName="isLicensed"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Legal Reconciled</label><input class="form-check-input ms-0" type="checkbox" formControlName="isLegalReconciled"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">First Owner</label><input class="form-check-input ms-0" type="checkbox" formControlName="isFirstOwner"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Master Room</label><input class="form-check-input ms-0" type="checkbox" formControlName="hasMasterRoom"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Hotel Entrance</label><input class="form-check-input ms-0" type="checkbox" formControlName="hasHotelEntrance"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">24/7 Security</label><input class="form-check-input ms-0" type="checkbox" formControlName="hasSecurity"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Parking Slot</label><input class="form-check-input ms-0" type="checkbox" formControlName="hasParking"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Balcony</label><input class="form-check-input ms-0" type="checkbox" formControlName="hasBalcony"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Electricity Meter</label><input class="form-check-input ms-0" type="checkbox" formControlName="hasElectricityMeter"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Water Meter</label><input class="form-check-input ms-0" type="checkbox" formControlName="hasWaterMeter"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Natural Gas Meter</label><input class="form-check-input ms-0" type="checkbox" formControlName="hasGasMeter"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Private Pool</label><input class="form-check-input ms-0" type="checkbox" formControlName="hasPool"></div></div>
+              <div class="col-md-4"><div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100"><label class="form-check-label small fw-bold mb-0">Garden Area</label><input class="form-check-input ms-0" type="checkbox" formControlName="hasGarden"></div></div>
+            </div>
 
             <!-- القسم السادس: الدفع -->
-<!-- ================== حالة البيع والمشاريع (Resale / Primary) ================== -->
-<h5 class="fw-bold border-bottom pb-2 mb-4 text-danger">
-  <i class="bi bi-wallet2 me-2"></i>Pricing & Payment Information
-</h5>
+            <h5 class="fw-bold border-bottom pb-2 mb-4 text-danger"><i class="bi bi-wallet2 me-2"></i>Pricing & Payment Information</h5>
 
-<div class="row g-3 mb-4 align-items-start">
-  
-  <!-- ================== الحالة الأولى: الإيجار (Rent) ================== -->
-  @if (isRent()) {
-    <div class="col-md-6 animate__animated animate__fadeIn">
-      <label class="small fw-bold">Monthly Rent Amount</label>
-      <input type="text" (input)="formatFinancial($event, 'monthlyRent')" formControlName="monthlyRent" class="form-control shadow-sm border-danger" min="0">
-      <small class="text-muted" style="font-size: 0.7rem;">* This should match the total price field above</small>
-    </div>
-    <div class="col-md-6 animate__animated animate__fadeIn">
-      <label class="small fw-bold">Security Deposit</label>
-      <input type="text" (input)="formatFinancial($event, 'securityDeposit')" formControlName="securityDeposit" class="form-control shadow-sm border-danger" min="0">
-      @if (isSecurityExceeded()) {
-        <small class="text-danger d-block mt-1 animate__animated animate__shakeX">
-          Security deposit cannot exceed the rent amount
-        </small>
-      }
-    </div>
-  }
+            <div class="row g-3 mb-4 align-items-start">
+              @if (isRent()) {
+                <div class="col-md-6">
+                  <label class="small fw-bold">Monthly Rent Amount</label>
+                  <input type="text" (input)="formatFinancial($event, 'monthlyRent')" formControlName="monthlyRent" class="form-control shadow-sm border-danger">
+                </div>
+                <div class="col-md-6">
+                  <label class="small fw-bold">Security Deposit</label>
+                  <input type="text" (input)="formatFinancial($event, 'securityDeposit')" formControlName="securityDeposit" class="form-control shadow-sm border-danger">
+                </div>
+              } @else {
+                <div class="col-md-3">
+                  <label class="small fw-bold">Payment Method</label>
+                  <select formControlName="paymentMethod" class="form-select shadow-sm">
+                    <option value="Cash">Full Cash</option>
+                    <option value="Installment">Installment Plan</option>
+                  </select>
+                </div>
 
-  <!-- ================== الحالة الثانية: البيع (Resale / Project) ================== -->
-  @else {
-    <!-- 1. اختيار طريقة الدفع -->
-    <div class="col-md-3">
-      <label class="small fw-bold">Payment Method</label>
-      <select formControlName="paymentMethod" class="form-select shadow-sm">
-        <option value="Cash">Full Cash</option>
-        <option value="Installment">Installment Plan</option>
-      </select>
-    </div>
-
-    <!-- 2. لو اختار تقسيط (Installment) -->
-    @if (isInstallment()) {
-      
-      <!-- لو هو مشروع (Primary أو Resale Project) نعرض الـ 3 حقول جنب بعض -->
-      @if (isProject()) {
-        <div class="col-md-9 animate__animated animate__fadeIn">
-          <div class="row g-2">
-            <!-- سنوات التقسيط -->
-            <div class="col-md-4">
-              <label class="small fw-bold">Installment Years</label>
-              <input type="text" (input)="formatInteger($event, 'installmentYears')" formControlName="installmentYears" class="form-control shadow-sm" min="1">
-              @if (editForm.get('installmentYears')?.errors?.['min']) {
-                <small class="text-danger d-block">Min 1 year</small>
+                @if (isInstallment()) {
+                  @if (isProject()) {
+                    <div class="col-md-12 mt-3">
+                      <div class="row g-2 bg-light p-3 rounded-3 border">
+                        <div class="col-md-3">
+                          <label class="small fw-bold">Installment Years</label>
+                          <input type="text" (input)="formatInteger($event, 'installmentYears'); calculateInstallments()" formControlName="installmentYears" class="form-control shadow-sm">
+                        </div>
+                        <div class="col-md-3">
+                          <label class="small fw-bold text-muted">Down Payment %</label>
+                          <div class="input-group">
+                            <input type="text" (input)="formatPercentage($event, 'downPaymentPercentage'); onPercentageChange()" formControlName="downPaymentPercentage" class="form-control shadow-sm" placeholder="e.g. 10">
+                            <span class="input-group-text bg-white">%</span>
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <label class="small fw-bold">Down Payment Amount</label>
+                          <div class="input-group">
+                            <span class="input-group-text bg-white">EGP</span>
+                            <input type="text" (input)="formatFinancial($event, 'downPayment'); onAmountChange()" formControlName="downPayment" class="form-control shadow-sm">
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+        <label class="small fw-bold">Quarterly Installment</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white">EGP</span>
+          <input type="text" (input)="formatFinancial($event, 'quarterInstallment')" formControlName="quarterInstallment" class="form-control shadow-sm" min="0">
+        </div>
+                        </div>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="col-md-4">
+                      <label class="small fw-bold">Years of Installment</label>
+                      <input type="text" (input)="formatInteger($event, 'installmentYears')" formControlName="installmentYears" class="form-control shadow-sm">
+                    </div>
+                  }
+                }
               }
             </div>
-
-            <!-- المقدم -->
-            <div class="col-md-4">
-              <label class="small fw-bold">Down Payment</label>
-              <input type="text" (input)="formatFinancial($event, 'downPayment')" formControlName="downPayment" class="form-control shadow-sm" min="0">
-              <!-- شرط: المقدم أقل من السعر الكلي -->
-             @if (isFinanceExceeded('downPayment')) {
-        <small class="text-danger d-block mt-1 animate__animated animate__shakeX">
-          Cannot exceed Total Price
-        </small>
-      }
-            </div>
-
-            <!-- القسط الربع سنوي -->
-            <div class="col-md-4">
-              <label class="small fw-bold">Quarterly Installment</label>
-              <input type="text" (input)="formatFinancial($event, 'quarterInstallment')" formControlName="quarterInstallment" class="form-control shadow-sm" min="0">
-              <!-- شرط: القسط أقل من السعر الكلي -->
-              @if (isFinanceExceeded('quarterInstallment')) {
-        <small class="text-danger d-block mt-1 animate__animated animate__shakeX">
-          Cannot exceed Total Price
-        </small>
-      }
-            </div>
-          </div>
-        </div>
-      } 
-      
-      <!-- لو هو Resale عادي (مش مشروع) نكتفي بسنوات التقسيط فقط في سطر واحد -->
-      @else {
-        <div class="col-md-4 animate__animated animate__fadeIn">
-          <label class="small fw-bold">Years of Installment</label>
-          <input type="text" (input)="formatInteger($event, 'installmentYears')" formControlName="installmentYears" class="form-control shadow-sm" min="1">
-        </div>
-      }
-    }
-  }
-</div>
 
             <!-- القسم السابع: الميديا والوصف -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-images me-2 text-danger"></i>Photos & Description</h5>
             
-            <!-- عرض الصور الحالية مع إمكانية تحديد الـ Main -->
             @if (existingPhotos().length > 0) {
               <h6 class="fw-bold small text-muted mb-3">Current Photos (Click to set as Main)</h6>
               <div class="row g-2 mb-4">
@@ -499,17 +375,14 @@
               </div>
             }
 
-            <!-- إضافة صور جديدة -->
             <div class="upload-box border border-dashed rounded-4 p-4 text-center bg-light mb-4 shadow-sm">
-  <i class="bi bi-cloud-arrow-up fs-1 text-danger d-block mb-2"></i>
-  <input type="file" (change)="onFileSelect($event)" multiple class="form-control mx-auto" style="max-width: 400px;" accept="image/*">
-  
-  <!-- نص توضيحي محدث -->
-  <p class="text-muted small mt-2">
-    Click on a photo below to set it as <b>Main</b> <br>
-    <span class="text-danger fw-bold fs-7 uppercase">* Maximum 10 photos allowed per listing</span>
-  </p>
-</div>
+              <i class="bi bi-cloud-arrow-up fs-1 text-danger d-block mb-2"></i>
+              <input type="file" (change)="onFileSelect($event)" multiple class="form-control mx-auto" style="max-width: 400px;" accept="image/*">
+              <p class="text-muted small mt-2">
+                Click on a photo below to set it as <b>Main</b> <br>
+                <span class="text-danger fw-bold fs-7 uppercase">* Maximum 10 photos allowed per listing</span>
+              </p>
+            </div>
 
             <div class="row g-2 mb-4">
               @for (photo of selectedPhotos(); track $index) {
@@ -520,6 +393,9 @@
                     @if (newMainPhotoIndex === $index) {
                       <span class="badge bg-danger position-absolute top-0 start-0 m-1" style="font-size: 0.6rem;">NEW MAIN</span>
                     }
+                    <button type="button" class="btn-remove-photo" (click)="removePhoto($index); $event.stopPropagation()">
+                      <i class="bi bi-x-circle-fill text-white fs-5"></i>
+                    </button>
                   </div>
                 </div>
               }

@@ -79,176 +79,94 @@ filteredProjects: string[] = [];
   private alertService = inject(AlertService);
 
   ngOnInit(): void {
-    // === الجزء الجديد: بناء الفورم بكل الحقول ===
     this.editForm = this.fb.group({
-      title: ['', [Validators.required, Validators.maxLength(200)]],
+      title: ['',[Validators.required, Validators.maxLength(200)]],
       description: ['', Validators.required],
-      price: ['', [Validators.required, minAmountValidator(1000000)]],
-      area: ['', [Validators.required, Validators.min(1)]],
+      price: ['',[Validators.required, minAmountValidator(1000000)]],
+      area: ['',[Validators.required, Validators.min(1)]],
       rooms: [0, [Validators.min(0)]],
       bathrooms: [0, [Validators.min(0)]],
-      city: [1, Validators.required],
+      city:[1, Validators.required],
       region: ['', Validators.required],
-      projectName: [''], // جديد
-      address: [''],
+      projectName: [''],
+      address:[''],
       listingType: [0, Validators.required],
-      propertyType: [0, Validators.required],
+      propertyType:[0, Validators.required],
       areaType: [0],
-  villaCategory: [0],
-  villaSubType: [null],
-  // حقول الأدوار
-  groundRooms: [0], groundBaths: [0], groundReception: [0],
-  firstRooms: [0], firstBaths: [0], firstReception: [0],
-  secondRooms: [0], secondBaths: [0], secondReception: [0],
-  // مرافق جديدة
-  hasPool: [false], 
-  hasGarden: [false],
+      villaCategory: [0],
+      villaSubType:[null],
+      groundRooms: [0], groundBaths: [0], groundReception: [0],
+      firstRooms: [0], firstBaths: [0], firstReception: [0],
+      secondRooms: [0], secondBaths: [0], secondReception: [0],
+      hasPool: [false], hasGarden: [false],
       code: ['', Validators.required],
       finishing: [2],
       buildYear: ['', [Validators.min(1950), Validators.max(this.currentYear)]],
-      floor: [0, [Validators.min(0)]],
-      totalFloors: [2, [Validators.min(2)]],
+      floor:[0, [Validators.min(0)]],
+      totalFloors: [2,[Validators.min(2)]],
       apartmentsPerFloor: [1, [Validators.min(1)]],
       elevatorsCount: [0, [Validators.min(0)]],
-      receptionPieces: [0, [Validators.min(0)]],
+      receptionPieces: [0,[Validators.min(0)]],
       view: [''],
       distanceFromLandmark: [''],
-      // Payment fields
       paymentMethod: ['Cash', Validators.required],
       installmentYears: [1],
-      downPayment: [0],
+      downPayment:[0],
       quarterInstallment: [0],
       monthlyRent: [0],
-      securityDeposit: [0],
-      // Delivery
+      securityDeposit:[0],
       deliveryStatus: [0],
       deliveryYear: [null],
-      // Switches
       hasMasterRoom: [false], hasHotelEntrance: [false], hasSecurity: [false],
       hasParking: [false], hasBalcony: [false], isFurnished: [false],
       isFirstOwner: [false], isLegalReconciled: [false], isLicensed: [false],
-      hasWaterMeter: [false], hasElectricityMeter: [false], hasGasMeter: [false], hasLandShare: [false]
+      hasWaterMeter: [false], hasElectricityMeter: [false], hasGasMeter: [false], hasLandShare: [false],
+      pricePerMeter: [''],
+      downPaymentPercentage: ['']
     });
 
     this.propertyId = Number(this.route.snapshot.paramMap.get('id'));
 
-    // مراقبة التغييرات لتحديث القوائم
     this.editForm.get('city')?.valueChanges.subscribe(() => { this.updateRegions(); this.updateProjectsList(); });
     this.editForm.get('region')?.valueChanges.subscribe(() => this.updateProjectsList());
 
     this.editForm.get('listingType')?.valueChanges.subscribe(type => {
-    const priceControl = this.editForm.get('price');
-    
-    if (Number(type) === 1) { // 1 = Rent
-      // لو إيجار: اقبل أي سعر من أول 1 جنيه
-      priceControl?.setValidators([Validators.required, minAmountValidator(1)]);
-    } else {
-      // لو بيع: ارجع لشرط المليون جنيه
-      priceControl?.setValidators([Validators.required, minAmountValidator(1000000)]);
-    }
-    
-    // تحديث الحالة فوراً عشان رسالة الخطأ تظهر أو تختفي
-    priceControl?.updateValueAndValidity();
-  });
+      const priceControl = this.editForm.get('price');
+      if (Number(type) === 1) { 
+        priceControl?.setValidators([Validators.required, minAmountValidator(1)]);
+      } else {
+        priceControl?.setValidators([Validators.required, minAmountValidator(1000000)]);
+      }
+      priceControl?.updateValueAndValidity();
+    });
 
-  this.editForm.get('price')?.valueChanges.subscribe(val => {
-    if (this.isRent()) {
-      // تحديث قيمة الإيجار الشهري لتطابق السعر فوراً
-      this.editForm.get('monthlyRent')?.setValue(val, { emitEvent: false });
-    }
-  });
+    this.editForm.get('price')?.valueChanges.subscribe(val => {
+      if (this.isRent()) {
+        this.editForm.get('monthlyRent')?.setValue(val, { emitEvent: false });
+      }
+    });
 
-  // 2. ربط الإيجار الشهري بالسعر (بالعكس)
-  this.editForm.get('monthlyRent')?.valueChanges.subscribe(val => {
-    if (this.isRent()) {
-      this.editForm.get('price')?.setValue(val, { emitEvent: false });
-    }
-  });
+    this.editForm.get('monthlyRent')?.valueChanges.subscribe(val => {
+      if (this.isRent()) {
+        this.editForm.get('price')?.setValue(val, { emitEvent: false });
+      }
+    });
 
     this.loadPropertyData();
   }
 
-  getPureNumber(controlName: string): number {
-  const val = this.editForm.get(controlName)?.value;
-  if (!val) return 0;
-  return Number(val.toString().replace(/,/g, ''));
-}
-
-isSecurityExceeded(): boolean {
-  const totalPrice = this.getPureNumber('price');
-  const security = this.getPureNumber('securityDeposit');
-  
-  return security > 0 && totalPrice > 0 && security > totalPrice;
-}
-
-isVilla(): boolean {
-  return Number(this.editForm.get('propertyType')?.value) === 1;
-}
-
-// 1. للمبالغ المالية: تقبل أرقام فقط وتعيد رسم الفواصل أوتوماتيكياً
-formatFinancial(event: any, controlName: string) {
-  let input = event.target.value;
-
-  // مسح أي شيء ليس رقماً (يمسح الحروف، السالب، النقطة، وحتى الفواصل القديمة)
-  let pureDigits = input.replace(/[^0-9]/g, '');
-
-  if (pureDigits === '') {
-    this.editForm.get(controlName)?.setValue('');
-    return;
-  }
-
-  // تحويل الأرقام الصافية لتنسيق أمريكي (يضع الفواصل كل 3 أرقام)
-  let formatted = Number(pureDigits).toLocaleString('en-US');
-
-  // تحديث القيمة في الفورم
-  this.editForm.get(controlName)?.setValue(formatted, { emitEvent: false });
-}
-
-// 2. للأرقام الصحيحة: تمسح أي شيء ليس رقماً (لا فواصل ولا حروف ولا سالب)
-formatInteger(event: any, controlName: string) {
-  let input = event.target.value;
-
-  // مسح أي رمز ليس رقماً من 0 لـ 9
-  let pureDigits = input.replace(/[^0-9]/g, '');
-
-  // تحديث الحقل بالقيمة الصافية
-  this.editForm.get(controlName)?.setValue(pureDigits, { emitEvent: false });
-}
-
-// تعديل دالة التحقق المالي العامة لتشمل التأمين
-isValidFinance(): boolean {
-  if (this.isRent()) {
-    return !this.isSecurityExceeded();
-  }
-  
-  // شروط البيع القديمة (المقدم والقسط)
-  const total = this.getPureNumber('price');
-  const down = this.getPureNumber('downPayment');
-  const quarter = this.getPureNumber('quarterInstallment');
-  return down < total && quarter < total;
-}
-
-// دالة لفحص هل المقدم أو القسط تخطى السعر الإجمالي
-isFinanceExceeded(controlName: string): boolean {
-  const totalPrice = this.getPureNumber('price');
-  const amount = this.getPureNumber(controlName);
-  
-  // يظهر الخطأ فقط لو القيمة أكبر من صفر وفعلاً أكبر من السعر التوتال
-  return amount > 0 && totalPrice > 0 && amount > totalPrice;
-}
-
-  // === الجزء الجديد: جلب البيانات وعمل الـ Patch مع التنسيق ===
   loadPropertyData() {
     this.propertyService.getPropertyById(this.propertyId).subscribe({
       next: (data: any) => {
-        // 1. تحويل النصوص لأرقام Enums
         const cityId = this.mapCityToId(data.city);
-        
-        // 2. تحديث القوائم المنسدلة أولاً
         this.updateRegions(cityId);
         this.updateProjectsList(cityId, data.region);
 
-        // 3. ملء الفورم
+        // 🟢 حل مشكلة الزرار المقفول: تصفير القيم اللي راجعة صفر عشان متضربش في الـ Validators
+        if (data.buildYear === 0) data.buildYear = '';
+        if (data.totalFloors === 0) data.totalFloors = 2;
+        if (data.apartmentsPerFloor === 0) data.apartmentsPerFloor = 1;
+
         this.editForm.patchValue({
           ...data,
           city: cityId,
@@ -256,106 +174,183 @@ isFinanceExceeded(controlName: string): boolean {
           propertyType: this.mapTypeToId(data.propertyType),
           finishing: this.mapFinishingToId(data.finishing),
           deliveryStatus: this.mapDeliveryToId(data.deliveryStatus),
-          areatype: this.mapAreaTypeToId(data.areaType),
-        villaCategory: this.mapVillaCatToId(data.villaCategory),
-        villaSubType: this.mapVillaSubToId(data.villaSubType),
+          areaType: this.mapAreaTypeToId(data.areaType),
+          villaCategory: this.mapVillaCatToId(data.villaCategory),
+          villaSubType: this.mapVillaSubToId(data.villaSubType),
         });
 
-        // 4. تنسيق مبالغ الأسعار بالفواصل فوراً عند التحميل
         this.formatInitialAmount('price');
         this.formatInitialAmount('downPayment');
         this.formatInitialAmount('quarterInstallment');
         this.formatInitialAmount('monthlyRent');
         this.formatInitialAmount('securityDeposit');
 
+        // 🟢 الجزء الجديد: حساب سعر المتر ونسبة المقدم عند فتح التعديل
+        const area = Number(data.area) || 0;
+        const price = Number(data.price) || 0;
+        const downPayment = Number(data.downPayment) || 0;
+
+        if (area > 0 && price > 0) {
+          const ppm = price / area;
+          this.editForm.get('pricePerMeter')?.setValue(ppm.toLocaleString('en-US'), { emitEvent: false });
+        }
+
+        if (price > 0 && downPayment > 0) {
+          const dpPercent = (downPayment / price) * 100;
+          this.editForm.get('downPaymentPercentage')?.setValue(parseFloat(dpPercent.toFixed(2)), { emitEvent: false });
+        }
+
         this.existingPhotos.set(data.photos);
       }
     });
   }
 
-  showDeliveryMenu(): boolean {
-  const type = Number(this.editForm.get('listingType')?.value);
-  return type === 2 || type === 3;
-}
-
-  // دالة مساعدة لتنسيق المبالغ عند التحميل لأول مرة
-  formatInitialAmount(controlName: string) {
+  getPureNumber(controlName: string): number {
     const val = this.editForm.get(controlName)?.value;
-    if (val) {
-      this.editForm.get(controlName)?.setValue(Number(val).toLocaleString('en-US'), { emitEvent: false });
-    }
+    if (!val) return 0;
+    return Number(val.toString().replace(/,/g, ''));
   }
 
-  // دالة تنسيق الرقم أثناء الكتابة (Commas)
-  formatNumber(event: any, controlName: string) {
-    let input = event.target.value.replace(/,/g, '');
-    if (input === '') { this.editForm.get(controlName)?.setValue(''); return; }
-    let formatted = Number(input).toLocaleString('en-US');
+  isSecurityExceeded(): boolean {
+    const totalPrice = this.getPureNumber('price');
+    const security = this.getPureNumber('securityDeposit');
+    return security > 0 && totalPrice > 0 && security > totalPrice;
+  }
+
+  isVilla(): boolean { return Number(this.editForm.get('propertyType')?.value) === 1; }
+
+  isValidFinance(): boolean {
+    if (this.isRent()) return !this.isSecurityExceeded();
+    const total = this.getPureNumber('price');
+    const down = this.getPureNumber('downPayment');
+    const quarter = this.getPureNumber('quarterInstallment');
+    return down < total && quarter < total;
+  }
+
+  isFinanceExceeded(controlName: string): boolean {
+    const totalPrice = this.getPureNumber('price');
+    const amount = this.getPureNumber(controlName);
+    return amount > 0 && totalPrice > 0 && amount > totalPrice;
+  }
+
+  formatFinancial(event: any, controlName: string) {
+    let input = event.target.value;
+    let pureDigits = input.replace(/[^0-9]/g, '');
+    if (pureDigits === '') { this.editForm.get(controlName)?.setValue(''); return; }
+    let formatted = Number(pureDigits).toLocaleString('en-US');
     this.editForm.get(controlName)?.setValue(formatted, { emitEvent: false });
   }
 
-  // منطق إخفاء وإظهار الحقول
-  isRent() { return Number(this.editForm.get('listingType')?.value) === 1; }
-  isProject() { const t = Number(this.editForm.get('listingType')?.value); return t === 2 || t === 3; }
-  isInstallment() { return this.editForm.get('paymentMethod')?.value === 'Installment'; }
-  isUnderConstruction() { return Number(this.editForm.get('deliveryStatus')?.value) === 1; }
-
-  // تحديث المناطق والمشروعات
-  updateRegions(cId?: number) {
-    const id = cId || Number(this.editForm.get('city')?.value);
-    this.filteredRegions = this.regionsMapping[id] || [];
+  formatInteger(event: any, controlName: string) {
+    let input = event.target.value;
+    let pureDigits = input.replace(/[^0-9]/g, '');
+    this.editForm.get(controlName)?.setValue(pureDigits, { emitEvent: false });
   }
 
-  mapAreaTypeToId(val: string) { return val === 'LandArea' ? 0 : 1; }
-mapVillaCatToId(val: string) {
-  const cats: any = { 'Standalone': 0, 'TwinHouse': 1, 'TownHouse': 2, 'TiesseraLower': 3, 'TiesseraUpper': 4, 'SkyVilla': 5 };
-  return cats[val] ?? 0;
-}
-mapVillaSubToId(val: string) {
-  if (!val) return null;
-  return val === 'Basement' ? 0 : 1;
-}
+  formatPercentage(event: any, controlName: string) {
+    let input = event.target.value;
+    let pureDigits = input.replace(/[^0-9.]/g, '');
+    if ((pureDigits.match(/\./g) ||[]).length > 1) {
+      pureDigits = pureDigits.substring(0, pureDigits.length - 1);
+    }
+    this.editForm.get(controlName)?.setValue(pureDigits, { emitEvent: false });
+  }
+
+  calculateTotalPrice() {
+    const area = this.getPureNumber('area');
+    const ppm = this.getPureNumber('pricePerMeter');
+    if (area > 0 && ppm > 0) {
+      const total = area * ppm;
+      this.editForm.get('price')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
+      if (this.isRent()) this.editForm.get('monthlyRent')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
+      this.onAmountChange();
+    }
+  }
+
+  onPercentageChange() {
+    const total = this.getPureNumber('price');
+    const dpPercent = Number(this.editForm.get('downPaymentPercentage')?.value || 0);
+    if (total > 0 && dpPercent >= 0) {
+      const dpAmount = total * (dpPercent / 100);
+      this.editForm.get('downPayment')?.setValue(dpAmount.toLocaleString('en-US'), { emitEvent: false });
+      this.calculateInstallments();
+    }
+  }
+
+  onAmountChange() {
+    const total = this.getPureNumber('price');
+    const dpAmount = this.getPureNumber('downPayment');
+    if (total > 0 && dpAmount >= 0) {
+      const dpPercent = (dpAmount / total) * 100;
+      this.editForm.get('downPaymentPercentage')?.setValue(parseFloat(dpPercent.toFixed(2)), { emitEvent: false });
+      this.calculateInstallments();
+    }
+  }
+
+  calculateInstallments() {
+    const total = this.getPureNumber('price');
+    const dpAmount = this.getPureNumber('downPayment');
+    const years = this.getPureNumber('installmentYears');
+    if (total > 0 && years > 0) {
+      const remaining = total - dpAmount;
+      if (remaining > 0) {
+        const quarter = (remaining / years) / 4;
+        this.editForm.get('quarterInstallment')?.setValue(quarter.toLocaleString('en-US'), { emitEvent: false });
+      } else {
+        this.editForm.get('quarterInstallment')?.setValue('0', { emitEvent: false });
+      }
+    }
+  }
+
+  isInstallmentSelected(): boolean { return this.editForm.get('paymentMethod')?.value === 'Installment'; }
 
   updateProjectsList(cId?: number, rName?: string) {
     const id = cId || Number(this.editForm.get('city')?.value);
     const reg = rName || this.editForm.get('region')?.value;
-    if (id === 1 || id === 2) this.filteredProjects = this.projectsMapping[id]?.['any'] || [];
-    else if (id === 3) this.filteredProjects = this.projectsMapping[3]?.[reg] || [];
-    else this.filteredProjects = [];
+    if (id === 1 || id === 2) this.filteredProjects = this.projectsMapping[id]?.['any'] ||[];
+    else if (id === 3) this.filteredProjects = this.projectsMapping[3]?.[reg] ||[];
+    else this.filteredProjects =[];
   }
 
-  // معالجة الصور
+  showDeliveryMenu(): boolean {
+    const type = Number(this.editForm.get('listingType')?.value);
+    return type === 2 || type === 3;
+  }
+
+  isUnderConstruction(): boolean { return Number(this.editForm.get('deliveryStatus')?.value) === 1; }
+
+  updateRegions(cId?: number) {
+    const id = cId || Number(this.editForm.get('city')?.value);
+    this.filteredRegions = this.regionsMapping[id] ||[];
+    if (!cId && this.editForm.get('region')?.value) {
+      this.editForm.get('region')?.setValue('');
+    }
+  }
+
   onFileSelect(event: any) {
-  const files = event.target.files;
-  if (files) {
-    // حساب (الموجود فعلاً على السيرفر + المختار حديثاً في القائمة)
-    const existingCount = this.existingPhotos().length;
-    const newlySelectedCount = this.selectedPhotos().length;
-    const totalCurrent = existingCount + newlySelectedCount;
-    
-    const remainingLimit = 10 - totalCurrent;
+    const files = event.target.files;
+    if (files) {
+      const existingCount = this.existingPhotos().length;
+      const newlySelectedCount = this.selectedPhotos().length;
+      const totalCurrent = existingCount + newlySelectedCount;
+      const remainingLimit = 10 - totalCurrent;
 
-    if (files.length > remainingLimit) {
-      this.alertService.error(
-        `Limit Reached! You have ${existingCount} existing and ${newlySelectedCount} new photos. You can only add ${remainingLimit} more.`,
-        'Upload Limit'
-      );
-      event.target.value = '';
-      return;
-    }
+      if (files.length > remainingLimit) {
+        this.alertService.error(`Limit Reached! You can only add ${remainingLimit} more photos.`, 'Upload Limit');
+        event.target.value = '';
+        return;
+      }
 
-    // إكمال العملية إذا كان العدد ضمن الحد المسموح
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.selectedPhotos.update(prev => [...prev, { file: file, preview: e.target.result }]);
-      };
-      reader.readAsDataURL(file);
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.selectedPhotos.update(prev => [...prev, { file: file, preview: e.target.result }]);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   }
-}
-
 
   setExistingAsMain(photoId: number) {
     this.alertService.showLoading('Updating...');
@@ -370,59 +365,108 @@ mapVillaSubToId(val: string) {
     this.selectedPhotos.update(p => { const n = [...p]; n.splice(i, 1); return n; });
   }
 
-  // === الجزء المطور: الإرسال وتنظيف الـ NULL والفواصل ===
+  isRent() { return Number(this.editForm.get('listingType')?.value) === 1; }
+  isProject() { const t = Number(this.editForm.get('listingType')?.value); return t === 2 || t === 3; }
+  isInstallment() { return this.editForm.get('paymentMethod')?.value === 'Installment'; }
+
+  // 🟢 حل مشكلة التكرار ومطابقة صفحة الإضافة
   onSubmit() {
+    if (this.isSubmitting) return;
     if (this.editForm.valid) {
       this.isSubmitting = true;
       this.alertService.showLoading('Saving changes...');
+      
       const formData = new FormData();
-      const vals = this.editForm.value;
+      const f = this.editForm.value;
 
+      formData.append('Title', f.title);
+      formData.append('Description', f.description);
+      formData.append('ProjectName', f.projectName || '');
+      formData.append('Code', f.code || '');
+      formData.append('Price', f.price.toString().replace(/,/g, ''));
+      formData.append('Area', f.area.toString().replace(/,/g, ''));
+      formData.append('City', f.city.toString());
+      formData.append('Region', f.region);
+      formData.append('ListingType', f.listingType.toString());
+      formData.append('PropertyType', f.propertyType.toString());
 
-      formData.append('GroundRooms', (vals.groundRooms || 0).toString());
-    formData.append('GroundBaths', (vals.groundBaths || 0).toString());
-    formData.append('GroundReception', (vals.groundReception || 0).toString());
-    formData.append('FirstRooms', (vals.firstRooms || 0).toString());
-    formData.append('FirstBaths', (vals.firstBaths || 0).toString());
-    formData.append('FirstReception', (vals.firstReception || 0).toString());
-    formData.append('SecondRooms', (vals.secondRooms || 0).toString());
-    formData.append('SecondBaths', (vals.secondBaths || 0).toString());
-    formData.append('SecondReception', (vals.secondReception || 0).toString());
+      formData.append('GroundRooms', (f.groundRooms || 0).toString());
+      formData.append('GroundBaths', (f.groundBaths || 0).toString());
+      formData.append('GroundReception', (f.groundReception || 0).toString());
+      formData.append('FirstRooms', (f.firstRooms || 0).toString());
+      formData.append('FirstBaths', (f.firstBaths || 0).toString());
+      formData.append('FirstReception', (f.firstReception || 0).toString());
+      formData.append('SecondRooms', (f.secondRooms || 0).toString());
+      formData.append('SecondBaths', (f.secondBaths || 0).toString());
+      formData.append('SecondReception', (f.secondReception || 0).toString());
 
-    formData.append('ProjectName', vals.projectName || '');
-formData.append('AreaType', vals.areaType?.toString() || '0');
-formData.append('VillaCategory', vals.villaCategory?.toString() || '0');
-if (vals.villaSubType !== null) {
-  formData.append('VillaSubType', vals.villaSubType.toString());
-}
+      formData.append('AreaType', f.areaType?.toString() || '0');
+      formData.append('VillaCategory', f.villaCategory?.toString() || '0');
+      if (f.villaSubType !== null) {
+        formData.append('VillaSubType', f.villaSubType.toString());
+      }
 
-    // المميزات الجديدة
-    formData.append('HasPool', vals.hasPool.toString());
-    formData.append('HasGarden', vals.hasGarden.toString());
+      formData.append('HasPool', (f.hasPool || false).toString());
+      formData.append('HasGarden', (f.hasGarden || false).toString());
+      formData.append('HasLandShare', (f.hasLandShare || false).toString());
+      formData.append('IsLicensed', (f.isLicensed || false).toString());
+      formData.append('IsLegalReconciled', (f.isLegalReconciled || false).toString());
+      formData.append('IsFirstOwner', (f.isFirstOwner || false).toString());
+      formData.append('HasMasterRoom', (f.hasMasterRoom || false).toString());
+      formData.append('HasHotelEntrance', (f.hasHotelEntrance || false).toString());
+      formData.append('HasSecurity', (f.hasSecurity || false).toString());
+      formData.append('HasParking', (f.hasParking || false).toString());
+      formData.append('HasBalcony', (f.hasBalcony || false).toString());
+      formData.append('HasElectricityMeter', (f.hasElectricityMeter || false).toString());
+      formData.append('HasWaterMeter', (f.hasWaterMeter || false).toString());
+      formData.append('HasGasMeter', (f.hasGasMeter || false).toString());
 
-      Object.keys(vals).forEach(key => {
-        let value = vals[key];
-        if (value !== null && value !== undefined) {
-          let strVal = value.toString();
-          // مسح الفواصل قبل الإرسال للباك اند
-          if (strVal.includes(',')) strVal = strVal.replace(/,/g, '');
-          
-          const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
-          formData.append(pascalKey, strVal);
-        }
-      });
+      formData.append('PaymentMethod', f.paymentMethod || 'Full Cash');
+      formData.append('InstallmentYears', (f.installmentYears || 0).toString());
+      formData.append('DownPayment', (f.downPayment || '').toString().replace(/,/g, '') || '0');
+      formData.append('QuarterInstallment', (f.quarterInstallment || '').toString().replace(/,/g, '') || '0');
+      formData.append('SecurityDeposit', (f.securityDeposit || '').toString().replace(/,/g, '') || '0');
+      formData.append('MonthlyRent', (f.monthlyRent || '').toString().replace(/,/g, '') || '0');
+
+      formData.append('Floor', (f.floor || 0).toString());
+      formData.append('TotalFloors', (f.totalFloors || 0).toString());
+      if (this.isUnderConstruction()) {
+        formData.append('BuildYear', '0');
+      } else {
+        formData.append('BuildYear', (f.buildYear || '').toString());
+      }
+      formData.append('Finishing', (f.finishing || 2).toString());
+      formData.append('Rooms', (f.rooms || 0).toString());
+      formData.append('Bathrooms', (f.bathrooms || 0).toString());
+      formData.append('ReceptionPieces', (f.receptionPieces || 0).toString());
+      formData.append('DistanceFromLandmark', f.distanceFromLandmark || '');
+      formData.append('View', f.view || '');
+      formData.append('ApartmentsPerFloor', (f.apartmentsPerFloor || 1).toString());
+      formData.append('ElevatorsCount', (f.elevatorsCount || 0).toString());
+
+      formData.append('DeliveryStatus', (f.deliveryStatus || 0).toString());
+      if (f.deliveryYear !== null && f.deliveryYear !== '') {
+        formData.append('DeliveryYear', f.deliveryYear.toString());
+      }
 
       if (this.newMainPhotoIndex !== null) formData.append('MainPhotoIndex', this.newMainPhotoIndex.toString());
       this.selectedPhotos().forEach(p => formData.append('Photos', p.file));
 
       this.propertyService.updateProperty(this.propertyId, formData).subscribe({
-        next: () => { this.alertService.close(); this.alertService.success('Saved!'); this.router.navigate(['/my-properties']); },
-        error: () => { this.alertService.close(); this.isSubmitting = false; this.alertService.error('Error'); }
+        next: () => { 
+          this.alertService.close(); 
+          this.alertService.success('Saved!'); 
+          this.router.navigate(['/my-properties']); 
+        },
+        error: () => { 
+          this.alertService.close(); 
+          this.isSubmitting = false; 
+          this.alertService.error('Error while saving'); 
+        }
       });
     }
   }
 
-  // العدادات والتحقق من الأدوار
   updateCounter(name: string, amt: number) {
     const ctrl = this.editForm.get(name);
     const total = this.editForm.get('totalFloors')?.value || 0;
@@ -441,11 +485,25 @@ if (vals.villaSubType !== null) {
     if (f > t) this.editForm.get('floor')?.patchValue(t);
   }
 
-  // خرائط التحويل من نصوص لأرقام (IDs)
+  formatInitialAmount(controlName: string) {
+    const val = this.editForm.get(controlName)?.value;
+    if (val) {
+      this.editForm.get(controlName)?.setValue(Number(val).toLocaleString('en-US'), { emitEvent: false });
+    }
+  }
+
   mapCityToId(c: string) { const m: any = { 'Cairo': 1, 'Alexandria': 2, 'NorthCoast': 3 }; return m[c] || 1; }
   mapListingToId(t: string) { const m: any = { 'Resale': 0, 'Rent': 1, 'Primary': 2, 'ResaleProject': 3 }; return m[t] ?? 0; }
   mapTypeToId(t: string) { const m: any = { 'Apartment': 0, 'Villa': 1, 'Shop': 2, 'Office': 3, 'Chalet': 4, 'FullFloor': 5 }; return m[t] ?? 0; }
   mapFinishingToId(f: string) { const m: any = { 'CoreAndShell': 0, 'SemiFinished': 1, 'FullyFinished': 2, 'SemiFurnished': 3, 'FullyFurnished': 4 }; return m[f] ?? 2; }
   mapDeliveryToId(s: string) { const m: any = { 'Ready': 0, 'UnderConstruction': 1 }; return m[s] ?? 0; }
-
+  mapAreaTypeToId(val: string) { return val === 'LandArea' ? 0 : 1; }
+  mapVillaCatToId(val: string) {
+    const cats: any = { 'Standalone': 0, 'TwinHouse': 1, 'TownHouse': 2, 'TiesseraLower': 3, 'TiesseraUpper': 4, 'SkyVilla': 5 };
+    return cats[val] ?? 0;
+  }
+  mapVillaSubToId(val: string) {
+    if (!val) return null;
+    return val === 'Basement' ? 0 : 1;
+  }
 }

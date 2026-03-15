@@ -341,9 +341,13 @@ namespace Unique_X.Services.Implementation
             if (dto.HasWaterMeter.HasValue) property.HasWaterMeter = dto.HasWaterMeter.Value;
             if (dto.IsLicensed.HasValue) property.IsLicensed = dto.IsLicensed.Value;
 
-            // معالجة الصور الجديدة إذا رُفعت
             if (dto.Photos != null && dto.Photos.Count > 0)
             {
+                if (dto.MainPhotoIndex != null)
+                {
+                    foreach (var p in property.Photos) p.IsMain = false;
+                }
+
                 for (int i = 0; i < dto.Photos.Count; i++)
                 {
                     var result = await _photoService.AddPhotoAsync(dto.Photos[i]);
@@ -480,12 +484,14 @@ namespace Unique_X.Services.Implementation
                 BrokerName = property.Broker != null ? $"{property.Broker.FirstName} {property.Broker.LastName}" : "System Agent",
                 BrokerPhone = property.Broker?.PhoneNumber ?? "N/A",
 
-                Photos = property.Photos?.Select(p => new PhotoResponseDto
-                {
-                    Id = p.Id,
-                    Url = p.Url,
-                    IsMain = p.IsMain
-                }).ToList() ?? new List<PhotoResponseDto>()
+                Photos = property.Photos?
+    .OrderByDescending(p => p.IsMain)
+    .Select(p => new PhotoResponseDto
+    {
+        Id = p.Id,
+        Url = p.Url,
+        IsMain = p.IsMain
+    }).ToList() ?? new List<PhotoResponseDto>()
             };
         }
     }

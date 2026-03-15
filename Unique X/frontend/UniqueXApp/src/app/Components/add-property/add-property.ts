@@ -96,47 +96,49 @@ filteredProjects: string[] = [];
       address: [''],
       listingType: [0,  Validators.required],
       distanceFromLandmark: [''],
-  hasMasterRoom: [false],
-  receptionPieces: [0, [Validators.min(0)]],
-  view: [''],
-  floor: [0, [Validators.min(0)]],
-  totalFloors: [2, [Validators.min(2)]],
-  apartmentsPerFloor: [1, [Validators.min(1)]],
-  elevatorsCount: [0, [Validators.min(0)]],
-  buildYear: [ '', [Validators.min(1950), Validators.max(this.currentYear)]],
-  hasHotelEntrance: [false],
-  hasSecurity: [false],
-  isFirstOwner: [false],
-  isLegalReconciled: [false],
-  hasParking: [false], // 0 = Sale, 1 = Rent
-  propertyType: [0, Validators.required],
-  areaType: [0],
-  villaCategory: [0],
-  villaSubType: [null],
+      hasMasterRoom: [false],
+      receptionPieces: [0, [Validators.min(0)]],
+      view: [''],
+      floor: [0, [Validators.min(0)]],
+      totalFloors: [2, [Validators.min(2)]],
+      apartmentsPerFloor: [1, [Validators.min(1)]],
+      elevatorsCount: [0, [Validators.min(0)]],
+      buildYear: [ '', [Validators.min(1950), Validators.max(this.currentYear)]],
+      hasHotelEntrance: [false],
+      hasSecurity: [false],
+      isFirstOwner: [false],
+      isLegalReconciled: [false],
+      hasParking: [false], // 0 = Sale, 1 = Rent
+      propertyType: [0, Validators.required],
+      areaType: [0],
+      villaCategory: [0],
+      villaSubType: [null],
   // حقول الأدوار
-  groundRooms: [0], groundBaths: [0], groundReception: [0],
-  firstRooms: [0], firstBaths: [0], firstReception: [0],
-  secondRooms: [0], secondBaths: [0], secondReception: [0],
+      groundRooms: [0], groundBaths: [0], groundReception: [0],
+      firstRooms: [0], firstBaths: [0], firstReception: [0],
+      secondRooms: [0], secondBaths: [0], secondReception: [0],
   // مرافق جديدة
-  hasPool: [false], 
-  hasGarden: [false],
-  hasBalcony: [false],
-  isFurnished: [false],
-  paymentMethod: ['Full Cash', Validators.required],
-  installmentYears: [1, [Validators.min(1)]],
-  deliveryStatus: [0], 
-  deliveryYear: [null],
-  isLicensed: [false],
-  hasWaterMeter: [false],
-  hasElectricityMeter: [false],
-  hasGasMeter: [false],
-  hasLandShare: [false],
-  downPayment: [0, [minAmountValidator(0)]],
-  quarterInstallment: [0, [minAmountValidator(0)]],
-  securityDeposit: [0, [minAmountValidator(0)]],
-  monthlyRent: [0, [minAmountValidator(0)]],
-  code: ['', Validators.required],
-  finishing: [2]
+      hasPool: [false], 
+      hasGarden: [false],
+      hasBalcony: [false],
+      isFurnished: [false],
+      paymentMethod: ['Full Cash', Validators.required],
+      installmentYears: [1, [Validators.min(1)]],
+      deliveryStatus: [0], 
+      deliveryYear: [null],
+      isLicensed: [false],
+      hasWaterMeter: [false],
+      hasElectricityMeter: [false],
+      hasGasMeter: [false],
+      hasLandShare: [false],
+      pricePerMeter: [''],
+      downPaymentPercentage: [''],
+      downPayment: [0, [minAmountValidator(0)]],
+      quarterInstallment: [0, [minAmountValidator(0)]],
+      securityDeposit: [0, [minAmountValidator(0)]],
+      monthlyRent: [0, [minAmountValidator(0)]],
+      code: ['', Validators.required],
+      finishing: [2]
     });
 
     this.propertyForm.get('city')?.valueChanges.subscribe(cityId => {
@@ -511,4 +513,75 @@ validateFloorInput() {
     this.alertService.error(`Floor cannot be higher than total building floors (${total})`);
   }
 }
+
+
+// 1. دالة لتنسيق النسب المئوية (تسمح بالأرقام والعلامة العشرية فقط)
+  formatPercentage(event: any, controlName: string) {
+    let input = event.target.value;
+    let pureDigits = input.replace(/[^0-9.]/g, '');
+    // منع كتابة أكثر من نقطة عشرية
+    if ((pureDigits.match(/\./g) ||[]).length > 1) {
+      pureDigits = pureDigits.substring(0, pureDigits.length - 1);
+    }
+    this.propertyForm.get(controlName)?.setValue(pureDigits, { emitEvent: false });
+  }
+
+  // 2. حساب السعر الكلي = المساحة × سعر المتر
+  calculateTotalPrice() {
+    const area = this.getPureNumber('area');
+    const ppm = this.getPureNumber('pricePerMeter');
+    
+    if (area > 0 && ppm > 0) {
+      const total = area * ppm;
+      this.propertyForm.get('price')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
+      
+      if (this.isRent()) {
+        this.propertyForm.get('monthlyRent')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
+      }
+      
+      this.onAmountChange(); // تحديث باقي الحسابات
+    }
+  }
+
+  // 3. حساب مبلغ المقدم بناءً على النسبة
+  onPercentageChange() {
+    const total = this.getPureNumber('price');
+    const dpPercent = Number(this.propertyForm.get('downPaymentPercentage')?.value || 0);
+    
+    if (total > 0 && dpPercent >= 0) {
+      const dpAmount = total * (dpPercent / 100);
+      this.propertyForm.get('downPayment')?.setValue(dpAmount.toLocaleString('en-US'), { emitEvent: false });
+      this.calculateInstallments();
+    }
+  }
+
+  // 4. حساب النسبة المئوية لو المستخدم كتب مبلغ المقدم بإيده
+  onAmountChange() {
+    const total = this.getPureNumber('price');
+    const dpAmount = this.getPureNumber('downPayment');
+    
+    if (total > 0 && dpAmount >= 0) {
+      const dpPercent = (dpAmount / total) * 100;
+      // تقريب النسبة لرقمين عشريين عشان متبقاش طويلة جداً
+      this.propertyForm.get('downPaymentPercentage')?.setValue(parseFloat(dpPercent.toFixed(2)), { emitEvent: false });
+      this.calculateInstallments();
+    }
+  }
+
+  // 5. حساب القسط الربع سنوي = (السعر - المقدم) / السنوات / 4
+  calculateInstallments() {
+    const total = this.getPureNumber('price');
+    const dpAmount = this.getPureNumber('downPayment');
+    const years = this.getPureNumber('installmentYears');
+
+    if (total > 0 && years > 0) {
+      const remaining = total - dpAmount;
+      if (remaining > 0) {
+        const quarter = (remaining / years) / 4;
+        this.propertyForm.get('quarterInstallment')?.setValue(quarter.toLocaleString('en-US'), { emitEvent: false });
+      } else {
+        this.propertyForm.get('quarterInstallment')?.setValue('0', { emitEvent: false });
+      }
+    }
+  }
 }
