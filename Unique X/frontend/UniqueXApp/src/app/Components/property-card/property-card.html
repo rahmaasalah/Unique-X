@@ -15,13 +15,16 @@
 
       <!-- حالة التسليم (Ready / Off) -->
       <span class="badge rounded-pill px-3 py-1 shadow-sm fw-bold text-uppercase"
-            [class.bg-danger]="property.deliveryStatus === 'Ready'"
-            [class.bg-secondary]="property.deliveryStatus !== 'Ready'"
-            style="font-size: 0.65rem; width: fit-content;">
-        <i class="bi" [class.bi-check-circle]="property.deliveryStatus === 'Ready'" 
-                     [class.bi-clock]="property.deliveryStatus !== 'Ready'"></i>
-        {{ property.deliveryStatus === 'Ready' ? 'Ready' : 'Off' }}
-      </span>
+      [class.bg-danger]="property.deliveryStatus === 'Ready'"
+      [class.bg-secondary]="property.deliveryStatus !== 'Ready'"
+      style="font-size: 0.65rem; width: fit-content;">
+  
+  <i class="bi" 
+     [class.bi-check-circle]="property.deliveryStatus === 'Ready'"
+     [class.bi-clock]="property.deliveryStatus !== 'Ready'"></i>
+  
+  {{ property.deliveryStatus === 'Ready' ? 'Ready' : 'Delivery ' + property.deliveryYear }}
+</span>
     </div>
 
     @if (authService.getUserType() === 0) {
@@ -58,6 +61,11 @@
     </div>
     <!-- السعر (بالخط العريض - Signature Style) -->
     <h6 class=" text-dark mb-1">EGP {{ property.price | number }}</h6>
+    @if (property.listingType === 'Primary'){
+      <h6 class=" text-dark mb-1">Down Payment {{ property.downPayment | number }}</h6>
+    }
+
+    
     <!-- العنوان -->
     <p class="text-truncate text-muted small mb-2">
       <i class="bi bi-geo-alt-fill text-danger me-1"></i>
