@@ -133,7 +133,7 @@ filteredProjects: string[] = [];
       hasElectricityMeter: [false],
       hasGasMeter: [false],
       hasLandShare: [false],
-      pricePerMeter: [''],
+      pricePerMeter: ['', Validators.required],
       downPaymentPercentage: [''],
       downPayment: [0, [minAmountValidator(0)]],
       quarterInstallment: [0, [minAmountValidator(0)]],
@@ -149,20 +149,29 @@ filteredProjects: string[] = [];
 
   this.propertyForm.get('listingType')?.valueChanges.subscribe(type => {
     const priceControl = this.propertyForm.get('price');
+    const ppmControl = this.propertyForm.get('pricePerMeter');
+    const securityControl = this.propertyForm.get('securityDeposit');
     
-    if (Number(type) === 1) { // 1 = Rent
-      // لو إيجار: اقبل أي سعر من أول 1 جنيه
+    if (Number(type) === 1) { // 🟢 1 = Rent (إيجار)
       priceControl?.setValidators([Validators.required, minAmountValidator(1)]);
-    } else {
-      // لو بيع: ارجع لشرط المليون جنيه
+      
+      ppmControl?.clearValidators();
+      ppmControl?.setValue('');
+      
+      securityControl?.setValidators([Validators.required, minAmountValidator(0)]);
+    } else { // 🟢 بيع أو مشاريع
       priceControl?.setValidators([Validators.required, minAmountValidator(1000000)]);
+      
+      ppmControl?.setValidators([Validators.required]);
+      
+      securityControl?.clearValidators();
     }
     
-    // تحديث الحالة فوراً عشان رسالة الخطأ تظهر أو تختفي
     priceControl?.updateValueAndValidity();
+    ppmControl?.updateValueAndValidity();
+    securityControl?.updateValueAndValidity();
   });
 
-  // تشغيلها مرة واحدة في البداية لو فيه قيمة افتراضية
   this.updateRegions(this.propertyForm.get('city')?.value);
 
   this.propertyForm.get('city')?.valueChanges.subscribe(() => this.updateProjectsList());
@@ -330,7 +339,6 @@ isUnderConstruction(): boolean {
       return;
     }
 
-    // 3. لو العدد مسموح به، كمل عملية القراءة والـ Preview
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const reader = new FileReader();
@@ -345,22 +353,15 @@ isUnderConstruction(): boolean {
             isWatermarked: false 
           }
         ]);
-        /* this.selectedPhotos.update(prev => [...prev, {
-          file: file,
-          preview: e.target.result
-        }]);
-      }; */
         };
       reader.readAsDataURL(file);
     }
   }
 }
 
-// 🟢 دالة إضافة/إزالة العلامة المائية (Toggle Watermark)
   toggleWatermark(index: number) {
     const photoObj = this.selectedPhotos()[index];
 
-    // 1. حالة الإزالة: لو عليها لوجو، نرجعلها أصلها فوراً
     if (photoObj.isWatermarked) {
       this.selectedPhotos.update(photos => {
         const newPhotos =[...photos];
@@ -372,7 +373,6 @@ isUnderConstruction(): boolean {
       return; // نخرج من الدالة خلاص
     }
 
-    // 2. حالة الإضافة: لو معليهاش لوجو، نحط اللوجو
     this.alertService.showLoading('Applying Logo...');
 
     const canvas = document.createElement('canvas');
@@ -380,7 +380,6 @@ isUnderConstruction(): boolean {
     if (!ctx) return;
 
     const img = new Image();
-    // دايماً نستخدم النسخة الأصلية كأساس عشان الجودة متقلش
     img.src = photoObj.originalPreview; 
     
     img.onload = () => {
@@ -393,11 +392,9 @@ isUnderConstruction(): boolean {
       watermark.src = 'logo.jpeg'; // تأكدي إن مسار اللوجو صح
       
       watermark.onload = () => {
-        // حجم اللوجو (20% من عرض الصورة)
         const wmWidth = img.width * 0.20; 
         const wmHeight = watermark.height * (wmWidth / watermark.width);
         
-        // المكان: أسفل اليمين
         const x = img.width - wmWidth - 20;
         const y = img.height - wmHeight - 20;
 
@@ -547,11 +544,9 @@ if (f.villaSubType !== null) {
 
     
 
-    // الصور
     formData.append('MainPhotoIndex', this.mainPhotoIndex.toString());
     this.selectedPhotos().forEach(p => formData.append('Photos', p.file));
 
-    // الإرسال
     this.propertyService.addProperty(formData).subscribe({
       next: () => {
         this.alertService.close();
@@ -569,18 +564,14 @@ if (f.villaSubType !== null) {
 
   updateCounter(controlName: string, amount: number) {
   const control = this.propertyForm.get(controlName);
-  // تحويل التوتال لرقم ✅
   const totalFloors = Number(this.propertyForm.get('totalFloors')?.value) || 0;
 
   if (control) {
-    // تحويل القيمة الحالية لرقم ✅
     const currentValue = Number(control.value) || 0;
     const newValue = currentValue + amount;
 
-    // منع القيم السالبة
     if (newValue < 0) return;
 
-    // شرط منطق الأدوار
     if (controlName === 'floor' && totalFloors > 0 && newValue > totalFloors) {
       this.alertService.error(`Floor number cannot exceed ${totalFloors}!`);
       return;
@@ -590,21 +581,15 @@ if (f.villaSubType !== null) {
   }
 }
 
-// 3. دالة تفحص المدخلات اليدوية (عند الكتابة بالكيبورد)
 validateFloorInput() {
-  // استخدام Number() لضمان إننا بنقارن أرقام مش نصوص ✅
   const floor = Number(this.propertyForm.get('floor')?.value) || 0;
   const total = Number(this.propertyForm.get('totalFloors')?.value) || 0;
 
   if (total > 0 && floor > total) {
-    // لو الدور أكبر من الإجمالي، نرجعه لأقصى دور مسموح (اللي هو التوتال) بدل الصفر لراحة المستخدم
     this.propertyForm.get('floor')?.patchValue(total);
     this.alertService.error(`Floor cannot be higher than total building floors (${total})`);
   }
 }
-
-
-// 1. دالة لتنسيق النسب المئوية (تسمح بالأرقام والعلامة العشرية فقط)
   formatPercentage(event: any, controlName: string) {
     let input = event.target.value;
     let pureDigits = input.replace(/[^0-9.]/g, '');
@@ -616,57 +601,57 @@ validateFloorInput() {
   }
 
   // 2. حساب السعر الكلي = المساحة × سعر المتر
+  roundAmount(value: number): number {
+    if (value <= 0) return 0;
+    return Math.round(value / 1000) * 1000;
+  }
+
+  // 1. حساب السعر الكلي 
   calculateTotalPrice() {
     const area = this.getPureNumber('area');
     const ppm = this.getPureNumber('pricePerMeter');
-    
     if (area > 0 && ppm > 0) {
-      const total = area * ppm;
+      // تطبيق التقريب
+      const total = this.roundAmount(area * ppm); 
       this.propertyForm.get('price')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
-      
-      if (this.isRent()) {
-        this.propertyForm.get('monthlyRent')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
-      }
-      
-      this.onAmountChange(); // تحديث باقي الحسابات
+      if (this.isRent()) this.propertyForm.get('monthlyRent')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
+      this.onAmountChange();
     }
   }
 
-  // 3. حساب مبلغ المقدم بناءً على النسبة
+  // 2. حساب مبلغ المقدم بناءً على النسبة
   onPercentageChange() {
     const total = this.getPureNumber('price');
     const dpPercent = Number(this.propertyForm.get('downPaymentPercentage')?.value || 0);
-    
     if (total > 0 && dpPercent >= 0) {
-      const dpAmount = total * (dpPercent / 100);
+      // تطبيق التقريب
+      const dpAmount = this.roundAmount(total * (dpPercent / 100));
       this.propertyForm.get('downPayment')?.setValue(dpAmount.toLocaleString('en-US'), { emitEvent: false });
       this.calculateInstallments();
     }
   }
 
-  // 4. حساب النسبة المئوية لو المستخدم كتب مبلغ المقدم بإيده
+  // 3. حساب النسبة لو كتب المبلغ بإيده
   onAmountChange() {
     const total = this.getPureNumber('price');
     const dpAmount = this.getPureNumber('downPayment');
-    
     if (total > 0 && dpAmount >= 0) {
       const dpPercent = (dpAmount / total) * 100;
-      // تقريب النسبة لرقمين عشريين عشان متبقاش طويلة جداً
       this.propertyForm.get('downPaymentPercentage')?.setValue(parseFloat(dpPercent.toFixed(2)), { emitEvent: false });
       this.calculateInstallments();
     }
   }
 
-  // 5. حساب القسط الربع سنوي = (السعر - المقدم) / السنوات / 4
+  // 4. حساب القسط الربع سنوي
   calculateInstallments() {
     const total = this.getPureNumber('price');
     const dpAmount = this.getPureNumber('downPayment');
     const years = this.getPureNumber('installmentYears');
-
     if (total > 0 && years > 0) {
       const remaining = total - dpAmount;
       if (remaining > 0) {
-        const quarter = (remaining / years) / 4;
+        // تطبيق التقريب
+        const quarter = this.roundAmount((remaining / years) / 4);
         this.propertyForm.get('quarterInstallment')?.setValue(quarter.toLocaleString('en-US'), { emitEvent: false });
       } else {
         this.propertyForm.get('quarterInstallment')?.setValue('0', { emitEvent: false });

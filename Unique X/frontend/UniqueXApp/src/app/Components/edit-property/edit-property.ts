@@ -114,14 +114,14 @@ filteredProjects: string[] = [];
       downPayment:[0],
       quarterInstallment: [0],
       monthlyRent: [0],
-      securityDeposit:[0],
+      securityDeposit:[0, [minAmountValidator(0)]],
       deliveryStatus: [0],
       deliveryYear: [null],
       hasMasterRoom: [false], hasHotelEntrance: [false], hasSecurity: [false],
       hasParking: [false], hasBalcony: [false], isFurnished: [false],
       isFirstOwner: [false], isLegalReconciled: [false], isLicensed: [false],
       hasWaterMeter: [false], hasElectricityMeter: [false], hasGasMeter: [false], hasLandShare: [false],
-      pricePerMeter: [''],
+      pricePerMeter: ['', Validators.required],
       downPaymentPercentage: ['']
     });
 
@@ -132,12 +132,31 @@ filteredProjects: string[] = [];
 
     this.editForm.get('listingType')?.valueChanges.subscribe(type => {
       const priceControl = this.editForm.get('price');
-      if (Number(type) === 1) { 
+      const ppmControl = this.editForm.get('pricePerMeter');
+      const securityControl = this.editForm.get('securityDeposit');
+      
+      if (Number(type) === 1) { // 🟢 1 = Rent (إيجار)
         priceControl?.setValidators([Validators.required, minAmountValidator(1)]);
-      } else {
+        
+        // إزالة الـ Required من سعر المتر وتصفيره
+        ppmControl?.clearValidators();
+        ppmControl?.setValue('');
+        
+        // إضافة الـ Required لمبلغ التأمين
+        securityControl?.setValidators([Validators.required, minAmountValidator(0)]);
+      } else { // 🟢 بيع أو مشاريع
         priceControl?.setValidators([Validators.required, minAmountValidator(1000000)]);
+        
+        // إرجاع الـ Required لسعر المتر
+        ppmControl?.setValidators([Validators.required]);
+        
+        // إزالة الـ Required من مبلغ التأمين
+        securityControl?.clearValidators();
       }
+      
       priceControl?.updateValueAndValidity();
+      ppmControl?.updateValueAndValidity();
+      securityControl?.updateValueAndValidity();
     });
 
     this.editForm.get('price')?.valueChanges.subscribe(val => {
@@ -162,7 +181,6 @@ filteredProjects: string[] = [];
         this.updateRegions(cityId);
         this.updateProjectsList(cityId, data.region);
 
-        // 🟢 حل مشكلة الزرار المقفول: تصفير القيم اللي راجعة صفر عشان متضربش في الـ Validators
         if (data.buildYear === 0) data.buildYear = '';
         if (data.totalFloors === 0) data.totalFloors = 2;
         if (data.apartmentsPerFloor === 0) data.apartmentsPerFloor = 1;
@@ -255,27 +273,38 @@ filteredProjects: string[] = [];
     this.editForm.get(controlName)?.setValue(pureDigits, { emitEvent: false });
   }
 
+  // 🟢 دالة التقريب (لأقرب 1000)
+  roundAmount(value: number): number {
+    if (value <= 0) return 0;
+    return Math.round(value / 1000) * 1000;
+  }
+
+  // 1. حساب السعر الكلي 
   calculateTotalPrice() {
     const area = this.getPureNumber('area');
     const ppm = this.getPureNumber('pricePerMeter');
     if (area > 0 && ppm > 0) {
-      const total = area * ppm;
+      // تطبيق التقريب
+      const total = this.roundAmount(area * ppm); 
       this.editForm.get('price')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
       if (this.isRent()) this.editForm.get('monthlyRent')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
       this.onAmountChange();
     }
   }
 
+  // 2. حساب مبلغ المقدم بناءً على النسبة
   onPercentageChange() {
     const total = this.getPureNumber('price');
     const dpPercent = Number(this.editForm.get('downPaymentPercentage')?.value || 0);
     if (total > 0 && dpPercent >= 0) {
-      const dpAmount = total * (dpPercent / 100);
+      // تطبيق التقريب
+      const dpAmount = this.roundAmount(total * (dpPercent / 100));
       this.editForm.get('downPayment')?.setValue(dpAmount.toLocaleString('en-US'), { emitEvent: false });
       this.calculateInstallments();
     }
   }
 
+  // 3. حساب النسبة لو كتب المبلغ بإيده
   onAmountChange() {
     const total = this.getPureNumber('price');
     const dpAmount = this.getPureNumber('downPayment');
@@ -286,6 +315,7 @@ filteredProjects: string[] = [];
     }
   }
 
+  // 4. حساب القسط الربع سنوي
   calculateInstallments() {
     const total = this.getPureNumber('price');
     const dpAmount = this.getPureNumber('downPayment');
@@ -293,7 +323,8 @@ filteredProjects: string[] = [];
     if (total > 0 && years > 0) {
       const remaining = total - dpAmount;
       if (remaining > 0) {
-        const quarter = (remaining / years) / 4;
+        // تطبيق التقريب
+        const quarter = this.roundAmount((remaining / years) / 4);
         this.editForm.get('quarterInstallment')?.setValue(quarter.toLocaleString('en-US'), { emitEvent: false });
       } else {
         this.editForm.get('quarterInstallment')?.setValue('0', { emitEvent: false });
@@ -582,7 +613,8 @@ filteredProjects: string[] = [];
     return cats[val] ?? 0;
   }
   mapVillaSubToId(val: string) {
-    if (!val) return null;
-    return val === 'Basement' ? 0 : 1;
+    if (!val || val === 'null' || val === 'None') return null;
+    const types: any = { 'Basement': 0, 'Penthouse': 1, 'Corner': 2, 'Middle': 3 };
+    return types[val] ?? null;
   }
 }

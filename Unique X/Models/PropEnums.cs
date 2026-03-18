@@ -57,7 +57,9 @@
         public enum VillaType 
         { 
             Basement = 0, 
-            Penthouse = 1 
+            Penthouse = 1,
+            Corner = 2,
+            Middle = 3
         }
     }
 }
