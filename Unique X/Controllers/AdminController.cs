@@ -112,9 +112,8 @@ namespace Unique_X.Controllers
         }
 
         [HttpPost("add-banner")]
-        public async Task<IActionResult> AddBanner([FromForm] BannerUploadDto dto) // تعديل هنا
+        public async Task<IActionResult> AddBanner([FromForm] BannerUploadDto dto)
         {
-            // استخدام dto.File و dto.Title
             var result = await _photoService.AddPhotoAsync(dto.File);
             if (result.Error != null) return BadRequest(result.Error.Message);
 

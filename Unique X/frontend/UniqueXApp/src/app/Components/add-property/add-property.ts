@@ -73,7 +73,7 @@ projectsMapping: any = {
     'Al-Dabaa': ['Dose', 'The Water Way', 'Seazen', 'La Vista Bay', 'La Vista Bay East', 'Hacienda Blue', 'La Sirena', 'D bay', 'South Med'],
     'Sidi Abdulrahman': ['Telal', 'Hacienda Red', 'Hacienda White', 'Amwaj', 'Q North', 'SeaShell', 'Bianchi Ilios', 'Shamasi', 'Masaya', 'Location', 'Stella Heights', 'Alura', 'La vista Cascada', 'Maraasi', 'Stella', 'Diplo 3', 'Haceinda Bay'],
     'Ghazala Bay': ['Playa Ghazala', 'Ghazala Bay', 'Zoya'],
-    'Al-Alamin': ['Zahra', 'Crysta', 'Plage', 'Lagoons', 'Alma', 'IL Latini', 'Downtown', 'Plam Hills North Coast', 'Mazarine', 'Golf Porto Marina'],
+    'Al-Alamin': ['Zahra', 'Crysta', 'Plage', 'Lagoons', 'Alma', 'IL Latini', 'Downtown', 'Plam Hills North Coast', 'Mazarine', 'Golf Porto Marina', 'Marina 1', 'Marina 2', 'Marina 3', 'Marina 4', 'Marina 5', 'Marina 6', 'Marina 7', 'Marina 8'],
     'sahel': ['Viller', 'The Island', 'Marina 8', 'North Code', 'Wanas Master', 'London', 'Eko Mena', 'Bungalows', 'Layana', 'Glee']
   }
 };
@@ -359,20 +359,24 @@ isUnderConstruction(): boolean {
   }
 }
 
+  
+  // 🟢 دالة إضافة/إزالة العلامة المائية للصور الجديدة
   toggleWatermark(index: number) {
     const photoObj = this.selectedPhotos()[index];
 
+    // 1. حالة الإزالة
     if (photoObj.isWatermarked) {
       this.selectedPhotos.update(photos => {
-        const newPhotos =[...photos];
+        const newPhotos = [...photos];
         newPhotos[index].file = newPhotos[index].originalFile;
         newPhotos[index].preview = newPhotos[index].originalPreview;
         newPhotos[index].isWatermarked = false;
         return newPhotos;
       });
-      return; // نخرج من الدالة خلاص
+      return;
     }
 
+    // 2. حالة الإضافة
     this.alertService.showLoading('Applying Logo...');
 
     const canvas = document.createElement('canvas');
@@ -385,27 +389,30 @@ isUnderConstruction(): boolean {
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
-      
       ctx.drawImage(img, 0, 0);
 
       const watermark = new Image();
-      watermark.src = 'logo.jpeg'; // تأكدي إن مسار اللوجو صح
+      watermark.src = 'logo.png'; // 🟢 مسار اللوجو الشفاف بتاعك
       
       watermark.onload = () => {
-        const wmWidth = img.width * 0.20; 
+        // 🟢 الحجم: 50% من عرض الصورة (هيكون كبير وفي المركز)
+        const wmWidth = img.width * 0.50; 
         const wmHeight = watermark.height * (wmWidth / watermark.width);
         
-        const x = img.width - wmWidth - 20;
-        const y = img.height - wmHeight - 20;
+        // 🟢 المكان: في المنتصف تماماً أفقياً ورأسياً
+        const x = (img.width - wmWidth) / 2;
+        const y = (img.height - wmHeight) / 2;
 
-        ctx.globalAlpha = 0.7; // شفافية 70%
+        // 🟢 الشفافية: 50% عشان ميعميش تفاصيل الشقة
+        ctx.globalAlpha = 0.5; 
         ctx.drawImage(watermark, x, y, wmWidth, wmHeight);
-        ctx.globalAlpha = 1.0;
+        ctx.globalAlpha = 1.0; 
 
         canvas.toBlob((blob) => {
           if (blob) {
+            // 🟢 التصدير كـ JPEG للحفاظ على مساحة السيرفر وسرعة الموقع
             const newFile = new File([blob], `watermarked_${photoObj.originalFile.name}`, { type: 'image/jpeg' });
-            const newPreview = canvas.toDataURL('image/jpeg', 0.85); // ضغط بسيط لمنع التهنيج
+            const newPreview = canvas.toDataURL('image/jpeg', 0.85); 
 
             this.selectedPhotos.update(photos => {
               const newPhotos = [...photos];
@@ -419,7 +426,7 @@ isUnderConstruction(): boolean {
              this.alertService.close();
              this.alertService.error("Failed to process this specific image.");
           }
-        }, 'image/jpeg', 0.85);
+        }, 'image/jpeg', 0.85); // 0.85 دي نسبة ضغط ممتازة للجودة
       };
       
       watermark.onerror = () => {
@@ -428,6 +435,7 @@ isUnderConstruction(): boolean {
       };
     };
   }
+
 setMainPhoto(index: number) {
   this.mainPhotoIndex = index;
 }

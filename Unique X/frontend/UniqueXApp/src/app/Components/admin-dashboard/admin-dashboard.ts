@@ -44,6 +44,8 @@ export class AdminDashboardComponent implements OnInit {
   propSearchText = signal('');
   propListingFilter = signal('');
   propTypeFilter = signal('');
+  isSidebarOpen = false;
+
 
   // إحصائيات سريعة
   totalUsers = computed(() => this.users().length);
@@ -124,6 +126,10 @@ export class AdminDashboardComponent implements OnInit {
         this.homeBanners.set(data);
     });
   }
+
+  toggleSidebar() {
+  this.isSidebarOpen = !this.isSidebarOpen;
+}
 
   onAddBanner(title: string, fileInput: any) {
     const file = fileInput.files[0];

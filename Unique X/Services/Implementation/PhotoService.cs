@@ -12,7 +12,6 @@ namespace Unique_X.Services.Implementation
 
         public PhotoService(IOptions<CloudinarySettings> config)
         {
-            // إعداد الاتصال عند تشغيل الخدمة
             var acc = new Account(
                 config.Value.CloudName,
                 config.Value.ApiKey,
@@ -31,11 +30,16 @@ namespace Unique_X.Services.Implementation
                 try
                 {
                     using var stream = file.OpenReadStream();
+
+                    var isGif = file.ContentType == "image/gif" ||
+                                file.FileName.EndsWith(".gif", StringComparison.OrdinalIgnoreCase);
+
                     var uploadParams = new ImageUploadParams
                     {
                         File = new FileDescription(file.FileName, stream),
-                        //Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face")
-                        Transformation = new Transformation().Width(1200).Crop("limit")
+                        // GIF: مفيش transformation خالص عشان يتحمل كما هو
+                        // صور عادية: بتتضغط لـ 1200px
+                        Transformation = isGif ? null : new Transformation().Width(1200).Crop("limit")
                     };
 
                     uploadResult = await _cloudinary.UploadAsync(uploadParams);
@@ -54,5 +58,7 @@ namespace Unique_X.Services.Implementation
             var deleteParams = new DeletionParams(publicId);
             return await _cloudinary.DestroyAsync(deleteParams);
         }
+
+        
     }
 }
