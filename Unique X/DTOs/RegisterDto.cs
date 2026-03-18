@@ -22,5 +22,8 @@ namespace Unique_X.DTOs
         // 0 = Client, 1 = Broker
         [Required]
         public int UserType { get; set; }
+
+        public string? BrokerTitle { get; set; }
+        public string? BrokerDescription { get; set; }
     }
 }

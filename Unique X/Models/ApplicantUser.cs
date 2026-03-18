@@ -11,6 +11,9 @@ namespace Unique_X.Models
         public string? ProfileImageUrl { get; set; }
         public string? ProfileImagePublicId { get; set; }
         public bool IsActive { get; set; } = true;
-        
+
+        public string? BrokerTitle { get; set; }
+        public string? BrokerDescription { get; set; }
+
     }
 }

@@ -24,7 +24,7 @@ export class EditPropertyComponent implements OnInit {
   propertyId!: number;
   selectedFiles: File[] = [];
   existingPhotos = signal<any[]>([]);
-  selectedPhotos = signal<{ file: File, preview: string }[]>([]);
+  selectedPhotos = signal<{ file: File, preview: string, originalFile: File, originalPreview: string, isWatermarked: boolean }[]>([]);
 newMainPhotoIndex: number | null = null;
 currentYear = new Date().getFullYear();
 isSubmitting = false;
@@ -185,7 +185,6 @@ filteredProjects: string[] = [];
         this.formatInitialAmount('monthlyRent');
         this.formatInitialAmount('securityDeposit');
 
-        // 🟢 الجزء الجديد: حساب سعر المتر ونسبة المقدم عند فتح التعديل
         const area = Number(data.area) || 0;
         const price = Number(data.price) || 0;
         const downPayment = Number(data.downPayment) || 0;
@@ -322,8 +321,9 @@ filteredProjects: string[] = [];
   updateRegions(cId?: number) {
     const id = cId || Number(this.editForm.get('city')?.value);
     this.filteredRegions = this.regionsMapping[id] ||[];
-    if (!cId && this.editForm.get('region')?.value) {
-      this.editForm.get('region')?.setValue('');
+    const currentRegion = this.editForm.get('region')?.value;
+    if (currentRegion && !this.filteredRegions.includes(currentRegion)) {
+      this.editForm.get('region')?.setValue('', { emitEvent: false });
     }
   }
 
@@ -345,12 +345,91 @@ filteredProjects: string[] = [];
         const file = files[i];
         const reader = new FileReader();
         reader.onload = (e: any) => {
-          this.selectedPhotos.update(prev => [...prev, { file: file, preview: e.target.result }]);
+          this.selectedPhotos.update(prev =>[
+          ...prev, 
+          { 
+            file: file, 
+            preview: e.target.result, 
+            originalFile: file, 
+            originalPreview: e.target.result, 
+            isWatermarked: false 
+          }
+        ]);
         };
         reader.readAsDataURL(file);
       }
     }
   }
+
+  // 🟢 دالة إضافة/إزالة العلامة المائية للصور الجديدة
+  toggleWatermark(index: number) {
+    const photoObj = this.selectedPhotos()[index];
+
+    if (photoObj.isWatermarked) {
+      this.selectedPhotos.update(photos => {
+        const newPhotos = [...photos];
+        newPhotos[index].file = newPhotos[index].originalFile;
+        newPhotos[index].preview = newPhotos[index].originalPreview;
+        newPhotos[index].isWatermarked = false;
+        return newPhotos;
+      });
+      return;
+    }
+
+    this.alertService.showLoading('Applying Logo...');
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.src = photoObj.originalPreview; 
+    
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      const watermark = new Image();
+      watermark.src = 'logo.jpeg'; 
+      
+      watermark.onload = () => {
+        const wmWidth = img.width * 0.20; 
+        const wmHeight = watermark.height * (wmWidth / watermark.width);
+        const x = img.width - wmWidth - 20;
+        const y = img.height - wmHeight - 20;
+
+        ctx.globalAlpha = 0.7; 
+        ctx.drawImage(watermark, x, y, wmWidth, wmHeight);
+        ctx.globalAlpha = 1.0;
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const newFile = new File([blob], `watermarked_${photoObj.originalFile.name}`, { type: 'image/jpeg' });
+            const newPreview = canvas.toDataURL('image/jpeg', 0.85);
+
+            this.selectedPhotos.update(photos => {
+              const newPhotos = [...photos];
+              newPhotos[index].file = newFile;
+              newPhotos[index].preview = newPreview;
+              newPhotos[index].isWatermarked = true;
+              return newPhotos;
+            });
+            this.alertService.close();
+          } else {
+             this.alertService.close();
+             this.alertService.error("Failed to process this specific image.");
+          }
+        }, 'image/jpeg', 0.85);
+      };
+      
+      watermark.onerror = () => {
+         this.alertService.close();
+         this.alertService.error("Logo file not found!");
+      };
+    };
+  }
+  
 
   setExistingAsMain(photoId: number) {
     this.alertService.showLoading('Updating...');

@@ -33,7 +33,24 @@ export class RegisterComponent implements OnInit {
   Validators.required, 
   Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W]).{6,}$/)
 ]],
-      userType: [0, [Validators.required]] // 0 = Client, 1 = Broker
+      userType: [0, [Validators.required]],
+      brokerTitle: [''],     
+      brokerDescription: [''] 
+    });
+
+    this.registerForm.get('userType')?.valueChanges.subscribe(val => {
+      const titleCtrl = this.registerForm.get('brokerTitle');
+      const descCtrl = this.registerForm.get('brokerDescription');
+      
+      if (val === 1) { // لو اختار Broker
+        titleCtrl?.setValidators([Validators.required]);
+        descCtrl?.setValidators([Validators.required]);
+      } else { // لو Client
+        titleCtrl?.clearValidators();
+        descCtrl?.clearValidators();
+      }
+      titleCtrl?.updateValueAndValidity();
+      descCtrl?.updateValueAndValidity();
     });
   }
 

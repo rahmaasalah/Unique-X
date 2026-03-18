@@ -540,19 +540,32 @@
 </div>
 
             <!-- معاينة الصور -->
-            <div class="row g-3 mb-4">
+            <div class="row g-2 mb-4">
               @for (photo of selectedPhotos(); track $index) {
-                <div class="col-md-3 col-6">
-                  <div class="photo-preview-card position-relative rounded-3 overflow-hidden shadow-sm border"
-                       [class.main-selected]="mainPhotoIndex === $index" (click)="setMainPhoto($index)">
-                    <img [src]="photo.preview" class="w-100 object-fit-cover" style="height: 140px;">
+                <div class="col-md-2 col-4">
+                  <!-- كارت الصورة -->
+                  <div class="position-relative rounded-3 overflow-hidden border shadow-sm cursor-pointer mb-1"[class.border-danger]="mainPhotoIndex === $index" (click)="setMainPhoto($index)">
+                    <img [src]="photo.preview" class="w-100 object-fit-cover" style="height: 100px;">
+                    
                     @if (mainPhotoIndex === $index) {
-                      <div class="main-badge bg-danger text-white px-2 py-1 small position-absolute top-0 start-0">MAIN</div>
+                      <span class="badge bg-danger position-absolute top-0 start-0 m-1" style="font-size: 0.6rem;">MAIN</span>
                     }
                     <button type="button" class="btn-remove-photo" (click)="removePhoto($index); $event.stopPropagation()">
                       <i class="bi bi-x-circle-fill text-white fs-5"></i>
                     </button>
                   </div>
+                  
+                  <!-- 🟢 الزرار الجديد الخاص بالعلامة المائية -->
+                  <button type="button" class="btn btn-sm w-100 fw-bold" 
+                          [class.btn-outline-dark]="!photo.isWatermarked"[class.btn-success]="photo.isWatermarked"
+                          style="font-size: 0.65rem;" 
+                          (click)="toggleWatermark($index)">
+                    @if (photo.isWatermarked) {
+                      <i class="bi bi-x-circle me-1"></i> Remove Logo
+                    } @else {
+                      <i class="bi bi-droplet me-1"></i> Add Logo
+                    }
+                  </button>
                 </div>
               }
             </div>

@@ -32,26 +32,41 @@
   <div class="container">
     
     <div class="row g-2 mb-3">
-      <div class="col-md-6">
+      <!-- خانة البحث (لو مفيش مشروع تاخد 6 أعمدة، لو فيه مشروع تصغر لـ 3) -->
+      <div [class]="(currentListingType === '2' || currentListingType === '3') ? 'col-md-3' : 'col-md-6'">
         <label class="form-label x-small-bold mb-1 text-dark">Keyword</label>
         <div class="input-group input-group-sm shadow-sm border rounded-2 bg-white">
           <span class="input-group-text bg-white border-0"><i class="bi bi-search text-danger"></i></span>
           <input type="text" class="form-control border-0 bg-transparent" placeholder="e.g. Palm Hills, Maadi..." #searchTerm>
         </div>
       </div>
+
       <div class="col-md-3">
         <label class="form-label x-small-bold mb-1 text-dark">Property Code</label>
         <input type="text" class="form-control form-control-sm border shadow-sm rounded-2" #code>
       </div>
+
       <div class="col-md-3">
         <label class="form-label x-small-bold mb-1 text-dark">City</label>
-        <select class="form-select form-select-sm border shadow-sm rounded-2" #city>
+        <select class="form-select form-select-sm border shadow-sm rounded-2" #city (change)="updateProjectsList(city.value)">
           <option value="">All Cities</option>
           <option value="1">Cairo</option>
           <option value="2">Alexandria</option>
+          <option value="3">North Coast</option>
+        </select>
+      </div>
+
+      <div class="col-md-3" [class.d-none]="currentListingType !== '2' && currentListingType !== '3'">
+        <label class="form-label x-small-bold mb-1 text-dark">Project Name</label>
+        <select class="form-select form-select-sm border shadow-sm rounded-2 text-dark " #projectName>
+          <option value="">All Projects</option>
+          @for (project of availableProjects; track project) {
+            <option [value]="project" [selected]="project === currentProjectName">{{ project }}</option>
+          }
         </select>
       </div>
     </div>
+
 
     <div class="row g-2 mb-3">
       <div class="col-md-3">
@@ -112,7 +127,7 @@
       <div class="col-md-4">
         <button class="btn btn-danger btn-sm w-100 fw-bold shadow py-2 rounded-3" 
                 (click)="onSearch({
-                  searchTerm: searchTerm.value, city: city.value, area: area.value,
+                  searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: projectName.value,
                   code: code.value, minPrice: minPrice.value, maxPrice: maxPrice.value, 
                   minFloor: minFloor.value, maxFloor: maxFloor.value,
                   minRooms: minRooms.value, maxRooms: maxRooms.value, 

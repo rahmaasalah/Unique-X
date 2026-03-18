@@ -34,7 +34,9 @@ namespace Unique_X.Services
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 PhoneNumber = model.PhoneNumber,
-                UserType = model.UserType
+                UserType = model.UserType,
+                BrokerTitle = model.UserType == 1 ? model.BrokerTitle : null,
+                BrokerDescription = model.UserType == 1 ? model.BrokerDescription : null
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);

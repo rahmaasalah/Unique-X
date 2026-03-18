@@ -59,6 +59,23 @@
         </div>
       </div>
 
+
+       @if (registerForm.get('userType')?.value === 1) {
+        <div class="p-3 bg-danger-subtle rounded-3 mb-4 border border-danger border-opacity-25 animate__animated animate__fadeIn">
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-briefcase-fill me-2"></i>Professional Details</h6>
+          
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark">Title</label>
+            <input type="text" formControlName="brokerTitle" class="form-control" placeholder="">
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-bold text-dark">Brief Description</label>
+            <textarea formControlName="brokerDescription" class="form-control" rows="3" placeholder="Tell clients about your experience..."></textarea>
+          </div>
+        </div>
+      }
+
       <button type="submit" [disabled]="registerForm.invalid" class="btn btn-danger btn-lg w-100 rounded-pill mb-3 shadow-sm">
         Create Account
       </button>

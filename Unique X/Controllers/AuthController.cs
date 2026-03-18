@@ -50,18 +50,15 @@ namespace Unique_X.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> LoginAsync([FromBody] LoginDto model)
         {
-            // 1. البحث عن المستخدم أولاً قبل محاولة تسجيل الدخول
             var user = await _userManager.FindByEmailAsync(model.Email);
 
             if (user == null)
                 return BadRequest("Invalid Email or Password!");
 
-            // 2. الفحص الجوهري: هل الحساب موقوف (Suspended)؟
             if (!user.IsActive)
             {
                 return BadRequest("Your account has been suspended by the administrator.");
             }
-            // 4. لو كل شيء تمام، كمل عملية اللوجين العادية
             var result = await _authService.LoginAsync(model);
 
             if (!result.IsAuthenticated)
@@ -87,7 +84,8 @@ namespace Unique_X.Controllers
                 PhoneNumber = user.PhoneNumber,
                 UserType = user.UserType,
                 ProfileImageUrl = user.ProfileImageUrl,
-                // حساب الإحصائيات سريعاً
+                BrokerTitle = user.BrokerTitle,
+                BrokerDescription = user.BrokerDescription,
                 TotalProperties = _context.Properties.Count(p => p.BrokerId == userId),
                 TotalWishlist = _context.Wishlists.Count(w => w.UserId == userId),
                 Properties = _context.Properties
@@ -114,6 +112,12 @@ namespace Unique_X.Controllers
             user.LastName = model.LastName;
             user.PhoneNumber = model.PhoneNumber;
 
+            if (user.UserType == 1)
+            {
+                user.BrokerTitle = model.BrokerTitle;
+                user.BrokerDescription = model.BrokerDescription;
+            }
+
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded) return Ok(new { Message = "Profile updated successfully" });
 
@@ -128,11 +132,9 @@ namespace Unique_X.Controllers
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return NotFound();
 
-            // 1. رفع الصورة لـ Cloudinary
             var result = await _photoService.AddPhotoAsync(file);
             if (result.Error != null) return BadRequest(result.Error.Message);
 
-            // 2. تحديث بيانات اليوزر
             user.ProfileImageUrl = result.SecureUrl.AbsoluteUri;
             user.ProfileImagePublicId = result.PublicId;
 
@@ -142,16 +144,18 @@ namespace Unique_X.Controllers
         }
 
         [HttpGet("brokers")]
-        [AllowAnonymous] // الكل يقدر يشوف البروكرز
+        [AllowAnonymous]
         public async Task<IActionResult> GetBrokers()
         {
             var brokers = await _userManager.Users
-                .Where(u => u.UserType == 1 && u.IsActive) // البروكرز النشطين فقط
+                .Where(u => u.UserType == 1 && u.IsActive)
                 .Select(u => new BrokerListDto
                 {
                     Id = u.Id,
                     FullName = u.FirstName + " " + u.LastName,
                     ProfileImageUrl = u.ProfileImageUrl,
+                    BrokerTitle = u.BrokerTitle,
+                    BrokerDescription = u.BrokerDescription,
                     PropertiesCount = _context.Properties.Count(p => p.BrokerId == u.Id && !p.IsSold)
                 }).ToListAsync();
 

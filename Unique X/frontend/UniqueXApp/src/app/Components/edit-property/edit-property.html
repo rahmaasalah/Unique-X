@@ -387,20 +387,36 @@
             <div class="row g-2 mb-4">
               @for (photo of selectedPhotos(); track $index) {
                 <div class="col-md-2 col-4">
-                  <div class="position-relative rounded-3 overflow-hidden border shadow-sm cursor-pointer"
+                  <!-- كارت الصورة -->
+                  <div class="position-relative rounded-3 overflow-hidden border shadow-sm cursor-pointer mb-1"
                        [class.border-danger]="newMainPhotoIndex === $index" (click)="setNewAsMain($index)">
                     <img [src]="photo.preview" class="w-100 object-fit-cover" style="height: 100px;">
+                    
                     @if (newMainPhotoIndex === $index) {
                       <span class="badge bg-danger position-absolute top-0 start-0 m-1" style="font-size: 0.6rem;">NEW MAIN</span>
                     }
+                    
                     <button type="button" class="btn-remove-photo" (click)="removePhoto($index); $event.stopPropagation()">
                       <i class="bi bi-x-circle-fill text-white fs-5"></i>
                     </button>
                   </div>
+
+                  <!-- 🟢 زرار العلامة المائية (Toggle) للصور الجديدة -->
+                  <button type="button" class="btn btn-sm w-100 fw-bold" 
+                          [class.btn-outline-dark]="!photo.isWatermarked" 
+                          [class.btn-success]="photo.isWatermarked"
+                          style="font-size: 0.65rem;" 
+                          (click)="toggleWatermark($index)">
+                    @if (photo.isWatermarked) {
+                      <i class="bi bi-x-circle me-1"></i> Remove Logo
+                    } @else {
+                      <i class="bi bi-droplet me-1"></i> Add Logo
+                    }
+                  </button>
+
                 </div>
               }
             </div>
-
             <div class="mb-4">
               <label class="form-label fw-bold small">Detailed Description</label>
               <textarea formControlName="description" class="form-control shadow-sm" rows="5"></textarea>
