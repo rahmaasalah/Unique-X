@@ -29,7 +29,9 @@ function minAmountValidator(min: number): ValidatorFn {
 export class AddPropertyComponent implements OnInit {
   propertyForm!: FormGroup;
   selectedFiles: File[] = []; // لتخزين الصور المختارة محلياً
-  selectedPhotos = signal<{ file: File, preview: string }[]>([]);
+  //selectedPhotos = signal<{ file: File, preview: string }[]>([]);
+  selectedPhotos = signal<{ file: File, preview: string, originalFile: File, originalPreview: string, isWatermarked: boolean }[]>([]);
+
 mainPhotoIndex: number = 0;
 isSubmitting = false;
 currentYear = new Date().getFullYear(); 
@@ -333,15 +335,102 @@ isUnderConstruction(): boolean {
       const file = files[i];
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.selectedPhotos.update(prev => [...prev, {
+        this.selectedPhotos.update(prev =>[
+          ...prev, 
+          { 
+            file: file, 
+            preview: e.target.result, 
+            originalFile: file,             // حفظ الملف الأصلي للرجوع إليه
+            originalPreview: e.target.result, // حفظ العرض الأصلي
+            isWatermarked: false 
+          }
+        ]);
+        /* this.selectedPhotos.update(prev => [...prev, {
           file: file,
           preview: e.target.result
         }]);
-      };
+      }; */
+        };
       reader.readAsDataURL(file);
     }
   }
 }
+
+// 🟢 دالة إضافة/إزالة العلامة المائية (Toggle Watermark)
+  toggleWatermark(index: number) {
+    const photoObj = this.selectedPhotos()[index];
+
+    // 1. حالة الإزالة: لو عليها لوجو، نرجعلها أصلها فوراً
+    if (photoObj.isWatermarked) {
+      this.selectedPhotos.update(photos => {
+        const newPhotos =[...photos];
+        newPhotos[index].file = newPhotos[index].originalFile;
+        newPhotos[index].preview = newPhotos[index].originalPreview;
+        newPhotos[index].isWatermarked = false;
+        return newPhotos;
+      });
+      return; // نخرج من الدالة خلاص
+    }
+
+    // 2. حالة الإضافة: لو معليهاش لوجو، نحط اللوجو
+    this.alertService.showLoading('Applying Logo...');
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    // دايماً نستخدم النسخة الأصلية كأساس عشان الجودة متقلش
+    img.src = photoObj.originalPreview; 
+    
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      ctx.drawImage(img, 0, 0);
+
+      const watermark = new Image();
+      watermark.src = 'logo.jpeg'; // تأكدي إن مسار اللوجو صح
+      
+      watermark.onload = () => {
+        // حجم اللوجو (20% من عرض الصورة)
+        const wmWidth = img.width * 0.20; 
+        const wmHeight = watermark.height * (wmWidth / watermark.width);
+        
+        // المكان: أسفل اليمين
+        const x = img.width - wmWidth - 20;
+        const y = img.height - wmHeight - 20;
+
+        ctx.globalAlpha = 0.7; // شفافية 70%
+        ctx.drawImage(watermark, x, y, wmWidth, wmHeight);
+        ctx.globalAlpha = 1.0;
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const newFile = new File([blob], `watermarked_${photoObj.originalFile.name}`, { type: 'image/jpeg' });
+            const newPreview = canvas.toDataURL('image/jpeg', 0.85); // ضغط بسيط لمنع التهنيج
+
+            this.selectedPhotos.update(photos => {
+              const newPhotos = [...photos];
+              newPhotos[index].file = newFile;
+              newPhotos[index].preview = newPreview;
+              newPhotos[index].isWatermarked = true;
+              return newPhotos;
+            });
+            this.alertService.close();
+          } else {
+             this.alertService.close();
+             this.alertService.error("Failed to process this specific image.");
+          }
+        }, 'image/jpeg', 0.85);
+      };
+      
+      watermark.onerror = () => {
+         this.alertService.close();
+         this.alertService.error("Logo file not found!");
+      };
+    };
+  }
 setMainPhoto(index: number) {
   this.mainPhotoIndex = index;
 }

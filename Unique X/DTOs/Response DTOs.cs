@@ -62,6 +62,9 @@ namespace Unique_X.DTOs
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string BrokerId { get; set; } // ضروري جداً للربط
         public int BrokerPropertyCount { get; set; }
+        public string? BrokerImage { get; set; }
+        public string? BrokerTitle { get; set; }
+        public string? BrokerDescription { get; set; }
 
         // أنواع الفيلا والمساحة
         public AreaType? AreaType { get; set; }

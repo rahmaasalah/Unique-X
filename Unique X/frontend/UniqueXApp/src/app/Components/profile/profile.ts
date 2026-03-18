@@ -30,7 +30,9 @@ export class ProfileComponent implements OnInit {
       lastName: ['', Validators.required],
       email: [{ value: '', disabled: true }], // الإيميل للعرض فقط
       phoneNumber: ['', Validators.required],
-      userType: [0]
+      userType: [0],
+      brokerTitle: [''],
+      brokerDescription: ['']
     });
 
     this.loadProfile();

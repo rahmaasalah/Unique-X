@@ -483,6 +483,9 @@ namespace Unique_X.Services.Implementation
                 BrokerId = property.BrokerId,
                 BrokerName = property.Broker != null ? $"{property.Broker.FirstName} {property.Broker.LastName}" : "System Agent",
                 BrokerPhone = property.Broker?.PhoneNumber ?? "N/A",
+                BrokerImage = property.Broker?.ProfileImageUrl,
+                BrokerTitle = property.Broker?.BrokerTitle,
+                BrokerDescription = property.Broker?.BrokerDescription,
 
                 Photos = property.Photos?
     .OrderByDescending(p => p.IsMain)

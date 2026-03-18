@@ -3,6 +3,9 @@ export interface Property {
   title: string;
   description: string;
   price: number;
+  brokerImage?: string;
+  brokerTitle?: string;
+  brokerDescription?: string;
   area: number;
   rooms: number;
   bathrooms: number;

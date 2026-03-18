@@ -53,6 +53,21 @@
             <label class="form-label small fw-bold text-muted">Phone Number</label>
             <input type="text" formControlName="phoneNumber" class="form-control form-control-lg bg-light border-0 rounded-3">
           </div>
+
+          @if (userData()?.userType === 1) {
+            <hr class="my-4 text-muted">
+            <h6 class="fw-bold text-danger mb-3">Professional Bio</h6>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">Job Title</label>
+              <input type="text" formControlName="brokerTitle" class="form-control form-control-lg bg-light border-0 rounded-3">
+            </div>
+            
+            <div class="mb-4">
+              <label class="form-label small fw-bold text-muted">Description / Bio</label>
+              <textarea formControlName="brokerDescription" class="form-control form-control-lg bg-light border-0 rounded-3" rows="4"></textarea>
+            </div>
+          }
           <div class="d-grid">
             <button type="submit" [disabled]="profileForm.invalid" class="btn btn-danger btn-lg rounded-pill fw-bold shadow-sm">
                Save Changes

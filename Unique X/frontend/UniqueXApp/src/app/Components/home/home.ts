@@ -26,20 +26,6 @@ export class HomeComponent implements OnInit {
   adminPhone = signal<string>('');
   private gaService = inject(GoogleAnalyticsService);
 
-/* ads = [
-  { 
-    image: 'https://th.bing.com/th/id/R.703c1580dd8de27f32ef89574aff3adb?rik=zOsxkXRIpkC%2fZw&riu=http%3a%2f%2fwww.justinhavre.com%2fuploads%2fagent-1%2fmultiple-offers-header.png&ehk=gKELJJ1d1MFgnS%2fDMdafCRozl%2fEjKDbnAk5O6qsFZvM%3d&risl=&pid=ImgRaw&r=0', 
-    message: 'Hello, I am interested in the Yearly Luxury Offers!' 
-  },
-  { 
-    image: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/db483d201999007.667e38210b0b8.png', 
-    message: 'I want to know more about the New Projects Installment plans.' 
-  },
-  { 
-    image: 'https://mir-s3-cdn-cf.behance.net/projects/404/2313f6165481709.Y3JvcCwxMjAwLDkzOCwwLDEzMA.png', 
-    message: 'Interested in the Cash Discount for this month!' 
-  }
-]; */
 
   isLoading = signal<boolean>(false);
   private route = inject(ActivatedRoute);
@@ -48,16 +34,32 @@ export class HomeComponent implements OnInit {
   private router: Router, private activatedRoute: ActivatedRoute, private authService: AuthService,
   private adminService: AdminService) {}
 
-  // تأكدي من عمل inject للـ ChangeDetectorRef فوق مع باقي الخدمات
-//private cdr = inject(ChangeDetectorRef); 
+  currentListingType: string | null = null;
+  currentProjectName: string | null = null;
+  availableProjects: string[] =[];
+
+  projectsMapping: any = {
+    1: { 'any':['Twin towers', 'Valore smouha', 'Valore antoniadis', 'East towers'] },
+    2: { 'any':[ 'Palm hills', 'Sawari', 'The One', 'Muruj', 'Alex west', 'Skyline', 'Crystal towers', 'Grand view', 'Twin towers', 'Valore smouha', 'Valore antoniadis', 'East towers', 'Fayroza smouha', 'Saraya gardens', 'Veranda', 'Jackranda', 'Jara', 'Oria city', 'El safwa city', 'Vida', 'Abha hayat', 'Pharma city', 'Jewar', 'Ouruba royals', 'Soly vie', 'San Stefano royals', 'Malaaz' ] },
+    3: {
+      'Ras Al Hekma':['Ramla', 'Azha', 'Naia Bay', 'El Masyaf', 'Fouka Bay', 'Remal', 'Hacienda West', 'Seashore', 'Ogami', 'Seashell Playa', 'La Vista Ras El Hikma', 'Caesar', 'Koun', 'Caesar Bay', 'Lyv', 'Mountain View Ras El Hikma', 'Solare', 'Swan Lake', 'Seashell Ras El Hikma', 'The Med', 'Gaia', 'June', 'Direction White', 'Cali Coast', 'Hacienda Waters', 'Mar Bay', 'Jefaira', 'Sea View', 'Safia', 'Salt', 'Azzar Islands', 'Saada North Coast', 'Katamya Coast', 'Soul', 'Lvls'],
+      'Al-Dabaa':['Dose', 'The Water Way', 'Seazen', 'La Vista Bay', 'La Vista Bay East', 'Hacienda Blue', 'La Sirena', 'D bay', 'South Med'],
+      'Sidi Abdulrahman':['Telal', 'Hacienda Red', 'Hacienda White', 'Amwaj', 'Q North', 'SeaShell', 'Bianchi Ilios', 'Shamasi', 'Masaya', 'Location', 'Stella Heights', 'Alura', 'La vista Cascada', 'Maraasi', 'Stella', 'Diplo 3', 'Haceinda Bay'],
+      'Ghazala Bay':['Playa Ghazala', 'Ghazala Bay', 'Zoya'],
+      'Al-Alamin':['Zahra', 'Crysta', 'Plage', 'Lagoons', 'Alma', 'IL Latini', 'Downtown', 'Plam Hills North Coast', 'Mazarine', 'Golf Porto Marina'],
+      'sahel':['Viller', 'The Island', 'Marina 8', 'North Code', 'Wanas Master', 'London', 'Eko Mena', 'Bungalows', 'Layana', 'Glee']
+    }
+  };
 
 ngOnInit(): void {
-  // 1. مراقبة فلاتر البحث في الرابط
   this.route.queryParams.subscribe(params => {
+    this.currentListingType = params['listingType']?.toString() || null;
+    this.currentProjectName = params['projectName'] || '';
+      
+    this.updateProjectsList(params['city']);
     this.loadProperties(params);
   });
 
-  // 2. سحب الإعلانات (Banners) من الباك اند
   this.adminService.getPublicBanners().subscribe({
     next: (data: any[]) => {
       
@@ -97,6 +99,30 @@ ngOnInit(): void {
     this.adminPhone.set(res.phoneNumber);
   });
 }
+
+updateProjectsList(cityId: any) {
+    let projects = new Set<string>(); // استخدام Set لمنع التكرار
+
+    if (cityId && cityId !== 'null' && cityId !== '') {
+      // لو اختار مدينة معينة، نجيب مشاريعها بس
+      const cityData = this.projectsMapping[Number(cityId)];
+      if (cityData) {
+        Object.values(cityData).forEach((arr: any) => {
+          arr.forEach((p: string) => projects.add(p));
+        });
+      }
+    } else {
+      // لو مفيش مدينة، نلف على كل المدن وكل المناطق ونجيب كل المشاريع
+      Object.values(this.projectsMapping).forEach((cityData: any) => {
+        Object.values(cityData).forEach((arr: any) => {
+          arr.forEach((p: string) => projects.add(p));
+        });
+      });
+    }
+
+    // تحويل الـ Set لمصفوفة وترتيبها أبجدياً لسهولة البحث
+    this.availableProjects = Array.from(projects).sort();
+  }
 
   initCarousel() {
     const bootstrap = (window as any).bootstrap;
@@ -163,6 +189,7 @@ ngOnInit(): void {
     city: params.city || null,
     minPrice: params.minPrice || null,
     maxPrice: params.maxPrice || null,
+    projectName: params.projectName || null,
     code: params.code || null,
     area: params.area || null,
     buildYear: params.buildYear || null,
