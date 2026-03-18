@@ -5,17 +5,17 @@
     overflow: visible;
 }
 
+/* ===== SIDEBAR ===== */
 .admin-sidebar {
     width: 280px;
     min-width: 280px;
     height: 100vh;
     position: sticky;
-    position: -webkit-sticky;
-    position: sticky;
     top: 0;
     z-index: 1000;
     background-color: #1a1d20 !important;
-    overflow-y: auto; 
+    overflow-y: auto;
+    transition: transform 0.3s ease, width 0.3s ease;
 }
 
 .sidebar-link {
@@ -39,13 +39,16 @@
     box-shadow: 0 4px 15px rgba(239, 51, 65, 0.3);
 }
 
-.stat-card {
-    border: 1px solid #f0f0f0 !important;
-    transition: transform 0.3s ease;
-}
+/* ===== MAIN CONTENT ===== */
 main {
     flex: 1;
     background-color: #f8f9fa;
+    min-width: 0; /* مهم عشان المحتوى ميطلعش بره */
+}
+
+.stat-card {
+    border: 1px solid #f0f0f0 !important;
+    transition: transform 0.3s ease;
 }
 
 .stat-card:hover { transform: translateY(-5px); }
@@ -59,3 +62,88 @@ main {
 ::-webkit-scrollbar-track { background: #f1f1f1; }
 ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* ===== MOBILE HAMBURGER BUTTON ===== */
+.sidebar-toggle-btn {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1100;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background-color: #1a1d20;
+    color: white;
+    border: none;
+    font-size: 1.2rem;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    cursor: pointer;
+}
+
+/* ===== OVERLAY للموبايل ===== */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+
+    /* إظهار زرار الهامبرجر */
+    .sidebar-toggle-btn {
+        display: flex;
+    }
+
+    /* الـ sidebar يتحرك لبرا بالـ transform */
+    .admin-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        transform: translateX(-100%);
+        z-index: 1050;
+    }
+
+    /* لما يتفتح */
+    .admin-sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+
+    /* إظهار الـ overlay لما السايدبار مفتوح */
+    .sidebar-overlay.sidebar-open {
+        display: block;
+    }
+
+    /* المحتوى الرئيسي ياخد كل العرض */
+    .admin-container {
+        flex-direction: column;
+    }
+
+    main {
+        width: 100%;
+        padding-top: 70px !important; /* مسافة من فوق عشان الزرار */
+    }
+
+    /* الجداول على الموبايل */
+    .table-responsive-mobile {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* تصغير padding الكروت */
+    .stat-card {
+        padding: 1rem !important;
+    }
+
+    /* stat numbers أصغر شوية */
+    .stat-card h2 {
+        font-size: 1.5rem;
+    }
+}

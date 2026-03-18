@@ -399,7 +399,7 @@
                     <div class="position-relative rounded-3 overflow-hidden border cursor-pointer shadow-sm"
                          [class.border-danger]="photo.isMain"[style.border-width]="photo.isMain ? '3px' : '1px'"
                          (click)="!photo.isMain ? setExistingAsMain(photo.id) : null">
-                      <img [src]="photo.url" class="w-100 object-fit-cover" style="height: 100px;">
+                      <img [src]="photo.url" class="w-100 object-fit-cover" style="height: 120px;">
                       @if (photo.isMain) {
                         <span class="badge bg-danger position-absolute top-0 start-0 m-1" style="font-size: 0.6rem;">MAIN</span>
                       } @else {

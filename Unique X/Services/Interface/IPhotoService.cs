@@ -9,5 +9,6 @@ namespace Unique_X.Services.Interface
 
         // دالة الحذف
         Task<DeletionResult> DeletePhotoAsync(string publicId);
+
     }
 }

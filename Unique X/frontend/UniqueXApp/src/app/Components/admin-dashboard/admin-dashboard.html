@@ -1,7 +1,16 @@
 <div class="d-flex admin-container min-vh-100 bg-light">
-  
-  <!-- 1. الـ Sidebar الثابت (الجهة اليسرى) -->
-  <aside class="admin-sidebar bg-dark text-white shadow-lg d-flex flex-column p-4">
+
+  <!-- زرار الهامبرجر (موبايل فقط) -->
+  <button class="sidebar-toggle-btn" (click)="toggleSidebar()">
+  <i [class]="isSidebarOpen ? 'bi bi-x-lg' : 'bi bi-list'"></i>
+</button>
+
+<!-- الـ Overlay (موبايل فقط) -->
+<div class="sidebar-overlay" [class.sidebar-open]="isSidebarOpen" (click)="toggleSidebar()"></div>
+
+<!-- 1. الـ Sidebar -->
+<aside class="admin-sidebar bg-dark text-white shadow-lg d-flex flex-column p-4" 
+       [class.sidebar-open]="isSidebarOpen">
     <div class="sidebar-header mb-5 text-center py-3">
   <!-- اللوجو بتنسيق جديد -->
   <div class="brand-logo fs-2">
@@ -16,25 +25,25 @@
       <ul class="list-unstyled">
         <li class="mb-3">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
-                  [class.active]="activeTab() === 'users'" (click)="switchTab('users')">
+                  [class.active]="activeTab() === 'users'" (click)="switchTab('users'); isSidebarOpen = false">
             <i class="bi bi-people-fill me-3 fs-5"></i> User Accounts
           </button>
         </li>
         <li class="mb-3">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
-                  [class.active]="activeTab() === 'props'" (click)="switchTab('props')">
+                  [class.active]="activeTab() === 'props'" (click)="switchTab('users'); isSidebarOpen = false">
             <i class="bi bi-houses-fill me-3 fs-5"></i> Property Listings
           </button>
         </li>
         <li class="mb-3">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
-                  [class.active]="activeTab() === 'settings'" (click)="switchTab('settings')">
+                  [class.active]="activeTab() === 'settings'" (click)="switchTab('users'); isSidebarOpen = false">
             <i class="bi bi-person-gear me-3 fs-5"></i> My Account
           </button>
         </li>
         <li class="mb-3">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
-          [class.active]="activeTab() === 'banners'" (click)="switchTab('banners')">
+          [class.active]="activeTab() === 'banners'" (click)="switchTab('users'); isSidebarOpen = false">
     <i class="bi bi-image-fill me-3 fs-5"></i> Manage Banners
   </button>
 </li>
