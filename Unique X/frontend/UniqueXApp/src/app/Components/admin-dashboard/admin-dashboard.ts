@@ -209,6 +209,7 @@ export class AdminDashboardComponent implements OnInit {
 
   switchTab(tab: any) {
   this.activeTab.set(tab);
+  this.isSidebarOpen = false;
   
   if (tab === 'sold') {
     this.adminService.getSoldProperties().subscribe(data => this.detailData.set(data));
