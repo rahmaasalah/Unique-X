@@ -138,6 +138,7 @@
               </div>
             }
 
+            <!-- المساحة وسعر المتر والسعر الكلي -->
             <div class="row g-3 mb-4">
               <div class="col-md-4">
                 <label class="form-label fw-bold small">Area (m²) <span class="text-danger">*</span></label>
@@ -152,12 +153,13 @@
                 }
               </div>
               
-              @if (!isRent()) {
+              <!-- 🟢 حقل سعر المتر (يظهر فقط في حالة الـ Primary) -->
+              @if (isPrimary()) {
                 <div class="col-md-4 animate__animated animate__fadeIn">
                   <label class="form-label fw-bold small text-dark">Price per Meter <span class="text-danger">*</span></label>
                   <div class="input-group">
-                    <span class="input-group-text bg-white">EGP</span>
-                    <input type="text" (input)="formatFinancial($event, 'pricePerMeter'); calculateTotalPrice()" formControlName="pricePerMeter" class="form-control" placeholder="Auto calculates total">
+                    <span class="input-group-text bg-light">EGP</span>
+                    <input type="text" (input)="formatFinancial($event, 'pricePerMeter'); calculateTotalPrice()" formControlName="pricePerMeter" class="form-control" placeholder="">
                   </div>
                   @if (editForm.get('pricePerMeter')?.touched && editForm.get('pricePerMeter')?.errors?.['required']) {
                     <small class="text-danger d-block mt-1">Price per meter is required</small>
@@ -165,12 +167,14 @@
                 </div>
               }
 
-              <div [class]="isRent() ? 'col-md-8 animate__animated animate__fadeIn' : 'col-md-4'">
-                <label class="form-label fw-bold small text-dark">Total Price <span class="text-danger">*</span></label>
+              <!-- 🟢 حقل السعر الكلي (يتمدد لو سعر المتر اختفى، ومقفول فقط لو Primary) -->
+              <div [class]="!isPrimary() ? 'col-md-8 animate__animated animate__fadeIn' : 'col-md-4'">
+                <label class="form-label fw-bold small">Total Price <span class="text-danger">*</span></label>
                 <div class="input-group">
-                  <span class="input-group-text"[class.bg-danger-subtle]="!isRent()" [class.text-danger]="!isRent()"[class.bg-light]="isRent()">EGP</span>
+                  <span class="input-group-text  fw-bold ">EGP</span>
+                  <!-- جعل الحقل Readonly فقط لو Primary -->
                   <input type="text" (input)="formatFinancial($event, 'price'); onAmountChange()" formControlName="price" class="form-control" 
-                         [class.bg-light]="!isRent()" [class.fw-bold]="!isRent()" [readonly]="!isRent()" placeholder="1,000,000">
+                         [readonly]="isPrimary()" [class.bg-light]="isPrimary()" min="1000000" placeholder="1,000,000">
                 </div>
                 @if (editForm.get('price')?.touched && editForm.get('price')?.errors?.['required']) {
                   <small class="text-danger d-block mt-1">Total price is required</small>
@@ -324,11 +328,11 @@
               @if (isRent()) {
                 <div class="col-md-6">
                   <label class="small fw-bold">Monthly Rent Amount <span class="text-danger">*</span></label>
-                  <input type="text" (input)="formatFinancial($event, 'monthlyRent')" formControlName="monthlyRent" class="form-control shadow-sm border-danger">
+                  <input type="text" (input)="formatFinancial($event, 'monthlyRent')" formControlName="monthlyRent" class="form-control shadow-sm ">
                 </div>
                 <div class="col-md-6 animate__animated animate__fadeIn">
                   <label class="small fw-bold">Security Deposit <span class="text-danger">*</span></label>
-                  <input type="text" (input)="formatFinancial($event, 'securityDeposit')" formControlName="securityDeposit" class="form-control shadow-sm border-danger" min="0">
+                  <input type="text" (input)="formatFinancial($event, 'securityDeposit')" formControlName="securityDeposit" class="form-control shadow-sm " min="0">
                   
                   @if (editForm.get('securityDeposit')?.touched && editForm.get('securityDeposit')?.errors?.['required']) {
                     <small class="text-danger d-block mt-1 animate__animated animate__fadeIn">Security Deposit is required</small>
@@ -370,10 +374,10 @@
                           </div>
                         </div>
                         <div class="col-md-3">
-                          <label class="small fw-bold text-success">Quarterly Installment</label>
+                          <label class="small fw-bold ">Quarterly Installment</label>
                           <div class="input-group">
-                            <span class="input-group-text bg-success-subtle text-success border-success">EGP</span>
-                            <input type="text" (input)="formatFinancial($event, 'quarterInstallment')" formControlName="quarterInstallment" class="form-control shadow-sm border-success fw-bold text-success">
+                            <span class="input-group-text ">EGP</span>
+                            <input type="text" (input)="formatFinancial($event, 'quarterInstallment')" formControlName="quarterInstallment" class="form-control shadow-sm ">
                           </div>
                         </div>
                       </div>

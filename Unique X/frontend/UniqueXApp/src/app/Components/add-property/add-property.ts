@@ -148,29 +148,32 @@ filteredProjects: string[] = [];
   });
 
   this.propertyForm.get('listingType')?.valueChanges.subscribe(type => {
-    const priceControl = this.propertyForm.get('price');
-    const ppmControl = this.propertyForm.get('pricePerMeter');
-    const securityControl = this.propertyForm.get('securityDeposit');
-    
-    if (Number(type) === 1) { // 🟢 1 = Rent (إيجار)
-      priceControl?.setValidators([Validators.required, minAmountValidator(1)]);
+      const typeNum = Number(type);
+      const priceControl = this.propertyForm.get('price');
+      const ppmControl = this.propertyForm.get('pricePerMeter');
+      const securityControl = this.propertyForm.get('securityDeposit');
+
+      // 🟢 1. التعامل مع حقل "سعر المتر" (Primary فقط)
+      if (typeNum === 2) { 
+        ppmControl?.setValidators([Validators.required]);
+      } else {
+        ppmControl?.clearValidators();
+        ppmControl?.setValue(''); // تصفير الحقل لو غير النوع
+      }
+
+      // 🟢 2. التعامل مع السعر الإجمالي والتأمين (حسب الإيجار أو البيع)
+      if (typeNum === 1) { // إيجار
+        priceControl?.setValidators([Validators.required, minAmountValidator(1)]);
+        securityControl?.setValidators([Validators.required, minAmountValidator(0)]);
+      } else { // أي نوع بيع آخر
+        priceControl?.setValidators([Validators.required, minAmountValidator(1000000)]);
+        securityControl?.clearValidators();
+      }
       
-      ppmControl?.clearValidators();
-      ppmControl?.setValue('');
-      
-      securityControl?.setValidators([Validators.required, minAmountValidator(0)]);
-    } else { // 🟢 بيع أو مشاريع
-      priceControl?.setValidators([Validators.required, minAmountValidator(1000000)]);
-      
-      ppmControl?.setValidators([Validators.required]);
-      
-      securityControl?.clearValidators();
-    }
-    
-    priceControl?.updateValueAndValidity();
-    ppmControl?.updateValueAndValidity();
-    securityControl?.updateValueAndValidity();
-  });
+      priceControl?.updateValueAndValidity();
+      ppmControl?.updateValueAndValidity();
+      securityControl?.updateValueAndValidity();
+    });
 
   this.updateRegions(this.propertyForm.get('city')?.value);
 
@@ -202,6 +205,10 @@ this.propertyForm.get('price')?.valueChanges.subscribe(val => {
 isVilla(): boolean {
   return Number(this.propertyForm.get('propertyType')?.value) === 1;
 }
+
+isPrimary(): boolean {
+    return Number(this.propertyForm.get('listingType')?.value) === 2;
+  }
 
 // تعديل دالة التحقق المالي العامة لتشمل التأمين
 isValidFinance(): boolean {
@@ -616,10 +623,11 @@ validateFloorInput() {
 
   // 1. حساب السعر الكلي 
   calculateTotalPrice() {
+    if (!this.isPrimary()) return; // 🟢 لو مش Primary، متعملش أي حسابات للسعر
+
     const area = this.getPureNumber('area');
     const ppm = this.getPureNumber('pricePerMeter');
     if (area > 0 && ppm > 0) {
-      // تطبيق التقريب
       const total = this.roundAmount(area * ppm); 
       this.propertyForm.get('price')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
       if (this.isRent()) this.propertyForm.get('monthlyRent')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
