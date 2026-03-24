@@ -347,25 +347,66 @@ isUnderConstruction(): boolean {
     }
 
     for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    const file = files[i];
+    this.compressImage(file).then(compressedFile => {
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.selectedPhotos.update(prev =>[
-          ...prev, 
-          { 
-            file: file, 
-            preview: e.target.result, 
-            originalFile: file,             // حفظ الملف الأصلي للرجوع إليه
-            originalPreview: e.target.result, // حفظ العرض الأصلي
-            isWatermarked: false 
+        this.selectedPhotos.update(prev => [
+          ...prev,
+          {
+            file: compressedFile,
+            preview: e.target.result,
+            originalFile: compressedFile,
+            originalPreview: e.target.result,
+            isWatermarked: false
           }
         ]);
-        };
-      reader.readAsDataURL(file);
-    }
+      };
+      reader.readAsDataURL(compressedFile);
+    });
   }
 }
+ }
 
+// دالة الضغط الجديدة
+compressImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const maxWidth = 1920;
+    const quality = 0.75; // جودة 75% كافية جداً
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e: any) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // تصغير لو أكبر من 1920px
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressed = new File([blob], file.name, { type: 'image/jpeg' });
+            resolve(compressed);
+          } else {
+            resolve(file); // fallback للملف الأصلي
+          }
+        }, 'image/jpeg', quality);
+      };
+    };
+  });
+}
   
   // 🟢 دالة إضافة/إزالة العلامة المائية للصور الجديدة
   toggleWatermark(index: number) {
