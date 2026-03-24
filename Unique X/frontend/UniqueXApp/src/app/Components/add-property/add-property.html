@@ -166,12 +166,12 @@
                 }
               </div>
               
-              <!-- 🟢 حقل سعر المتر (يختفي في حالة الإيجار) -->
-              @if (!isRent()) {
+              <!-- 🟢 حقل سعر المتر (يظهر فقط في حالة الـ Primary) -->
+              @if (isPrimary()) {
                 <div class="col-md-4 animate__animated animate__fadeIn">
                   <label class="form-label fw-bold small text-dark">Price per Meter <span class="text-danger">*</span></label>
                   <div class="input-group">
-                    <span class="input-group-text bg-white">EGP</span>
+                    <span class="input-group-text bg-light">EGP</span>
                     <input type="text" (input)="formatFinancial($event, 'pricePerMeter'); calculateTotalPrice()" formControlName="pricePerMeter" class="form-control" placeholder="">
                   </div>
                   @if (propertyForm.get('pricePerMeter')?.touched && propertyForm.get('pricePerMeter')?.errors?.['required']) {
@@ -180,13 +180,14 @@
                 </div>
               }
 
-              <!-- 🟢 حقل السعر الكلي (يتمدد لو سعر المتر اختفى، ويبقى مقفول للقراءة بس لو بيع) -->
-              <div [class]="isRent() ? 'col-md-8 animate__animated animate__fadeIn' : 'col-md-4'">
-                <label class="form-label fw-bold small text-dark">Total Price <span class="text-danger">*</span></label>
+              <!-- 🟢 حقل السعر الكلي (يتمدد لو سعر المتر اختفى، ومقفول فقط لو Primary) -->
+              <div [class]="!isPrimary() ? 'col-md-8 animate__animated animate__fadeIn' : 'col-md-4'">
+                <label class="form-label fw-bold small">Total Price <span class="text-danger">*</span></label>
                 <div class="input-group">
-                  <span class="input-group-text" [class.bg-danger-subtle]="!isRent()" [class.text-danger]="!isRent()" [class.bg-light]="isRent()">EGP</span>
-                  <input type="text" (input)="formatFinancial($event, 'price'); onAmountChange()" formControlName="price" class="form-control" 
-                         [class.bg-light]="!isRent()" [class.fw-bold]="!isRent()" [readonly]="!isRent()" placeholder="1,000,000">
+                  <span class="input-group-text fw-bold ">EGP</span>
+                  <!-- جعل الحقل Readonly فقط لو Primary -->
+                  <input type="text" (input)="formatFinancial($event, 'price'); onAmountChange()" formControlName="price" class="form-control " 
+                         [readonly]="isPrimary()" [class.bg-light]="isPrimary()" min="1000000" placeholder="1,000,000">
                 </div>
                 @if (propertyForm.get('price')?.touched && propertyForm.get('price')?.errors?.['required']) {
                   <small class="text-danger d-block mt-1">Total price is required</small>
@@ -466,7 +467,7 @@
     </div>
     <div class="col-md-6 animate__animated animate__fadeIn">
       <label class="small fw-bold">Security Deposit <span class="text-danger">*</span></label>
-      <input type="text" (input)="formatFinancial($event, 'securityDeposit')" formControlName="securityDeposit" class="form-control shadow-sm border-danger" min="0">
+      <input type="text" (input)="formatFinancial($event, 'securityDeposit')" formControlName="securityDeposit" class="form-control shadow-sm" min="0">
       
       @if (propertyForm.get('securityDeposit')?.touched && propertyForm.get('securityDeposit')?.errors?.['required']) {
         <small class="text-danger d-block mt-1 animate__animated animate__fadeIn">Security Deposit is required</small>

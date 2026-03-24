@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core'; // تأكدي من وجود Input
+import { Component, Input,  Output, EventEmitter, inject } from '@angular/core'; // تأكدي من وجود Input
 import { CommonModule } from '@angular/common'; // مهم لاستخدام الـ Pipes مثل | number
 import { Property } from '../../Models/property.model';
 import { RouterModule } from '@angular/router'; 
@@ -18,6 +18,8 @@ import { GoogleAnalyticsService } from 'ngx-google-analytics';
 })
 export class PropertyCardComponent {
   @Input() property!: Property;
+  @Output() removedFromWishlist = new EventEmitter<number>(); 
+
   isLiked: boolean = false; 
   private propertyService = inject(PropertyService);
   private alertService = inject(AlertService);
@@ -86,21 +88,33 @@ handleContact(event: Event, type: 'whatsapp' | 'call') {
 
 
 onToggleWishlist(event: Event) {
-  event.stopPropagation();
+    event.stopPropagation();
 
-  if (!this.authService.loggedIn()) {
-    this.router.navigate(['/login']); // لو مش مسجل واديه للوجين فوراً ✅
-    return;
-  }
-  
-  this.propertyService.toggleWishlist(this.property.id).subscribe({
+    if (!this.authService.loggedIn()) {
+      this.router.navigate(['/login']); 
+      return;
+    }
+
+    // التغيير الفوري للون القلب (Optimistic Update) لتجربة مستخدم سريعة
+    this.isLiked = !this.isLiked;
+    this.property.isFavorite = this.isLiked;
+
+    // لو إحنا في صفحة الويشليست والقلب اتشال، نبلغ الصفحة فوراً عشان تخفيه
+    if (!this.isLiked && this.router.url.includes('wishlist')) {
+      this.removedFromWishlist.emit(this.property.id);
+    }
+    
+    this.propertyService.toggleWishlist(this.property.id).subscribe({
       next: (res: any) => {
-        this.isLiked = res.isFavorite; 
-        
-        this.property.isFavorite = res.isFavorite;
+        // التأكيد من الباك إند
+        const actualState = res.isFavorite ?? res.IsFavorite;
+        this.isLiked = actualState;
+        this.property.isFavorite = actualState;
       },
       error: (err) => {
-        console.error('Login required or server error');
+        // لو حصل خطأ في السيرفر، نرجع القلب زي ما كان
+        this.isLiked = !this.isLiked;
+        this.property.isFavorite = this.isLiked;
       }
     });
   }
