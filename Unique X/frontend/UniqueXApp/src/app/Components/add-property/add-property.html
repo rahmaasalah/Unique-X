@@ -458,6 +458,7 @@
   
   @if (isRent()) {
     <div class="col-md-6 animate__animated animate__fadeIn">
+      <!-- 💡 غيري كلمة propertyForm لـ editForm لو إنتي في صفحة التعديل -->
       <label class="small fw-bold">Monthly Rent Amount <span class="text-danger">*</span></label>
       <input type="text" (input)="formatFinancial($event, 'monthlyRent')" formControlName="monthlyRent" class="form-control shadow-sm border-danger" min="0">
       <small class="text-danger" style="font-size: 0.7rem;">This should match the total price field above</small>

@@ -122,7 +122,7 @@ filteredProjects: string[] = [];
       hasParking: [false], hasBalcony: [false], isFurnished: [false],
       isFirstOwner: [false], isLegalReconciled: [false], isLicensed: [false],
       hasWaterMeter: [false], hasElectricityMeter: [false], hasGasMeter: [false], hasLandShare: [false],
-      pricePerMeter: ['', Validators.required],
+      pricePerMeter: [''],
       //downPaymentPercentage: ['']
     });
 
@@ -247,6 +247,11 @@ filteredProjects: string[] = [];
     return Number(val.toString().replace(/,/g, ''));
   }
 
+   convertArabicToEnglish(str: string): string {
+    const arabicNumbers =['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    return str.replace(/[٠-٩]/g, (char) => arabicNumbers.indexOf(char).toString());
+  }
+
   isSecurityExceeded(): boolean {
     const totalPrice = this.getPureNumber('price');
     const security = this.getPureNumber('securityDeposit');
@@ -274,26 +279,24 @@ filteredProjects: string[] = [];
   }
 
   formatFinancial(event: any, controlName: string) {
-    let input = event.target.value;
+    let input = this.convertArabicToEnglish(event.target.value); // 🟢 تطبيق الترجمة
     let pureDigits = input.replace(/[^0-9]/g, '');
-    if (pureDigits === '') { this.editForm.get(controlName)?.setValue(''); return; }
+    if (pureDigits === '') { (this.editForm).get(controlName)?.setValue(''); return; }
     let formatted = Number(pureDigits).toLocaleString('en-US');
-    this.editForm.get(controlName)?.setValue(formatted, { emitEvent: false });
+    (this.editForm).get(controlName)?.setValue(formatted, { emitEvent: false });
   }
 
   formatInteger(event: any, controlName: string) {
-    let input = event.target.value;
+    let input = this.convertArabicToEnglish(event.target.value);
     let pureDigits = input.replace(/[^0-9]/g, '');
-    this.editForm.get(controlName)?.setValue(pureDigits, { emitEvent: false });
+    (this.editForm).get(controlName)?.setValue(pureDigits, { emitEvent: false });
   }
 
   formatPercentage(event: any, controlName: string) {
-    let input = event.target.value;
+    let input = this.convertArabicToEnglish(event.target.value);
     let pureDigits = input.replace(/[^0-9.]/g, '');
-    if ((pureDigits.match(/\./g) ||[]).length > 1) {
-      pureDigits = pureDigits.substring(0, pureDigits.length - 1);
-    }
-    this.editForm.get(controlName)?.setValue(pureDigits, { emitEvent: false });
+    if ((pureDigits.match(/\./g) ||[]).length > 1) pureDigits = pureDigits.substring(0, pureDigits.length - 1);
+    (this.editForm).get(controlName)?.setValue(pureDigits, { emitEvent: false });
   }
 
   // 🟢 دالة التقريب (لأقرب 1000)
@@ -323,18 +326,22 @@ filteredProjects: string[] = [];
   }
 
   // ================== 🟢 دوال التنسيق الخاصة بالمصفوفة ==================
-  formatFinancialArray(event: any, controlName: string, index: number) {
-    let pureDigits = event.target.value.replace(/[^0-9]/g, '');
+ formatFinancialArray(event: any, controlName: string, index: number) {
+    let input = this.convertArabicToEnglish(event.target.value);
+    let pureDigits = input.replace(/[^0-9]/g, '');
     let formatted = pureDigits ? Number(pureDigits).toLocaleString('en-US') : '';
     this.paymentPlans.at(index).get(controlName)?.setValue(formatted, { emitEvent: false });
   }
 
+
   formatIntegerArray(event: any, controlName: string, index: number) {
-    let pureDigits = event.target.value.replace(/[^0-9]/g, '');
+    let input = this.convertArabicToEnglish(event.target.value);
+    let pureDigits = input.replace(/[^0-9]/g, '');
     this.paymentPlans.at(index).get(controlName)?.setValue(pureDigits, { emitEvent: false });
   }
 
   formatPercentageArray(event: any, controlName: string, index: number) {
+    let input = this.convertArabicToEnglish(event.target.value);
     let pureDigits = event.target.value.replace(/[^0-9.]/g, '');
     if ((pureDigits.match(/\./g) ||[]).length > 1) pureDigits = pureDigits.substring(0, pureDigits.length - 1);
     this.paymentPlans.at(index).get(controlName)?.setValue(pureDigits, { emitEvent: false });

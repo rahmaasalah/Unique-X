@@ -322,13 +322,14 @@
             </div>
 
             <!-- القسم السادس: الدفع -->
-            <<!-- القسم السادس: الدفع -->
+           <!-- القسم السادس: الدفع -->
 <h5 class="fw-bold border-bottom pb-2 mb-4 text-danger"><i class="bi bi-wallet2 me-2"></i>Pricing & Payment Information</h5>
 
 <div class="row g-3 mb-4 align-items-start">
   
   @if (isRent()) {
     <div class="col-md-6 animate__animated animate__fadeIn">
+      <!-- 💡 غيري كلمة propertyForm لـ editForm لو إنتي في صفحة التعديل -->
       <label class="small fw-bold">Monthly Rent Amount <span class="text-danger">*</span></label>
       <input type="text" (input)="formatFinancial($event, 'monthlyRent')" formControlName="monthlyRent" class="form-control shadow-sm border-danger" min="0">
       <small class="text-danger" style="font-size: 0.7rem;">This should match the total price field above</small>
