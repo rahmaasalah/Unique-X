@@ -30,7 +30,7 @@ currentYear = new Date().getFullYear();
 isSubmitting = false;
 
   regionsMapping: any = {
-  1: ['Zamalek', 'El-Qourba', 'Nasr city'], // Cairo
+  1: ['Sheikh Zayed', 'Green belt', '6th of October', 'North Expansions', 'October Gardens', 'Eastern Expansions', 'New Cairo'], // Cairo
   2: [
     'zizinia', 'Janaklis', 'Gliem', 'Fleming', 'San Stefano', 'Shods', 
     'Elshalalat', 'Wabur al-miyah', 'Al-Ibrahimiya', 'Al-Manshiyya', 
@@ -49,7 +49,18 @@ filteredRegions: string[] = [];
 
 projectsMapping: any = {
   1: { // Cairo
-    'any': ['Twin towers', 'Valore smouha', 'Valore antoniadis', 'East towers']
+    'Sheikh Zayed' : ['Village West-Dorra', 'Elkarma Kay', 'Zed West-Ora', 'Skyramp-Upwyde', 'La Colina-Capital Hills', 'Ivoire West-Pre', 'Etapa-City Edge', 'Allegria-Sodic', 'Westown-Sodic', ' Bura Residence-Kafafy', 'Terrace-Hdp', '205-Arkan Palm', 'Elite West-Taj', 'Bliss Gate-Torec', 'The Harv-Dal', 'Genova West-Eastren', 'Jazal-Legacy Estates', 'Bahja-Symphony', 'Coy-Voya', 'Lien-Elysium', 'Belva-Karnak', 'Rovan-Epd', 'Guira-Kaia', 'Pavia-Taj', 'Cloudside-Hills', 'Civ West-Civilia', 'Bona Nova-Ad', 'Levent-El Diwanya', 'White Residence-Pledge', 'La Quinta-Rhd', 'Calma-Leaders', 'Via-Eagles', 'D.Mile-District 4', 'Zia Park-Hills', 'Rewaya-Siac', 'Rouh Zayed-Al Amaken'],
+    'Green belt' : ['One 50 El-Gabry','Zg2-Zg','Montania Park-Everst View','T pearl-Torec','Novella-Al Karma','Stay-Zg','Tabah West-Zg','Upove-Contact','Zayard Elite-Palmier','El Patio Vera-La Vista','Levels-Duens', 'West End','Green Plaza', 'Vert-Palmier','S7n Shades-Zg', 'Yuva-Urban Edge', 'Lake West 5-Cairo Capital', 'Menorca-Mardev', 'Montania Gardens', 'Lake West 4-Cairo Capital', 'Montania-Everst view','Ira-El Gabry', 'The 8-El Gabry', 'West Line-Living Lines', 'Isola Villas-El Masria', 'Ladera Heights-Merath','Roudy-Zaya', 'Parkwoods-Malvern', 'Solimar', 'Moon Hills 5-Sakan', 'Ladera Rose-Merath', 'Kings Way-Mountain View'],
+    '6th of October' : ['Ever-Cred', 'O/Nine-Miqqat','Jazebeya-Upwyde', 'Pyramids City 5', 'West Clay-Remal', 'Stay`n-A plus', 'Hayah-Jawad'],
+    'North Expansions' : ['Rafts-The Ark', 'Elm Tree-Elm', 'One 33-Badreldin', 'Westdays-Ilcazar', 'ICity-Mountain View', 'October Plaza-Sodic', 'Diar 2-Tameer', 'Kayan-Badreldin', 'Nyoum October-Adh', 'Boulevard Hiils-Al Amar', 'Azalea-Egy Dev', 'Abha-Srd', 'Rayat-Malaz', 'Villaria-Mirad', 'M Apartments-Mirad', 'Murooj'],
+    'October Gardens' : ['kite-Centrada', ' Belong-Centrada', 'Aqmar-Kayan', 'Tesla Residence-Tesla', 'Flw-Zg', 'Darvell-White Eagle', 'Tabeaa-Nasdaq', 'O west-Orascom', 'Ashgar City-Igi', 'River-West Way', 'Rock Eden-El Batal', 'Ixora-Jora', 'Westera-Kastorai', 'Seven-Harby', 'Sun Capital-Arabia Holding', 'Zat-Voya', 'Zaya', 'Solin-Levels', 'Jiran-A Plus', 'Vienna-Dream Hills', 'Beta Residence-Beta Egypt', 'Badya-Palm Hills', 'Mountain View kings way', 'Badya'],
+    'Eastern Expansions' : ['Cleopatra Square-Cleopatra', 'Joya-Tcc', 'Nmq-Melee', 'keeva-Al Ahly Sabbour', 'Swan Lake West-Hassan Allam', 'Palm Parks-Palm Hills', 'Upville-Wadi El Nile', 'WestVille-Binbaz 9 El Masria', '31 West-M Squared', 'Club Hills-Hpd', 'Villagio-Modon', 'Tawny-Hyde Park', 'Signature-Hyde Park', 'Garden Lakes-Hyde Park', 'The Crown-Palm Hills', 'Px-Palm Hills', 'October Park-Mountain View', 'Joulz-Inertia', 'Midgard-Orbit', 'Giza Terracas-Marakez', 'West Leaves-El Attal', 'Hadaba-Pre', 'Nyoum Pyarmids-Adh', 'Brix-Inertia', 'Fifty 7-Inertia'],
+    'New Cairo' : ['Swan Lake Residences-Hassan Allam', 'Sa`ada-Horizon', 'Capital Gardens-Palm Hills', 'Palm Hills New Cairo', '97 Hills-Palm Hills', 'Patio Oro-La Vista', 'Patio Hills-La vista', 'Hyde park New cairo', 'Solana East-Ora', 'Zed East-Ora', 'Hyde park Central', 'Patio Vida-La Vista', 'Patio Riva-La Vista', 'Crescent Walk-Marakez', 'Sa`ada Boutique-Horizon', 'District 5-Marakez', 'Kairo-One & Waterway', 'Hyde Park Views', 'Katameya Creeks-Starlight', 'El-Patio Town - La Vista', 'Al Patio 7-La Vista', 'W Signature-The Waterway', 'The View-The Waterway', 'Villette-Sodic', 'Regent`s Square - Al Dawlia', 'Fifth Square - Marasem', 'Waterway 1-The Waterway', 'Taj City-Madinet Masr', 'Stei8ht-Lmd', 'Creek Town-II Cazar',
+      'Yellow-Urbnlanes', 'Address East-Dorra', 'Telal East-Roya', 'ICity New Cairo-Mountain View', 'Mist-M Squared', 'Trio Gardens-M Squared', 'Sarai-Madinet Masr', 'Tierra-Sed', 'Glen-II Cazar', 'Roya', 'Cred-Ever', 'Midtown East-Better Home', 'The Crest-|| Cazar', 'Mountain View Hyde park', 'City Gate-Qatari Diar', 'IVoire East-Pre', 'Promenade-Wadi Degla', 'The WaterMarQ-The MarQ', 'Azad-Tameer', 'Noi-Urbnlanes', 'Galleria Moon Valley-Arabia Holding', 'Jayd-Sed', 'Mountain View 1.1', 'Ashrafieh-Arabia Holding', 'Jw Marriott Residences-Al Jazi', 'White Residence-Upwyde', 'Stone park-Royal', 'Stone Residence-Pre', 'Brooks-Pre', 'SQ1-Hdp', 'The Median-Egy Gab', 'Nile Boulevard-Nile', 'Eelaf-Erg', 'Life Wise-Eons', 'Linwood-Erg',
+      'Livair-Erg', 'Zeya-El Baron', 'Orla-ICapital', 'Peerage-Al riyadh Misr', 'Acasa Mia-Dar Al Alamia', 'Hope Memaar Al Ashraf', 'Notion-TownWriters', 'The lark-Tamayoz', 'La Colina-Capital Hills', 'Eastville - Ajna', 'Solay-Living Yards', 'Cavali-Al Basiony', 'Blue Tree-Sky Ad', 'Zomra East-Nations of Sky', 'The Red-Abm', 'Greya-El Baron', 'Kin-Imarra', 'Cattleya Arabco', 'Aster-Times', ' Boutique Village-Modon', 'Nurai-Mercon', 'Amara-New Plan', 'Isola Centra-El Masria', 'The Residence-Salam', 'True-UC', 'Avelin-Times', 'Garnet-Jadeer', '90 Avenue-Tabarak', 'The Ark', 'J East-Juzur', 'Palm East-Tg', 'Begonia-Menassat', 'Blanks-Manaj', 'Sephora Heights-Sephora', 'Jada & Blue-Aspect', 'Rock Vera-Al Batal', 'Jadie-Concrete',
+      'The Icon Gardens-Style Home', 'Valencia Valley-Ncb', 'Silvia-Ted', 'Yardin-Mass', 'Rivali-Samco Holding', 'Century city-Vantage', 'Amorada-Afaaq', 'Elen-Concrete', 'Wuud-Tharaa', 'Dijar-Azzar Reedy', 'Maliv-kulture', 'Noll-Kleek', 'Acasa Alma-Dar Al Alamia', 'Najm-Royal', 'Jiwar-Concrete', 'Home Residence-Home Town', 'Cairova-Rna', 'Lusail-Margins', 'Nest N Developments', 'Alca-Sag', 'Grounds - One / One'
+     ]
+
   },
   2: { // Alexandria
     'any': [
@@ -248,6 +259,7 @@ filteredProjects: string[] = [];
   }
 
    convertArabicToEnglish(str: string): string {
+    if (!str) return '';
     const arabicNumbers =['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     return str.replace(/[٠-٩]/g, (char) => arabicNumbers.indexOf(char).toString());
   }
@@ -279,24 +291,24 @@ filteredProjects: string[] = [];
   }
 
   formatFinancial(event: any, controlName: string) {
-    let input = this.convertArabicToEnglish(event.target.value); // 🟢 تطبيق الترجمة
+    let input = this.convertArabicToEnglish(event.target.value);
     let pureDigits = input.replace(/[^0-9]/g, '');
-    if (pureDigits === '') { (this.editForm).get(controlName)?.setValue(''); return; }
+    if (pureDigits === '') { this.editForm.get(controlName)?.setValue(''); return; }
     let formatted = Number(pureDigits).toLocaleString('en-US');
-    (this.editForm).get(controlName)?.setValue(formatted, { emitEvent: false });
+    this.editForm.get(controlName)?.setValue(formatted, { emitEvent: false });
   }
 
   formatInteger(event: any, controlName: string) {
     let input = this.convertArabicToEnglish(event.target.value);
     let pureDigits = input.replace(/[^0-9]/g, '');
-    (this.editForm).get(controlName)?.setValue(pureDigits, { emitEvent: false });
+    this.editForm.get(controlName)?.setValue(pureDigits, { emitEvent: false });
   }
 
   formatPercentage(event: any, controlName: string) {
     let input = this.convertArabicToEnglish(event.target.value);
     let pureDigits = input.replace(/[^0-9.]/g, '');
     if ((pureDigits.match(/\./g) ||[]).length > 1) pureDigits = pureDigits.substring(0, pureDigits.length - 1);
-    (this.editForm).get(controlName)?.setValue(pureDigits, { emitEvent: false });
+    this.editForm.get(controlName)?.setValue(pureDigits, { emitEvent: false });
   }
 
   // 🟢 دالة التقريب (لأقرب 1000)
@@ -342,7 +354,7 @@ filteredProjects: string[] = [];
 
   formatPercentageArray(event: any, controlName: string, index: number) {
     let input = this.convertArabicToEnglish(event.target.value);
-    let pureDigits = event.target.value.replace(/[^0-9.]/g, '');
+    let pureDigits = input.replace(/[^0-9.]/g, '');
     if ((pureDigits.match(/\./g) ||[]).length > 1) pureDigits = pureDigits.substring(0, pureDigits.length - 1);
     this.paymentPlans.at(index).get(controlName)?.setValue(pureDigits, { emitEvent: false });
   }
@@ -420,9 +432,18 @@ filteredProjects: string[] = [];
   updateProjectsList(cId?: number, rName?: string) {
     const id = cId || Number(this.editForm.get('city')?.value);
     const reg = rName || this.editForm.get('region')?.value;
-    if (id === 1 || id === 2) this.filteredProjects = this.projectsMapping[id]?.['any'] ||[];
-    else if (id === 3) this.filteredProjects = this.projectsMapping[3]?.[reg] ||[];
-    else this.filteredProjects =[];
+    
+    if (id === 1 || id === 3) {
+      this.filteredProjects = this.projectsMapping[id]?.[reg] ||[];
+    } 
+    else if (id === 2) {
+      this.filteredProjects = this.projectsMapping[id]?.['any'] ||[];
+    } 
+    else {
+      this.filteredProjects =[];
+    }
+    
+    this.editForm.get('projectName')?.setValue('');
   }
 
   showDeliveryMenu(): boolean {
@@ -475,11 +496,9 @@ filteredProjects: string[] = [];
     }
   }
 
-  // 🟢 دالة إضافة/إزالة العلامة المائية للصور الجديدة
   toggleWatermark(index: number) {
     const photoObj = this.selectedPhotos()[index];
 
-    // 1. حالة الإزالة
     if (photoObj.isWatermarked) {
       this.selectedPhotos.update(photos => {
         const newPhotos = [...photos];
@@ -491,7 +510,6 @@ filteredProjects: string[] = [];
       return;
     }
 
-    // 2. حالة الإضافة
     this.alertService.showLoading('Applying Logo...');
 
     const canvas = document.createElement('canvas');
@@ -510,22 +528,18 @@ filteredProjects: string[] = [];
       watermark.src = 'logo.png'; // 🟢 مسار اللوجو الشفاف بتاعك
       
       watermark.onload = () => {
-        // 🟢 الحجم: 50% من عرض الصورة (هيكون كبير وفي المركز)
         const wmWidth = img.width * 0.50; 
         const wmHeight = watermark.height * (wmWidth / watermark.width);
         
-        // 🟢 المكان: في المنتصف تماماً أفقياً ورأسياً
         const x = (img.width - wmWidth) / 2;
         const y = (img.height - wmHeight) / 2;
 
-        // 🟢 الشفافية: 50% عشان ميعميش تفاصيل الشقة
         ctx.globalAlpha = 0.5; 
         ctx.drawImage(watermark, x, y, wmWidth, wmHeight);
         ctx.globalAlpha = 1.0; 
 
         canvas.toBlob((blob) => {
           if (blob) {
-            // 🟢 التصدير كـ JPEG للحفاظ على مساحة السيرفر وسرعة الموقع
             const newFile = new File([blob], `watermarked_${photoObj.originalFile.name}`, { type: 'image/jpeg' });
             const newPreview = canvas.toDataURL('image/jpeg', 0.85); 
 
@@ -569,112 +583,138 @@ filteredProjects: string[] = [];
   isProject() { const t = Number(this.editForm.get('listingType')?.value); return t === 2 || t === 3; }
   isInstallment() { return this.editForm.get('paymentMethod')?.value === 'Installment'; }
 
-  // 🟢 حل مشكلة التكرار ومطابقة صفحة الإضافة
   onSubmit() {
     if (this.isSubmitting) return;
-    if (this.editForm.valid) {
-      this.isSubmitting = true;
-      this.alertService.showLoading('Saving changes...');
-      
-      const formData = new FormData();
-      const f = this.editForm.value;
 
-      formData.append('Title', f.title);
-      formData.append('Description', f.description);
-      formData.append('ProjectName', f.projectName || '');
-      formData.append('Code', f.code || '');
-      formData.append('Price', f.price.toString().replace(/,/g, ''));
-      formData.append('Area', f.area.toString().replace(/,/g, ''));
-      formData.append('City', f.city.toString());
-      formData.append('Region', f.region);
-      formData.append('ListingType', f.listingType.toString());
-      formData.append('PropertyType', f.propertyType.toString());
+    if (this.editForm.invalid) {
+        this.editForm.markAllAsTouched(); 
+        this.alertService.error("Please fill all required fields correctly.");
+        return;
+    }
 
-      formData.append('GroundRooms', (f.groundRooms || 0).toString());
-      formData.append('GroundBaths', (f.groundBaths || 0).toString());
-      formData.append('GroundReception', (f.groundReception || 0).toString());
-      formData.append('FirstRooms', (f.firstRooms || 0).toString());
-      formData.append('FirstBaths', (f.firstBaths || 0).toString());
-      formData.append('FirstReception', (f.firstReception || 0).toString());
-      formData.append('SecondRooms', (f.secondRooms || 0).toString());
-      formData.append('SecondBaths', (f.secondBaths || 0).toString());
-      formData.append('SecondReception', (f.secondReception || 0).toString());
+    this.isSubmitting = true;
+    this.alertService.showLoading('Saving changes...');
+    
+    const formData = new FormData();
+    const f = this.editForm.value;
 
-      formData.append('AreaType', f.areaType?.toString() || '0');
-      formData.append('VillaCategory', f.villaCategory?.toString() || '0');
-      if (f.villaSubType !== null) {
-        formData.append('VillaSubType', f.villaSubType.toString());
-      }
+    // 🟢 دالة السحر: بتغسل أي رقم جاي من الموبايل (بتحول العربي لإنجليزي وتمسح الفواصل والمسافات)
+    const cleanNum = (val: any) => {
+      if (val === null || val === undefined || val === '') return '0';
+      let str = val.toString();
+      const arabicNumbers =['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+      str = str.replace(/[٠-٩]/g, (char: string) => arabicNumbers.indexOf(char).toString());
+      return str.replace(/[, ]/g, ''); 
+    };
 
-      formData.append('HasPool', (f.hasPool || false).toString());
-      formData.append('HasGarden', (f.hasGarden || false).toString());
-      formData.append('HasLandShare', (f.hasLandShare || false).toString());
-      formData.append('IsLicensed', (f.isLicensed || false).toString());
-      formData.append('IsLegalReconciled', (f.isLegalReconciled || false).toString());
-      formData.append('IsFirstOwner', (f.isFirstOwner || false).toString());
-      formData.append('HasMasterRoom', (f.hasMasterRoom || false).toString());
-      formData.append('HasHotelEntrance', (f.hasHotelEntrance || false).toString());
-      formData.append('HasSecurity', (f.hasSecurity || false).toString());
-      formData.append('HasParking', (f.hasParking || false).toString());
-      formData.append('HasBalcony', (f.hasBalcony || false).toString());
-      formData.append('HasElectricityMeter', (f.hasElectricityMeter || false).toString());
-      formData.append('HasWaterMeter', (f.hasWaterMeter || false).toString());
-      formData.append('HasGasMeter', (f.hasGasMeter || false).toString());
+    // إرسال الحقول النصية
+    formData.append('Title', f.title || '');
+    formData.append('Description', f.description || '');
+    formData.append('ProjectName', f.projectName || ''); 
+    formData.append('Code', f.code || '');
+    formData.append('City', f.city.toString());
+    formData.append('Region', f.region || '');
+    formData.append('ListingType', f.listingType.toString());
+    formData.append('PropertyType', f.propertyType.toString());
+    formData.append('Finishing', (f.finishing || 2).toString());
+    formData.append('PaymentMethod', f.paymentMethod || 'Full Cash');
+    formData.append('DeliveryStatus', (f.deliveryStatus || 0).toString());
+    formData.append('DistanceFromLandmark', f.distanceFromLandmark || '');
+    formData.append('View', f.view || '');
 
-      formData.append('PaymentMethod', f.paymentMethod || 'Full Cash');
-      if (f.paymentMethod === 'Installment') {
-        this.paymentPlans.controls.forEach((plan, index) => {
-          const y = plan.get('installmentYears')?.value || '1';
-          const dp = plan.get('downPayment')?.value.toString().replace(/,/g, '') || '0';
-          const q = plan.get('quarterInstallment')?.value.toString().replace(/,/g, '') || '0';
+    // 🟢 إرسال الأرقام بعد غسيلها بـ cleanNum
+    formData.append('Price', cleanNum(f.price));
+    formData.append('Area', cleanNum(f.area));
+    formData.append('Rooms', cleanNum(f.rooms));
+    formData.append('Bathrooms', cleanNum(f.bathrooms));
+    formData.append('ReceptionPieces', cleanNum(f.receptionPieces));
+    
+    formData.append('Floor', cleanNum(f.floor));
+    formData.append('TotalFloors', cleanNum(f.totalFloors));
+    formData.append('ApartmentsPerFloor', cleanNum(f.apartmentsPerFloor));
+    formData.append('ElevatorsCount', cleanNum(f.elevatorsCount));
 
-          formData.append(`PaymentPlans[${index}].InstallmentYears`, y.toString());
-          formData.append(`PaymentPlans[${index}].DownPayment`, dp.toString());
-          formData.append(`PaymentPlans[${index}].QuarterInstallment`, q.toString());
-        });
-      }
-      formData.append('SecurityDeposit', (f.securityDeposit || '').toString().replace(/,/g, '') || '0');
-      formData.append('MonthlyRent', (f.monthlyRent || '').toString().replace(/,/g, '') || '0');
+    formData.append('GroundRooms', cleanNum(f.groundRooms));
+    formData.append('GroundBaths', cleanNum(f.groundBaths));
+    formData.append('GroundReception', cleanNum(f.groundReception));
+    formData.append('FirstRooms', cleanNum(f.firstRooms));
+    formData.append('FirstBaths', cleanNum(f.firstBaths));
+    formData.append('FirstReception', cleanNum(f.firstReception));
+    formData.append('SecondRooms', cleanNum(f.secondRooms));
+    formData.append('SecondBaths', cleanNum(f.secondBaths));
+    formData.append('SecondReception', cleanNum(f.secondReception));
 
-      formData.append('Floor', (f.floor || 0).toString());
-      formData.append('TotalFloors', (f.totalFloors || 0).toString());
-      if (this.isUnderConstruction()) {
-        formData.append('BuildYear', '0');
-      } else {
-        formData.append('BuildYear', (f.buildYear || '').toString());
-      }
-      formData.append('Finishing', (f.finishing || 2).toString());
-      formData.append('Rooms', (f.rooms || 0).toString());
-      formData.append('Bathrooms', (f.bathrooms || 0).toString());
-      formData.append('ReceptionPieces', (f.receptionPieces || 0).toString());
-      formData.append('DistanceFromLandmark', f.distanceFromLandmark || '');
-      formData.append('View', f.view || '');
-      formData.append('ApartmentsPerFloor', (f.apartmentsPerFloor || 1).toString());
-      formData.append('ElevatorsCount', (f.elevatorsCount || 0).toString());
+    formData.append('AreaType', f.areaType?.toString() || '0');
+    formData.append('VillaCategory', f.villaCategory?.toString() || '0');
+    if (f.villaSubType !== null) {
+      formData.append('VillaSubType', f.villaSubType.toString());
+    }
 
-      formData.append('DeliveryStatus', (f.deliveryStatus || 0).toString());
-      if (f.deliveryYear !== null && f.deliveryYear !== '') {
-        formData.append('DeliveryYear', f.deliveryYear.toString());
-      }
+    formData.append('HasPool', (f.hasPool || false).toString());
+    formData.append('HasGarden', (f.hasGarden || false).toString());
+    formData.append('HasLandShare', (f.hasLandShare || false).toString());
+    formData.append('IsLicensed', (f.isLicensed || false).toString());
+    formData.append('IsLegalReconciled', (f.isLegalReconciled || false).toString());
+    formData.append('IsFirstOwner', (f.isFirstOwner || false).toString());
+    formData.append('HasMasterRoom', (f.hasMasterRoom || false).toString());
+    formData.append('HasHotelEntrance', (f.hasHotelEntrance || false).toString());
+    formData.append('HasSecurity', (f.hasSecurity || false).toString());
+    formData.append('HasParking', (f.hasParking || false).toString());
+    formData.append('HasBalcony', (f.hasBalcony || false).toString());
+    formData.append('HasElectricityMeter', (f.hasElectricityMeter || false).toString());
+    formData.append('HasWaterMeter', (f.hasWaterMeter || false).toString());
+    formData.append('HasGasMeter', (f.hasGasMeter || false).toString());
 
-      if (this.newMainPhotoIndex !== null) formData.append('MainPhotoIndex', this.newMainPhotoIndex.toString());
-      this.selectedPhotos().forEach(p => formData.append('Photos', p.file));
+    if (f.paymentMethod === 'Installment') {
+      this.paymentPlans.controls.forEach((plan, index) => {
+        const y = cleanNum(plan.get('installmentYears')?.value);
+        const dp = cleanNum(plan.get('downPayment')?.value);
+        const q = cleanNum(plan.get('quarterInstallment')?.value);
 
-      this.propertyService.updateProperty(this.propertyId, formData).subscribe({
-        next: () => { 
-          this.alertService.close(); 
-          this.alertService.success('Saved!'); 
-          this.router.navigate(['/my-properties']); 
-        },
-        error: () => { 
-          this.alertService.close(); 
-          this.isSubmitting = false; 
-          this.alertService.error('Error while saving'); 
-        }
+        formData.append(`PaymentPlans[${index}].InstallmentYears`, y);
+        formData.append(`PaymentPlans[${index}].DownPayment`, dp);
+        formData.append(`PaymentPlans[${index}].QuarterInstallment`, q);
       });
     }
-  }
+    
+    formData.append('SecurityDeposit', cleanNum(f.securityDeposit));
+    formData.append('MonthlyRent', cleanNum(f.monthlyRent));
 
+    if (this.isUnderConstruction()) {
+      formData.append('BuildYear', '0'); 
+    } else {
+      formData.append('BuildYear', cleanNum(f.buildYear));
+    }
+
+    if (f.deliveryYear !== null && f.deliveryYear !== '') {
+      formData.append('DeliveryYear', cleanNum(f.deliveryYear));
+    }
+
+    if (this.newMainPhotoIndex !== null) formData.append('MainPhotoIndex', this.newMainPhotoIndex.toString());
+    this.selectedPhotos().forEach(p => formData.append('Photos', p.file));
+
+    this.propertyService.updateProperty(this.propertyId, formData).subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success('Property Updated Successfully!');
+        this.router.navigate(['/my-properties']);
+      },
+      error: (err) => {
+        this.alertService.close();
+        this.isSubmitting = false;
+        
+        let errorMsg = 'Error while saving. Please check all fields.';
+        if (err.error) {
+          if (typeof err.error === 'string') errorMsg = err.error;
+          else if (err.error.title) errorMsg = err.error.title; 
+          else if (err.error.errors) errorMsg = JSON.stringify(err.error.errors);
+        }
+        
+        console.error("Backend Error:", err);
+        this.alertService.error(errorMsg, 'Update Failed');
+      }
+    });
+  }
   updateCounter(name: string, amt: number) {
     const ctrl = this.editForm.get(name);
     const total = this.editForm.get('totalFloors')?.value || 0;
