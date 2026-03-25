@@ -29,7 +29,7 @@ namespace Unique_X.DTOs
         public bool? HasBalcony { get; set; }
         public bool? IsFurnished { get; set; }
         public string? PaymentMethod { get; set; } // "Cash" or "Installment"
-        public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
+        //public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
         public int? City { get; set; }
         public string? Region { get; set; }
         public string? Address { get; set; }
@@ -43,9 +43,10 @@ namespace Unique_X.DTOs
         public bool? HasElectricityMeter { get; set; } // عداد كهرباء
         public bool? HasGasMeter { get; set; }
         public bool? HasLandShare { get; set; }
-        public decimal? DownPayment { get; set; }        // المقدم
-        public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
+        //public decimal? DownPayment { get; set; }        // المقدم
+        //public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
         public decimal? SecurityDeposit { get; set; }    // مبلغ التأمين (للإيجار)
+        public List<PaymentPlanDto>? PaymentPlans { get; set; }
         public decimal? MonthlyRent { get; set; }
         public string? Code { get; set; } // AR#123
 

@@ -76,6 +76,7 @@ projectName?: string;
   // المميزات الجديدة
   hasPool: boolean;
   hasGarden: boolean;
+  paymentPlans?: any
 }
 
 export interface Photo {

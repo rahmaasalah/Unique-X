@@ -42,7 +42,7 @@ namespace Unique_X.DTOs
         public bool HasBalcony { get; set; }
         public bool IsFurnished { get; set; }
         public string PaymentMethod { get; set; } // "Cash" or "Installment"
-        public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
+       // public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
         public string ListingType { get; set; }
         public string PropertyType { get; set; }
         public DeliveryStatus DeliveryStatus { get; set; } = DeliveryStatus.Ready;
@@ -52,9 +52,10 @@ namespace Unique_X.DTOs
         public bool? HasElectricityMeter { get; set; } // عداد كهرباء
         public bool? HasLandShare { get; set; }
         public bool? HasGasMeter { get; set; }
-        public decimal? DownPayment { get; set; }        // المقدم
-        public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
+        //public decimal? DownPayment { get; set; }        // المقدم
+        //public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
         public decimal? SecurityDeposit { get; set; }    // مبلغ التأمين (للإيجار)
+        public List<PaymentPlanDto>? PaymentPlans { get; set; }
         public decimal? MonthlyRent { get; set; }
         public string? Code { get; set; } // AR#123
         public FinishingType Finishing { get; set; }
@@ -118,5 +119,12 @@ namespace Unique_X.DTOs
         public int? MinFloor { get; set; }
         public int? MaxFloor { get; set; }
 
+    }
+
+    public class PaymentPlanDto
+    {
+        public int InstallmentYears { get; set; }
+        public decimal DownPayment { get; set; }
+        public decimal QuarterInstallment { get; set; }
     }
 }

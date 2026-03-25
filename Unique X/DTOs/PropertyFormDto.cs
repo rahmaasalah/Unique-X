@@ -36,7 +36,7 @@ namespace Unique_X.DTOs
         public bool? HasBalcony { get; set; }
         public bool? IsFurnished { get; set; }
         public string? PaymentMethod { get; set; } // "Cash" or "Installment"
-        public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
+        //public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
         public DeliveryStatus? DeliveryStatus { get; set; }
         public int? DeliveryYear { get; set; } // Nullable لأنه يظهر فقط لو تحت الإنشاء
         public bool? IsLicensed { get; set; }        // هل الشقة مرخصة؟
@@ -44,9 +44,10 @@ namespace Unique_X.DTOs
         public bool? HasLandShare { get; set; }
         public bool? HasElectricityMeter { get; set; } // عداد كهرباء
         public bool? HasGasMeter { get; set; }
-        public decimal? DownPayment { get; set; }        // المقدم
-        public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
+        //public decimal? DownPayment { get; set; }        // المقدم
+        //public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
         public decimal? SecurityDeposit { get; set; }    // مبلغ التأمين (للإيجار)
+        public List<PaymentPlanDto>? PaymentPlans { get; set; }
         public decimal? MonthlyRent { get; set; }
 
         // أنواع الفيلا والمساحة

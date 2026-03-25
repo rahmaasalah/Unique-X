@@ -251,22 +251,34 @@
                 <h6 class="mb-0 fw-bold">Rental Terms</h6>
                 @if (prop.securityDeposit > 0) { <small class="text-danger fw-bold">Security Deposit: EGP {{ prop.securityDeposit | number }}</small> }
               } @else {
-                <h6 class="mb-0 fw-bold">Payment Plan: {{ prop.paymentMethod }}</h6>
+                <h6 class="mb-2 fw-bold">Payment Plan: {{ prop.paymentMethod }}</h6>
+                
                 @if (prop.paymentMethod === 'Installment') {
-                   <div class="mt-1">
-                    @if (prop.downPayment > 0) {
-                        <small class="d-block  fw-bold text-danger">Down Payment: EGP {{ prop.downPayment | number }}</small>
-                      }
-                      @if (prop.quarterInstallment > 0) {
-                        <small class="d-block  fw-bold text-danger">Quarterly Installment: EGP {{ prop.quarterInstallment | number }}</small>
-                      }
-                      <small class="d-block text-danger"><strong>Installment Years:</strong> {{ prop.installmentYears }} Years</small>
-                       @if (prop.price > 0) {
-                        <small class="d-block text-danger fw-bold">Total Price: EGP {{ prop.price | number }}</small>
-                      }
+                   <div class="mt-2">
+                     <!-- 🟢 عرض كل خطط الدفع المتاحة -->
+                     @for(plan of prop.paymentPlans; track $index; let i = $index) {
+                        <div class="bg-white p-3 rounded-4 border mb-2 shadow-sm position-relative">
+                           <span class="position-absolute top-0 end-0 badge bg-danger rounded-bottom-4 px-2 py-1 m-2" style="font-size: 0.6rem;">Plan {{ i + 1 }}</span>
+                           
+                           <div class="row g-2 mt-1">
+                             <div class="col-6">
+                               <small class="d-block text-muted fw-bold" style="font-size: 0.65rem;">DOWN PAYMENT</small>
+                               <span class="fw-bold text-dark fs-6">EGP {{ plan.downPayment | number }}</span>
+                             </div>
+                             <div class="col-6">
+                               <small class="d-block text-muted fw-bold" style="font-size: 0.65rem;">DURATION</small>
+                               <span class="fw-bold text-dark fs-6">{{ plan.installmentYears }} Years</span>
+                             </div>
+                             <div class="col-12 mt-2 pt-2 border-top">
+                               <small class="d-block text-success fw-bold" style="font-size: 0.65rem;">QUARTERLY INSTALLMENT</small>
+                               <span class="fw-bold text-success fs-6">EGP {{ plan.quarterInstallment | number }}</span>
+                             </div>
+                           </div>
+                        </div>
+                     }
                    </div>
                 } @else {
-                    <small class="text-muted">Full cash payment </small>
+                    <small class="text-muted d-block border p-3 rounded-3 bg-white mt-2">Full cash payment required.</small>
                 }
               }
             </div>
