@@ -541,9 +541,8 @@ filteredProjects: string[] = [];
   onSubmit() {
     if (this.isSubmitting) return;
 
-    // 🟢 طباعة الأخطاء في حالة إن الزرار اتفتح بالغلط والفورم فيها مشكلة
     if (this.propertyForm.invalid) {
-        this.propertyForm.markAllAsTouched(); // بيخلي كل النجوم الحمرا تنور عشان العميل يشوف نسي إيه
+        this.propertyForm.markAllAsTouched(); 
         this.alertService.error("Please fill all required fields correctly.");
         return;
     }
@@ -559,26 +558,52 @@ filteredProjects: string[] = [];
     const formData = new FormData();
     const f = this.propertyForm.value;
 
-    formData.append('Title', f.title);
-    formData.append('Description', f.description);
+    // 🟢 دالة السحر: بتغسل أي رقم جاي من الموبايل (بتحول العربي لإنجليزي وتمسح الفواصل والمسافات)
+    const cleanNum = (val: any) => {
+      if (val === null || val === undefined || val === '') return '0';
+      let str = val.toString();
+      const arabicNumbers =['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+      str = str.replace(/[٠-٩]/g, (char: string) => arabicNumbers.indexOf(char).toString());
+      return str.replace(/[, ]/g, ''); // مسح أي فواصل أو مسافات
+    };
+
+    // إرسال الحقول النصية
+    formData.append('Title', f.title || '');
+    formData.append('Description', f.description || '');
     formData.append('ProjectName', f.projectName || ''); 
     formData.append('Code', f.code || '');
-    formData.append('Price', f.price.toString().replace(/,/g, ''));
-    formData.append('Area', f.area.toString().replace(/,/g, ''));
     formData.append('City', f.city.toString());
-    formData.append('Region', f.region);
+    formData.append('Region', f.region || '');
     formData.append('ListingType', f.listingType.toString());
     formData.append('PropertyType', f.propertyType.toString());
+    formData.append('Finishing', (f.finishing || 2).toString());
+    formData.append('PaymentMethod', f.paymentMethod || 'Full Cash');
+    formData.append('DeliveryStatus', (f.deliveryStatus || 0).toString());
+    formData.append('DistanceFromLandmark', f.distanceFromLandmark || '');
+    formData.append('View', f.view || '');
 
-    formData.append('GroundRooms', (f.groundRooms || 0).toString());
-    formData.append('GroundBaths', (f.groundBaths || 0).toString());
-    formData.append('GroundReception', (f.groundReception || 0).toString());
-    formData.append('FirstRooms', (f.firstRooms || 0).toString());
-    formData.append('FirstBaths', (f.firstBaths || 0).toString());
-    formData.append('FirstReception', (f.firstReception || 0).toString());
-    formData.append('SecondRooms', (f.secondRooms || 0).toString());
-    formData.append('SecondBaths', (f.secondBaths || 0).toString());
-    formData.append('SecondReception', (f.secondReception || 0).toString());
+    // 🟢 إرسال الأرقام بعد غسيلها بـ cleanNum لضمان قبول C# لها
+    formData.append('Price', cleanNum(f.price));
+    formData.append('Area', cleanNum(f.area));
+    formData.append('Rooms', cleanNum(f.rooms));
+    formData.append('Bathrooms', cleanNum(f.bathrooms));
+    formData.append('ReceptionPieces', cleanNum(f.receptionPieces));
+    
+    formData.append('Floor', cleanNum(f.floor));
+    formData.append('TotalFloors', cleanNum(f.totalFloors));
+    formData.append('ApartmentsPerFloor', cleanNum(f.apartmentsPerFloor));
+    formData.append('ElevatorsCount', cleanNum(f.elevatorsCount));
+
+    // حقول الفيلا (مغسولة)
+    formData.append('GroundRooms', cleanNum(f.groundRooms));
+    formData.append('GroundBaths', cleanNum(f.groundBaths));
+    formData.append('GroundReception', cleanNum(f.groundReception));
+    formData.append('FirstRooms', cleanNum(f.firstRooms));
+    formData.append('FirstBaths', cleanNum(f.firstBaths));
+    formData.append('FirstReception', cleanNum(f.firstReception));
+    formData.append('SecondRooms', cleanNum(f.secondRooms));
+    formData.append('SecondBaths', cleanNum(f.secondBaths));
+    formData.append('SecondReception', cleanNum(f.secondReception));
 
     formData.append('AreaType', f.areaType?.toString() || '0');
     formData.append('VillaCategory', f.villaCategory?.toString() || '0');
@@ -586,8 +611,9 @@ filteredProjects: string[] = [];
       formData.append('VillaSubType', f.villaSubType.toString());
     }
 
-    formData.append('HasPool', f.hasPool.toString());
-    formData.append('HasGarden', f.hasGarden.toString());
+    // المفاتيح (Booleans)
+    formData.append('HasPool', (f.hasPool || false).toString());
+    formData.append('HasGarden', (f.hasGarden || false).toString());
     formData.append('HasLandShare', (f.hasLandShare || false).toString());
     formData.append('IsLicensed', (f.isLicensed || false).toString());
     formData.append('IsLegalReconciled', (f.isLegalReconciled || false).toString());
@@ -601,42 +627,31 @@ filteredProjects: string[] = [];
     formData.append('HasWaterMeter', (f.hasWaterMeter || false).toString());
     formData.append('HasGasMeter', (f.hasGasMeter || false).toString());
 
-    formData.append('PaymentMethod', f.paymentMethod || 'Full Cash');
+    // 🟢 خطط الدفع (مغسولة)
     if (f.paymentMethod === 'Installment') {
       this.paymentPlans.controls.forEach((plan, index) => {
-        const y = plan.get('installmentYears')?.value || '1';
-        const dp = plan.get('downPayment')?.value.toString().replace(/,/g, '') || '0';
-        const q = plan.get('quarterInstallment')?.value.toString().replace(/,/g, '') || '0';
+        const y = cleanNum(plan.get('installmentYears')?.value);
+        const dp = cleanNum(plan.get('downPayment')?.value);
+        const q = cleanNum(plan.get('quarterInstallment')?.value);
 
-        formData.append(`PaymentPlans[${index}].InstallmentYears`, y.toString());
-        formData.append(`PaymentPlans[${index}].DownPayment`, dp.toString());
-        formData.append(`PaymentPlans[${index}].QuarterInstallment`, q.toString());
+        formData.append(`PaymentPlans[${index}].InstallmentYears`, y);
+        formData.append(`PaymentPlans[${index}].DownPayment`, dp);
+        formData.append(`PaymentPlans[${index}].QuarterInstallment`, q);
       });
     }
-    formData.append('SecurityDeposit', (f.securityDeposit || '').toString().replace(/,/g, '') || '0');
-    formData.append('MonthlyRent', (f.monthlyRent || '').toString().replace(/,/g, '') || '0');
-
-    formData.append('Floor', (f.floor || 0).toString());
-    formData.append('TotalFloors', (f.totalFloors || 0).toString());
     
-    // 🟢 حماية للسنة عشان الموبايل ميبعتش String للباك إند ويضرب Error
+    formData.append('SecurityDeposit', cleanNum(f.securityDeposit));
+    formData.append('MonthlyRent', cleanNum(f.monthlyRent));
+
+    // حماية سنة التسليم والبناء
     if (this.isUnderConstruction()) {
       formData.append('BuildYear', '0'); 
     } else {
-      formData.append('BuildYear', f.buildYear ? f.buildYear.toString() : '0');
+      formData.append('BuildYear', cleanNum(f.buildYear));
     }
 
-    formData.append('Finishing', f.finishing.toString());
-    formData.append('Rooms', (f.rooms || 0).toString());
-    formData.append('Bathrooms', (f.bathrooms || 0).toString());
-    formData.append('ReceptionPieces', (f.receptionPieces || 0).toString());
-    formData.append('DistanceFromLandmark', f.distanceFromLandmark || '');
-    formData.append('View', f.view || '');
-    formData.append('ApartmentsPerFloor', (f.apartmentsPerFloor || 1).toString());
-    formData.append('ElevatorsCount', (f.elevatorsCount || 0).toString());
-    formData.append('DeliveryStatus', (f.deliveryStatus || 0).toString());
     if (f.deliveryYear !== null && f.deliveryYear !== '') {
-      formData.append('DeliveryYear', f.deliveryYear.toString());
+      formData.append('DeliveryYear', cleanNum(f.deliveryYear));
     }
 
     formData.append('MainPhotoIndex', this.mainPhotoIndex.toString());
@@ -651,7 +666,17 @@ filteredProjects: string[] = [];
       error: (err) => {
         this.alertService.close();
         this.isSubmitting = false;
-        this.alertService.error('Error while saving. Please check all fields.');
+        
+        // 🟢 كشف الإيرور الحقيقي اللي جاي من السيرفر وعرضه في الشاشة
+        let errorMsg = 'Error while saving. Please check all fields.';
+        if (err.error) {
+          if (typeof err.error === 'string') errorMsg = err.error;
+          else if (err.error.title) errorMsg = err.error.title; // بيجيب الخطأ بتاع C#
+          else if (err.error.errors) errorMsg = JSON.stringify(err.error.errors);
+        }
+        
+        console.error("Backend Error:", err);
+        this.alertService.error(errorMsg, 'Upload Failed');
       }
     });
   }
