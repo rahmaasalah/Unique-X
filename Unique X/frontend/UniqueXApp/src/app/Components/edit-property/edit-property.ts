@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup,FormArray, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { PropertyService } from '../../Services/property';
 import { AlertService } from '../../Services/alert';
@@ -110,9 +110,10 @@ filteredProjects: string[] = [];
       view: [''],
       distanceFromLandmark: [''],
       paymentMethod: ['Cash', Validators.required],
-      installmentYears: [1],
-      downPayment:[0],
-      quarterInstallment: [0],
+      //installmentYears: [1],
+      //downPayment:[0],
+      //quarterInstallment: [0],
+      paymentPlans: this.fb.array([this.createPaymentPlan()]),
       monthlyRent: [0],
       securityDeposit:[0, [minAmountValidator(0)]],
       deliveryStatus: [0],
@@ -122,7 +123,7 @@ filteredProjects: string[] = [];
       isFirstOwner: [false], isLegalReconciled: [false], isLicensed: [false],
       hasWaterMeter: [false], hasElectricityMeter: [false], hasGasMeter: [false], hasLandShare: [false],
       pricePerMeter: ['', Validators.required],
-      downPaymentPercentage: ['']
+      //downPaymentPercentage: ['']
     });
 
     this.propertyId = Number(this.route.snapshot.paramMap.get('id'));
@@ -195,6 +196,25 @@ filteredProjects: string[] = [];
           villaCategory: this.mapVillaCatToId(data.villaCategory),
           villaSubType: this.mapVillaSubToId(data.villaSubType),
         });
+
+        this.paymentPlans.clear();
+        if (data.paymentPlans && data.paymentPlans.length > 0) {
+          const price = Number(data.price) || 0;
+          data.paymentPlans.forEach((plan: any) => {
+            let dpPercent = '';
+            if (price > 0 && plan.downPayment > 0) {
+              dpPercent = ((plan.downPayment / price) * 100).toFixed(2);
+            }
+            this.paymentPlans.push(this.createPaymentPlan(
+              plan.installmentYears,
+              plan.downPayment > 0 ? plan.downPayment.toLocaleString('en-US') : '',
+              dpPercent,
+              plan.quarterInstallment > 0 ? plan.quarterInstallment.toLocaleString('en-US') : ''
+            ));
+          });
+        } else {
+          this.addPaymentPlan(); // لو مفيش، يفتحله خطة واحدة بيضاء
+        }
 
         this.formatInitialAmount('price');
         this.formatInitialAmount('downPayment');
@@ -277,61 +297,113 @@ filteredProjects: string[] = [];
   }
 
   // 🟢 دالة التقريب (لأقرب 1000)
+  // ================== 🟢 إدارة المصفوفة (FormArray) ==================
+  get paymentPlans(): FormArray {
+    // استخدمي editForm لو إنتي في صفحة التعديل، و propertyForm لو في صفحة الإضافة
+    return this.editForm.get('paymentPlans') as FormArray;
+  }
+
+  createPaymentPlan(years = 1, dp = '', dpPercent = '', quarter = ''): FormGroup {
+    return this.fb.group({
+      installmentYears: [years, [Validators.min(1)]],
+      downPaymentPercentage: [dpPercent],
+      downPayment: [dp],
+      quarterInstallment: [quarter]
+    });
+  }
+
+  addPaymentPlan() {
+    this.paymentPlans.push(this.createPaymentPlan());
+  }
+
+  removePaymentPlan(index: number) {
+    if (this.paymentPlans.length > 1) {
+      this.paymentPlans.removeAt(index);
+    }
+  }
+
+  // ================== 🟢 دوال التنسيق الخاصة بالمصفوفة ==================
+  formatFinancialArray(event: any, controlName: string, index: number) {
+    let pureDigits = event.target.value.replace(/[^0-9]/g, '');
+    let formatted = pureDigits ? Number(pureDigits).toLocaleString('en-US') : '';
+    this.paymentPlans.at(index).get(controlName)?.setValue(formatted, { emitEvent: false });
+  }
+
+  formatIntegerArray(event: any, controlName: string, index: number) {
+    let pureDigits = event.target.value.replace(/[^0-9]/g, '');
+    this.paymentPlans.at(index).get(controlName)?.setValue(pureDigits, { emitEvent: false });
+  }
+
+  formatPercentageArray(event: any, controlName: string, index: number) {
+    let pureDigits = event.target.value.replace(/[^0-9.]/g, '');
+    if ((pureDigits.match(/\./g) ||[]).length > 1) pureDigits = pureDigits.substring(0, pureDigits.length - 1);
+    this.paymentPlans.at(index).get(controlName)?.setValue(pureDigits, { emitEvent: false });
+  }
+
+  // ================== 🟢 دوال الحسابات الذكية للمصفوفة ==================
   roundAmount(value: number): number {
     if (value <= 0) return 0;
     return Math.round(value / 1000) * 1000;
   }
 
-  // 1. حساب السعر الكلي 
   calculateTotalPrice() {
-    if (!this.isPrimary()) return; // 🟢 لو مش Primary، متعملش أي حسابات للسعر
-
+    if (!this.isPrimary()) return; 
     const area = this.getPureNumber('area');
     const ppm = this.getPureNumber('pricePerMeter');
+    
     if (area > 0 && ppm > 0) {
       const total = this.roundAmount(area * ppm); 
-      this.editForm.get('price')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
-      if (this.isRent()) this.editForm.get('monthlyRent')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
-      this.onAmountChange();
+      const form = this.editForm;
+      form.get('price')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
+      
+      // تحديث كل خطط الدفع المفتوحة بناءً على السعر الجديد
+      this.onTotalPriceChange();
     }
   }
 
-  // 2. حساب مبلغ المقدم بناءً على النسبة
-  onPercentageChange() {
+  onTotalPriceChange() {
+    for (let i = 0; i < this.paymentPlans.length; i++) {
+      this.onAmountChange(i);
+    }
+  }
+
+  onPercentageChange(index: number) {
     const total = this.getPureNumber('price');
-    const dpPercent = Number(this.editForm.get('downPaymentPercentage')?.value || 0);
+    const plan = this.paymentPlans.at(index);
+    const dpPercent = Number(plan.get('downPaymentPercentage')?.value || 0);
+
     if (total > 0 && dpPercent >= 0) {
-      // تطبيق التقريب
       const dpAmount = this.roundAmount(total * (dpPercent / 100));
-      this.editForm.get('downPayment')?.setValue(dpAmount.toLocaleString('en-US'), { emitEvent: false });
-      this.calculateInstallments();
+      plan.get('downPayment')?.setValue(dpAmount.toLocaleString('en-US'), { emitEvent: false });
+      this.calculateInstallments(index);
     }
   }
 
-  // 3. حساب النسبة لو كتب المبلغ بإيده
-  onAmountChange() {
+  onAmountChange(index: number) {
     const total = this.getPureNumber('price');
-    const dpAmount = this.getPureNumber('downPayment');
+    const plan = this.paymentPlans.at(index);
+    const dpAmount = Number(plan.get('downPayment')?.value.toString().replace(/,/g, '') || 0);
+
     if (total > 0 && dpAmount >= 0) {
       const dpPercent = (dpAmount / total) * 100;
-      this.editForm.get('downPaymentPercentage')?.setValue(parseFloat(dpPercent.toFixed(2)), { emitEvent: false });
-      this.calculateInstallments();
+      plan.get('downPaymentPercentage')?.setValue(parseFloat(dpPercent.toFixed(2)), { emitEvent: false });
+      this.calculateInstallments(index);
     }
   }
 
-  // 4. حساب القسط الربع سنوي
-  calculateInstallments() {
+  calculateInstallments(index: number) {
     const total = this.getPureNumber('price');
-    const dpAmount = this.getPureNumber('downPayment');
-    const years = this.getPureNumber('installmentYears');
+    const plan = this.paymentPlans.at(index);
+    const dpAmount = Number(plan.get('downPayment')?.value.toString().replace(/,/g, '') || 0);
+    const years = Number(plan.get('installmentYears')?.value.toString().replace(/[^0-9]/g, '') || 0);
+
     if (total > 0 && years > 0) {
       const remaining = total - dpAmount;
       if (remaining > 0) {
-        // تطبيق التقريب
         const quarter = this.roundAmount((remaining / years) / 4);
-        this.editForm.get('quarterInstallment')?.setValue(quarter.toLocaleString('en-US'), { emitEvent: false });
+        plan.get('quarterInstallment')?.setValue(quarter.toLocaleString('en-US'), { emitEvent: false });
       } else {
-        this.editForm.get('quarterInstallment')?.setValue('0', { emitEvent: false });
+        plan.get('quarterInstallment')?.setValue('0', { emitEvent: false });
       }
     }
   }
@@ -543,9 +615,17 @@ filteredProjects: string[] = [];
       formData.append('HasGasMeter', (f.hasGasMeter || false).toString());
 
       formData.append('PaymentMethod', f.paymentMethod || 'Full Cash');
-      formData.append('InstallmentYears', (f.installmentYears || 0).toString());
-      formData.append('DownPayment', (f.downPayment || '').toString().replace(/,/g, '') || '0');
-      formData.append('QuarterInstallment', (f.quarterInstallment || '').toString().replace(/,/g, '') || '0');
+      if (f.paymentMethod === 'Installment') {
+        this.paymentPlans.controls.forEach((plan, index) => {
+          const y = plan.get('installmentYears')?.value || '1';
+          const dp = plan.get('downPayment')?.value.toString().replace(/,/g, '') || '0';
+          const q = plan.get('quarterInstallment')?.value.toString().replace(/,/g, '') || '0';
+
+          formData.append(`PaymentPlans[${index}].InstallmentYears`, y.toString());
+          formData.append(`PaymentPlans[${index}].DownPayment`, dp.toString());
+          formData.append(`PaymentPlans[${index}].QuarterInstallment`, q.toString());
+        });
+      }
       formData.append('SecurityDeposit', (f.securityDeposit || '').toString().replace(/,/g, '') || '0');
       formData.append('MonthlyRent', (f.monthlyRent || '').toString().replace(/,/g, '') || '0');
 

@@ -173,7 +173,7 @@
                 <div class="input-group">
                   <span class="input-group-text  fw-bold ">EGP</span>
                   <!-- جعل الحقل Readonly فقط لو Primary -->
-                  <input type="text" (input)="formatFinancial($event, 'price'); onAmountChange()" formControlName="price" class="form-control" 
+                  <input type="text" (input)="formatFinancial($event, 'price'); onTotalPriceChange()" formControlName="price" class="form-control" 
                          [readonly]="isPrimary()" [class.bg-light]="isPrimary()" min="1000000" placeholder="1,000,000">
                 </div>
                 @if (editForm.get('price')?.touched && editForm.get('price')?.errors?.['required']) {
@@ -322,75 +322,89 @@
             </div>
 
             <!-- القسم السادس: الدفع -->
-            <h5 class="fw-bold border-bottom pb-2 mb-4 text-danger"><i class="bi bi-wallet2 me-2"></i>Pricing & Payment Information</h5>
+            <<!-- القسم السادس: الدفع -->
+<h5 class="fw-bold border-bottom pb-2 mb-4 text-danger"><i class="bi bi-wallet2 me-2"></i>Pricing & Payment Information</h5>
 
-            <div class="row g-3 mb-4 align-items-start">
-              @if (isRent()) {
-                <div class="col-md-6">
-                  <label class="small fw-bold">Monthly Rent Amount <span class="text-danger">*</span></label>
-                  <input type="text" (input)="formatFinancial($event, 'monthlyRent')" formControlName="monthlyRent" class="form-control shadow-sm ">
-                </div>
-                <div class="col-md-6 animate__animated animate__fadeIn">
-                  <label class="small fw-bold">Security Deposit <span class="text-danger">*</span></label>
-                  <input type="text" (input)="formatFinancial($event, 'securityDeposit')" formControlName="securityDeposit" class="form-control shadow-sm " min="0">
-                  
-                  @if (editForm.get('securityDeposit')?.touched && editForm.get('securityDeposit')?.errors?.['required']) {
-                    <small class="text-danger d-block mt-1 animate__animated animate__fadeIn">Security Deposit is required</small>
-                  } @else if (isSecurityExceeded()) {
-                    <small class="text-danger d-block mt-1 animate__animated animate__shakeX">
-                      Security deposit cannot exceed the rent amount
-                    </small>
-                  }
-                </div>
-              } @else {
-                <div class="col-md-3">
-                  <label class="small fw-bold">Payment Method <span class="text-danger">*</span></label>
-                  <select formControlName="paymentMethod" class="form-select shadow-sm">
-                    <option value="Cash">Full Cash</option>
-                    <option value="Installment">Installment Plan</option>
-                  </select>
-                </div>
+<div class="row g-3 mb-4 align-items-start">
+  
+  @if (isRent()) {
+    <div class="col-md-6 animate__animated animate__fadeIn">
+      <label class="small fw-bold">Monthly Rent Amount <span class="text-danger">*</span></label>
+      <input type="text" (input)="formatFinancial($event, 'monthlyRent')" formControlName="monthlyRent" class="form-control shadow-sm border-danger" min="0">
+      <small class="text-danger" style="font-size: 0.7rem;">This should match the total price field above</small>
+    </div>
+    <div class="col-md-6 animate__animated animate__fadeIn">
+      <label class="small fw-bold">Security Deposit <span class="text-danger">*</span></label>
+      <input type="text" (input)="formatFinancial($event, 'securityDeposit')" formControlName="securityDeposit" class="form-control shadow-sm border-danger" min="0">
+    </div>
+  } @else {
+    <div class="col-md-3">
+      <label class="small fw-bold">Payment Method <span class="text-danger">*</span></label>
+      <select formControlName="paymentMethod" class="form-select shadow-sm">
+        <option value="Cash">Full Cash</option>
+        <option value="Installment">Installment Plan</option>
+      </select>
+    </div>
 
-                @if (isInstallment()) {
-                  @if (isProject()) {
-                    <div class="col-md-12 mt-3">
-                      <div class="row g-2 bg-light p-3 rounded-3 border">
-                        <div class="col-md-3">
-                          <label class="small fw-bold">Installment Years</label>
-                          <input type="text" (input)="formatInteger($event, 'installmentYears'); calculateInstallments()" formControlName="installmentYears" class="form-control shadow-sm">
-                        </div>
-                        <div class="col-md-3">
-                          <label class="small fw-bold text-muted">Down Payment %</label>
-                          <div class="input-group">
-                            <input type="text" (input)="formatPercentage($event, 'downPaymentPercentage'); onPercentageChange()" formControlName="downPaymentPercentage" class="form-control shadow-sm" placeholder="e.g. 10">
-                            <span class="input-group-text bg-white">%</span>
-                          </div>
-                        </div>
-                        <div class="col-md-3">
-                          <label class="small fw-bold">Down Payment Amount</label>
-                          <div class="input-group">
-                            <span class="input-group-text bg-white">EGP</span>
-                            <input type="text" (input)="formatFinancial($event, 'downPayment'); onAmountChange()" formControlName="downPayment" class="form-control shadow-sm">
-                          </div>
-                        </div>
-                        <div class="col-md-3">
-                          <label class="small fw-bold ">Quarterly Installment</label>
-                          <div class="input-group">
-                            <span class="input-group-text ">EGP</span>
-                            <input type="text" (input)="formatFinancial($event, 'quarterInstallment')" formControlName="quarterInstallment" class="form-control shadow-sm ">
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  } @else {
-                    <div class="col-md-4">
-                      <label class="small fw-bold">Years of Installment</label>
-                      <input type="text" (input)="formatInteger($event, 'installmentYears')" formControlName="installmentYears" class="form-control shadow-sm">
-                    </div>
-                  }
-                }
-              }
+    @if (isInstallment()) {
+      <!-- 🟢 مصفوفة خطط الدفع الديناميكية -->
+      <div class="col-md-12 animate__animated animate__fadeIn mt-3" formArrayName="paymentPlans">
+        
+        @for (plan of paymentPlans.controls; track $index; let i = $index) {
+          <div class="row g-2 bg-light p-3 rounded-4 border mb-3 position-relative shadow-sm" [formGroupName]="i">
+            
+            <!-- زرار مسح الخطة (يظهر لو فيه أكتر من خطة واحدة) -->
+            @if (paymentPlans.length > 1) {
+              <button type="button" class="btn btn-danger btn-sm position-absolute d-flex align-items-center justify-content-center shadow" 
+                      style="top: -12px; right: -12px; width: 28px; height: 28px; border-radius: 50%; z-index: 10;" 
+                      (click)="removePaymentPlan(i)">
+                <i class="bi bi-x fs-5"></i>
+              </button>
+            }
+            
+            <div class="col-md-3">
+              <label class="small fw-bold text-dark">Installment Years</label>
+              <input type="text" (input)="formatIntegerArray($event, 'installmentYears', i); calculateInstallments(i)" formControlName="installmentYears" class="form-control shadow-sm">
             </div>
+
+            <div class="col-md-3">
+              <label class="small fw-bold text-muted">Down Payment %</label>
+              <div class="input-group">
+                <input type="text" (input)="formatPercentageArray($event, 'downPaymentPercentage', i); onPercentageChange(i)" formControlName="downPaymentPercentage" class="form-control shadow-sm">
+                <span class="input-group-text bg-white">%</span>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <label class="small fw-bold text-dark">Down Payment Amount</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white text-dark">EGP</span>
+                <input type="text" (input)="formatFinancialArray($event, 'downPayment', i); onAmountChange(i)" formControlName="downPayment" class="form-control shadow-sm">
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <label class="small fw-bold text-success">Quarterly Installment</label>
+              <div class="input-group">
+                <span class="input-group-text bg-success-subtle text-success border-success">EGP</span>
+                <input type="text" (input)="formatFinancialArray($event, 'quarterInstallment', i)" formControlName="quarterInstallment" class="form-control shadow-sm border-success fw-bold text-success">
+              </div>
+            </div>
+            
+          </div>
+        }
+
+        <!-- 🟢 زرار إضافة خطة دفع جديدة -->
+        <div class="text-end">
+          <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-bold shadow-sm px-4" (click)="addPaymentPlan()">
+            <i class="bi bi-plus-circle me-1"></i> Add Another Plan
+          </button>
+        </div>
+
+      </div>
+    }
+  }
+</div>
 
             <!-- القسم السابع: الميديا والوصف -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-images me-2 text-danger"></i>Photos & Description</h5>

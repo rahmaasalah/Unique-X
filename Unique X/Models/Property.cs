@@ -47,7 +47,7 @@ namespace Unique_X.Models
         public bool HasBalcony { get; set; }
         public bool IsFurnished { get; set; }
         public string PaymentMethod { get; set; } // "Cash" or "Installment"
-        public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
+        //public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
         public DeliveryStatus DeliveryStatus { get; set; } = DeliveryStatus.Ready;
         public int? DeliveryYear { get; set; } // Nullable لأنه يظهر فقط لو تحت الإنشاء
         public bool IsLicensed { get; set; }        // هل الشقة مرخصة؟
@@ -55,8 +55,8 @@ namespace Unique_X.Models
         public bool HasWaterMeter { get; set; }      // عداد مياه
         public bool HasElectricityMeter { get; set; } // عداد كهرباء
         public bool HasGasMeter { get; set; }
-        public decimal? DownPayment { get; set; }        // المقدم
-        public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
+        //public decimal? DownPayment { get; set; }        // المقدم
+        //public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
         public decimal? SecurityDeposit { get; set; }    // مبلغ التأمين (للإيجار)
         public decimal? MonthlyRent { get; set; }
         public string? Code { get; set; } // AR#123
@@ -95,5 +95,7 @@ namespace Unique_X.Models
 
         // العلاقة مع الصور
         public ICollection<Photo> Photos { get; set; }
+
+        public ICollection<PaymentPlan> PaymentPlans { get; set; } = new List<PaymentPlan>();
     }
 }

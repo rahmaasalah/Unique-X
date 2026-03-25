@@ -71,9 +71,6 @@ namespace Unique_X.Services.Implementation
 
                 // البيانات المالية
                 PaymentMethod = dto.PaymentMethod ?? "Cash",
-                InstallmentYears = dto.InstallmentYears,
-                DownPayment = dto.DownPayment,
-                QuarterInstallment = dto.QuarterInstallment,
                 MonthlyRent = dto.MonthlyRent,
                 SecurityDeposit = dto.SecurityDeposit,
                 CommissionPercentage = 2.5m, // قيمة ثابتة أو يمكن أخذها من dto.CommissionPercentage
@@ -114,6 +111,19 @@ namespace Unique_X.Services.Implementation
                             IsMain = (i == dto.MainPhotoIndex)
                         });
                     }
+                }
+            }
+
+            if (dto.PaymentPlans != null && dto.PaymentPlans.Any())
+            {
+                foreach (var plan in dto.PaymentPlans)
+                {
+                    property.PaymentPlans.Add(new PaymentPlan
+                    {
+                        InstallmentYears = plan.InstallmentYears,
+                        DownPayment = plan.DownPayment,
+                        QuarterInstallment = plan.QuarterInstallment
+                    });
                 }
             }
 
@@ -247,6 +257,7 @@ namespace Unique_X.Services.Implementation
             var property = await _context.Properties
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
+                .Include(p => p.PaymentPlans)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (property == null) return null;
@@ -266,6 +277,7 @@ namespace Unique_X.Services.Implementation
             var property = await _context.Properties
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
+                .Include(p => p.PaymentPlans)
                 .FirstOrDefaultAsync(p => p.Id == id && p.BrokerId == brokerId);
            
 
@@ -321,10 +333,8 @@ namespace Unique_X.Services.Implementation
 
             // تحديث البيانات المالية (Nullable Decimals)
             if (dto.MonthlyRent.HasValue) property.MonthlyRent = dto.MonthlyRent.Value;
-            if (dto.DownPayment.HasValue) property.DownPayment = dto.DownPayment.Value;
-            if (dto.QuarterInstallment.HasValue) property.QuarterInstallment = dto.QuarterInstallment.Value;
+            
             if (dto.SecurityDeposit.HasValue) property.SecurityDeposit = dto.SecurityDeposit.Value;
-            if (dto.InstallmentYears.HasValue) property.InstallmentYears = dto.InstallmentYears.Value;
 
             // تحديث الـ Booleans
             if (dto.HasMasterRoom.HasValue) property.HasMasterRoom = dto.HasMasterRoom.Value;
@@ -360,6 +370,22 @@ namespace Unique_X.Services.Implementation
                             IsMain = (i == dto.MainPhotoIndex)
                         });
                     }
+                }
+            }
+
+            if (dto.PaymentPlans != null)
+            {
+                var existingPlans = await _context.PaymentPlans.Where(p => p.PropertyId == id).ToListAsync();
+                _context.PaymentPlans.RemoveRange(existingPlans);
+
+                foreach (var plan in dto.PaymentPlans)
+                {
+                    property.PaymentPlans.Add(new PaymentPlan
+                    {
+                        InstallmentYears = plan.InstallmentYears,
+                        DownPayment = plan.DownPayment,
+                        QuarterInstallment = plan.QuarterInstallment
+                    });
                 }
             }
 
@@ -441,9 +467,7 @@ namespace Unique_X.Services.Implementation
 
                 // البيانات المالية والخدمات
                 PaymentMethod = property.PaymentMethod,
-                InstallmentYears = property.InstallmentYears,
-                DownPayment = property.DownPayment,
-                QuarterInstallment = property.QuarterInstallment,
+                
                 SecurityDeposit = property.SecurityDeposit,
                 MonthlyRent = property.MonthlyRent,
                 CommissionPercentage = property.CommissionPercentage,
@@ -487,15 +511,24 @@ namespace Unique_X.Services.Implementation
                 BrokerTitle = property.Broker?.BrokerTitle,
                 BrokerDescription = property.Broker?.BrokerDescription,
 
+                PaymentPlans = property.PaymentPlans?.Select(p => new PaymentPlanDto
+                {
+                    InstallmentYears = p.InstallmentYears,
+                    DownPayment = p.DownPayment,
+                    QuarterInstallment = p.QuarterInstallment
+                }).ToList() ?? new List<PaymentPlanDto>(),
+
                 Photos = property.Photos?
-    .OrderByDescending(p => p.IsMain)
-    .Select(p => new PhotoResponseDto
-    {
-        Id = p.Id,
-        Url = p.Url,
-        IsMain = p.IsMain
-    }).ToList() ?? new List<PhotoResponseDto>()
+                   .OrderByDescending(p => p.IsMain)
+                   .Select(p => new PhotoResponseDto
+                      {
+                        Id = p.Id,
+                        Url = p.Url,
+                        IsMain = p.IsMain
+                      }).ToList() ?? new List<PhotoResponseDto>()
             };
+
+
         }
     }
 }
