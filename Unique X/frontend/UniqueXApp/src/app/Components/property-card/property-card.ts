@@ -118,4 +118,19 @@ onToggleWishlist(event: Event) {
       }
     });
   }
+
+  onCardClick() {
+    const compareId = localStorage.getItem('compare_prop_1');
+
+    if (compareId) {
+      if (Number(compareId) === this.property.id) {
+        this.alertService.error('Please select a DIFFERENT property to compare.');
+        return;
+      }
+
+      this.router.navigate(['/compare', compareId, this.property.id]);
+    } else {
+      this.router.navigate(['/property-details', this.property.id]);
+    }
+  }
 }

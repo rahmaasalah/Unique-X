@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using ExcelDataReader;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Unique_X.Data;
 using Unique_X.DTOs;
 using Unique_X.Services;
 using Unique_X.Services.Interface;
@@ -25,7 +27,6 @@ namespace Unique_X.Controllers
         [DisableRequestSizeLimit]
         public async Task<IActionResult> AddProperty([FromForm] PropertyFormDto dto)
         {
-            // استخراج الـ ID الخاص بالبروكر من التوكن
             var brokerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (brokerId == null)
@@ -140,6 +141,83 @@ namespace Unique_X.Controllers
             var result = await _propertiesService.SetExistingPhotoAsMainAsync(id, photoId, brokerId);
 
             return result ? Ok(new { Message = "Main photo updated" }) : BadRequest("Failed to update main photo");
+        }
+
+        [HttpGet("{code}/financial-history")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetFinancialHistory(string code, [FromServices] AppDbContext context)
+        {
+            if (string.IsNullOrEmpty(code)) return BadRequest("Code is required");
+
+            var fileRecord = await context.FinancialFiles.OrderByDescending(f => f.UploadedAt).FirstOrDefaultAsync();
+            if (fileRecord == null || fileRecord.FileData == null)
+                return Ok(new List<object>());
+
+            var history = new List<object>();
+
+            try
+            {
+                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+                using var stream = new MemoryStream(fileRecord.FileData);
+
+                // 🟢 1. التعرف التلقائي: لو الملف CSV نستخدم القارئ الخاص بيه، ولو إكسيل نستخدم العادي
+                var ext = Path.GetExtension(fileRecord.FileName).ToLower();
+                using var reader = ext == ".csv"
+                    ? ExcelDataReader.ExcelReaderFactory.CreateCsvReader(stream)
+                    : ExcelDataReader.ExcelReaderFactory.CreateReader(stream);
+
+                var result = reader.AsDataSet(new ExcelDataReader.ExcelDataSetConfiguration()
+                {
+                    ConfigureDataTable = (_) => new ExcelDataReader.ExcelDataTableConfiguration() { UseHeaderRow = true }
+                });
+
+                var dataTable = result.Tables[0];
+
+                // 🟢 2. البحث الذكي عن العواميد (عشان نتجنب مشكلة المسافات وحالة الحروف)
+                int codeCol = -1, priceCol = -1, yearCol = -1;
+                for (int i = 0; i < dataTable.Columns.Count; i++)
+                {
+                    var colName = dataTable.Columns[i].ColumnName.Trim().ToLower();
+                    if (colName == "code") codeCol = i;
+                    else if (colName.Contains("price")) priceCol = i;
+                    else if (colName.Contains("year")) yearCol = i;
+                }
+
+                // لو ملقاش العواميد يرجع فاضي
+                if (codeCol == -1 || priceCol == -1 || yearCol == -1)
+                    return Ok(new List<object>());
+
+                // 3. استخراج البيانات
+                foreach (System.Data.DataRow row in dataTable.Rows)
+                {
+                    var rowCode = row[codeCol]?.ToString()?.Trim();
+
+                    if (!string.IsNullOrEmpty(rowCode) && rowCode.Equals(code.Trim(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            var priceRaw = row[priceCol];
+                            var yearRaw = row[yearCol];
+
+                            if (priceRaw != DBNull.Value && yearRaw != DBNull.Value)
+                            {
+                                decimal price = Convert.ToDecimal(priceRaw);
+                                int year = Convert.ToInt32(yearRaw);
+
+                                history.Add(new { Year = year, Price = price });
+                            }
+                        }
+                        catch { /* لو فيه صف بايظ في الإكسيل يتجاهله ويكمل */ }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Excel Parsing Error: {ex.Message}");
+                return Ok(new List<object>());
+            }
+
+            return Ok(history);
         }
     }
 }

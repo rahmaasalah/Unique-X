@@ -93,6 +93,9 @@ namespace Unique_X.Services.Implementation
                 HasGasMeter = dto.HasGasMeter ?? false,
 
                 BrokerId = brokerId,
+                IsActive = false,
+                IsApproved = false,
+                RejectionReason = null,
                 Photos = new List<Photo>()
             };
 
@@ -203,7 +206,7 @@ namespace Unique_X.Services.Implementation
                 // سيبحث عن النوع المختار بدقة (0 أو 1 أو 2 أو 3)
                 query = query.Where(p => p.ListingType == (ListingType)filter.ListingType.Value);
             }
-            query = query.Where(p => !p.IsSold && p.IsActive); // شرط إضافي
+            query = query.Where(p => !p.IsSold && p.IsActive && p.IsApproved); // شرط إضافي
 
 
             if (!string.IsNullOrEmpty(filter.SearchTerm))
@@ -389,6 +392,10 @@ namespace Unique_X.Services.Implementation
                 }
             }
 
+            property.IsApproved = false;
+            property.IsActive = false;
+            property.RejectionReason = null;
+
             _context.Properties.Update(property);
             await _context.SaveChangesAsync();
 
@@ -505,6 +512,8 @@ namespace Unique_X.Services.Implementation
 
                 CreatedAt = property.CreatedAt,
                 BrokerId = property.BrokerId,
+                IsApproved = property.IsApproved,
+                RejectionReason = property.RejectionReason,
                 BrokerName = property.Broker != null ? $"{property.Broker.FirstName} {property.Broker.LastName}" : "System Agent",
                 BrokerPhone = property.Broker?.PhoneNumber ?? "N/A",
                 BrokerImage = property.Broker?.ProfileImageUrl,

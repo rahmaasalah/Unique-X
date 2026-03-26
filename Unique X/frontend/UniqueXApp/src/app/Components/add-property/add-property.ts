@@ -674,11 +674,13 @@ filteredProjects: string[] = [];
     this.selectedPhotos().forEach(p => formData.append('Photos', p.file));
 
     this.propertyService.addProperty(formData).subscribe({
-      next: () => {
-        this.alertService.close();
-        this.alertService.success('Property Published Successfully!');
-        this.router.navigate(['/home']);
-      },
+      next: () => { 
+          this.alertService.close(); 
+          // 🟢 رسالة منطقية توضح إن العقار في المراجعة
+          this.alertService.success('Submitted successfully! Waiting for admin approval.'); 
+          // 🟢 نوجهه للداش بوورد بتاعته عشان يشوف الكارت وهو منور أصفر (Pending)
+          this.router.navigate(['/my-properties']); 
+        },
       error: (err) => {
         this.alertService.close();
         this.isSubmitting = false;

@@ -7,7 +7,9 @@ import { AuthService } from '../../Services/auth';
 import { Router } from '@angular/router';
 import { AdminService } from '../../Services/admin';
 import { GoogleAnalyticsService } from 'ngx-google-analytics';
-
+import { AlertService } from '../../Services/alert';
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-property-details',
@@ -20,10 +22,13 @@ export class PropertyDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private propertyService = inject(PropertyService);
   public authService = inject(AuthService);
+  public alertService = inject(AlertService);
   private router = inject(Router);
   private adminService = inject(AdminService);
   private location = inject(Location);
   private gaService = inject(GoogleAnalyticsService);
+  chart: any;
+  financialHistory = signal<any[]>([]);
 
   
   property = signal<Property | null>(null);
@@ -48,6 +53,21 @@ export class PropertyDetailsComponent implements OnInit {
         // تحديث اللينك في المتصفح
         const baseUrl = this.router.url.split('/')[1]; 
         this.location.replaceState(`/${baseUrl}/${data.id}/${slug}`);
+
+        if (data.code) {
+          this.propertyService.getFinancialHistory(data.code).subscribe({
+            next: (history) => {
+              if (history && history.length > 0) {
+                // ترتيب السنين من الأقدم للأحدث
+                history.sort((a, b) => a.year - b.year);
+                this.financialHistory.set(history);
+                
+                // تأخير بسيط للسماح للـ HTML برسم الـ Canvas أولاً
+                setTimeout(() => this.renderChart(history, data.listingType), 200);
+              }
+            }
+          });
+        }
       },
       error: (err) => console.error(err)
     });
@@ -133,6 +153,66 @@ openGallery(index: number) {
     carousel.to(index);
   }, 200);
 }
+
+startCompare() {
+    const prop = this.property();
+    if (prop) {
+      // 🟢 حفظ الـ ID في ذاكرة المتصفح عشان مننساهوش
+      localStorage.setItem('compare_prop_1', prop.id.toString());
+      this.alertService.success('Please select the second property from the home page to compare.');
+      // 🟢 توجيه لصفحة الهوم
+      this.router.navigate(['/home']);
+    }
+  }
+
+  // 🟢 دالة رسم المنحنى البياني
+  renderChart(history: any[], listingType: string) {
+    const ctx = document.getElementById('financialChart') as HTMLCanvasElement;
+    if (!ctx) return;
+    
+    if (this.chart) this.chart.destroy(); // مسح الرسمة القديمة لو موجودة
+
+    const years = history.map(h => h.year);
+    const prices = history.map(h => h.price);
+    const labelTitle = listingType === 'Rent' ? 'Rental Price Trend (EGP)' : 'Property Value Trend (EGP)';
+
+    this.chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: years,
+        datasets:[{
+          label: labelTitle,
+          data: prices,
+          borderColor: '#ef3341', // لون بيتك الأحمر
+          backgroundColor: 'rgba(239, 51, 65, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4, // بيخلي الخطوط انسيابية وناعمة
+          pointBackgroundColor: '#fff',
+          pointBorderColor: '#ef3341',
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return ' EGP ' + context.parsed.y.toLocaleString('en-US');
+              }
+            }
+          }
+        },
+        scales: {
+          y: { beginAtZero: false } // عشان المنحنى ميبدأش من الصفر ويكون واقعي
+        }
+      }
+    });
+  }
 
   
 }

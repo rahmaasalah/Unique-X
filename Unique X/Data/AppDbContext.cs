@@ -16,6 +16,7 @@ namespace Unique_X.Data
         public DbSet<HomeBanner> HomeBanners { get; set; }
         public DbSet<AnalyticsRecord> AnalyticsRecords { get; set; }
         public DbSet<PaymentPlan> PaymentPlans { get; set; }
+        public DbSet<FinancialFile> FinancialFiles { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)

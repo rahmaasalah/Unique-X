@@ -95,6 +95,28 @@
                     <button class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm" (click)="onDelete(prop.id)">Delete</button>
                   </div>
                 </td>
+
+                <td>
+  <!-- حالة الموافقة -->
+  @if (!prop.isApproved && !prop.rejectionReason) {
+    <span class="badge bg-warning text-dark rounded-pill px-3 mb-1 d-block">
+      <i class="bi bi-hourglass-split me-1"></i>Pending Review
+    </span>
+  }
+  @if (prop.isApproved) {
+    <span class="badge bg-success rounded-pill px-3 mb-1 d-block">
+      <i class="bi bi-check-circle me-1"></i>Approved
+    </span>
+  }
+  @if (prop.rejectionReason) {
+    <span class="badge bg-danger rounded-pill px-3 mb-1 d-block" 
+          [title]="prop.rejectionReason"
+          style="cursor:pointer" 
+          (click)="showRejectionReason(prop.rejectionReason)">
+      <i class="bi bi-x-circle me-1"></i>Rejected · See reason
+    </span>
+  }
+                </td>
                 <td>
                   <button class="btn btn-sm rounded-pill px-3 fw-bold status-toggle-btn shadow-sm"
                           [class.btn-dark]="prop.isSold" [class.btn-outline-danger]="!prop.isSold"

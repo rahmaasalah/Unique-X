@@ -89,4 +89,30 @@ getSuspendedUsers(): Observable<any[]> {
 getSuspendedProperties(): Observable<any[]> {
   return this.http.get<any[]>(`${this.baseUrl}/suspended-properties`);
 }
+
+getFinancialFile(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/financial-file`);
+  }
+
+  uploadFinancialFile(file: File): Observable<any> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post(`${this.baseUrl}/upload-financial`, fd);
+  }
+
+  deleteFinancialFile(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/delete-financial/${id}`);
+  }
+
+  getPendingProperties(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/pending-properties`);
+}
+
+approveProperty(id: number): Observable<any> {
+  return this.http.patch(`${this.baseUrl}/approve-property/${id}`, {});
+}
+
+rejectProperty(id: number, reason: string): Observable<any> {
+  return this.http.patch(`${this.baseUrl}/reject-property/${id}`, { reason });
+}
 }

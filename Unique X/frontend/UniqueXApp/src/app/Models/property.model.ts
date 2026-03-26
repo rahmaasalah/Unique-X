@@ -77,6 +77,8 @@ projectName?: string;
   hasPool: boolean;
   hasGarden: boolean;
   paymentPlans?: any
+  isApproved: boolean;
+rejectionReason?: string;
 }
 
 export interface Photo {

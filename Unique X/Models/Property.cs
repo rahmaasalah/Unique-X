@@ -91,7 +91,9 @@ namespace Unique_X.Models
         // Foreign Key for Broker (User)
         public string BrokerId { get; set; }
         public ApplicantUser Broker { get; set; }
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; } = false;
+        public bool IsApproved { get; set; } = false;
+        public string? RejectionReason { get; set; }
 
         // العلاقة مع الصور
         public ICollection<Photo> Photos { get; set; }
