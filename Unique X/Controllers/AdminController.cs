@@ -239,5 +239,130 @@ namespace Unique_X.Controllers
                 }).ToListAsync();
             return Ok(props);
         }
+
+        [HttpGet("financial-file")]
+        public async Task<IActionResult> GetFinancialFile()
+        {
+            // بنجيب بيانات أحدث ملف مرفوع (بدون جلب محتوى الملف نفسه لتسريع التحميل)
+            var file = await _context.FinancialFiles
+                .OrderByDescending(f => f.UploadedAt)
+                .Select(f => new {
+                    f.Id,
+                    f.FileName,
+                    f.UploadedAt
+                }).FirstOrDefaultAsync();
+
+            if (file == null) return NotFound("No financial file found.");
+            return Ok(file);
+        }
+
+        [HttpPost("upload-financial")]
+        public async Task<IActionResult> UploadFinancialFile(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            // التأكد إن الملف بصيغة إكسيل أو CSV
+            var ext = Path.GetExtension(file.FileName).ToLower();
+            if (ext != ".xlsx" && ext != ".csv" && ext != ".xls")
+                return BadRequest("Only Excel (.xlsx, .xls) and CSV files are allowed.");
+
+            // تحويل الملف لـ Byte Array عشان يتحفظ في الداتابيز
+            using var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+
+            // مسح أي ملفات قديمة عشان نحافظ على ملف واحد أكتيف بس في السيستم
+            var oldFiles = await _context.FinancialFiles.ToListAsync();
+            if (oldFiles.Any())
+            {
+                _context.FinancialFiles.RemoveRange(oldFiles);
+            }
+
+            // إنشاء الملف الجديد
+            var newFile = new FinancialFile
+            {
+                FileName = file.FileName,
+                ContentType = file.ContentType,
+                FileData = memoryStream.ToArray(),
+                UploadedAt = DateTime.UtcNow
+            };
+
+            _context.FinancialFiles.Add(newFile);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { newFile.Id, newFile.FileName, newFile.UploadedAt });
+        }
+
+        [HttpDelete("delete-financial/{id}")]
+        public async Task<IActionResult> DeleteFinancialFile(int id)
+        {
+            var file = await _context.FinancialFiles.FindAsync(id);
+            if (file == null) return NotFound();
+
+            _context.FinancialFiles.Remove(file);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "File deleted successfully" });
+        }
+
+        // ================== 🟢 Pending Properties ==================
+
+        [HttpGet("pending-properties")]
+        public async Task<IActionResult> GetPendingProperties()
+        {
+            var props = await _context.Properties
+                .Include(p => p.Broker)
+                .Include(p => p.Photos)
+                .Where(p => !p.IsApproved && p.RejectionReason == null)
+                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new {
+                    p.Id,
+                    p.Title,
+                    p.Code,
+                    p.Price,
+                    p.City,
+                    p.Region,
+                    p.ListingType,
+                    p.PropertyType,
+                    p.CreatedAt,
+                    BrokerName = p.Broker.FirstName + " " + p.Broker.LastName,
+                    BrokerPhone = p.Broker.PhoneNumber,
+                    Photos = p.Photos.Select(img => new { img.Url, img.IsMain })
+                }).ToListAsync();
+
+            return Ok(props);
+        }
+
+        [HttpPatch("approve-property/{id}")]
+        public async Task<IActionResult> ApproveProperty(int id)
+        {
+            var property = await _context.Properties.FindAsync(id);
+            if (property == null) return NotFound("Property not found");
+
+            property.IsApproved = true;
+            property.IsActive = true;
+            property.RejectionReason = null;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Property approved and published successfully" });
+        }
+
+        [HttpPatch("reject-property/{id}")]
+        public async Task<IActionResult> RejectProperty(int id, [FromBody] RejectDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Reason))
+                return BadRequest("Rejection reason is required");
+
+            var property = await _context.Properties.FindAsync(id);
+            if (property == null) return NotFound("Property not found");
+
+            property.IsApproved = false;
+            property.IsActive = false;
+            property.RejectionReason = dto.Reason;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Property rejected" });
+        }
+
     }
 }

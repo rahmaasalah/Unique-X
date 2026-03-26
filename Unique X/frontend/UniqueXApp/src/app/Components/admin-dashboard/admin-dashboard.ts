@@ -28,18 +28,20 @@ export class AdminDashboardComponent implements OnInit {
   stats = signal<any>({});
   userData = signal<any>(null); // بيانات الأدمن الشخصية
   selectedProperty = signal<any>(null); 
+  currentFinancialFile = signal<any>(null);
 
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
   homeBanners = signal<any[]>([]);
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending'>('users');
 
   detailData = signal<any[]>([]);
 
   adminForm!: FormGroup;
 
   userSearchText = signal('');
-  userTypeFilter = signal(''); // الكل، بروكر، أو كلاينت
+  userTypeFilter = signal(''); 
+  pendingProperties = signal<any[]>([]);// الكل، بروكر، أو كلاينت
   
   propSearchText = signal('');
   propListingFilter = signal('');
@@ -91,6 +93,7 @@ export class AdminDashboardComponent implements OnInit {
 
     this.loadAllData();
     this.loadAdminProfile();
+    this.loadPendingProperties();
   }
 
   loadAllData() {
@@ -119,6 +122,7 @@ export class AdminDashboardComponent implements OnInit {
   });
 
   this.loadBanners(); 
+  this.loadFinancialFile();
 }
 
   loadBanners() {
@@ -303,4 +307,98 @@ export class AdminDashboardComponent implements OnInit {
       }
     }, 500);
   }
+
+  // ================== 🟢 إدارة ملف الحسابات (Financial) ==================
+  loadFinancialFile() {
+    this.adminService.getFinancialFile().subscribe({
+      next: (data) => this.currentFinancialFile.set(data),
+      error: () => this.currentFinancialFile.set(null) // لو مفيش ملف هيفضل null
+    });
+  }
+
+  onUploadFinancial(fileInput: any) {
+    const file = fileInput.files[0];
+    if (!file) {
+      this.alertService.error('Please select an Excel or CSV file first.');
+      return;
+    }
+
+    this.alertService.showLoading('Uploading Data File...');
+    this.adminService.uploadFinancialFile(file).subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success('Financial Data Updated Successfully!');
+        this.loadFinancialFile(); 
+        fileInput.value = ''; 
+      },
+      error: (err) => {
+        this.alertService.close();
+        this.alertService.error(err.error || 'Failed to upload file.');
+      }
+    });
+  }
+
+  onDeleteFinancial(id: number) {
+    this.alertService.confirm('Are you sure you want to delete the current financial data?', () => {
+      this.alertService.showLoading('Deleting...');
+      this.adminService.deleteFinancialFile(id).subscribe({
+        next: () => {
+          this.alertService.close();
+          this.alertService.success('File deleted.');
+          this.loadFinancialFile();
+        }
+      });
+    });
+  }
+
+  loadPendingProperties() {
+  this.adminService.getPendingProperties().subscribe(data => 
+    this.pendingProperties.set(data)
+  );
+}
+
+onApproveProperty(id: number) {
+  this.alertService.confirm('Approve this property and publish it?', () => {
+    this.alertService.showLoading('Approving...');
+    this.adminService.approveProperty(id).subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success('Property approved and published!');
+        this.loadPendingProperties();
+        this.loadAllData();
+      }
+    });
+  });
+}
+
+onRejectProperty(id: number) {
+  // SweetAlert input prompt لكتابة السبب
+  const swal = (window as any).Swal;
+  swal.fire({
+    title: 'Reject Property',
+    input: 'textarea',
+    inputLabel: 'Reason for rejection',
+    inputPlaceholder: 'Enter the reason...',
+    inputAttributes: { 'aria-label': 'Reason' },
+    showCancelButton: true,
+    confirmButtonColor: '#ef3341',
+    confirmButtonText: 'Reject',
+    inputValidator: (value: string) => {
+  if (!value) return 'Please enter a reason!';
+  return undefined;
+}
+  }).then((result: any) => {
+    if (result.isConfirmed) {
+      this.alertService.showLoading('Rejecting...');
+      this.adminService.rejectProperty(id, result.value).subscribe({
+        next: () => {
+          this.alertService.close();
+          this.alertService.success('Property rejected.');
+          this.loadPendingProperties();
+        }
+      });
+    }
+  });
+}
+
 }

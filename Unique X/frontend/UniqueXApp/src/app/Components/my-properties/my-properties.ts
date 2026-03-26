@@ -94,4 +94,15 @@ export class MyPropertiesComponent implements OnInit {
       next: () => this.loadMyProperties()
     });
   }
+
+  showRejectionReason(reason: string) {
+  const swal = (window as any).Swal;
+  swal.fire({
+    title: 'Rejection Reason',
+    text: reason,
+    icon: 'error',
+    confirmButtonColor: '#ef3341',
+    confirmButtonText: 'OK'
+  });
+}
 }

@@ -11,24 +11,24 @@ namespace Unique_X.DTOs
         public int? Area { get; set; }
         public int? Rooms { get; set; }
         public int? Bathrooms { get; set; }
-        public string? DistanceFromLandmark { get; set; } // 4 نمرة من ابوقير
-        public bool? HasMasterRoom { get; set; }           // غرف ماستر
-        public int? ReceptionPieces { get; set; }          // ريسيبشن كم قطعة
-        public string? View { get; set; }                 // الاطلالة (على الشارع)
-        public int? Floor { get; set; }                    // الدور
-        public int? TotalFloors { get; set; }               // عدد أدوار العقار
-        public int? ApartmentsPerFloor { get; set; }        // الدور كم شقة
-        public int? ElevatorsCount { get; set; }            // عدد الاسانسيرات
-        public int? BuildYear { get; set; }                 // سنة المباني
-        public bool? HasHotelEntrance { get; set; }        // مدخل فندقي
-        public bool? HasSecurity { get; set; }             // أمن وحراسة
-        public bool? IsFirstOwner { get; set; }            // أول مالك
-        public bool? IsLegalReconciled { get; set; }       // مدفوع تصالح
-        public bool? HasParking { get; set; }              // متاح جراج
-        public decimal CommissionPercentage { get; set; } = 2.5m; // العمولة
+        public string? DistanceFromLandmark { get; set; } 
+        public bool? HasMasterRoom { get; set; }          
+        public int? ReceptionPieces { get; set; }         
+        public string? View { get; set; }                 
+        public int? Floor { get; set; }                    
+        public int? TotalFloors { get; set; }               
+        public int? ApartmentsPerFloor { get; set; }        
+        public int? ElevatorsCount { get; set; }            
+        public int? BuildYear { get; set; }                 
+        public bool? HasHotelEntrance { get; set; }        
+        public bool? HasSecurity { get; set; }             
+        public bool? IsFirstOwner { get; set; }            
+        public bool? IsLegalReconciled { get; set; }       
+        public bool? HasParking { get; set; }              
+        public decimal CommissionPercentage { get; set; } = 2.5m; 
         public bool? HasBalcony { get; set; }
         public bool? IsFurnished { get; set; }
-        public string? PaymentMethod { get; set; } // "Cash" or "Installment"
+        public string? PaymentMethod { get; set; } 
         //public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
         public int? City { get; set; }
         public string? Region { get; set; }
@@ -37,18 +37,18 @@ namespace Unique_X.DTOs
         public int? PropertyType { get; set; }
         public int MainPhotoIndex { get; set; } = 0;
         public DeliveryStatus? DeliveryStatus { get; set; }
-        public int? DeliveryYear { get; set; } // Nullable لأنه يظهر فقط لو تحت الإنشاء
-        public bool? IsLicensed { get; set; }        // هل الشقة مرخصة؟
-        public bool? HasWaterMeter { get; set; }      // عداد مياه
-        public bool? HasElectricityMeter { get; set; } // عداد كهرباء
+        public int? DeliveryYear { get; set; } 
+        public bool? IsLicensed { get; set; }        
+        public bool? HasWaterMeter { get; set; }      
+        public bool? HasElectricityMeter { get; set; } 
         public bool? HasGasMeter { get; set; }
         public bool? HasLandShare { get; set; }
-        //public decimal? DownPayment { get; set; }        // المقدم
-        //public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
-        public decimal? SecurityDeposit { get; set; }    // مبلغ التأمين (للإيجار)
+        //public decimal? DownPayment { get; set; }        
+        //public decimal? QuarterInstallment { get; set; } 
+        public decimal? SecurityDeposit { get; set; }    
         public List<PaymentPlanDto>? PaymentPlans { get; set; }
         public decimal? MonthlyRent { get; set; }
-        public string? Code { get; set; } // AR#123
+        public string? Code { get; set; } 
 
         // أنواع الفيلا والمساحة
         public AreaType? AreaType { get; set; }

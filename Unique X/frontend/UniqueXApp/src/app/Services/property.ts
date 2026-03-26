@@ -62,4 +62,8 @@ getWishlist(): Observable<Property[]> {
 markAsSold(id: number): Observable<any> {
   return this.http.patch(`${this.baseUrl}/${id}/mark-as-sold`, {});
 }
+getFinancialHistory(code: string): Observable<any[]> {
+    // 🟢 إضافة encodeURIComponent لحماية الأكواد اللي فيها رموز زي #
+    return this.http.get<any[]>(`${this.baseUrl}/${encodeURIComponent(code)}/financial-history`);
+  }
 }

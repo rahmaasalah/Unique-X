@@ -13,11 +13,9 @@ import { ProfileComponent } from './Components/profile/profile';
 import {adminGuard } from './Guards/admin-guard';
 import { AdminDashboardComponent } from './Components/admin-dashboard/admin-dashboard';
 import { FindAgentComponent } from './Components/find-agent/find-agent';
+import { ComparePropertiesComponent } from './Components/compare-properties/compare-properties';
 
 export const routes: Routes = [
-  //{ path: 'login', component: LoginComponent },
-  //{ path: 'register', component: RegisterComponent },
-
   { 
     path: 'admin', 
     component: AdminDashboardComponent, // الكومبوننت اللي هتعمليه للأدمن
@@ -35,10 +33,7 @@ export const routes: Routes = [
   { path: 'edit-property/:id', component: EditPropertyComponent, canActivate: [authGuard] },
   { path: 'wishlist', component: WishlistComponent, canActivate: [authGuard] },
   { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
-
-  //{ path: 'home', component: HomeComponent, canActivate: [authGuard] },
-  //{ path: 'property-details/:id', component: PropertyDetailsComponent, canActivate: [authGuard] },
-  //{ path: 'add-property', component: AddPropertyComponent, canActivate: [authGuard] },
+  { path: 'compare/:id1/:id2', component: ComparePropertiesComponent },
  { path: '', component: HomeComponent, pathMatch: 'full' }, 
  { path: '**', redirectTo: '/login' }
 ];
