@@ -40,7 +40,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
-        ValidIssuer = builder.Configuration["JWT:Issuer"], // تأكدي إن القيم دي موجودة في appsettings.json
+        ValidIssuer = builder.Configuration["JWT:Issuer"],
         ValidAudience = builder.Configuration["JWT:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
     };
@@ -68,19 +68,16 @@ builder.Services.AddCors(options =>
         });
 });
 
-// 3. Add services to the container.
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // يخلي الـ Enums تظهر كـ Strings في الـ JSON
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
 builder.Services.AddEndpointsApiExplorer();
-// تعريف Swagger مع إعدادات الـ JWT
 builder.Services.AddSwaggerGen(options =>
 {
-    // 1. تعريف نوع الحماية (Bearer Token)
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",

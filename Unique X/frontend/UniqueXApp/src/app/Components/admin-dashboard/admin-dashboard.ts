@@ -54,7 +54,7 @@ export class AdminDashboardComponent implements OnInit {
   totalProperties = computed(() => this.properties().length);
   activePropertiesCount = computed(() => this.properties().filter(p => p.isActive).length); // حساب النشط فقط
   suspendedUsersCount = computed(() => this.users().filter(u => !u.isActive).length);
-  suspendedPropertiesCount = computed(() => this.properties().filter(p => !p.isActive).length); // حساب الموقوف فقط
+  suspendedPropertiesCount = computed(() => this.properties().filter(p => !p.isActive && p.isApproved).length);
   soldPropertiesCount = computed(() => this.properties().filter(p => p.isSold).length);
 
   brokersList = computed(() => this.users().filter(u => u.userType === 1));
@@ -366,6 +366,7 @@ onApproveProperty(id: number) {
         this.alertService.success('Property approved and published!');
         this.loadPendingProperties();
         this.loadAllData();
+        document.getElementById('closeModalBtn')?.click(); 
       }
     });
   });
@@ -395,6 +396,7 @@ onRejectProperty(id: number) {
           this.alertService.close();
           this.alertService.success('Property rejected.');
           this.loadPendingProperties();
+          document.getElementById('closeModalBtn')?.click(); 
         }
       });
     }

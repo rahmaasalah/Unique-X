@@ -33,6 +33,13 @@ export class AlertService {
       confirmButtonColor: '#002b52' // لون أزرق داكن للتباين
     });
   }
+
+  warning(message: string, title: string = 'Warning') {
+    const swal = (window as any).Swal;
+    if (swal) {
+      swal.fire({ title: title, text: message, icon: 'warning', confirmButtonColor: '#f8bb86' });
+    }
+  }
   
 
   // رسالة تنبيه أو تأكيد (زي "هل أنت متأكد من الحذف؟")

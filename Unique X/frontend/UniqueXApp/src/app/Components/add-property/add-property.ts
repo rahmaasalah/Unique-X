@@ -26,8 +26,7 @@ function minAmountValidator(min: number): ValidatorFn {
 
 export class AddPropertyComponent implements OnInit {
   propertyForm!: FormGroup;
-  selectedFiles: File[] = []; // لتخزين الصور المختارة محلياً
-  //selectedPhotos = signal<{ file: File, preview: string }[]>([]);
+  selectedFiles: File[] = [];
   selectedPhotos = signal<{ file: File, preview: string, originalFile: File, originalPreview: string, isWatermarked: boolean }[]>([]);
 
 mainPhotoIndex: number = 0;
@@ -78,12 +77,14 @@ projectsMapping: any = {
     ]
   },
   3: { // North Coast
-    'Ras Al Hekma': ['Ramla', 'Azha', 'Naia Bay', 'El Masyaf', 'Fouka Bay', 'Remal', 'Hacienda West', 'Seashore', 'Ogami', 'Seashell Playa', 'La Vista Ras El Hikma', 'Caesar', 'Koun', 'Caesar Bay', 'Lyv', 'Mountain View Ras El Hikma', 'Solare', 'Swan Lake', 'Seashell Ras El Hikma', 'The Med', 'Gaia', 'June', 'Direction White', 'Cali Coast', 'Hacienda Waters', 'Mar Bay', 'Jefaira', 'Sea View', 'Safia', 'Salt', 'Azzar Islands', 'Saada North Coast', 'Katamya Coast', 'Soul', 'Lvls'],
-    'Al-Dabaa': ['Dose', 'The Water Way', 'Seazen', 'La Vista Bay', 'La Vista Bay East', 'Hacienda Blue', 'La Sirena', 'D bay', 'South Med'],
-    'Sidi Abdulrahman': ['Telal', 'Hacienda Red', 'Hacienda White', 'Amwaj', 'Q North', 'SeaShell', 'Bianchi Ilios', 'Shamasi', 'Masaya', 'Location', 'Stella Heights', 'Alura', 'La vista Cascada', 'Maraasi', 'Stella', 'Diplo 3', 'Haceinda Bay'],
+    'Ras Al Hekma': ['Ramla', 'Azha', 'Naia Bay', 'El Masyaf', 'Fouka Bay', 'Remal', 'Hacienda West', 'Seashore', 'Ogami', 'Seashell Playa', 'La Vista Ras El Hikma', 'Caesar', 'Koun', 'Caesar Bay', 'Lyv', 'Mountain View Ras El Hikma', 'Solare', 'Swan Lake', 'Seashell Ras El Hikma', 'The Med', 'Gaia', 'June', 'Direction White', 'Cali Coast', 'Hacienda Waters', 'Mar Bay', 'Jefaira', 'Sea View', 'Safia', 'Salt', 'Azzar Islands', 'Saada North Coast', 'Katamya Coast', 'Soul', 'Lvls','قرية لافيستا باي','قرية سواني','قرية الامارات هايتس','قرية قطامية كوست','قرية بالي','قرية ذا ووتر واي','قرية ذا شور','قرية سي فيو','قرية لاميرا','قرية وان علمين','قرية دايركشن وايت','قرية جون سوديك','قرية رملة','قرية ذا ميد','قرية كالي كوست','قرية سيتي ستارز','قرية رودس','قرية ذا كريبس جيفيرا','قرية ماونتن فيو الدبلوماسيين','قرية سيزر قيصر باي','قرية هاسيندا وايت','قرية جيفيرا','قرية بلوز تيفاني','قرية الجوهرة','قرية رويال بيتش','قرية لافيستا باي ايست','قرية كوست 82 سابقا المصيف حاليا','قرية فوكا كلوب','قرية المصيف','قرية نايا باي','قرية مينا كلوب','قرية ازها','قرية ملاذ سوديك','قرية كاي','قرية سيلفر ساندس','قرية وايت باي سيدي حنيش','قرية سيسيليا لاجونز','قرية اس باس سيدي حنيش','قرية ازميرالدا باي','قرية بورتو كريستال لاجونز','قرية جزر الجراولة'],
+    'Al-Dabaa': ['Dose', 'The Water Way', 'Seazen', 'La Vista Bay', 'La Vista Bay East', 'Hacienda Blue', 'La Sirena', 'D bay', 'South Med','قرية كورونادو','قرية جاي','قرية دي باي','قرية لاسيرينا','قرية سيزين','قرية دوس'],
+    'Sidi Abdulrahman': ['Telal', 'Hacienda Red', 'Hacienda White', 'Amwaj', 'Q North', 'SeaShell', 'Bianchi Ilios', 'Shamasi', 'Masaya', 'Location', 'Stella Heights', 'Alura', 'La vista Cascada', 'Maraasi', 'Stella', 'Diplo 3', 'Haceinda Bay','قرية هاسيندا باي','قرية ستيلا سيدي عبدالرحمن','قرية ليك يارد','قرية ماراسي','قرية سكايا مراسي','','قرية أجورا','قرية فرح','قرية لافيستا كاسكادا','قرية سي شيل بلايا','قرية سوان ليك','قرية ريتان','قرية مسايا','قرية اوركيديا','قرية ستيلا هايتس','قرية كاسكاديا','قرية بيانكي','قرية ستيلا مارينا','قرية أمواج','قرية بلومار','قرية هاسيندا وايت','قرية خليج غزالة','قرية زويا','قرية تلال'],
     'Ghazala Bay': ['Playa Ghazala', 'Ghazala Bay', 'Zoya'],
-    'Al-Alamin': ['Zahra', 'Crysta', 'Plage', 'Lagoons', 'Alma', 'IL Latini', 'Downtown', 'Plam Hills North Coast', 'Mazarine', 'Golf Porto Marina', 'Marina 1', 'Marina 2', 'Marina 3', 'Marina 4', 'Marina 5', 'Marina 6', 'Marina 7', 'Marina 8'],
-    'sahel': ['Viller', 'The Island', 'Marina 8', 'North Code', 'Wanas Master', 'London', 'Eko Mena', 'Bungalows', 'Layana', 'Glee']
+    'Al-Alamin': ['Zahra', 'Crysta', 'Plage', 'Lagoons', 'Alma', 'IL Latini', 'Downtown', 'Plam Hills North Coast', 'Mazarine', 'Golf Porto Marina', 'Marina 1', 'Marina 2', 'Marina 3', 'Marina 4', 'Marina 5', 'Marina 6', 'Marina 7', 'Marina 8','قرية مازارين','قرية مارسيليا لاند','قرية ليفير','قرية اركو لاجون','قرية فيستا مارينا','منتجع العلمين كابيتال','قرية باب البحر','قرية بلو فالي','قرية لازوردي باي','قرية بو ايلاند','قرية بو ساندس','قرية داون تاون مارينا','قرية رو مارينا','قرية بورتو مارينا','قرية سيا فيلاجيو','قرية جولف بورتو مارينا','قرية بورتو كروز'],
+    'sahel': ['Viller', 'The Island', 'Marina 8', 'North Code', 'Wanas Master', 'London', 'Eko Mena', 'Bungalows', 'Layana', 'Glee', 'قرية المهندسين', 'فخر البحار للقوات البحرية', 'قرية سيدرا', 'قرية ريزيه', 'قرية أمون','مايوركا', 'قرية كرير باراديس','قرية ألماظة باي','قرية داليا','قرية مصر للتعمير','قرية كرير لاجون','قرية الفيروز','قرية شاطئ الشروق','قرية البنوك','قرية الأطباء','قرية الطيارين','قرية جامعة القاهرة','قرية رمسيس','قرية كازابلانكا','قرية جولدن بيتش','قرية مرسي باجوش','قرية هليو بيتش','قرية مراقيا','قرية سرايات','قرية الدبلوماسيين التجاريين','قرية زمردة','قرية روزانا','قرية غرناطة','قرية فالنسيا','قرية ديانا بيتش','قرية هايدي','قرية سيلا','قرية الريفيرا','قرية تيباروز','قرية جراند هيلز','قرية المروة','قرية سلسبيل','قرية تاهيتي',
+      'قرية التجاريين','قرية بلو باي','قرية باراديس بيتش','قرية البلاح','قرية قناة السويس','قرية ماربيلا','قرية اونديكسا','قرية روز فالي','قرية الرواد بيتش','قرية الكروان','قرية بالم بيتش','قرية كازابيانكا','قرية الروضة','قرية جامعة الدول العربية','قرية جامعة عين شمس','قرية المعمورة الجديدة','قرية الصفا','قرية بانجلوز','قرية حورس والرمال الذهبية','قرية زهرة','قرية بيلا ميرا','قرية ديمورا','قرية مارسيليا بوكية','قرية وايت ساند','قرية بانوراما بيتش','قرية عايدة','قرية المعادي','قرية مرحبا بيتش','قرية ريتال فيو','قرية كاربيان','قرية ريماس','قرية الروان','قرية المنتزة','قرية ايكو','قرية المرجان','','قرية قرطاج','قرية مارينا فلاورز','قرية أغادير','قرية سيرينا','قرية الصحفيين','قرية بلو بلاجا','قرية كوستا دل سول','قرية بيو بيلا','قرية روتندو كوست','قرية سانتوريني','قرية بدر','قرية فيرجينيا','قرية نيفادا هيلز','قرية كيلوباترا','قرية الزهور','قرية مارينا صن شاين','قرية البوسيت','قرية جرين بيتش','قرية سوميد','قرية جامعة أسيوط','قرية دياموند بيتش','قرية أتيك','قرية مارينا جاردنز','قرية اللوتس','قرية أكوا فيو','قرية باترسي','قرية بيترو بيتش','قرية مارينا فالي','قرية بيلا مارينا',
+    ]
   }
 };
 
@@ -194,7 +195,6 @@ filteredProjects: string[] = [];
       }
     });
 
-    // 🟢 رادار الأخطاء: اطبعي في الـ Console لو الفورم مقفولة عشان تعرفي السبب
     this.propertyForm.valueChanges.subscribe(() => {
       if (this.propertyForm.invalid) {
         console.warn('Form Invalid. Check these fields:');
@@ -676,20 +676,17 @@ filteredProjects: string[] = [];
     this.propertyService.addProperty(formData).subscribe({
       next: () => { 
           this.alertService.close(); 
-          // 🟢 رسالة منطقية توضح إن العقار في المراجعة
-          this.alertService.success('Submitted successfully! Waiting for admin approval.'); 
-          // 🟢 نوجهه للداش بوورد بتاعته عشان يشوف الكارت وهو منور أصفر (Pending)
+          this.alertService.warning('Submitted successfully! Waiting for admin approval.', 'Pending Review'); 
           this.router.navigate(['/my-properties']); 
         },
       error: (err) => {
         this.alertService.close();
         this.isSubmitting = false;
         
-        // 🟢 كشف الإيرور الحقيقي اللي جاي من السيرفر وعرضه في الشاشة
         let errorMsg = 'Error while saving. Please check all fields.';
         if (err.error) {
           if (typeof err.error === 'string') errorMsg = err.error;
-          else if (err.error.title) errorMsg = err.error.title; // بيجيب الخطأ بتاع C#
+          else if (err.error.title) errorMsg = err.error.title;
           else if (err.error.errors) errorMsg = JSON.stringify(err.error.errors);
         }
         
