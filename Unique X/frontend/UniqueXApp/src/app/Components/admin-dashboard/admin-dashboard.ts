@@ -245,17 +245,16 @@ export class AdminDashboardComponent implements OnInit {
   toggleProperty(propId: number, currentStatus: boolean) {
     this.adminService.togglePropertyStatus(propId).subscribe({
       next: () => {
-        this.loadAllData();
+        
         this.alertService.success('Listing visibility updated');
+        this.loadAllData();
       }
     });
   }
 
   viewPropertyDetails(prop: any) {
-  // وضع بيانات العقار اللي ضغطتي عليه جوه السجنل
   this.selectedProperty.set(prop); 
   
-  // تشغيل المودال الخاص ببوتستراب برمجياً
   const bootstrap = (window as any).bootstrap;
   const modalElement = document.getElementById('adminPropModal');
   if (modalElement) {
