@@ -95,6 +95,7 @@ namespace Unique_X.Controllers
             var props = await _context.Properties
                 .Include(p => p.Broker)
                 .Include(p => p.Photos)
+                .Include(p => p.PaymentPlans)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
@@ -226,6 +227,7 @@ namespace Unique_X.Controllers
         {
             var props = await _context.Properties
                 .Include(p => p.Broker)
+                .Include(p => p.PaymentPlans)
                 .Where(p => !p.IsActive)
                 .Select(p => new {
                     p.Id,
@@ -262,23 +264,19 @@ namespace Unique_X.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
 
-            // التأكد إن الملف بصيغة إكسيل أو CSV
             var ext = Path.GetExtension(file.FileName).ToLower();
             if (ext != ".xlsx" && ext != ".csv" && ext != ".xls")
                 return BadRequest("Only Excel (.xlsx, .xls) and CSV files are allowed.");
 
-            // تحويل الملف لـ Byte Array عشان يتحفظ في الداتابيز
             using var memoryStream = new MemoryStream();
             await file.CopyToAsync(memoryStream);
 
-            // مسح أي ملفات قديمة عشان نحافظ على ملف واحد أكتيف بس في السيستم
             var oldFiles = await _context.FinancialFiles.ToListAsync();
             if (oldFiles.Any())
             {
                 _context.FinancialFiles.RemoveRange(oldFiles);
             }
 
-            // إنشاء الملف الجديد
             var newFile = new FinancialFile
             {
                 FileName = file.FileName,
@@ -305,7 +303,6 @@ namespace Unique_X.Controllers
             return Ok(new { Message = "File deleted successfully" });
         }
 
-        // ================== 🟢 Pending Properties ==================
 
         [HttpGet("pending-properties")]
         public async Task<IActionResult> GetPendingProperties()
@@ -313,22 +310,10 @@ namespace Unique_X.Controllers
             var props = await _context.Properties
                 .Include(p => p.Broker)
                 .Include(p => p.Photos)
+                .Include(p => p.PaymentPlans)
                 .Where(p => !p.IsApproved && p.RejectionReason == null)
                 .OrderByDescending(p => p.CreatedAt)
-                .Select(p => new {
-                    p.Id,
-                    p.Title,
-                    p.Code,
-                    p.Price,
-                    p.City,
-                    p.Region,
-                    p.ListingType,
-                    p.PropertyType,
-                    p.CreatedAt,
-                    BrokerName = p.Broker.FirstName + " " + p.Broker.LastName,
-                    BrokerPhone = p.Broker.PhoneNumber,
-                    Photos = p.Photos.Select(img => new { img.Url, img.IsMain })
-                }).ToListAsync();
+                .ToListAsync();
 
             return Ok(props);
         }

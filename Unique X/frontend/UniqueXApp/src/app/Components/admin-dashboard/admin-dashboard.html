@@ -269,7 +269,16 @@
         <option [value]="b.id" [selected]="b.id === prop.brokerId">
           {{ b.firstName }} {{ b.lastName }}
         </option>
-      }
+      } @empty {
+                <!-- 🟢 رسالة تظهر لو مفيش عقارات بجد -->
+                <tr>
+                  <td colspan="6" class="text-center py-5 text-muted">
+                    <i class="bi bi-houses-fill fs-1 d-block mb-3 opacity-25"></i>
+                    <h5 class="fw-bold text-dark">No Properties Found</h5>
+                    <p class="small">There are no property listings available in the system yet.</p>
+                  </td>
+                </tr>
+              }
     </select>
   </div>
 </div>
@@ -282,10 +291,18 @@
                     </span></td>
                   <td class="fw-bold text-dark">EGP {{ prop.price | number }}</td>
                   <td class="text-center">
-                    <span class="badge rounded-pill px-3" [class]="prop.isActive ? 'bg-success' : 'bg-secondary'">
-                      {{ prop.isActive ? 'Active' : 'Suspended' }}
-                    </span>
-                    @if(prop.isSold) { <span class="badge bg-dark rounded-pill px-2 ms-1">SOLD</span> }
+                    <!-- 🟢 عرض الحالة الحقيقية للعقار -->
+                    @if (!prop.isApproved && !prop.rejectionReason) {
+                      <span class="badge bg-warning text-dark rounded-pill px-3 shadow-sm"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
+                    } @else if (!prop.isApproved && prop.rejectionReason) {
+                      <span class="badge bg-danger rounded-pill px-3 shadow-sm"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                    } @else if (prop.isApproved && prop.isActive) {
+                      <span class="badge bg-success rounded-pill px-3 shadow-sm"><i class="bi bi-check-circle me-1"></i>Active</span>
+                    } @else {
+                      <span class="badge bg-secondary rounded-pill px-3 shadow-sm"><i class="bi bi-pause-circle me-1"></i>Suspended</span>
+                    }
+                    
+                    @if(prop.isSold) { <span class="badge bg-dark rounded-pill px-2 ms-1 shadow-sm">SOLD</span> }
                   </td>
                   <td class="text-end pe-4">
                     <button class="btn btn-outline-dark btn-sm rounded-pill px-3 me-2 fw-bold shadow-sm" (click)="viewPropertyDetails(prop)">
@@ -361,6 +378,12 @@
                     <td class="text-muted small">{{ prop.createdAt | date:'mediumDate' }}</td>
                     <td class="text-center pe-4">
                       <div class="d-flex justify-content-center gap-2">
+                        <!-- 🟢 زرار الـ View الجديد -->
+                        <button class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold shadow-sm"
+                                (click)="viewPropertyDetails(prop)">
+                          <i class="bi bi-search me-1"></i>View
+                        </button>
+                        
                         <button class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm"
                                 (click)="onApproveProperty(prop.id)">
                           <i class="bi bi-check-lg me-1"></i>Approve
@@ -712,10 +735,21 @@
                        <div class="col-md-6"><b>Rent:</b> EGP {{ p.monthlyRent | number }}</div>
                        <div class="col-md-6"><b>Security:</b> EGP {{ p.securityDeposit | number }}</div>
                      }
-                     @if(p.paymentMethod === 'Installment') {
-                       <div class="col-md-6"><b>Down Payment:</b> EGP {{ p.downPayment | number }}</div>
-                       <div class="col-md-6"><b>Quarterly:</b> EGP {{ p.quarterInstallment | number }}</div>
-                       <div class="col-md-6"><b>Duration:</b> {{ p.installmentYears }} Years</div>
+                     
+                     <!-- 🟢 عرض خطط الدفع المتعددة للأدمن -->
+                     @if(p.paymentMethod === 'Installment' && p.paymentPlans?.length > 0) {
+                       <div class="col-12 mt-3">
+                         <h6 class="fw-bold text-dark small mb-2 border-bottom pb-1">Payment Plans ({{ p.paymentPlans.length }})</h6>
+                         
+                         @for(plan of p.paymentPlans; track $index; let i = $index) {
+                           <div class="p-2 border rounded-3 bg-light mb-2 small d-flex flex-wrap gap-3 align-items-center">
+                             <span class="badge bg-danger">Plan {{ i + 1 }}</span>
+                             <span><b>Down Payment:</b> EGP {{ plan.downPayment | number }}</span>
+                             <span><b>Quarterly:</b> EGP {{ plan.quarterInstallment | number }}</span>
+                             <span><b>Duration:</b> {{ plan.installmentYears }} Years</span>
+                           </div>
+                         }
+                       </div>
                      }
                   </div>
                 </div>
@@ -788,12 +822,25 @@
               </div>
             </div>
           </div>
+
+          <!-- 🟢 الفوتر المدمج بشكل صحيح جوه الـ @if -->
+          <div class="modal-footer bg-white border-0 shadow-sm p-3 d-flex justify-content-between">
+            @if (activeTab() === 'pending') {
+              <div>
+                <button class="btn btn-success rounded-pill px-4 fw-bold me-2 shadow-sm" (click)="onApproveProperty(p.id)">
+                  <i class="bi bi-check-circle me-1"></i> Approve & Publish
+                </button>
+                <button class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" (click)="onRejectProperty(p.id)">
+                  <i class="bi bi-x-circle me-1"></i> Reject
+                </button>
+              </div>
+            } @else {
+              <div></div> 
+            }
+            <button type="button" id="closeModalBtn" class="btn btn-secondary rounded-pill px-5 fw-bold" data-bs-dismiss="modal">Close Audit</button>
+          </div>
+
         }
-
-        <div class="modal-footer bg-white border-0 shadow-sm p-3">
-          <button type="button" class="btn btn-secondary rounded-pill px-5 fw-bold" data-bs-dismiss="modal">Close Audit</button>
-        </div>
-
       </div>
     </div>
   </div>
