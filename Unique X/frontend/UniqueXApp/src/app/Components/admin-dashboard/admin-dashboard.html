@@ -184,11 +184,13 @@
                     </span>
                   </td>
                   <td class="text-end pe-4">
+                    @if(getUserTypeLabel(user.userType) != 'Admin'){
                     <button class="btn btn-sm rounded-pill px-3 fw-bold" 
                             [class]="user.isActive ? 'btn-outline-danger' : 'btn-success'"
                             (click)="toggleUser(user.id, user.isActive)">
                       {{ user.isActive ? 'Suspend User' : 'Activate User' }}
                     </button>
+                    }
                   </td>
                 </tr>
               }
@@ -308,11 +310,13 @@
                     <button class="btn btn-outline-dark btn-sm rounded-pill px-3 me-2 fw-bold shadow-sm" (click)="viewPropertyDetails(prop)">
                       <i class="bi bi-search me-1"></i> View
                     </button>
-                    <button class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm" 
-                            [class]="prop.isActive ? 'btn-danger' : 'btn-success'" 
-                            (click)="toggleProperty(prop.id, prop.isActive)">
-                      {{ prop.isActive ? 'Suspend' : 'Activate' }}
-                    </button>
+                    @if (prop.isApproved) {
+                      <button class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm" 
+                              [class]="prop.isActive ? 'btn-danger' : 'btn-success'" 
+                              (click)="toggleProperty(prop.id, prop.isActive)">
+                        {{ prop.isActive ? 'Suspend' : 'Activate' }}
+                      </button>
+                    }
                   </td>
                 </tr>
               }
