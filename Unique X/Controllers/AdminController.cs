@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; // تأكدي من وجود السطر ده
+using Microsoft.EntityFrameworkCore; 
 using System.Security.Claims;
 using Unique_X.Data;
 using Unique_X.DTOs;
@@ -56,16 +56,13 @@ namespace Unique_X.Controllers
         [HttpPatch("reassign-property/{propertyId}/{newBrokerId}")]
         public async Task<IActionResult> ReassignProperty(int propertyId, string newBrokerId)
         {
-            // 1. البحث عن العقار
             var property = await _context.Properties.FindAsync(propertyId);
             if (property == null) return NotFound("Property not found");
 
-            // 2. التحقق من أن المستخدم الجديد موجود وفعلاً UserType == 1 (بروكر)
             var newBroker = await _userManager.FindByIdAsync(newBrokerId);
             if (newBroker == null || newBroker.UserType != 1)
                 return BadRequest("Invalid broker account");
 
-            // 3. تغيير ملكية العقار
             property.BrokerId = newBrokerId;
             await _context.SaveChangesAsync();
 
@@ -146,8 +143,23 @@ namespace Unique_X.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetBanners()
         {
-            var banners = await _context.HomeBanners.ToListAsync();
+            var banners = await _context.HomeBanners
+                .OrderBy(b => b.DisplayOrder)
+                .ToListAsync();
             return Ok(banners ?? new List<HomeBanner>());
+        }
+
+        [HttpPut("banners/reorder")]
+        public async Task<IActionResult> ReorderBanners([FromBody] List<int> orderedIds)
+        {
+            for (int i = 0; i < orderedIds.Count; i++)
+            {
+                var banner = await _context.HomeBanners.FindAsync(orderedIds[i]);
+                if (banner != null)
+                    banner.DisplayOrder = i;
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         [HttpPost("track")]

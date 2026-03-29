@@ -4,13 +4,14 @@ import { AdminService } from '../../Services/admin';
 import { AlertService } from '../../Services/alert';
 import { AuthService } from '../../Services/auth'; // مهم جداً
 import { RouterModule, Router } from '@angular/router';
+import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDrag, CdkDragPlaceholder, DragDropModule } from '@angular/cdk/drag-drop';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms'; // 1. حل مشكلة formGroup
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
   // أضفنا ReactiveFormsModule هنا
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule], 
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, CdkDropList, CdkDrag, CdkDragPlaceholder, DragDropModule], 
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.css'
 })
@@ -411,6 +412,18 @@ onRejectProperty(id: number) {
       }
     });
   }, 500);
+}
+
+onBannerReorder(event: CdkDragDrop<any[]>) {
+  const updated = [...this.homeBanners()];
+  moveItemInArray(updated, event.previousIndex, event.currentIndex);
+  this.homeBanners.set(updated);
+
+  const orderedIds = updated.map((b: any) => b.id);
+  this.adminService.reorderBanners(orderedIds).subscribe({
+    next: () => this.alertService.success('Order saved!'),
+    error: () => this.alertService.error('Failed to save order.')
+  });
 }
 
 }

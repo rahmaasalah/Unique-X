@@ -461,44 +461,53 @@
 
     @if (activeTab() === 'banners') {
   <section class="animate__animated animate__fadeIn">
-    <h4 class="fw-bold mb-4">Homepage Carousel Manager</h4>
-    
-    <!-- فورم الرفع -->
-    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-      <h6 class="fw-bold mb-3">Upload New Banner</h6>
-      <div class="row g-3 align-items-end">
-        <div class="col-md-5">
-          <label class="small fw-bold">WhatsApp Message Title</label>
-          <input type="text" #bannerTitle class="form-control bg-light border-0" placeholder="e.g. Yearly Offers">
-        </div>
-        <div class="col-md-5">
-          <label class="small fw-bold">Banner Image</label>
-          <input type="file" #bannerFile class="form-control bg-light border-0">
-        </div>
-        <div class="col-md-2">
-          <button class="btn btn-danger w-100 rounded-pill fw-bold" 
-                  (click)="onAddBanner(bannerTitle.value, bannerFile)">Upload</button>
-        </div>
-      </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold mb-0"><i class="bi bi-image me-2"></i>Manage Banners</h4>
+      <small class="text-muted"><i class="bi bi-grip-vertical me-1"></i>Drag to reorder</small>
     </div>
 
-    <!-- عرض البنرات الحالية للحذف -->
-    <div class="row g-3">
-  @for (b of homeBanners(); track b.id) { <!-- أضفنا القوسين هنا ✅ -->
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-4 overflow-hidden position-relative h-100 bg-white">
-        <img [src]="b.imageUrl" class="w-100" style="height: 180px; object-fit: contain; background: #eee;">
-        <div class="p-3 d-flex justify-content-between align-items-center">
-          <span class="fw-bold small">{{ b.messageTitle }}</span>
-          <button class="btn btn-sm btn-outline-danger border-0" (click)="onDeleteBanner(b.id)">
-            <i class="bi bi-trash"></i>
+    <!-- Upload -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+          <label class="form-label fw-bold small text-muted">BANNER TITLE</label>
+          <input #bannerTitle type="text" class="form-control bg-light border-0 rounded-3" placeholder="e.g. Summer Offer">
+        </div>
+        <div class="col-md-5">
+          <label class="form-label fw-bold small text-muted">IMAGE</label>
+          <input #bannerFile type="file" accept="image/*" class="form-control bg-light border-0 rounded-3">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-danger rounded-3 w-100 fw-bold" (click)="onAddBanner(bannerTitle.value, bannerFile)">
+            <i class="bi bi-plus-lg me-1"></i>Add
           </button>
         </div>
       </div>
     </div>
-  }
-</div>
 
+    <!-- Banners Grid -->
+    <div class="row g-3"
+         cdkDropList
+         cdkDropListOrientation="mixed"
+         (cdkDropListDropped)="onBannerReorder($event)">
+      @for (banner of homeBanners(); track banner.id) {
+        <div class="col-md-4" cdkDrag>
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="cursor: grab;">
+            <div class="bg-dark text-white-50 px-3 py-2 d-flex align-items-center justify-content-between" style="font-size: 0.75rem;">
+              <span><i class="bi bi-grip-horizontal me-2"></i>{{ banner.title }}</span>
+              <span class="badge bg-secondary">{{ $index + 1 }}</span>
+            </div>
+            <img [src]="banner.imageUrl" class="w-100" style="height: 160px; object-fit: cover;">
+            <div class="p-2 text-end bg-white">
+              <button class="btn btn-outline-danger btn-sm rounded-pill px-3" (click)="onDeleteBanner(banner.id)">
+                <i class="bi bi-trash me-1"></i>Delete
+              </button>
+            </div>
+          </div>
+          <div *cdkDragPlaceholder class="rounded-4 border border-2 border-danger bg-light" style="height: 220px;"></div>
+        </div>
+      }
+    </div>
   </section>
 }
 

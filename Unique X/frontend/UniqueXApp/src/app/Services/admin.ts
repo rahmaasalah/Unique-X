@@ -115,4 +115,7 @@ approveProperty(id: number): Observable<any> {
 rejectProperty(id: number, reason: string): Observable<any> {
   return this.http.patch(`${this.baseUrl}/reject-property/${id}`, { reason });
 }
+reorderBanners(orderedIds: number[]) {
+  return this.http.put(`${this.baseUrl}/banners/reorder`, orderedIds);
+}
 }
