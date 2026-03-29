@@ -4,7 +4,8 @@
         {
             public int Id { get; set; }
             public string ImageUrl { get; set; }
-            public string PublicId { get; set; } // للحذف من Cloudinary
-            public string MessageTitle { get; set; } // العنوان اللي هيظهر في رسالة الواتساب
+            public string PublicId { get; set; } 
+            public string MessageTitle { get; set; }
+            public int DisplayOrder { get; set; }
         }
     }
