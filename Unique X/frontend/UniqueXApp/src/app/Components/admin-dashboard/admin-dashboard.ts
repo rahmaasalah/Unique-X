@@ -372,34 +372,45 @@ onApproveProperty(id: number) {
 }
 
 onRejectProperty(id: number) {
-  // SweetAlert input prompt لكتابة السبب
-  const swal = (window as any).Swal;
-  swal.fire({
-    title: 'Reject Property',
-    input: 'textarea',
-    inputLabel: 'Reason for rejection',
-    inputPlaceholder: 'Enter the reason...',
-    inputAttributes: { 'aria-label': 'Reason' },
-    showCancelButton: true,
-    confirmButtonColor: '#ef3341',
-    confirmButtonText: 'Reject',
-    inputValidator: (value: string) => {
-  if (!value) return 'Please enter a reason!';
-  return undefined;
-}
-  }).then((result: any) => {
-    if (result.isConfirmed) {
-      this.alertService.showLoading('Rejecting...');
-      this.adminService.rejectProperty(id, result.value).subscribe({
-        next: () => {
-          this.alertService.close();
-          this.alertService.success('Property rejected.');
-          this.loadPendingProperties();
-          document.getElementById('closeModalBtn')?.click(); 
-        }
-      });
-    }
-  });
+  // أول حاجة: اقفل الـ Bootstrap modal مؤقتاً
+  const modalElement = document.getElementById('adminPropModal');
+  const bootstrap = (window as any).bootstrap;
+  const modalInstance = bootstrap.Modal.getInstance(modalElement);
+  modalInstance?.hide();
+
+  // استنى الـ modal يقفل الأول، وبعدين افتح SweetAlert
+  setTimeout(() => {
+    const swal = (window as any).Swal;
+    swal.fire({
+      title: 'Reject Property',
+      input: 'textarea',
+      inputLabel: 'Reason for rejection',
+      inputPlaceholder: 'Enter the reason...',
+      inputAttributes: { 'aria-label': 'Reason' },
+      showCancelButton: true,
+      confirmButtonColor: '#ef3341',
+      confirmButtonText: 'Reject',
+      inputValidator: (value: string) => {
+        if (!value) return 'Please enter a reason!';
+        return undefined;
+      }
+    }).then((result: any) => {
+      if (result.isConfirmed) {
+        this.alertService.showLoading('Rejecting...');
+        this.adminService.rejectProperty(id, result.value).subscribe({
+          next: () => {
+            this.alertService.close();
+            this.alertService.success('Property rejected.');
+            this.loadPendingProperties();
+          }
+        });
+      } else {
+        // لو الأدمن كانسل، افتح الـ modal تاني
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+      }
+    });
+  }, 500);
 }
 
 }

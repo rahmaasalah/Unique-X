@@ -38,16 +38,32 @@
       <div class="bg-white p-4 rounded-4 shadow-sm mb-4 border border-light">
         
         <!-- العنوان (Title) - الآن واضح وتحت الصور بمسافة مريحة -->
-        <h2 class="fw-bold text-dark mb-2">
-            {{ prop.title }} 
-             @if (prop.projectName) {
-    <h4 class="text-danger fw-bold mb-3 d-flex align-items-center animate__animated animate__fadeIn">
-      <i class="bi bi-building-fill-check me-2"></i>
-      <span>{{ prop.projectName }}</span>
-    </h4>
-  } 
-      @if (prop.code) { <h6 class="text-dark fs-6 fw-normal ms-2">{{ prop.code }}</h6> }
-        </h2>
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h2 class="fw-bold text-dark mb-1">
+                {{ prop.title }} 
+            </h2>
+            
+            @if (prop.projectName) {
+              <h4 class="text-danger fw-bold mb-2 mt-2 d-flex align-items-center animate__animated animate__fadeIn">
+                <i class="bi bi-building-fill-check me-2"></i>
+                <span>{{ prop.projectName }}</span>
+              </h4>
+            } 
+            
+            @if (prop.code) { 
+              <h6 class="text-muted fs-6 fw-normal mb-0">{{ prop.code }}</h6> 
+            }
+          </div>
+          
+          <!-- زر النسخ (Copy Link) -->
+          <button class="btn btn-light border rounded-pill shadow-sm px-3 py-1 text-dark d-flex align-items-center gap-2" 
+                  (click)="copyLink()" 
+                  title="Copy Property Link">
+            <i class="bi bi-link-45deg fs-5"></i> 
+            <span class="small fw-bold">Copy Link</span>
+          </button>
+        </div>
         
          <div class="d-flex align-items-center gap-3 mb-3">
             @if (prop.listingType === 'Rent') {
