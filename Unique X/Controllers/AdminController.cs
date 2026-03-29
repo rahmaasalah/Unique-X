@@ -313,6 +313,72 @@ namespace Unique_X.Controllers
                 .Include(p => p.PaymentPlans)
                 .Where(p => !p.IsApproved && p.RejectionReason == null)
                 .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Title,
+                    p.Code,
+                    p.Price,
+                    p.ListingType,
+                    p.PropertyType,
+                    p.Region,
+                    p.CreatedAt,
+                    p.IsApproved,
+                    p.RejectionReason,
+                    p.IsActive,
+                    p.IsSold,
+                    p.Area,
+                    p.Rooms,
+                    p.Bathrooms,
+                    p.Floor,
+                    p.TotalFloors,
+                    p.ApartmentsPerFloor,
+                    p.ElevatorsCount,
+                    p.Finishing,
+                    p.BuildYear,
+                    p.View,
+                    p.DeliveryStatus,
+                    p.DeliveryYear,
+                    p.PaymentMethod,
+                    p.MonthlyRent,
+                    p.SecurityDeposit,
+                    p.ProjectName,
+                    p.DistanceFromLandmark,
+                    p.Description,
+                    p.IsLicensed,
+                    p.HasLandShare,
+                    p.IsLegalReconciled,
+                    p.IsFirstOwner,
+                    p.HasSecurity,
+                    p.HasParking,
+                    p.HasPool,
+                    p.HasGarden,
+                    p.HasElectricityMeter,
+                    p.HasWaterMeter,
+                    p.HasGasMeter,
+                    // Villa fields
+                    p.AreaType,
+                    p.VillaCategory,
+                    p.VillaSubType,
+                    p.GroundRooms,
+                    p.GroundBaths,
+                    p.FirstRooms,
+                    p.FirstBaths,
+                    p.SecondRooms,
+                    p.SecondBaths,
+                    // Broker info
+                    BrokerName = p.Broker.FirstName + " " + p.Broker.LastName,
+                    BrokerPhone = p.Broker.PhoneNumber,
+                    BrokerId = p.Broker.Id,
+                    // Related data
+                    Photos = p.Photos.Select(ph => new { ph.Url, ph.IsMain }),
+                    PaymentPlans = p.PaymentPlans.Select(pl => new
+                    {
+                        pl.DownPayment,
+                        pl.QuarterInstallment,
+                        pl.InstallmentYears
+                    })
+                })
                 .ToListAsync();
 
             return Ok(props);

@@ -214,5 +214,14 @@ startCompare() {
     });
   }
 
+  copyLink() {
+  const currentUrl = window.location.href;
+  navigator.clipboard.writeText(currentUrl).then(() => {
+    this.alertService.success('Link copied successfully!');
+  }).catch(err => {
+    console.error('Failed to copy text: ', err);
+  });
+}
+
   
 }

@@ -348,13 +348,13 @@
             <table class="table table-hover align-middle mb-0">
               <thead class="table-light">
                 <tr>
-                  <th class="ps-4 py-3">PROPERTY</th>
-                  <th>BROKER</th>
-                  <th>PRICE</th>
-                  <th>CATEGORY</th>
-                  <th>DATE</th>
-                  <th class="text-center pe-4">ACTIONS</th>
-                </tr>
+  <th class="ps-4 py-3" style="width: 35%">PROPERTY</th>
+  <th style="width: 18%">BROKER</th>
+  <th style="width: 13%">PRICE</th>
+  <th style="width: 10%">CATEGORY</th>
+  <th style="width: 10%">DATE</th>
+  <th class="text-center pe-4" style="width: 14%">ACTIONS</th>
+</tr>
               </thead>
               <tbody>
                 @for (prop of pendingProperties(); track prop.id) {
@@ -385,16 +385,16 @@
                         <!-- 🟢 زرار الـ View الجديد -->
                         <button class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold shadow-sm"
                                 (click)="viewPropertyDetails(prop)">
-                          <i class="bi bi-search me-1"></i>View
+                          <i></i>View
                         </button>
                         
                         <button class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm"
                                 (click)="onApproveProperty(prop.id)">
-                          <i class="bi bi-check-lg me-1"></i>Approve
+                          <i></i>Approve
                         </button>
                         <button class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm"
                                 (click)="onRejectProperty(prop.id)">
-                          <i class="bi bi-x-lg me-1"></i>Reject
+                          <i></i>Reject
                         </button>
                       </div>
                     </td>
@@ -699,8 +699,12 @@
         @if (selectedProperty(); as p) {
           <div class="modal-header border-0 bg-dark text-white p-4">
             <div>
-              <h4 class="modal-title fw-bold mb-1">{{ p.title }}</h4>
-              <p class="mb-0 small opacity-75">Broker: {{ p.broker?.firstName }} | Code: #{{ p.code }} | Type: {{ p.propertyType }}</p>
+              <h5 class="modal-title fw-bold text-white fs-4">{{ p.title }}</h5>
+<p class="text-white-50 small mb-0">
+  Broker: <span class="text-warning fw-bold">{{ p.brokerName }}</span>
+  <i class="bi bi-phone ms-2 me-1"></i>{{ p.brokerPhone }}
+  | Code: #{{ p.code }} | Type: {{ p.propertyType }}
+</p>
             </div>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
