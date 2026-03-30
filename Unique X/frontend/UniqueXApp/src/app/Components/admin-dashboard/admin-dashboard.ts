@@ -34,7 +34,7 @@ export class AdminDashboardComponent implements OnInit {
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
   homeBanners = signal<any[]>([]);
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected'>('users');
 
   detailData = signal<any[]>([]);
 
@@ -57,6 +57,8 @@ export class AdminDashboardComponent implements OnInit {
   suspendedUsersCount = computed(() => this.users().filter(u => !u.isActive).length);
   suspendedPropertiesCount = computed(() => this.properties().filter(p => !p.isActive && p.isApproved).length);
   soldPropertiesCount = computed(() => this.properties().filter(p => p.isSold).length);
+  rejectedPropertiesCount = computed(() => this.properties().filter(p => !p.isApproved && p.rejectionReason).length);
+  rejectedPropertiesList = computed(() => this.properties().filter(p => !p.isApproved && p.rejectionReason));
 
   brokersList = computed(() => this.users().filter(u => u.userType === 1));
 

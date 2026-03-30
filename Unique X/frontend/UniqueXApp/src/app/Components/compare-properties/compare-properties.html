@@ -51,6 +51,20 @@
             <td>{{ prop2()?.region }}, {{ prop2()?.city }}</td>
           </tr>
 
+          <!-- نوع العرض (Listing Type) -->
+          <tr>
+            <td class="text-start ps-4 fw-bold text-muted">Listing Type</td>
+            <td><span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">{{ prop1()?.listingType }}</span></td>
+            <td><span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">{{ prop2()?.listingType }}</span></td>
+          </tr>
+
+          <!-- نوع العقار (Property Type) -->
+          <tr>
+            <td class="text-start ps-4 fw-bold text-muted">Property Type</td>
+            <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">{{ prop1()?.propertyType }}</span></td>
+            <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">{{ prop2()?.propertyType }}</span></td>
+          </tr>
+
           <!-- المساحة والغرف -->
          <tr>
             <td class="text-start ps-4 fw-bold text-muted align-middle">Specs & Details</td>
@@ -76,6 +90,19 @@
                 
                 @if (prop1()?.distanceFromLandmark) { <li><i class="bi bi-geo text-danger me-2"></i> <strong>Landmark:</strong> {{ prop1()?.distanceFromLandmark }}</li> }
               </ul>
+
+            @if (prop1()?.propertyType === 'Villa') {
+                <hr class="my-2 border-secondary-subtle">
+                <div class="fw-bold text-danger mb-2 small"><i class="bi bi-layers-half me-1"></i> Villa Layout</div>
+                <ul class="list-unstyled mb-0 small text-muted lh-lg">
+                  @if(prop1()?.areaType) { <li><strong>Area Type:</strong> {{ prop1()?.areaType }}</li> }
+                  @if(prop1()?.villaCategory) { <li><strong>Category:</strong> {{ prop1()?.villaCategory }}</li> }
+                  @if(prop1()?.villaSubType) { <li><strong>Sub-Type:</strong> {{ prop1()?.villaSubType }}</li> }
+                  @if(prop1()?.groundRooms > 0 || prop1()?.groundBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>Ground:</strong> {{ prop1()?.groundRooms }} Rooms | {{ prop1()?.groundBaths }} Baths</li> }
+                  @if(prop1()?.firstRooms > 0 || prop1()?.firstBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>First:</strong> {{ prop1()?.firstRooms }} Rooms | {{ prop1()?.firstBaths }} Baths</li> }
+                  @if(prop1()?.secondRooms > 0 || prop1()?.secondBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>Second:</strong> {{ prop1()?.secondRooms }} Rooms | {{ prop1()?.secondBaths }} Baths</li> }
+                </ul>
+              }
             </td>
 
             <!-- مواصفات العقار الثاني -->
@@ -99,6 +126,21 @@
                 
                 @if (prop2()?.distanceFromLandmark) { <li><i class="bi bi-geo text-danger me-2"></i> <strong>Landmark:</strong> {{ prop2()?.distanceFromLandmark }}</li> }
               </ul>
+
+
+              @if (prop2()?.propertyType === 'Villa') {
+                <hr class="my-2 border-secondary-subtle">
+                <div class="fw-bold text-danger mb-2 small"><i class="bi bi-layers-half me-1"></i> Villa Layout</div>
+                <ul class="list-unstyled mb-0 small text-muted lh-lg">
+                  @if(prop2()?.areaType) { <li><strong>Area Type:</strong> {{ prop2()?.areaType }}</li> }
+                  @if(prop2()?.villaCategory) { <li><strong>Category:</strong> {{ prop2()?.villaCategory }}</li> }
+                  @if(prop2()?.villaSubType) { <li><strong>Sub-Type:</strong> {{ prop2()?.villaSubType }}</li> }
+                  @if(prop2()?.groundRooms > 0 || prop2()?.groundBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>Ground:</strong> {{ prop2()?.groundRooms }} Rooms | {{ prop2()?.groundBaths }} Baths</li> }
+                  @if(prop2()?.firstRooms > 0 || prop2()?.firstBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>First:</strong> {{ prop2()?.firstRooms }} Rooms | {{ prop2()?.firstBaths }} Baths</li> }
+                  @if(prop2()?.secondRooms > 0 || prop2()?.secondBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>Second:</strong> {{ prop2()?.secondRooms }} Rooms | {{ prop2()?.secondBaths }} Baths</li> }
+                </ul>
+              }
+            
             </td>
           </tr>
 
@@ -171,10 +213,61 @@
           </tr>
 
           <!-- طريقة الدفع -->
+          <!-- 🟢 طريقة الدفع وخطط التقسيط -->
           <tr>
             <td class="text-start ps-4 fw-bold text-muted">Payment</td>
-            <td>{{ prop1()?.paymentMethod }}</td>
-            <td>{{ prop2()?.paymentMethod }}</td>
+            
+            <!-- دفع العقار الأول -->
+            <td>
+              <div class="fw-bold text-dark mb-2">{{ prop1()?.paymentMethod }}</div>
+              
+              @if(prop1()?.paymentMethod === 'Installment' && prop1()?.paymentPlans?.length > 0) {
+                <div class="d-flex flex-column gap-2 align-items-center">
+                  @for(plan of prop1()?.paymentPlans; track $index) {
+                    <div class="border rounded-3 p-2 bg-light text-start small w-100 shadow-sm" style="max-width: 260px;">
+                      <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted fw-bold" style="font-size: 0.65rem;">DOWN PAYMENT</span>
+                        <span class="text-dark fw-bold">EGP {{ plan.downPayment | number }}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted fw-bold" style="font-size: 0.65rem;">DURATION</span>
+                        <span class="text-dark fw-bold">{{ plan.installmentYears }} Years</span>
+                      </div>
+                      <div class="d-flex justify-content-between border-top pt-1 mt-1">
+                        <span class="text-success fw-bold" style="font-size: 0.65rem;">QUARTERLY</span>
+                        <span class="text-success fw-bold">EGP {{ plan.quarterInstallment | number }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </td>
+            
+            <!-- دفع العقار الثاني -->
+            <td>
+              <div class="fw-bold text-dark mb-2">{{ prop2()?.paymentMethod }}</div>
+              
+              @if(prop2()?.paymentMethod === 'Installment' && prop2()?.paymentPlans?.length > 0) {
+                <div class="d-flex flex-column gap-2 align-items-center">
+                  @for(plan of prop2()?.paymentPlans; track $index) {
+                    <div class="border rounded-3 p-2 bg-light text-start small w-100 shadow-sm" style="max-width: 260px;">
+                      <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted fw-bold" style="font-size: 0.65rem;">DOWN PAYMENT</span>
+                        <span class="text-dark fw-bold">EGP {{ plan.downPayment | number }}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted fw-bold" style="font-size: 0.65rem;">DURATION</span>
+                        <span class="text-dark fw-bold">{{ plan.installmentYears }} Years</span>
+                      </div>
+                      <div class="d-flex justify-content-between border-top pt-1 mt-1">
+                        <span class="text-success fw-bold" style="font-size: 0.65rem;">QUARTERLY</span>
+                        <span class="text-success fw-bold">EGP {{ plan.quarterInstallment | number }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </td>
           </tr>
 
           <!-- الأكشن -->

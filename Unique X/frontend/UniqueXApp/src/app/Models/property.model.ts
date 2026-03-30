@@ -3,6 +3,7 @@ export interface Property {
   title: string;
   description: string;
   price: number;
+  pricePerMeter: number;
   brokerImage?: string;
   brokerTitle?: string;
   brokerDescription?: string;
