@@ -112,6 +112,12 @@
             <h2 class="fw-bold mb-0 text-warning">{{ suspendedPropertiesCount() }}</h2>
           </div>
         </div>
+        <div class="col-md-3" (click)="switchTab('rejected')" style="cursor: pointer;">
+          <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-danger border-5 rounded-4">
+            <small class="text-muted fw-bold text-uppercase">Rejected Properties</small>
+            <h2 class="fw-bold mb-0 text-danger">{{ rejectedPropertiesCount() }}</h2>
+          </div>
+        </div>
         <div class="col-md-3 " (click)="switchTab('sold')" style="cursor: pointer;">
           <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-success border-5 rounded-4">
             <small class="text-muted fw-bold text-uppercase">Sold Properties</small>
@@ -698,6 +704,64 @@
   </section>
 }
 
+@if (activeTab() === 'rejected') {
+  <section class="animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-x-octagon-fill text-danger me-2"></i>Rejected Listings Review</h4>
+      <span class="badge bg-danger text-white rounded-pill px-3">{{ rejectedPropertiesCount() }} Properties</span>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden border-top border-danger border-4">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4 py-3">PROPERTY & BROKER</th>
+            <th>REJECTION REASON</th>
+            <th class="text-end pe-4">ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of rejectedPropertiesList(); track p.id) {
+            <tr>
+              <td class="ps-4">
+                <div class="d-flex align-items-center">
+                   <img [src]="p.photos?.[0]?.url" class="rounded-2 me-3 border shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">
+                   <div>
+                      <h6 class="mb-0 fw-bold text-dark small">{{ p.title }}</h6>
+                      <small class="text-muted fw-bold"><i class="bi bi-person me-1"></i>{{ p.broker?.firstName }} {{ p.broker?.lastName }}</small>
+                   </div>
+                </div>
+              </td>
+              <td>
+                <div class="text-danger small fw-bold" style="max-width: 300px; white-space: normal;">
+                  <i class="bi bi-info-circle me-1"></i>{{ p.rejectionReason }}
+                </div>
+              </td>
+              <td class="text-end pe-4">
+                <button class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold shadow-sm me-2" 
+                        (click)="viewPropertyDetails(p)">
+                  <i class="bi bi-search me-1"></i> View
+                </button>
+                <button class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm" 
+                        (click)="onApproveProperty(p.id)">
+                  <i class="bi bi-check2-circle me-1"></i> Approve Now
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="text-center py-5 text-muted">
+                <i class="bi bi-emoji-smile fs-1 d-block mb-3 opacity-25"></i>
+                No rejected properties.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
+
   </main>
 
   <!-- ================== مودال فحص العقار الشامل ( Inspection Report ) ================== -->
@@ -745,6 +809,9 @@
                   <div class="row g-3 small">
                      <div class="col-md-6"><b>Category:</b> {{ p.listingType }}</div>
                      <div class="col-md-6"><b>Total Price:</b> EGP {{ p.price | number }}</div>
+                     @if(p.pricePerMeter > 0) {
+                       <div class="col-md-6"><b>Price/m²:</b> EGP {{ p.pricePerMeter | number }}</div>
+                     }
                      <div class="col-md-6"><b>Payment:</b> {{ p.paymentMethod }}</div>
                      @if(p.listingType !== 'Rent') { <div class="col-md-6"><b>Commission:</b> <span class="text-danger fw-bold">2.5%</span></div> }
 
@@ -777,7 +844,10 @@
                   <div class="row g-3 small">
                     <div class="col-md-6"><b>Area:</b> {{ p.area }} m²</div>
                     <div class="col-md-6"><b>Type:</b> {{ p.propertyType }}</div>
-                    @if(p.projectName) { <div class="col-md-6"><b>Project:</b> <span class="text-danger fw-bold">{{ p.projectName }}</span></div> }
+                    <div class="col-md-6"><b>Listing Type: </b> {{ p.listingType }}</div>
+                    <div class="col-md-6"><b>City:</b> {{ p.city }}</div>
+                    <div class="col-md-6"><b>Region:</b> {{ p.region }}</div>
+                    @if(p.projectName) { <div class="col-md-6"><b>Project:</b> <span class="text-danger fw-bold"> {{ p.projectName }}</span></div> }
                     @if(p.distanceFromLandmark) { <div class="col-md-6"><b>Landmark:</b> {{ p.distanceFromLandmark }}</div> }
                     <div class="col-md-6"><b>Finishing:</b> {{ p.finishing }}</div>
 
@@ -790,7 +860,11 @@
                         @if(p.elevatorsCount > 0) { <div class="col-md-6"><b>Elevators:</b> {{ p.elevatorsCount }}</div> }
                     }
 
-                    <div class="col-md-6"><b>Build Year:</b> {{ p.buildYear }}</div>
+                    @if(p.buildYear ){
+                        <div class="col-md-6"><b>Build Year:</b> {{ p.buildYear }}</div>
+
+                    }
+
                     @if(p.view) { <div class="col-md-6"><b>View:</b> {{ p.view }}</div> }
                     @if(p.deliveryStatus) { <div class="col-md-12"><b>Handover:</b> {{ p.deliveryStatus }} @if(p.deliveryYear) { ({{ p.deliveryYear }}) }</div> }
                   </div>
