@@ -54,15 +54,16 @@ get displayRooms(): number {
     return this.property.bathrooms || 0;
   }
 
-getWhatsAppLink(phone: string, code: string): string {
+getWhatsAppLink(phone: string, code: string, id: number): string {
   if (!phone) return '#';
   // تنظيف الرقم وإضافة كود مصر
   let cleanedPhone = phone.replace(/\D/g, '');
   if (cleanedPhone.startsWith('0')) {
     cleanedPhone = '2' + cleanedPhone;
   }
+  const propertyUrl = `${window.location.origin}/property-details/${this.property.id}`;
   // الرسالة تشمل كود العقار لسهولة التواصل
-  const message = encodeURIComponent(`Hello, I'm interested in property code: #${code}`);
+    const message = encodeURIComponent(`Hello, I'm interested in property code: #${code}\nLink: ${propertyUrl}`);
   return `https://wa.me/${cleanedPhone}?text=${message}`;
 }
 
@@ -82,7 +83,7 @@ handleContact(event: Event, type: 'whatsapp' | 'call') {
   if (type === 'call') {
     window.location.href = 'tel:' + phone;
   } else {
-    window.open(this.getWhatsAppLink(phone, this.property.code), '_blank');
+    window.open(this.getWhatsAppLink(phone, this.property.code, this.property.id), '_blank');
   }
 }
 

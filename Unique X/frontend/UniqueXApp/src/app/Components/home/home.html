@@ -153,12 +153,70 @@
       </div>
     } 
     @else if (properties().length > 0) {
-      @for (prop of properties(); track prop.id) {
-        <div class="col-md-6 col-lg-4">
-          <app-property-card [property]="prop"></app-property-card>
+      <!-- 1. قسم Resale -->
+      @if (resaleProps().length > 0) {
+        <div class="col-12 mb-5 animate__animated animate__fadeInUp">
+          <div class="d-flex align-items-center mb-4">
+            <h3 class="fw-bold text-dark mb-0"><i class="bi bi-house-door text-danger me-2"></i>Resale Properties</h3>
+          </div>
+          <div class="row g-4">
+            @for (prop of resaleProps(); track prop.id) {
+              <div class="col-md-6 col-lg-4">
+                <app-property-card [property]="prop"></app-property-card>
+              </div>
+            }
+          </div>
         </div>
       }
-    } 
+
+      <!-- 2. قسم Resale Project -->
+      @if (resaleProjectProps().length > 0) {
+        <div class="col-12 mb-5 animate__animated animate__fadeInUp">
+          <div class="d-flex align-items-center mb-4">
+            <h3 class="fw-bold text-dark mb-0"><i class="bi bi-building text-danger me-2"></i>Resale Projects</h3>
+          </div>
+          <div class="row g-4">
+            @for (prop of resaleProjectProps(); track prop.id) {
+              <div class="col-md-6 col-lg-4">
+                <app-property-card [property]="prop"></app-property-card>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- 3. قسم Primary -->
+      @if (primaryProps().length > 0) {
+        <div class="col-12 mb-5 animate__animated animate__fadeInUp">
+          <div class="d-flex align-items-center mb-4">
+            <h3 class="fw-bold text-dark mb-0"><i class="bi bi-stars text-danger me-2"></i>Primary Properties</h3>
+          </div>
+          <div class="row g-4">
+            @for (prop of primaryProps(); track prop.id) {
+              <div class="col-md-6 col-lg-4">
+                <app-property-card [property]="prop"></app-property-card>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- 4. قسم Rent -->
+      @if (rentProps().length > 0) {
+        <div class="col-12 mb-5 animate__animated animate__fadeInUp">
+          <div class="d-flex align-items-center mb-4">
+            <h3 class="fw-bold text-dark mb-0"><i class="bi bi-key text-danger me-2"></i>Properties for Rent</h3>
+          </div>
+          <div class="row g-4">
+            @for (prop of rentProps(); track prop.id) {
+              <div class="col-md-6 col-lg-4">
+                <app-property-card [property]="prop"></app-property-card>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
     @else {
       <!-- حالة عدم وجود نتائج: تم تكبيرها وتوسيطها -->
       <div class="col-12 d-flex justify-content-center align-items-center" style="min-height: 400px;">

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectorRef, computed  } from '@angular/core';
 import { CommonModule } from '@angular/common'; // مهم جداً للأوامر مثل *ngIf
 import { PropertyCardComponent } from '../property-card/property-card'; // مهم لكي يتعرف على الكارت
 import { PropertyService } from '../../Services/property';
@@ -25,6 +25,11 @@ export class HomeComponent implements OnInit {
 
   adminPhone = signal<string>('');
   private gaService = inject(GoogleAnalyticsService);
+
+  resaleProps = computed(() => this.properties().filter(p => p.listingType === 'Resale'));
+  resaleProjectProps = computed(() => this.properties().filter(p => p.listingType === 'ResaleProject'));
+  primaryProps = computed(() => this.properties().filter(p => p.listingType === 'Primary'));
+  rentProps = computed(() => this.properties().filter(p => p.listingType === 'Rent'));
 
 
   isLoading = signal<boolean>(false);
@@ -214,18 +219,15 @@ getAdminWhatsApp(): string {
   if (!this.adminPhone()) return '#';
   let phone = this.adminPhone().replace(/\D/g, '');
   if (phone.startsWith('0')) phone = '2' + phone;
-  const msg = encodeURIComponent("Hello, I have an inquiry regarding Unique X properties.");
+  const msg = encodeURIComponent("Hello, I have an inquiry regarding BETK properties.");
   return `https://wa.me/${phone}?text=${msg}`;
 }
 
-// أضيفي هذه الدالة داخل كلاس HomeComponent في ملف home.ts
 
 handleAdminContact(event: Event, type: 'whatsapp' | 'call') {
   event.preventDefault(); // منع المتصفح من فتح الرابط تلقائياً
 
-  // 1. فحص هل المستخدم مسجل دخول؟
   if (!this.authService.loggedIn()) {
-    // 2. توجيه لصفحة اللوجن لو مش مسجل
     this.router.navigate(['/login']);
     return;
   }

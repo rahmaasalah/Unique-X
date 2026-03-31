@@ -165,6 +165,7 @@
           </div>
         </div>
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light border-0">
                <tr>
@@ -202,6 +203,7 @@
               }
             </tbody>
           </table>
+          </div>
         </div>
       </section>
     }
@@ -351,18 +353,19 @@
           </div>
         } @else {
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden border-top border-warning border-4">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light">
-                <tr>
-  <th class="ps-4 py-3" style="width: 35%">PROPERTY</th>
-  <th style="width: 18%">BROKER</th>
-  <th style="width: 13%">PRICE</th>
-  <th style="width: 10%">CATEGORY</th>
-  <th style="width: 10%">DATE</th>
-  <th class="text-center pe-4" style="width: 14%">ACTIONS</th>
-</tr>
-              </thead>
-              <tbody>
+            <div class="table-responsive"> 
+              <table class="table table-hover align-middle mb-0" style="min-width: 800px;">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-4 py-3" style="width: 35%">PROPERTY</th>
+                    <th style="width: 18%">BROKER</th>
+                    <th style="width: 13%">PRICE</th>
+                    <th style="width: 10%">CATEGORY</th>
+                    <th style="width: 10%">DATE</th>
+                    <th class="text-center pe-4" style="width: 14%">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
                 @for (prop of pendingProperties(); track prop.id) {
                   <tr>
                     <td class="ps-4 py-3">
@@ -408,6 +411,7 @@
                 }
               </tbody>
             </table>
+            </div>
           </div>
         }
       </section>
@@ -496,23 +500,34 @@
          cdkDropList
          cdkDropListOrientation="mixed"
          (cdkDropListDropped)="onBannerReorder($event)">
-      @for (banner of homeBanners(); track banner.id) {
+      <!-- 🟢 ضفنا let i = $index عشان نرقم البنرات -->
+      @for (banner of homeBanners(); track banner.id; let i = $index) {
         <div class="col-md-4" cdkDrag>
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="cursor: grab;">
             <div class="bg-dark text-white-50 px-3 py-2 d-flex align-items-center justify-content-between" style="font-size: 0.75rem;">
-              <span><i class="bi bi-grip-horizontal me-2"></i>{{ banner.title }}</span>
-              <span class="badge bg-secondary">{{ $index + 1 }}</span>
+              <span><i class="bi bi-grip-horizontal me-2"></i>{{ banner.messageTitle }}</span>
+              <span class="badge bg-secondary">{{ i + 1 }}</span>
             </div>
             <img [src]="banner.imageUrl" class="w-100" style="height: 160px; object-fit: cover;">
-            <div class="p-2 text-end bg-white">
-              <button class="btn btn-outline-danger btn-sm rounded-pill px-3" (click)="onDeleteBanner(banner.id)">
-                <i class="bi bi-trash me-1"></i>Delete
+            
+            <!-- 🟢 خلينا الفوتر فيه زرار تحميل وزرار مسح -->
+            <div class="p-2 d-flex justify-content-between align-items-center bg-white border-top border-light">
+              <button class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold shadow-sm" 
+                      (click)="downloadPhoto(banner.imageUrl, i, $event, 'Banner')">
+                <i class="bi bi-download me-1"></i> Download
+              </button>
+              
+              <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold shadow-sm" 
+                      (click)="onDeleteBanner(banner.id)">
+                <i class="bi bi-trash me-1"></i> Delete
               </button>
             </div>
+
           </div>
           <div *cdkDragPlaceholder class="rounded-4 border border-2 border-danger bg-light" style="height: 220px;"></div>
         </div>
       }
+    
     </div>
   </section>
 }
@@ -787,13 +802,31 @@
               
               <!-- الجزء الأيسر: كل الصور -->
               <div class="col-lg-5 bg-white border-end p-4">
-                <h6 class="fw-bold text-muted mb-4 text-uppercase small">Photo Audit ({{ p.photos?.length }} Images)</h6>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <h6 class="fw-bold text-muted text-uppercase small mb-0">Photo Audit ({{ p.photos?.length }} Images)</h6>
+                  <!-- 🟢 زرار تحميل كل الصور -->
+                  <button class="btn btn-outline-danger btn-sm rounded-pill fw-bold" 
+                          (click)="downloadAllPhotos(p.photos)">
+                    <i class="bi bi-cloud-arrow-down-fill me-1"></i> Download All
+                  </button>
+                </div>
+                
                 <div class="row g-2">
-                  @for (img of p.photos; track img.url) {
+                  @for (img of p.photos; track img.url; let i = $index) {
                     <div class="col-6">
                       <div class="position-relative border rounded-3 overflow-hidden shadow-sm h-100">
                         <img [src]="img.url" class="w-100 h-100 object-fit-cover" style="min-height: 150px; max-height: 150px;">
-                        @if (img.isMain) { <span class="badge bg-danger position-absolute top-0 start-0 m-2">COVER</span> }
+                        
+                        @if (img.isMain) { 
+                          <span class="badge bg-danger position-absolute top-0 start-0 m-2">COVER</span> 
+                        }
+                        
+                        <!-- 🟢 زرار تحميل الصورة الفردية -->
+                        <button class="btn btn-dark btn-sm rounded-circle position-absolute bottom-0 end-0 m-2 shadow"
+                                style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; opacity: 0.85;"
+                                (click)="downloadPhoto(img.url, i, $event)" title="Download Image">
+                          <i class="bi bi-download"></i>
+                        </button>
                       </div>
                     </div>
                   }

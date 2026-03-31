@@ -119,8 +119,9 @@ handleContact(event: Event, type: 'call' | 'whatsapp') {
   if (cleanedPhone.startsWith('0')) {
     cleanedPhone = '2' + cleanedPhone;
   }
+  const currentUrl = window.location.href;
 
-  const message = encodeURIComponent(`Hello, I'm interested in your property: ${this.property()?.code}`);
+  const message = encodeURIComponent(`Hello, I'm interested in your property: #${this.property()?.code}\nLink: ${currentUrl}`);
   return `https://wa.me/${cleanedPhone}?text=${message}`;
 }
 
