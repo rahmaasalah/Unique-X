@@ -95,6 +95,7 @@ namespace Unique_X.DTOs
         public string BrokerName { get; set; } 
         public string BrokerPhone { get; set; }
         public bool IsApproved { get; set; }
+        public bool IsActive { get; set; }
         public string? RejectionReason { get; set; }
     }
 

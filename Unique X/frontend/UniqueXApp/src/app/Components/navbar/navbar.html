@@ -1,8 +1,5 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
   <div class="container position-relative">
-    <!-- <a class="navbar-brand brand-logo fs-3" routerLink="/home">
-  <span class="brand-bold">BET</span><span class="text-dark brand-light">K</span>
-</a> -->
 
 <a class="navbar-brand d-flex align-items-center" routerLink="/home" (click)="closeMenu()">
   <!-- عرض اللوجو -->
@@ -15,7 +12,7 @@
 
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center">
-  @if (authService.loggedIn()) {
+  
     <!-- Resale (0) -->
     <li class="nav-item">
       <a class="nav-link px-3 fw-semibold custom-link" 
@@ -59,8 +56,6 @@
          routerLinkActive="active-tab"
          (click)="closeMenu()">Agents</a>
     </li>
-
-  
     
         <!-- خيارات البروكر فقط -->
         @if (authService.loggedIn() && authService.getUserType() === 1) {
@@ -75,7 +70,7 @@
             </a>
           </li>
         }
-      }
+      
       </ul>
 
       <ul class="navbar-nav ms-auto align-items-center">

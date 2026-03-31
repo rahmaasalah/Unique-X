@@ -513,6 +513,7 @@ namespace Unique_X.Services.Implementation
                 CreatedAt = property.CreatedAt,
                 BrokerId = property.BrokerId,
                 IsApproved = property.IsApproved,
+                IsActive = property.IsActive,
                 RejectionReason = property.RejectionReason,
                 BrokerName = property.Broker != null ? $"{property.Broker.FirstName} {property.Broker.LastName}" : "System Agent",
                 BrokerPhone = property.Broker?.PhoneNumber ?? "N/A",

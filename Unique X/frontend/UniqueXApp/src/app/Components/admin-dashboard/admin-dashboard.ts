@@ -428,4 +428,41 @@ onBannerReorder(event: CdkDragDrop<any[]>) {
   });
 }
 
+// دالة لتحميل صورة واحدة
+  downloadPhoto(url: string, index: number, e: Event, prefix: string = 'Property_Image'
+  ) {
+    e.stopPropagation();
+    this.alertService.showLoading('Downloading...');
+    
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${prefix}_${index + 1}.jpg`; // اسم الملف
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.alertService.close();
+      })
+      .catch(err => {
+        console.error(err);
+        this.alertService.close();
+        this.alertService.error('Failed to download image.');
+      });
+  }
+
+  // دالة لتحميل كل الصور بضغطة واحدة
+  downloadAllPhotos(photos: any[]) {
+    if (!photos || photos.length === 0) return;
+    this.alertService.success('Starting download... Please allow multiple downloads if prompted.');
+    
+    // استخدام مهلة زمنية بسيطة بين كل صورة لمنع المتصفح من حظر التحميل المتعدد
+    photos.forEach((photo, index) => {
+      setTimeout(() => {
+        this.downloadPhoto(photo.url, index, new Event('click'));
+      }, index * 500); // نصف ثانية بين كل صورة وصورة
+    });
+  }
+
 }

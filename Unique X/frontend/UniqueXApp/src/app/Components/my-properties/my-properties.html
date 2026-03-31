@@ -98,19 +98,15 @@
                 </td>
 
                 <td>
-  <!-- حالة الموافقة -->
-  @if (!prop.isApproved && !prop.rejectionReason) {
-    <span class="badge bg-warning text-dark rounded-pill px-3 mb-1 d-block">
-      <i class="bi bi-hourglass-split me-1"></i>Pending Review
-    </span>
-  }
-  @if (prop.isApproved) {
-    <span class="badge bg-success rounded-pill px-3 mb-1 d-block">
-      <i class="bi bi-check-circle me-1"></i>Approved
-    </span>
-  }
-  @if (prop.rejectionReason) {
-    <div class="mb-1">
+                  @if (!prop.isApproved && !prop.rejectionReason) {
+                    <span class="badge bg-warning text-dark rounded-pill px-3 mb-1 d-block">
+                      <i class="bi bi-hourglass-split me-1"></i>Pending Review
+                    </span>
+                  } 
+                  
+                  <!-- 2. Rejected (لو اترفضت) -->
+                  @else if (!prop.isApproved && prop.rejectionReason) {
+                    <div class="mb-1">
                       <span class="badge bg-danger rounded-pill px-3 mb-1 d-block">
                         <i class="bi bi-x-circle me-1"></i>Rejected
                       </span>
@@ -118,7 +114,22 @@
                         <i class="bi bi-info-circle me-1"></i>{{ prop.rejectionReason }}
                       </small>
                     </div>
-  }
+                  } 
+                  
+                  <!-- 3. Suspended (لو الأدمن وافق بس وقفها بعدين) -->
+                  @else if (prop.isApproved && !prop.isActive) {
+                    <span class="badge bg-secondary rounded-pill px-3 mb-1 d-block" title="Suspended by Admin">
+                      <i class="bi bi-pause-circle me-1"></i>Suspended
+                    </span>
+                  } 
+                  
+                  <!-- 4. Approved / Active (لو متوافق عليها وشغالة في الهوم) -->
+                  @else if (prop.isApproved && prop.isActive) {
+                    <span class="badge bg-success rounded-pill px-3 mb-1 d-block">
+                      <i class="bi bi-check-circle me-1"></i>Approved
+                    </span>
+                  }
+                  
                 </td>
                 <td>
                   <button class="btn btn-sm rounded-pill px-3 fw-bold status-toggle-btn shadow-sm"

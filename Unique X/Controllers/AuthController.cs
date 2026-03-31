@@ -166,7 +166,6 @@ namespace Unique_X.Controllers
         [AllowAnonymous] // مسموح للجميع لمعرفة رقم التواصل
         public async Task<IActionResult> GetAdminContact()
         {
-            // البحث عن أول مستخدم يملك صلاحية Admin
             var admin = await _userManager.GetUsersInRoleAsync("Admin");
             var adminUser = admin.FirstOrDefault();
 

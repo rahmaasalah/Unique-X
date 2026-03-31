@@ -17,7 +17,8 @@ export interface Property {
   propertyType: string;
   isFavorite: boolean;
   isSold: boolean;
-   distanceFromLandmark: string;
+  isActive: boolean; 
+  distanceFromLandmark: string;
   hasMasterRoom: boolean;
   receptionPieces: number;
   view: string;
