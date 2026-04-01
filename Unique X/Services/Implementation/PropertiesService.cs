@@ -199,7 +199,21 @@ namespace Unique_X.Services.Implementation
                 query = query.Where(p => p.BrokerId == filter.BrokerId);
 
             if (!string.IsNullOrEmpty(filter.ProjectName))
-                query = query.Where(p => p.ProjectName != null && p.ProjectName.ToLower().Contains(filter.ProjectName.ToLower()));
+            {
+                var terms = filter.ProjectName.ToLower().Split('|', StringSplitOptions.RemoveEmptyEntries);
+                if (terms.Length == 1)
+                {
+                    var t = terms[0];
+                    query = query.Where(p => p.ProjectName != null && p.ProjectName.ToLower().Contains(t));
+                }
+                else
+                {
+                    var t1 = terms[0];
+                    var t2 = terms[1];
+                    query = query.Where(p => p.ProjectName != null &&
+                                            (p.ProjectName.ToLower().Contains(t1) || p.ProjectName.ToLower().Contains(t2)));
+                }
+            }
 
             if (filter.ListingType.HasValue)
             {
@@ -211,14 +225,26 @@ namespace Unique_X.Services.Implementation
 
             if (!string.IsNullOrEmpty(filter.SearchTerm))
             {
-                var search = filter.SearchTerm.ToLower();
-
-                query = query.Where(p =>
-                    p.Title.ToLower().Contains(search) ||
-                    p.Region.ToLower().Contains(search) ||
-                    p.PropertyType.ToString().ToLower().Contains(search) ||
-                    (p.ProjectName != null && p.ProjectName.ToLower().Contains(search))
-                );
+                var terms = filter.SearchTerm.ToLower().Split('|', StringSplitOptions.RemoveEmptyEntries);
+                if (terms.Length == 1)
+                {
+                    var t = terms[0];
+                    query = query.Where(p =>
+                        p.Title.ToLower().Contains(t) ||
+                        p.Region.ToLower().Contains(t) ||
+                        p.PropertyType.ToString().ToLower().Contains(t) ||
+                        (p.ProjectName != null && p.ProjectName.ToLower().Contains(t))
+                    );
+                }
+                else
+                {
+                    var t1 = terms[0];
+                    var t2 = terms[1];
+                    query = query.Where(p =>
+                        p.Title.ToLower().Contains(t1) || p.Region.ToLower().Contains(t1) || p.PropertyType.ToString().ToLower().Contains(t1) || (p.ProjectName != null && p.ProjectName.ToLower().Contains(t1)) ||
+                        p.Title.ToLower().Contains(t2) || p.Region.ToLower().Contains(t2) || p.PropertyType.ToString().ToLower().Contains(t2) || (p.ProjectName != null && p.ProjectName.ToLower().Contains(t2))
+                    );
+                }
             }
 
             var properties = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
