@@ -108,6 +108,23 @@
 }
 
 
+/* تنسيق اسم المنطقة (Optgroup) */
+select optgroup.region-group {
+  background-color: #f1f3f5; /* لون خلفية رمادي فاتح بيفصل بين المناطق */
+  color: #ef3341; /* لون أحمر (نفس لون موقعك) لتمييز اسم المنطقة */
+  font-weight: 800; /* خط عريض */
+  font-style: normal; /* المتصفح بيخلي الخط مائل افتراضياً، ده بيرجعه معدول */
+  font-size: 0.9rem;
+}
+
+/* تنسيق المشاريع اللي تحت المنطقة (Options) */
+select optgroup.region-group option.project-option {
+  background-color: #ffffff; /* إرجاع خلفية المشاريع للون الأبيض */
+  color: #212529; /* لون خط أسود غامق للمشاريع */
+  font-weight: 500;
+  padding: 5px 0;
+}
+
 /* حاوية الأزرار العائمة */
 .floating-contact-wrap {
     position: fixed;
