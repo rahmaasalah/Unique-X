@@ -63,7 +63,7 @@
           
           <!-- 🟢 عرض المشاريع متقسمة حسب المنطقة -->
           @for (group of availableProjectGroups; track group.region) {
-            <optgroup [label]="'▬▬ ' + group.region + ' ▬▬'" class="region-group">
+            <optgroup [label]="'📍 ' + group.region" class="region-group">
               @for (project of group.projects; track project) {
                 <option [value]="project" [selected]="project === currentProjectName" class="project-option">
                   {{ project }}
