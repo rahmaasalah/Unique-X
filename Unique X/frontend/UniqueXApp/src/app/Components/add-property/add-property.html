@@ -153,11 +153,13 @@
 }
 
             <div class="row g-3 mb-4">
+              <!-- حقل المساحة -->
               <div class="col-md-4">
                 <label class="form-label fw-bold small">Area (m²) <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <span class="input-group-text bg-white"><i class="bi bi-aspect-ratio"></i></span>
-                  <input type="text" (input)="formatInteger($event, 'area'); calculateTotalPrice()" formControlName="area" class="form-control" placeholder="">
+                  <!-- 🟢 غيرنا الدالة هنا لـ onAreaChange -->
+                  <input type="text" (input)="formatInteger($event, 'area'); onAreaChange()" formControlName="area" class="form-control" placeholder="">
                 </div>
                 @if (propertyForm.get('area')?.touched && propertyForm.get('area')?.errors?.['required']) {
                   <small class="text-danger d-block mt-1">Area is required</small>
@@ -172,6 +174,7 @@
                   <label class="form-label fw-bold small text-dark">Price per Meter <span class="text-danger">*</span></label>
                   <div class="input-group">
                     <span class="input-group-text bg-light">EGP</span>
+                    <!-- 🟢 بيحسب السعر الكلي لما نكتب هنا -->
                     <input type="text" (input)="formatFinancial($event, 'pricePerMeter'); calculateTotalPrice()" formControlName="pricePerMeter" class="form-control" placeholder="">
                   </div>
                   @if (propertyForm.get('pricePerMeter')?.touched && propertyForm.get('pricePerMeter')?.errors?.['required']) {
@@ -180,14 +183,14 @@
                 </div>
               }
 
-              <!-- 🟢 حقل السعر الكلي (يتمدد لو سعر المتر اختفى، ومقفول فقط لو Primary) -->
+              <!-- 🟢 حقل السعر الكلي -->
               <div [class]="!isPrimary() ? 'col-md-8 animate__animated animate__fadeIn' : 'col-md-4'">
                 <label class="form-label fw-bold small">Total Price <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <span class="input-group-text fw-bold ">EGP</span>
-                  <!-- جعل الحقل Readonly فقط لو Primary -->
-                  <input type="text" (input)="formatFinancial($event, 'price'); onTotalPriceChange()" formControlName="price" class="form-control " 
-                         [readonly]="isPrimary()" [class.bg-light]="isPrimary()" min="1000000" placeholder="1,000,000">
+                  <!-- 🟢 شيلنا الـ readonly، وضيفنا calculatePricePerMeter -->
+                  <input type="text" (input)="formatFinancial($event, 'price'); calculatePricePerMeter(); onTotalPriceChange()" 
+                         formControlName="price" class="form-control" min="1000000" placeholder="1,000,000">
                 </div>
                 @if (propertyForm.get('price')?.touched && propertyForm.get('price')?.errors?.['required']) {
                   <small class="text-danger d-block mt-1">Total price is required</small>
