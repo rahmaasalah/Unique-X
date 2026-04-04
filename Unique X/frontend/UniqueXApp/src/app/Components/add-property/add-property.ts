@@ -318,6 +318,25 @@ filteredProjects: string[] = [];
     return Math.round(value / 1000) * 1000;
   }
 
+  // 🟢 دالة جديدة: لما يغير المساحة، تقرر تحسب السعر الكلي ولا سعر المتر
+  onAreaChange() {
+    if (!this.isPrimary()) return;
+    const area = this.getPureNumber('area');
+    const ppm = this.getPureNumber('pricePerMeter');
+    const total = this.getPureNumber('price');
+
+    if (area > 0) {
+      // لو كاتب سعر المتر، احسب الإجمالي
+      if (ppm > 0) {
+        this.calculateTotalPrice();
+      } 
+      // لو مش كاتب سعر المتر بس كاتب الإجمالي، احسب سعر المتر
+      else if (total > 0) {
+        this.calculatePricePerMeter();
+      }
+    }
+  }
+
   calculateTotalPrice() {
     if (!this.isPrimary()) return; 
     const area = this.getPureNumber('area');
@@ -328,6 +347,22 @@ filteredProjects: string[] = [];
       this.propertyForm.get('price')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
       if (this.isRent()) this.propertyForm.get('monthlyRent')?.setValue(total.toLocaleString('en-US'), { emitEvent: false });
       this.onTotalPriceChange();
+    } else if (ppm === 0) {
+      this.propertyForm.get('price')?.setValue('', { emitEvent: false });
+    }
+  }
+
+  // 🟢 دالة حساب سعر المتر (السعر الإجمالي ÷ المساحة)
+  calculatePricePerMeter() {
+    if (!this.isPrimary()) return;
+    const area = this.getPureNumber('area');
+    const total = this.getPureNumber('price');
+
+    if (area > 0 && total > 0) {
+      const ppm = Math.round(total / area); // هنا مش بنقرب لأقرب 1000 عشان ده سعر متر
+      this.propertyForm.get('pricePerMeter')?.setValue(ppm.toLocaleString('en-US'), { emitEvent: false });
+    } else if (total === 0) {
+      this.propertyForm.get('pricePerMeter')?.setValue('', { emitEvent: false });
     }
   }
 
