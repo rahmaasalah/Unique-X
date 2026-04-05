@@ -465,4 +465,51 @@ onBannerReorder(event: CdkDragDrop<any[]>) {
     });
   }
 
+  onDuplicateProperty(prop: any) {
+    // 1. تجهيز قائمة البروكرز لتظهر في القائمة المنسدلة
+    const brokerOptions: any = {};
+    this.brokersList().forEach(b => {
+      brokerOptions[b.id] = `${b.firstName} ${b.lastName} (${b.phoneNumber})`;
+    });
+
+    const swal = (window as any).Swal;
+    swal.fire({
+      title: 'Duplicate Property',
+      text: `Select the broker for the new copy of "${prop.title}"`,
+      input: 'select',
+      inputOptions: brokerOptions,
+      inputPlaceholder: '--- Select a Broker ---',
+      showCancelButton: true,
+      confirmButtonColor: '#0d6efd', // لون أزرق للنسخ
+      confirmButtonText: '<i class="bi bi-files"></i> Duplicate Now',
+      inputValidator: (value: string) => {
+        return new Promise((resolve) => {
+          if (value) {
+            resolve(null);
+          } else {
+            resolve('You need to select a broker!');
+          }
+        });
+      }
+    }).then((result: any) => {
+      if (result.isConfirmed) {
+        const selectedBrokerId = result.value;
+        this.alertService.showLoading('Duplicating Property...');
+        
+        // 2. إرسال الطلب للباك إند
+        this.adminService.duplicateProperty(prop.id, selectedBrokerId).subscribe({
+          next: () => {
+            this.alertService.close();
+            this.alertService.success('Property duplicated successfully!');
+            this.loadAllData(); // تحديث الجدول عشان النسخة الجديدة تظهر
+          },
+          error: (err: any) => {
+            this.alertService.close();
+            this.alertService.error('Failed to duplicate property.');
+          }
+        });
+      }
+    });
+  }
+
 }

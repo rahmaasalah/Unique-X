@@ -253,7 +253,7 @@
                 <th>TYPE</th>
                 <th>PRICE</th>
                 <th class="text-center">VISIBILITY</th>
-                <th class="text-end pe-4">REVIEW & CONTROL</th>
+                <th class="text-end pe-4 text-nowrap" style="min-width: 280px;">REVIEW & CONTROL</th>
               </tr>
             </thead>
             <tbody>
@@ -315,16 +315,32 @@
                     @if(prop.isSold) { <span class="badge bg-dark rounded-pill px-2 ms-1 shadow-sm">SOLD</span> }
                   </td>
                   <td class="text-end pe-4">
-                    <button class="btn btn-outline-dark btn-sm rounded-pill px-3 me-2 fw-bold shadow-sm" (click)="viewPropertyDetails(prop)">
-                      <i class="bi bi-search me-1"></i> View
-                    </button>
-                    @if (prop.isApproved) {
-                      <button class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm" 
-                              [class]="prop.isActive ? 'btn-danger' : 'btn-success'" 
-                              (click)="toggleProperty(prop.id, prop.isActive)">
-                        {{ prop.isActive ? 'Suspend' : 'Activate' }}
+                    <!-- 🟢 استخدمنا flex-nowrap عشان نمنع الزراير تنزل سطر جديد نهائياً -->
+                    <div class="d-flex align-items-center justify-content-end gap-2 flex-nowrap">
+                      
+                      <!-- زرار العرض -->
+                      <button class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold shadow-sm text-nowrap" 
+                              (click)="viewPropertyDetails(prop)">
+                        <i class="bi bi-search me-1"></i> View
                       </button>
-                    }
+
+                      <!-- زرار النسخ -->
+                      <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold shadow-sm text-nowrap" 
+                              (click)="onDuplicateProperty(prop)" title="Make a copy">
+                        <i class="bi bi-files me-1"></i> Duplicate
+                      </button>
+
+                      <!-- زرار الإيقاف والتفعيل -->
+                      @if (prop.isApproved) {
+                        <button class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm text-nowrap" 
+                                [class]="prop.isActive ? 'btn-danger' : 'btn-success'" 
+                                (click)="toggleProperty(prop.id, prop.isActive)"
+                                style="min-width: 95px;">
+                          {{ prop.isActive ? 'Suspend' : 'Activate' }}
+                        </button>
+                      }
+                      
+                    </div>
                   </td>
                 </tr>
               }

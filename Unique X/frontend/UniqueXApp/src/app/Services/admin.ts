@@ -118,4 +118,8 @@ rejectProperty(id: number, reason: string): Observable<any> {
 reorderBanners(orderedIds: number[]) {
   return this.http.put(`${this.baseUrl}/banners/reorder`, orderedIds);
 }
+
+duplicateProperty(propertyId: number, brokerId: string) {
+    return this.http.post(`${this.baseUrl}/duplicate-property/${propertyId}/${brokerId}`, {});
+  }
 }

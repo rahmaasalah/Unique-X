@@ -127,6 +127,60 @@ namespace Unique_X.Controllers
             return Ok(banner);
         }
 
+
+        [HttpPost("duplicate-property/{id}/{newBrokerId}")]
+        public async Task<IActionResult> DuplicateProperty(int id, string newBrokerId)
+        {
+            // 1. التأكد من البروكر
+            var newBroker = await _userManager.FindByIdAsync(newBrokerId);
+            if (newBroker == null || newBroker.UserType != 1)
+                return BadRequest("Invalid broker account.");
+
+            // 2. جلب العقار الأصلي مع فصله عن التتبع (AsNoTracking) عشان نقدر ننسخه كعنصر جديد
+            var originalProp = await _context.Properties
+                .Include(p => p.Photos)
+                .Include(p => p.PaymentPlans)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (originalProp == null) return NotFound("Property not found.");
+
+            // 3. تصفير الـ IDs وتعديل البيانات الأساسية للنسخة الجديدة
+            originalProp.Id = 0;
+            originalProp.BrokerId = newBrokerId;
+            originalProp.CreatedAt = DateTime.UtcNow;
+            originalProp.Code = originalProp.Code + "-COPY";
+
+            // تفعيل النسخة الجديدة لتظهر في الهوم فوراً
+            originalProp.IsApproved = true;
+            originalProp.IsActive = true;
+
+            // 4. نسخ الصور (مع حماية الـ PublicId عشان منمسحش الصورة الأصلية من Cloudinary بالخطأ)
+            if (originalProp.Photos != null)
+            {
+                foreach (var photo in originalProp.Photos)
+                {
+                    photo.Id = 0;
+                    photo.PropertyId = 0;
+                    photo.PublicId = "COPY_" + photo.PublicId;
+                }
+            }
+
+            // 5. نسخ خطط الدفع
+            if (originalProp.PaymentPlans != null)
+            {
+                foreach (var plan in originalProp.PaymentPlans)
+                {
+                    plan.Id = 0;
+                    plan.PropertyId = 0;
+                }
+            }
+            _context.Properties.Add(originalProp);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Property duplicated successfully!" });
+        }
+
         [HttpDelete("delete-banner/{id}")]
         public async Task<IActionResult> DeleteBanner(int id)
         {
