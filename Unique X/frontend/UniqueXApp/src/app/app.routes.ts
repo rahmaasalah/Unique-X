@@ -29,6 +29,8 @@ export const routes: Routes = [
   { path: 'add-property', component: AddPropertyComponent, canActivate: [authGuard] },
   { path: 'property-details/:id', component: PropertyDetailsComponent },
   { path: 'property-details/:id/:title', component: PropertyDetailsComponent },
+  { path: 'forgot-password', loadComponent: () => import('./Components/forgot-password/forgot-password').then(m => m.ForgotPasswordComponent) },
+{ path: 'reset-password', loadComponent: () => import('./Components/reset-password/reset-password').then(m => m.ResetPasswordComponent) },
   { path: 'my-properties', component: MyPropertiesComponent, canActivate: [authGuard] },
   { path: 'edit-property/:id', component: EditPropertyComponent, canActivate: [authGuard] },
   { path: 'wishlist', component: WishlistComponent, canActivate: [authGuard] },
