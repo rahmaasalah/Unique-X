@@ -17,10 +17,8 @@ services:
       - JWT__Key=${JWT_KEY}
 
       - FrontendUrl=https://betk.property
-      
-      # 🟢 إعدادات إرسال الإيميلات (Gmail كمثال)
       - EmailSettings__Email=uniquexxxxxxx@gmail.com
-      - EmailSettings__Password=xntb kmlh ejfx wmhg
+      - EmailSettings__Password=xntbkmlhejfxwmhg
       - EmailSettings__Host=smtp.gmail.com
       - EmailSettings__Port=587
 
