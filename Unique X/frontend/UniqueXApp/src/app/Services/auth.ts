@@ -80,4 +80,12 @@ getUserImage(): string | null {
   }
   return null;
 }
+
+forgotPassword(email: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}forgot-password`, { email });
+  }
+
+  resetPassword(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}reset-password`, data);
+  }
 }

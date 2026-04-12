@@ -9,6 +9,9 @@ using Unique_X.Models;
 using Unique_X.Services;
 using Unique_X.Services.Implementation;
 using Unique_X.Services.Interface;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Text;
+
 
 namespace Unique_X.Controllers
 {
@@ -20,17 +23,20 @@ namespace Unique_X.Controllers
         private readonly UserManager<ApplicantUser> _userManager; 
         private readonly AppDbContext _context;
         private readonly IPhotoService _photoService;
+        private readonly IConfiguration _configuration;
 
         public AuthController(
             IAuthService authService, 
             UserManager<ApplicantUser> userManager,
             AppDbContext context,
-            IPhotoService photoService)
+            IPhotoService photoService,
+            IConfiguration configuration)
         {
             _authService = authService;
             _userManager = userManager;
             _context = context;
             _photoService = photoService;
+            _configuration = configuration;
         }
 
         [HttpPost("register")]
@@ -172,6 +178,53 @@ namespace Unique_X.Controllers
             if (adminUser == null) return NotFound();
 
             return Ok(new { PhoneNumber = adminUser.PhoneNumber });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto, [FromServices] IEmailService emailService)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            // لدواعي أمنية، حتى لو الإيميل غير موجود نرجع Ok لكي لا يعرف الهاكرز الإيميلات المسجلة
+            if (user == null || !user.IsActive)
+                return Ok(new { Message = "If your email is registered, you will receive a reset link." });
+
+            // 1. إنشاء توكن الأمان
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            // 2. تشفير التوكن ليكون صالحاً للاستخدام في روابط الإنترنت (URL)
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+            // 3. بناء الرابط الذي سيضغط عليه المستخدم (استبدلي الدومين بدومين موقعك الفعلي لاحقاً)
+            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
+            var resetLink = $"{frontendUrl}/reset-password?email={user.Email}&token={encodedToken}";
+
+            // 4. إرسال الإيميل
+            var emailBody = $@"
+        <h3>Reset Your BETK Password</h3>
+        <p>Hello {user.FirstName},</p>
+        <p>You requested to reset your password. Click the button below to set a new one:</p>
+        <a href='{resetLink}' style='background-color:#ef3341;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;'>Reset Password</a>
+        <p>If you didn't request this, you can safely ignore this email.</p>";
+
+            await emailService.SendEmailAsync(user.Email, "BETK - Password Reset Request", emailBody);
+
+            return Ok(new { Message = "If your email is registered, you will receive a reset link." });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user == null) return BadRequest("Invalid request");
+
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token));
+
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, dto.NewPassword);
+
+            if (result.Succeeded)
+                return Ok(new { Message = "Password has been reset successfully." });
+
+            return BadRequest(result.Errors.FirstOrDefault()?.Description ?? "Failed to reset password.");
         }
 
     }
