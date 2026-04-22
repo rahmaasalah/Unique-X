@@ -184,16 +184,24 @@ filteredProjects: string[] = [];
     this.propertyForm.get('region')?.valueChanges.subscribe(() => this.updateProjectsList());
 
     this.propertyForm.get('price')?.valueChanges.subscribe(val => {
-      if (this.isRent()) {
-        this.propertyForm.get('monthlyRent')?.setValue(val, { emitEvent: false });
-      }
-    });
+  if (this.isRent()) {
+    const pureDigits = val ? val.toString().replace(/,/g, '') : '';
+    const formatted = pureDigits && !isNaN(Number(pureDigits))
+      ? Number(pureDigits).toLocaleString('en-US')
+      : val;
+    this.propertyForm.get('monthlyRent')?.setValue(formatted, { emitEvent: false });
+  }
+});
 
-    this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
-      if (this.isRent()) {
-        this.propertyForm.get('price')?.setValue(val, { emitEvent: false });
-      }
-    });
+this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
+  if (this.isRent()) {
+    const pureDigits = val ? val.toString().replace(/,/g, '') : '';
+    const formatted = pureDigits && !isNaN(Number(pureDigits))
+      ? Number(pureDigits).toLocaleString('en-US')
+      : val;
+    this.propertyForm.get('price')?.setValue(formatted, { emitEvent: false });
+  }
+});
 
     this.propertyForm.valueChanges.subscribe(() => {
       if (this.propertyForm.invalid) {
