@@ -14,6 +14,10 @@ import {adminGuard } from './Guards/admin-guard';
 import { AdminDashboardComponent } from './Components/admin-dashboard/admin-dashboard';
 import { FindAgentComponent } from './Components/find-agent/find-agent';
 import { ComparePropertiesComponent } from './Components/compare-properties/compare-properties';
+import { LeadsDashboardComponent } from './Components/CRM/leads-dashboard/leads-dashboard'; 
+import { LeadDetailsComponent } from './Components/CRM/lead-details/lead-details';
+import { CrmDashboardComponent } from './Components/CRM/crm-dashboard/crm-dashboard';
+import { BrokerProfileComponent } from './Components/CRM/broker-profile/broker-profile';
 
 export const routes: Routes = [
   { 
@@ -36,6 +40,23 @@ export const routes: Routes = [
   { path: 'wishlist', component: WishlistComponent, canActivate: [authGuard] },
   { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
   { path: 'compare/:id1/:id2', component: ComparePropertiesComponent },
+  { 
+    path: 'crm/leads', 
+    component: LeadsDashboardComponent 
+  },
+  { 
+  path: 'crm/leads/:id', 
+  component: LeadDetailsComponent 
+},
+{ 
+  path: 'crm/dashboard', 
+  component: CrmDashboardComponent 
+},
+
+{ 
+  path: 'crm/profile', 
+  component: BrokerProfileComponent 
+},
  { path: '', component: HomeComponent, pathMatch: 'full' }, 
  { path: '**', redirectTo: '/login' }
 ];

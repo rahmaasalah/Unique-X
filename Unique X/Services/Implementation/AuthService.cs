@@ -103,10 +103,12 @@ namespace Unique_X.Services
 
             return new AuthModel
             {
+                Id = user.Id,
                 IsAuthenticated = true,
                 Token = new JwtSecurityTokenHandler().WriteToken(token),
                 Email = user.Email,
-                Username = user.FirstName,
+                Username = user.FirstName + " " + user.LastName, // يفضل نرجع الاسم بالكامل
+                PhoneNumber = user.PhoneNumber,
                 Roles = userRoles.ToList(),
                 ExpiresOn = token.ValidTo,
                 ProfileImageUrl = user.ProfileImageUrl

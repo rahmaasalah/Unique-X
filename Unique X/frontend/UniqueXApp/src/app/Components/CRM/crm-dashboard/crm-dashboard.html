@@ -1,0 +1,176 @@
+<div class="container mt-4" dir="ltr">
+  <h2 class="fw-bold mb-4"><i class="fas fa-chart-pie text-danger me-2"></i> CRM Overview</h2>
+
+  <!-- ============================================== -->
+  <!-- 1. لوحة المدير (Admin Dashboard)                 -->
+  <!-- ============================================== -->
+  <ng-container *ngIf="isAdmin() && adminStats()">
+    <div class="row g-4 mb-5">
+      <!-- Total Leads -->
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-primary text-white p-4 h-100">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-uppercase mb-2 opacity-75" style="letter-spacing: 1px;">Total Leads</h6>
+              <h2 class="fw-bold mb-0">{{ adminStats()?.totalLeads }}</h2>
+            </div>
+            <i class="fas fa-users fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+      <!-- Closed Deals -->
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-success text-white p-4 h-100">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-uppercase mb-2 opacity-75" style="letter-spacing: 1px;">Closed Deals</h6>
+              <h2 class="fw-bold mb-0">{{ adminStats()?.totalClosedDeals }}</h2>
+            </div>
+            <i class="fas fa-handshake fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+      <!-- Expected Revenue -->
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-danger text-white p-4 h-100">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-uppercase mb-2 opacity-75" style="letter-spacing: 1px;">Expected Revenue</h6>
+              <h2 class="fw-bold mb-0">{{ adminStats()?.totalExpectedRevenue | currency:'EGP ' }}</h2>
+            </div>
+            <i class="fas fa-money-bill-wave fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- جدول أداء البروكرز -->
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+      <h5 class="fw-bold mb-4"><i class="fas fa-medal text-warning me-2"></i> Brokers Performance</h5>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Broker Name</th>
+              <th>Assigned Leads</th>
+              <th>Closed Deals</th>
+              <th>Win Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let broker of adminStats()?.brokerPerformances">
+              <td class="fw-bold text-dark"><i class="fas fa-user-tie text-muted me-2"></i> {{ broker.brokerName }}</td>
+              <td>{{ broker.totalLeads }} Leads</td>
+              <td><span class="badge bg-success px-3 py-2">{{ broker.closedDeals }}</span></td>
+              <td>
+                <!-- حساب نسبة النجاح -->
+                <div class="progress" style="height: 20px;">
+                  <div class="progress-bar bg-info fw-bold text-dark" role="progressbar" 
+                       [style.width.%]="broker.totalLeads > 0 ? (broker.closedDeals / broker.totalLeads) * 100 : 0">
+                    {{ broker.totalLeads > 0 ? ((broker.closedDeals / broker.totalLeads) * 100).toFixed(0) : 0 }}%
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+   <!-- 2. لوحة البروكر (Broker Dashboard)               -->
+  <!-- ============================================== -->
+  <ng-container *ngIf="!isAdmin() && brokerStats()">
+    <div class="row g-4 mb-4">
+      
+      <!-- My Leads -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100 border-start border-dark border-5" 
+             style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
+             routerLink="/crm/leads">
+          <h6 class="text-muted fw-bold text-uppercase mb-2 small">My Leads <i class="bi bi-box-arrow-up-right ms-1"></i></h6>
+          <h2 class="fw-bold mb-0 text-dark">{{ brokerStats()?.totalMyLeads }}</h2>
+        </div>
+      </div>
+
+      <!-- Closed Deals -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100 border-start border-success border-5">
+          <h6 class="text-muted fw-bold text-uppercase mb-2 small">Closed Deals</h6>
+          <h2 class="fw-bold mb-0 text-success">{{ brokerStats()?.myClosedDeals }}</h2>
+        </div>
+      </div>
+
+      <!-- Expected Revenue -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100 border-start border-danger border-5">
+          <h6 class="text-muted fw-bold text-uppercase mb-2 small">Expected Revenue</h6>
+          <h3 class="fw-bold mb-0 text-danger">{{ brokerStats()?.myExpectedRevenue | currency:'EGP ' }}</h3>
+        </div>
+      </div>
+
+      <!-- Pending Tasks -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100 position-relative border-start border-warning border-5"
+             style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
+             (click)="toggleTasks()">
+          <h6 class="text-muted fw-bold text-uppercase mb-2 small">Pending Tasks <i class="bi bi-hand-index ms-1"></i></h6>
+          <h2 class="fw-bold mb-0 text-dark">{{ brokerStats()?.myPendingTasksToday }}</h2>
+          <i *ngIf="brokerStats()!.myPendingTasksToday > 0" class="bi bi-exclamation-circle-fill text-danger position-absolute top-0 end-0 m-3 fs-5 animate__animated animate__pulse animate__infinite"></i>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 👇 الجدول اللي هيظهر لما البروكر يدوس على كارت المهام -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mt-4 animate__animated animate__fadeInUp" *ngIf="showTasksList()">
+      
+      <div class="alert alert-light border text-center" *ngIf="brokerStats()?.pendingTasksList?.length === 0">
+        🎉 Awesome! You have no pending tasks for today.
+      </div>
+
+      <div class="table-responsive" *ngIf="brokerStats()!.pendingTasksList.length > 0">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Type</th>
+              <th>Summary</th>
+              <th>Client (Lead)</th>
+              <th>Due Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let task of brokerStats()?.pendingTasksList">
+              <td>
+                <span class="badge bg-success">{{ task.activityType }}</span>
+              </td>
+              <td class="fw-bold">{{ task.summary }}</td>
+              <td>
+                <a [routerLink]="['/crm/leads', task.leadId]" class="text-decoration-none fw-bold text-dark">
+                  <i class="fas fa-user-circle me-1"></i> {{ task.leadName }}
+                </a>
+              </td>
+              <td class="text-dark fw-bold"><i class="fas fa-clock me-1"></i> {{ task.dueDate | date:'shortTime' }}</td>
+              <td>
+                <!-- زرار يودي لصفحة العميل عشان يخلص المهمة -->
+                <button class="btn btn-sm btn-outline-dark" [routerLink]="['/crm/leads', task.leadId]">
+                  Open Lead ➔
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+  </ng-container>
+    
+    <!-- زرار الذهاب للوحة المهام -->
+    <div class="text-center mt-5">
+       <button class="btn btn-danger btn-lg px-5 rounded-pill shadow-sm" routerLink="/crm/leads">
+         <i class="fas fa-columns me-2"></i> Open My Pipeline
+       </button>
+    </div>
+
+</div>

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Unique_X.Data;
 
@@ -11,9 +12,11 @@ using Unique_X.Data;
 namespace Unique_X.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260420141913_Crmleads")]
+    partial class Crmleads
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -370,12 +373,6 @@ namespace Unique_X.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("ExpectedClosingDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal?>("ExpectedRevenue")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -386,9 +383,6 @@ namespace Unique_X.Migrations
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("Probability")
-                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -401,47 +395,6 @@ namespace Unique_X.Migrations
                     b.ToTable("Leads");
                 });
 
-            modelBuilder.Entity("Unique_X.Models.LeadActivity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ActivityType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("AssignedToId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDone")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("LeadId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Summary")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignedToId");
-
-                    b.HasIndex("LeadId");
-
-                    b.ToTable("LeadActivities");
-                });
-
             modelBuilder.Entity("Unique_X.Models.LeadRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -449,21 +402,6 @@ namespace Unique_X.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BuildingDate")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Compound")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("DpAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Floor")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("InstallmentAmount")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("LeadId")
                         .HasColumnType("int");
@@ -494,15 +432,6 @@ namespace Unique_X.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("UnitType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ZoneInterested")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("LeadId");
@@ -529,42 +458,6 @@ namespace Unique_X.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("LeadStatuses");
-                });
-
-            modelBuilder.Entity("Unique_X.Models.LeadStatusHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ChangedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ChangedById")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("LeadId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("NewStatusId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("OldStatusId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChangedById");
-
-                    b.HasIndex("LeadId");
-
-                    b.ToTable("LeadStatusHistories");
                 });
 
             modelBuilder.Entity("Unique_X.Models.PaymentPlan", b =>
@@ -971,25 +864,6 @@ namespace Unique_X.Migrations
                     b.Navigation("Status");
                 });
 
-            modelBuilder.Entity("Unique_X.Models.LeadActivity", b =>
-                {
-                    b.HasOne("Unique_X.Models.ApplicantUser", "AssignedTo")
-                        .WithMany()
-                        .HasForeignKey("AssignedToId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Unique_X.Models.Lead", "Lead")
-                        .WithMany()
-                        .HasForeignKey("LeadId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AssignedTo");
-
-                    b.Navigation("Lead");
-                });
-
             modelBuilder.Entity("Unique_X.Models.LeadRequest", b =>
                 {
                     b.HasOne("Unique_X.Models.Lead", "Lead")
@@ -997,25 +871,6 @@ namespace Unique_X.Migrations
                         .HasForeignKey("LeadId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Lead");
-                });
-
-            modelBuilder.Entity("Unique_X.Models.LeadStatusHistory", b =>
-                {
-                    b.HasOne("Unique_X.Models.ApplicantUser", "ChangedBy")
-                        .WithMany()
-                        .HasForeignKey("ChangedById")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Unique_X.Models.Lead", "Lead")
-                        .WithMany()
-                        .HasForeignKey("LeadId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ChangedBy");
 
                     b.Navigation("Lead");
                 });

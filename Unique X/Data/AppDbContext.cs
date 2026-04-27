@@ -17,6 +17,13 @@ namespace Unique_X.Data
         public DbSet<AnalyticsRecord> AnalyticsRecords { get; set; }
         public DbSet<PaymentPlan> PaymentPlans { get; set; }
         public DbSet<FinancialFile> FinancialFiles { get; set; }
+        public DbSet<Lead> Leads { get; set; }
+        public DbSet<LeadRequest> LeadRequests { get; set; }
+        public DbSet<LeadActivity> LeadActivities { get; set; }
+        public DbSet<LeadStatus> LeadStatuses { get; set; }
+        public DbSet<Visit> Visits { get; set; }
+        public DbSet<Campaign> Campaigns { get; set; }
+        public DbSet<LeadStatusHistory> LeadStatusHistories { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -64,6 +71,39 @@ namespace Unique_X.Data
             builder.Entity<Property>().Property(p => p.SecurityDeposit).HasColumnType("decimal(18,2)");
             builder.Entity<PaymentPlan>().Property(p => p.DownPayment).HasColumnType("decimal(18,2)");
             builder.Entity<PaymentPlan>().Property(p => p.QuarterInstallment).HasColumnType("decimal(18,2)");
+
+            builder.Entity<LeadRequest>().Property(lr => lr.MinBudget).HasColumnType("decimal(18,2)");
+            builder.Entity<LeadRequest>().Property(lr => lr.MaxBudget).HasColumnType("decimal(18,2)");
+
+            // ==================================================
+            // إعدادات الـ Decimals الجديدة الخاصة بالـ CRM (Odoo Fields)
+            // ==================================================
+            builder.Entity<Lead>()
+                .Property(l => l.ExpectedRevenue)
+                .HasColumnType("decimal(18,2)");
+
+            builder.Entity<Lead>()
+                .Property(l => l.Probability)
+                .HasColumnType("decimal(18,2)");
+
+            builder.Entity<LeadRequest>()
+                .Property(lr => lr.TotalAmount)
+                .HasColumnType("decimal(18,2)");
+
+            builder.Entity<LeadRequest>()
+                .Property(lr => lr.DpAmount)
+                .HasColumnType("decimal(18,2)");
+
+            builder.Entity<LeadRequest>()
+                .Property(lr => lr.InstallmentAmount)
+                .HasColumnType("decimal(18,2)");
+
+            // يفضل كمان نمنع مسح البروكر لو ماسك Leads (عشان الداتا ماتضربش)
+            builder.Entity<Lead>()
+                .HasOne(l => l.Broker)
+                .WithMany()
+                .HasForeignKey(l => l.BrokerId)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
     }
