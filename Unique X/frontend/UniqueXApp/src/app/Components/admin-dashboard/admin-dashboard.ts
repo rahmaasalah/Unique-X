@@ -6,6 +6,7 @@ import { AuthService } from '../../Services/auth'; // مهم جداً
 import { RouterModule, Router } from '@angular/router';
 import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDrag, CdkDragPlaceholder, DragDropModule } from '@angular/cdk/drag-drop';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms'; // 1. حل مشكلة formGroup
+import { CrmService } from '../../Services/crm.services';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -21,6 +22,11 @@ export class AdminDashboardComponent implements OnInit {
   public authService = inject(AuthService); // لجلب بيانات البروفايل
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private crmService = inject(CrmService); // حقن خدمة الـ CRM
+  adminLeadForm!: FormGroup;
+
+  campaignsList = signal<any[]>([]);
+  campaignForm!: FormGroup;
 
   // --- السجنلز ---
   users = signal<any[]>([]);
@@ -34,7 +40,7 @@ export class AdminDashboardComponent implements OnInit {
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
   homeBanners = signal<any[]>([]);
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead' | 'campaigns'>('users');
 
   detailData = signal<any[]>([]);
 
@@ -94,9 +100,36 @@ export class AdminDashboardComponent implements OnInit {
       phoneNumber: ['', Validators.required]
     });
 
+    this.adminLeadForm = this.fb.group({
+      fullName: ['', Validators.required],
+      phoneNumber: ['', Validators.required],
+      email: [''],
+      brokerId: ['', Validators.required], // 👈 هنا الأدمن لازم يختار البروكر، مفيش قيمة مبدئية
+      leadStatusId:[1, Validators.required], // بينزل في عمود الـ New
+      propertyType: ['Apartment', Validators.required],
+      purpose: ['Sale', Validators.required],
+      campaignId: [''],
+      totalAmount: [0],
+      paymentMethod:['Cash'],
+      preferredLocation: [''],
+      notes: ['Assigned by Admin'] // رسالة توضح إن الأدمن اللي ضافه
+    });
+
+     this.campaignForm = this.fb.group({
+      name: ['', Validators.required],
+      source: ['Facebook', Validators.required]
+    });
+
+    // وفي نفس الدالة (ngOnInit) استدعي الدالة دي عشان نجيب الداتا
+    this.loadCampaigns();
+
     this.loadAllData();
     this.loadAdminProfile();
     this.loadPendingProperties();
+  }
+
+  loadCampaigns() {
+    this.crmService.getCampaigns().subscribe(data => this.campaignsList.set(data));
   }
 
   loadAllData() {
@@ -509,6 +542,67 @@ onBannerReorder(event: CdkDragDrop<any[]>) {
           }
         });
       }
+    });
+  }
+
+  onSubmitAdminLead() {
+    if (this.adminLeadForm.valid) {
+      this.alertService.showLoading('Assigning Lead to Broker...');
+      
+      this.crmService.createLead(this.adminLeadForm.value).subscribe({
+        next: () => {
+          this.alertService.close();
+          this.alertService.success('Lead assigned successfully!');
+          // تفريغ الفورم مع الاحتفاظ بالقيم الافتراضية للدروب داون
+          this.adminLeadForm.reset({
+            leadStatusId: 1,
+            propertyType: 'Apartment',
+            purpose: 'Sale',
+            paymentMethod: 'Cash',
+            totalAmount: 0,
+            notes: 'Assigned by Admin'
+          });
+        },
+        error: (err) => {
+          this.alertService.close();
+          console.error(err);
+          this.alertService.error('Failed to assign lead.');
+        }
+      });
+    }
+  }
+  onSubmitCampaign() {
+    if (this.campaignForm.valid) {
+      this.alertService.showLoading('Adding Campaign...');
+      this.crmService.createCampaign(this.campaignForm.value).subscribe({
+        next: () => {
+          this.alertService.close();
+          this.alertService.success('Campaign Added!');
+          this.campaignForm.reset({ source: 'Facebook' });
+          this.loadCampaigns(); // نحدث اللستة
+        },
+        error: () => {
+          this.alertService.close();
+          this.alertService.error('Error adding campaign');
+        }
+      });
+    }
+  }
+
+  onDeleteCampaign(id: number) {
+    this.alertService.confirm('Are you sure you want to delete this campaign? Any leads attached to it will remain, but without a campaign tag.', () => {
+      this.alertService.showLoading('Deleting Campaign...');
+      this.crmService.deleteCampaign(id).subscribe({
+        next: () => {
+          this.alertService.close();
+          this.alertService.success('Campaign deleted successfully!');
+          this.loadCampaigns(); // تحديث الجدول أوتوماتيك
+        },
+        error: () => {
+          this.alertService.close();
+          this.alertService.error('Failed to delete campaign.');
+        }
+      });
     });
   }
 

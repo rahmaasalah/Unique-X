@@ -9,71 +9,88 @@
 <div class="sidebar-overlay" [class.sidebar-open]="isSidebarOpen" (click)="toggleSidebar()"></div>
 
 <!-- 1. الـ Sidebar -->
-<aside class="admin-sidebar bg-dark text-white shadow-lg d-flex flex-column p-4" 
-       [class.sidebar-open]="isSidebarOpen">
-    <div class="sidebar-header mb-5 text-center py-3">
-  <!-- اللوجو بتنسيق جديد -->
-  <div class="brand-logo fs-2">
-    <span class="brand-bold">BET</span><span class="text-white brand-light">K</span>
-  </div>
-  <p class="text-muted small text-uppercase mt-1" style="letter-spacing: 3px; font-size: 0.55rem; opacity: 0.6;">
-    Admin Management
-  </p>
-</div>
+<aside class="admin-sidebar bg-dark text-white shadow-lg d-flex flex-column p-3"[class.sidebar-open]="isSidebarOpen">
+    
+    <!-- قللنا الـ mb-5 لـ mb-3 -->
+    <div class="sidebar-header mb-3 text-center py-2">
+      <div class="brand-logo fs-3">
+        <span class="brand-bold">BET</span><span class="text-white brand-light">K</span>
+      </div>
+      <p class="text-muted small text-uppercase mt-1" style="letter-spacing: 2px; font-size: 0.55rem; opacity: 0.6;">
+        Admin Management
+      </p>
+    </div>
 
-    <nav class="flex-grow-1">
-      <ul class="list-unstyled">
-        <li class="mb-3">
-          <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
+    <!-- زرار الـ CRM قللنا المسافة اللي تحته mb-4 لـ mb-2 -->
+    <div class="px-2 mb-2">
+      <a routerLink="/crm/dashboard" class="btn btn-danger w-100 rounded-pill fw-bold shadow d-flex align-items-center justify-content-center py-2" style="letter-spacing: 1px;">
+        <i class="bi bi-pie-chart-fill me-2"></i> OPEN CRM
+      </a>
+    </div>
+
+    <nav class="flex-grow-1 overflow-y-auto" style="overflow-x: hidden;">
+      <ul class="list-unstyled pe-2">
+        <!-- كل مسافات الـ li اتغيرت من mb-3 لـ mb-1 -->
+        <li class="mb-1">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
                   [class.active]="activeTab() === 'users'" (click)="switchTab('users')">
-            <i class="bi bi-people-fill me-3 fs-5"></i> User Accounts
+            <i class="bi bi-people-fill me-3 fs-6"></i> User Accounts
           </button>
         </li>
-        <li class="mb-3">
-          <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
-                  [class.active]="activeTab() === 'props'" (click)="switchTab('props')">
-            <i class="bi bi-houses-fill me-3 fs-5"></i> Property Listings
+        <li class="mb-1">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"[class.active]="activeTab() === 'props'" (click)="switchTab('props')">
+            <i class="bi bi-houses-fill me-3 fs-6"></i> Property Listings
           </button>
         </li>
-
-        <li class="mb-3">
-          <button class="btn sidebar-link w-100 text-start d-flex align-items-center justify-content-between"
+        <li class="mb-1">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center justify-content-between py-2"
                   [class.active]="activeTab() === 'pending'" (click)="switchTab('pending')">
-            <span><i class="bi bi-hourglass-split me-3 fs-5"></i> Pending Approval</span>
+            <span><i class="bi bi-hourglass-split me-3 fs-6"></i> Pending Approval</span>
             @if (pendingProperties().length > 0) {
               <span class="badge bg-warning text-dark rounded-pill">{{ pendingProperties().length }}</span>
             }
           </button>
         </li>
-        <li class="mb-3">
-          <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
+        <li class="mb-1">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
                   [class.active]="activeTab() === 'settings'" (click)="switchTab('settings')">
-            <i class="bi bi-person-gear me-3 fs-5"></i> My Account
+            <i class="bi bi-person-gear me-3 fs-6"></i> My Account
           </button>
         </li>
-        <li class="mb-3">
-  <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
-          [class.active]="activeTab() === 'banners'" (click)="switchTab('banners')">
-    <i class="bi bi-image-fill me-3 fs-5"></i> Manage Banners
-  </button>
-</li>
-<li class="mb-3">
-          <button class="btn sidebar-link w-100 text-start d-flex align-items-center" 
+        <li class="mb-1">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
+                  [class.active]="activeTab() === 'banners'" (click)="switchTab('banners')">
+            <i class="bi bi-image-fill me-3 fs-6"></i> Manage Banners
+          </button>
+        </li>
+        <li class="mb-1">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
                   [class.active]="activeTab() === 'financial'" (click)="switchTab('financial')">
-            <i class="bi bi-bar-chart-fill me-3 fs-5"></i> Financial Charts
+            <i class="bi bi-bar-chart-fill me-3 fs-6"></i> Financial Charts
           </button>
         </li>
-        
+        <li class="mb-1">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+                  [class.active]="activeTab() === 'addLead'" (click)="switchTab('addLead')">
+            <i class="bi bi-person-plus-fill me-3 fs-6 text-warning"></i> Assign CRM Leads
+          </button>
+        </li>
+        <li class="mb-1">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
+                  [class.active]="activeTab() === 'campaigns'" (click)="switchTab('campaigns')">
+            <i class="bi bi-megaphone-fill me-3 fs-6 text-primary"></i> Campaigns
+          </button>
+        </li>
       </ul>
     </nav>
 
-    <!-- زر تسجيل الخروج في أسفل السايد بار -->
-    <div class="sidebar-footer mt-auto pt-4 border-top border-secondary">
-      <button class="btn btn-outline-danger rounded-pill w-100 py-2 fw-bold d-flex align-items-center justify-content-center" (click)="onLogout()">
+    <!-- زر تسجيل الخروج -->
+    <div class="sidebar-footer mt-2 pt-3 border-top border-secondary">
+      <button class="btn btn-outline-danger rounded-pill w-100 py-1 fw-bold d-flex align-items-center justify-content-center" (click)="onLogout()">
         <i class="bi bi-box-arrow-left me-2"></i> Sign Out
       </button>
     </div>
-  </aside>
+</aside>
 
   <!-- 2. المحتوى الرئيسي (الجهة اليمنى) مع سكرول داخلي -->
   <main class="flex-grow-1 p-4 p-md-5">
@@ -137,6 +154,73 @@
           </div>
         </div>
       </div>
+    }
+
+    <!-- ================== تبويب الحملات الإعلانية ================== -->
+    @if (activeTab() === 'campaigns') {
+      <section class="animate__animated animate__fadeIn">
+        <h4 class="fw-bold mb-4 text-dark"><i class="bi bi-megaphone-fill text-primary me-2"></i>Marketing Campaigns</h4>
+
+        <div class="row g-4">
+          <!-- إضافة حملة -->
+          <div class="col-md-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white border-top border-primary border-4 h-100">
+              <h6 class="fw-bold mb-3">Add New Campaign</h6>
+              <form [formGroup]="campaignForm" (ngSubmit)="onSubmitCampaign()">
+                <div class="mb-3">
+                  <label class="small text-muted fw-bold">Campaign Name</label>
+                  <input type="text" class="form-control bg-light border-0" formControlName="name" placeholder="e.g. Summer Offer - North Coast">
+                </div>
+                <div class="mb-4">
+                  <label class="small text-muted fw-bold">Source</label>
+                  <select class="form-select bg-light border-0" formControlName="source">
+                    <option value="Facebook">Facebook Ads</option>
+                    <option value="Google">Google Ads</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="TikTok">TikTok</option>
+                    <option value="Cold Call">Cold Call</option>
+                    <option value="Website">Website Organic</option>
+                    <option value="Referral">Referral / Word of Mouth</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-danger btn-lg w-100 rounded-pill fw-bold shadow-sm mt-3" [disabled]="campaignForm.invalid">
+  <i class="bi bi-plus-lg me-1"></i> Save Campaign
+</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- قائمة الحملات -->
+          <div class="col-md-7">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr><th>Campaign Name</th>
+                    <th>Source</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (c of campaignsList(); track c.id) {
+                    <tr>
+                      <td class="fw-bold">{{ c.name }}</td>
+                      <td><span class="badge bg-secondary">{{ c.source }}</span></td>
+                      <td class="text-end">
+                        <!-- 👈 زرار الحذف -->
+                        <button class="btn btn-sm btn-outline-danger rounded-circle" (click)="onDeleteCampaign(c.id)" title="Delete Campaign">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="3" class="text-center text-muted py-4">No campaigns added yet.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
     }
 
     <!-- تبويب إدارة المستخدمين -->
@@ -346,6 +430,108 @@
               }
             </tbody>
           </table>
+        </div>
+      </section>
+    }
+
+
+    <!-- ================== تبويب إضافة وتوزيع العملاء للـ CRM ================== -->
+    @if (activeTab() === 'addLead') {
+      <section class="animate__animated animate__fadeIn">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-person-plus-fill text-warning me-2"></i>Assign Leads to Brokers</h4>
+          <span class="badge bg-warning text-dark rounded-pill px-3 py-2">CRM Management</span>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white border-top border-warning border-4">
+          
+          <form [formGroup]="adminLeadForm" (ngSubmit)="onSubmitAdminLead()">
+            
+            <!-- 🟢 أهم جزء: اختيار البروكر -->
+            <div class="bg-light p-4 rounded-3 border mb-4">
+              <label class="form-label fw-bold text-dark"><i class="bi bi-person-badge-fill text-danger me-2"></i>Select Broker to Assign *</label>
+              <select class="form-select form-select-lg border-secondary-subtle fw-bold text-primary" formControlName="brokerId">
+                <option value="" disabled selected>--- Choose a Broker ---</option>
+                <!-- بنلف على لستة البروكرز اللي موجودة عندك أصلاً في الأدمن -->
+                @for (b of brokersList(); track b.id) {
+                  <option [value]="b.id">{{ b.firstName }} {{ b.lastName }} ({{ b.phoneNumber }})</option>
+                }
+              </select>
+            </div>
+
+            <!-- ضيفي دي جنب خانة الـ Payment Method أو Budget -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Campaign Source (Optional)</label>
+                <select class="form-select form-select-lg bg-light border-0 rounded-3" formControlName="campaignId">
+                  <option value="">-- No Campaign --</option>
+                  @for (c of campaignsList(); track c.id) {
+                    <option [value]="c.id">{{ c.name }} ({{ c.source }})</option>
+                  }
+                </select>
+              </div>
+
+            <div class="row g-4 mb-4">
+              <!-- بيانات العميل -->
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Client Name *</label>
+                <input type="text" class="form-control form-control-lg bg-light border-0 rounded-3" formControlName="fullName" placeholder="e.g. Ahmed Ali">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Phone Number *</label>
+                <input type="text" class="form-control form-control-lg bg-light border-0 rounded-3" formControlName="phoneNumber" placeholder="e.g. 01012345678">
+              </div>
+
+              <!-- تفاصيل الطلب -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Property Type</label>
+                <select class="form-select form-select-lg bg-light border-0 rounded-3" formControlName="propertyType">
+                  <option value="Apartment">Apartment</option>
+                  <option value="Villa">Villa</option>
+                  <option value="Shop">Shop</option>
+                  <option value="Office">Office</option>
+                  <option value="Chalet">Chalet</option>
+                  <option value="FullFloor">Full Floor</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Purpose</label>
+                <select class="form-select form-select-lg bg-light border-0 rounded-3" formControlName="purpose">
+                  <option value="Resale">Resale</option>
+                  <option value="Rent">Rent</option>
+                  <option value="Primary">Primary</option>
+                  <option value="ResaleProject">Resale Project</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Payment Method</label>
+                <select class="form-select form-select-lg bg-light border-0 rounded-3" formControlName="paymentMethod">
+                  <option value="Cash">Cash</option>
+                  <option value="Installment">Installment</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Budget</label>
+                <input type="number" class="form-control form-control-lg bg-light border-0 rounded-3" formControlName="totalAmount" placeholder="e.g. 5000000">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-muted">Preferred Location</label>
+                <input type="text" class="form-control form-control-lg bg-light border-0 rounded-3" formControlName="preferredLocation" placeholder="e.g. New Cairo, Zayed">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label small fw-bold text-muted">Admin Notes</label>
+                <textarea class="form-control bg-light border-0 rounded-3" formControlName="notes" rows="2" placeholder="Any specific instructions for the broker..."></textarea>
+              </div>
+            </div>
+
+            <div class="text-end border-top pt-4 mt-3">
+  <button type="submit" [disabled]="adminLeadForm.invalid" class="btn btn-danger btn-lg rounded-pill px-5 fw-bold shadow-sm">
+    <i class="bi bi-send-fill me-2"></i> Assign Lead to Broker
+  </button>
+</div>
+          </form>
+
         </div>
       </section>
     }

@@ -1,22 +1,33 @@
-<!-- <app-navbar></app-navbar>
-<div class="container mt-4">
-  <main style="min-height: 80vh;"> 
-  <router-outlet></router-outlet> 
-  </main>
-</div>
-
-<app-footer></app-footer> -->
+<!-- 
 
 @if (!isAdminArea()) {
   <app-navbar></app-navbar>
+}
+<app-navbar *ngIf="!isCrmRoute"></app-navbar>
+
+<app-crm-navbar *ngIf="isCrmRoute"></app-crm-navbar>
+
+<main [class.admin-wrapper]="isAdminArea()">
+  <router-outlet></router-outlet>
+</main>
+
+<app-footer *ngIf="!isCrmRoute"></app-footer> -->
+
+
+@if (!isAdminArea() && !isCrmRoute) {
+  <app-navbar></app-navbar>
+}
+
+<!-- لو جوه الـ CRM، اعرض الناف بار الخاص بالـ CRM فقط -->
+@if (isCrmRoute) {
+  <app-crm-navbar></app-crm-navbar>
 }
 
 <main [class.admin-wrapper]="isAdminArea()">
   <router-outlet></router-outlet>
 </main>
 
+<!-- لو مش أدمن ومش جوه الـ CRM، اعرض الفوتر -->
+@if (!isAdminArea() && !isCrmRoute) {
   <app-footer></app-footer>
-
-
-
-
+}

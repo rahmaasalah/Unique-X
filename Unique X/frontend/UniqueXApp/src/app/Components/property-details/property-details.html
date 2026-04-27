@@ -440,30 +440,30 @@
 
     <!-- العمود الأيمن (البروكر) -->
     <div class="col-lg-4">
-      <div class="sticky-sidebar"> 
-        <div class="card border-0 shadow rounded-4 p-4 text-center">
-          <div class="position-relative d-inline-block mx-auto mb-3">
-            <img [src]="prop.brokerImage || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" 
-                 class="rounded-circle shadow-sm border border-3 border-danger" 
-                 style="width: 80px; height: 80px; object-fit: cover;">
-          </div>
-          <h5 class="fw-bold mb-1">{{ prop.brokerName }}</h5>
-          <p class="text-danger small mb-4 fw-bold">{{ prop.brokerTitle || 'Real Estate Consultant' }}</p>
-         <a href="javascript:void(0)" (click)="handleContact($event, 'call')" 
-   class="btn btn-outline-dark btn-lg w-100 rounded-pill mb-3 fw-bold py-2 small shadow-sm">
-   <i class="bi bi-telephone-fill me-2"></i> Call Now
-</a>
-
-<!-- زر الواتساب -->
-<a href="javascript:void(0)" (click)="handleContact($event, 'whatsapp')" 
-   class="btn btn-success btn-lg w-100 rounded-pill fw-bold py-2 small shadow">
-   <i class="bi bi-whatsapp me-2"></i> WhatsApp
-</a>
-        </div>
+  <div class="sticky-sidebar"> 
+    <div class="card border-0 shadow rounded-4 p-4 text-center">
+      <div class="position-relative d-inline-block mx-auto mb-3">
+        <img [src]="prop.brokerImage || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" 
+             class="rounded-circle shadow-sm border border-3 border-danger" 
+             style="width: 80px; height: 80px; object-fit: cover;">
       </div>
-    </div>
+      <h5 class="fw-bold mb-1">{{ prop.brokerName }}</h5>
+      <p class="text-danger small mb-4 fw-bold">{{ prop.brokerTitle || 'Real Estate Consultant' }}</p>
+     
+      <!-- زر الاتصال -->
+      <a href="javascript:void(0)" (click)="handleContact($event, 'call', prop.brokerPhone)" 
+         class="btn btn-outline-dark btn-lg w-100 rounded-pill mb-3 fw-bold py-2 small shadow-sm">
+         <i class="bi bi-telephone-fill me-2"></i> Call Now
+      </a>
 
+      <!-- زر الواتساب -->
+      <a href="javascript:void(0)" (click)="handleContact($event, 'whatsapp', prop.brokerPhone)" 
+         class="btn btn-success btn-lg w-100 rounded-pill fw-bold py-2 small shadow">
+         <i class="bi bi-whatsapp me-2"></i> WhatsApp
+      </a>
+    </div>
   </div>
+</div>
 
    @if (financialHistory().length > 0) {
           <div class="bg-white p-4 rounded-4 shadow-sm border border-light mt-4 animate__animated animate__fadeInUp">
@@ -533,5 +533,6 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 }
