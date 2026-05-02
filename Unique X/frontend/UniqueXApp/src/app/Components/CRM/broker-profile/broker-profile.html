@@ -1,68 +1,182 @@
-<div class="container mt-4" dir="ltr" *ngIf="profileData()">
+<div class="container-fluid mt-4 px-4" dir="ltr" *ngIf="profileData()">
   
-  <!-- رأس البروفايل -->
-  <div class="d-flex align-items-center mb-5 bg-white p-4 rounded-4 shadow-sm border">
-    <img [src]="brokerImage()" class="rounded-circle border border-3 border-danger shadow-sm me-4" style="width: 100px; height: 100px; object-fit: cover;">
+  <!-- رأس البروفايل (الزراير الجديدة على اليمين) -->
+  <div class="d-flex align-items-center mb-4 bg-white p-4 rounded-4 shadow-sm ">
+    <img [src]="brokerImage()" class="rounded-circle border border-3  shadow-sm me-4" style="width: 100px; height: 100px; object-fit: cover;">
     <div>
       <h2 class="fw-bold mb-1">{{ brokerName() }}</h2>
       <p class="text-muted mb-0"><i class="fas fa-briefcase text-danger me-2"></i> Real Estate Broker Workspace</p>
     </div>
+    
+    <!-- 👇 الزراير الجديدة (Add Lead & Pipeline) -->
+    <div class="ms-auto d-flex gap-2 flex-wrap">
+      <button class="btn btn-outline-danger rounded-pill fw-bold px-4" routerLink="/crm/add-lead">
+        <i class="bi bi-person-plus-fill me-1"></i> Add Lead
+      </button>
+      <button class="btn btn-danger rounded-pill fw-bold px-4 shadow-sm" routerLink="/crm/leads">
+        <i class="bi bi-kanban me-1"></i> My Pipeline
+      </button>
+    </div>
   </div>
 
+  <!-- التابات -->
   <ul class="nav nav-tabs fw-bold mb-4" id="profileTabs" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link active text-dark" id="leads-tab" data-bs-toggle="tab" data-bs-target="#leads" type="button" role="tab">
-        <i class="fas fa-users text-primary me-2"></i> My Leads ({{ profileData().leads.length }})
+        <i class="bi bi-people-fill text-danger me-2"></i> My Leads ({{ profileData().leads.length }})
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link text-dark" id="visits-tab" data-bs-toggle="tab" data-bs-target="#visits" type="button" role="tab">
-        <i class="fas fa-map-marker-alt text-success me-2"></i> Visits ({{ profileData().visits.length }})
+        <i class="bi bi-geo-alt-fill text-success me-2"></i> Visits ({{ profileData().visits.length }})
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link text-dark" id="activities-tab" data-bs-toggle="tab" data-bs-target="#activities" type="button" role="tab">
-        <i class="fas fa-phone-alt text-warning me-2"></i> Calls & Tasks ({{ profileData().activities.length }})
+        <i class="bi bi-telephone-fill text-warning me-2"></i> Calls ({{ profileData().activities.length }})
       </button>
     </li>
   </ul>
 
   <div class="tab-content bg-white p-4 rounded-4 shadow-sm border" id="profileTabsContent">
     
-    <!-- جدول العملاء (Leads) -->
+    <!-- ======================= جدول العملاء (Leads) بالفلاتر ======================= -->
     <div class="tab-pane fade show active" id="leads" role="tabpanel">
+      
+      <!-- 🟢 شريط الفلاتر الشامل -->
+      <div class="row g-2 mb-4 p-3 bg-light rounded-3 border">
+        <div class="col-md-3">
+          <input type="text" class="form-control form-control-sm" placeholder="Search Name/Phone..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm" [ngModel]="filterStage()" (ngModelChange)="filterStage.set($event)">
+            <option value="">All Stages</option>
+            <option value="1">New "To Call"</option>
+            <option value="2">Wait response on wtp msg</option>
+            <option value="3">Request call another time</option>
+            <option value="4">Calls (request)</option>
+            <option value="5">Wait Client Feedback on unit</option>
+            <option value="6">Follow Up For Visit</option>
+            <option value="7">Visit scheduled</option>
+            <option value="8">Follow up After visit</option>
+            <option value="9">Wait feedback on project</option>
+            <option value="10">Follow up for Meeting</option>
+            <option value="11">Meeting Scheduled</option>
+            <option value="12">Follow up after meeting</option>
+            <option value="13">Follow up for developer meeting</option>
+            <option value="14">Follow up for site visit</option>
+            <option value="15">Site visit scheduled</option>
+            <option value="16">Follow up for event</option>
+            <option value="17">Follow up after event</option>
+            <option value="18">Follow up for closing</option>
+            <option value="19">Deal closed</option>
+            <option value="20">Follow up, not now</option>
+            <option value="21">N/A "unreachable"</option>
+            <option value="22">Lost Not interested</option>
+            <option value="23">Low Budget</option>
+            <option value="24">Number Issue</option>
+            <option value="25">Broker</option>
+            <option value="26">Recommend to shift</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm"[ngModel]="filterCampaign()" (ngModelChange)="filterCampaign.set($event)">
+            <option value="">All Campaigns</option>
+            <option value="No Campaign">Direct / Website</option>
+            @for (c of campaignsList(); track c.id) { <option [value]="c.name">{{ c.name }}</option> }
+          </select>
+        </div>
+       <div class="col-md-2">
+          <select class="form-select form-select-sm" [ngModel]="filterZone()" (ngModelChange)="filterZone.set($event)">
+            <option value="">All Zones</option>
+            <option *ngFor="let zone of zones" [value]="zone.name">{{ zone.name }}</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex gap-1">
+          <input type="number" class="form-control form-control-sm" placeholder="Min Budget" [ngModel]="filterMinBudget()" (ngModelChange)="filterMinBudget.set($event)">
+          <input type="number" class="form-control form-control-sm" placeholder="Max Budget" [ngModel]="filterMaxBudget()" (ngModelChange)="filterMaxBudget.set($event)">
+        </div>
+        <div class="col-md-4 d-flex align-items-center gap-2 mt-2">
+          <label class="small text-muted mb-0 text-nowrap">Created:</label>
+          <input type="date" class="form-control form-control-sm" [ngModel]="filterCreationDate()" (ngModelChange)="filterCreationDate.set($event)">
+        </div>
+        <div class="col-md-4 d-flex align-items-center gap-2 mt-2">
+          <label class="small text-muted mb-0 text-nowrap">Updated:</label>
+          <input type="date" class="form-control form-control-sm"[ngModel]="filterLastUpdate()" (ngModelChange)="filterLastUpdate.set($event)">
+        </div>
+        <div class="col-md-4 mt-2 text-end">
+          <button class="btn btn-sm btn-outline-danger fw-bold w-100" (click)="clearFilters()"><i class="bi bi-x-circle me-1"></i> Clear Filters</button>
+        </div>
+      </div>
+
+      <!-- جدول العملاء -->
       <div class="table-responsive">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Client Name</th>
-              <th>Phone</th>
-              <th>Status</th>
+              <th class="ps-3">Client</th>
+              <th>Stage</th>
+              <th>Campaign</th>
+              <th>Zone</th>
+              <th>Budget</th>
               <th>Created Date</th>
-              <th>Action</th>
+              <th>Last Update</th>
+              <th class="text-end pe-3">Action</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let lead of profileData().leads">
-              <td class="fw-bold">{{ lead.fullName }}</td>
-              <td>{{ lead.phoneNumber }}</td>
-              <td><span class="badge bg-secondary">{{ lead.statusName }}</span></td>
-              <td>{{ lead.createdAt | date:'mediumDate' }}</td>
+            <tr *ngFor="let lead of filteredLeads()">
+              <td class="ps-3">
+                <div class="fw-bold text-dark">{{ lead.fullName }}</div>
+                <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ lead.phoneNumber }}</small>
+              </td>
+              <td><span class="badge bg-dark">{{ lead.statusName }}</span></td>
               <td>
-                <!-- الزرار ده بيودي لصفحة التفاصيل -->
-                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" [routerLink]="['/crm/leads', lead.id]">
-                  Open Profile ➔
+                <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-3 py-2 shadow-sm">
+                  <i class="bi" [ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
+                  {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
+                </span>
+              </td>
+              <td><span class="fw-bold small text-secondary">{{ lead.zoneName }}</span></td>
+              
+              <td>
+                <div class="fw-bold text-success fs-6">{{ lead.totalAmount | currency:'EGP ' }}</div>
+                <div class="mt-1" *ngIf="lead.paymentMethod">
+                  <span class="badge bg-light text-dark border">{{ lead.paymentMethod }}</span>
+                  <div *ngIf="lead.paymentMethod === 'Installment'" class="mt-1 text-muted" style="font-size: 0.65rem; font-weight: 600;">
+                    DP: <span class="text-dark">{{ lead.downPayment | currency:'EGP ' }}</span><br>
+                    Years: <span class="text-danger">{{ lead.installmentYears }}</span>
+                  </div>
+                </div>
+              </td>
+              
+             <td>
+                <div class="small fw-bold text-dark">{{ lead.createdAt | date:'mediumDate' }}</div>
+              </td>
+              
+              <!-- 5. عمود تاريخ التحديث (ضفنا الوقت بالساعات والدقايق عشان يبان التغيير) -->
+             <td>
+                <div class="small fw-bold text-danger bg-danger-subtle px-2 py-1 rounded d-inline-block">
+                  <i class="bi bi-clock-history me-1"></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
+                </div>
+              </td>
+              <td class="text-end pe-3">
+                <button class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm fw-bold" [routerLink]="['/crm/leads', lead.id]">
+                  Client File &rarr;
                 </button>
               </td>
             </tr>
-            <tr *ngIf="profileData().leads.length === 0">
-              <td colspan="5" class="text-center text-muted py-4">No leads found.</td>
+            <tr *ngIf="filteredLeads().length === 0">
+              <td colspan="7" class="text-center text-muted py-5">
+                <i class="bi bi-search fs-2 d-block mb-2 opacity-50"></i> No leads match your filters.
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
-
+  </div>
+</div>
     <!-- جدول الزيارات (Visits) -->
     <div class="tab-pane fade" id="visits" role="tabpanel">
       <div class="table-responsive">
@@ -158,6 +272,3 @@
         </table>
       </div>
     </div>
-
-  </div>
-</div>

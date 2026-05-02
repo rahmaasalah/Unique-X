@@ -12,15 +12,12 @@
         public decimal MaxBudget { get; set; }
         public string PaymentMethod { get; set; } // Cash, Installments
         public string PreferredLocation { get; set; } // المنطقة المفضلة
-        public string Notes { get; set; } // أي تفاصيل إضافية
-
-        public string? UnitType { get; set; }
-        public string? ZoneInterested { get; set; }
-        public string? Floor { get; set; }
-        public string? BuildingDate { get; set; }
-        public string? Compound { get; set; }
+        public string Notes { get; set; } // أي تفاصيل إضافية       
         public decimal? TotalAmount { get; set; }
-        public decimal? DpAmount { get; set; } // Down Payment
-        public decimal? InstallmentAmount { get; set; }
+        public int? ZoneId { get; set; }
+        public string? SelectedRegions { get; set; } // هيتخزن كنص مفصول بفاصلة
+        public string? SelectedProjects { get; set; } // هيتخزن كنص مفصول بفاصلة
+        public decimal? DownPayment { get; set; }
+        public int? InstallmentYears { get; set; }
     }
 }

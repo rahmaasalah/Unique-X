@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-// 👇 استيراد أدوات السحب والإفلات من Angular Material
+import { FormsModule } from '@angular/forms'; // سبناها عشان الـ ngModel بتاع الفلاتر
 import { CdkDragDrop, moveItemInArray, transferArrayItem, DragDropModule } from '@angular/cdk/drag-drop'; 
 import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
@@ -11,34 +10,29 @@ import { RouterModule } from '@angular/router';
 @Component({
   selector: 'app-leads-dashboard',
   standalone: true,
-  imports:[CommonModule, FormsModule, ReactiveFormsModule, DragDropModule, RouterModule], // ضفنا DragDropModule
+  imports:[CommonModule, FormsModule, DragDropModule, RouterModule], 
   templateUrl: './leads-dashboard.html',
   styleUrls: ['./leads-dashboard.css']
 })
 export class LeadsDashboardComponent implements OnInit {
   private crmService = inject(CrmService);
-  private fb = inject(FormBuilder);
   private alertService = inject(AlertService);
 
-  leadForm!: FormGroup;
   currentBrokerId: string = ''; 
   campaignsList = signal<any[]>([]);
 
-  allLeads = signal<any[]>([]); // دي النسخة الأصلية اللي مش بتتمسح
-  searchText = signal<string>(''); // نص البحث
+  viewMode = signal<'kanban' | 'list'>('kanban'); 
+  filteredLeadsForList = signal<any[]>([]);
+
+  allLeads = signal<any[]>([]); 
+  searchText = signal<string>(''); 
   filterCampaign = signal<string>('');
   filterStatus = signal<string>('');
   filterPropertyType = signal<string>('');
   filterPurpose = signal<string>('');
   filterDate = signal<string>('');
 
-  // 👇 أعمدة الـ Kanban Board (تقدري تغيري الأسماء والـ IDs حسب اللي عندك في الداتابيز)
-  boardColumns = signal<any[]>([
-    { id: 1, name: 'New "To Call"', leads: [] },
-    { id: 2, name: 'Visit Scheduled', leads: [] },
-    { id: 4, name: 'Meeting Scheduled', leads:[] },
-    { id: 5, name: 'Deal Closed', leads:[] }
-  ]);
+  boardColumns = signal<any[]>([]);
 
   ngOnInit() {
     const userString = localStorage.getItem('user');
@@ -46,7 +40,6 @@ export class LeadsDashboardComponent implements OnInit {
       const user = JSON.parse(userString);
       this.currentBrokerId = user.id || user.userId || ''; 
     }
-    this.initForm();
     this.loadLeads(this.currentBrokerId);
     this.loadCampaigns();
   }
@@ -58,36 +51,24 @@ export class LeadsDashboardComponent implements OnInit {
     });
   }
 
-  initForm() {
-    this.leadForm = this.fb.group({
-      fullName: ['', Validators.required],
-      phoneNumber: ['', Validators.required],
-      email: [''],
-      brokerId: [this.currentBrokerId, Validators.required],
-      leadStatusId: [1, Validators.required], // العميل الجديد بينزل في عمود رقم 1
-      propertyType: ['Apartment', Validators.required],
-      purpose: ['Sale', Validators.required],
-      totalAmount: [0, [Validators.min(0)]],
-      paymentMethod: ['Cash'],
-      preferredLocation: [''],
-      campaignId: [''],
-      notes: ['']
-    });
-  }
-
   loadLeads(brokerId: string) {
     if (!brokerId) return; 
     
     this.crmService.getLeads(brokerId).subscribe({
       next: (data) => {
-        this.allLeads.set(data); // بنحفظ النسخة الأصلية
-        this.applyFilters(); // 👈 بننادي دالة الفلترة عشان توزعهم في الأعمدة
+        // 👇 السطرين دول بيحلوا مشكلة فرق التوقيت (بيعرفوا Angular إن ده توقيت عالمي)
+        data.forEach((lead: any) => {
+          if (lead.createdAt && !lead.createdAt.endsWith('Z')) lead.createdAt += 'Z';
+          if (lead.updatedAt && !lead.updatedAt.endsWith('Z')) lead.updatedAt += 'Z';
+        });
+
+        this.allLeads.set(data); 
+        this.applyFilters(); 
       },
       error: (err) => console.error('Error fetching leads:', err)
     });
   }
 
-  // 👇 الدالة السحرية الجديدة اللي بتفلتر وتوزع العملاء
   applyFilters(isUserAction: boolean = false) {
     const search = this.searchText().toLowerCase();
     const campaign = this.filterCampaign();
@@ -112,21 +93,44 @@ export class LeadsDashboardComponent implements OnInit {
       return matchSearch && matchCamp && matchStatus && matchPropType && matchPurpose && matchDate;
     });
 
+    this.filteredLeadsForList.set(filtered);
+
     const freshColumns =[
       { id: 1, name: 'New "To Call"', leads: [] as any[] },
-      { id: 2, name: 'Visit Scheduled', leads: [] as any[] },
-      { id: 4, name: 'Meeting Scheduled', leads:[] as any[] },
-      { id: 5, name: 'Deal Closed', leads: [] as any[] }
+      { id: 2, name: 'Wait response on wtp msg', leads: [] as any[] },
+      { id: 3, name: 'Request call another time', leads: [] as any[] },
+      { id: 4, name: 'Calls (request)', leads: [] as any[] },
+      { id: 5, name: 'Wait Client Feedback on unit', leads: [] as any[] },
+      { id: 6, name: 'Follow Up For Visit', leads: [] as any[] },
+      { id: 7, name: 'Visit scheduled', leads: [] as any[] },
+      { id: 8, name: 'Follow up After visit', leads:[] as any[] },
+      { id: 9, name: 'Wait feedback on project', leads:[] as any[] },
+      { id: 10, name: 'Follow up for Meeting', leads:[] as any[] },
+      { id: 11, name: 'Meeting Scheduled', leads: [] as any[] },
+      { id: 12, name: 'Follow up after meeting', leads: [] as any[] },
+      { id: 13, name: 'Follow up for developer meeting', leads: [] as any[] },
+      { id: 14, name: 'Follow up for site visit', leads:[] as any[] },
+      { id: 15, name: 'Site visit scheduled', leads: [] as any[] },
+      { id: 16, name: 'Follow up for event', leads: [] as any[] },
+      { id: 17, name: 'Follow up after event', leads: [] as any[] },
+      { id: 18, name: 'Follow up for closing', leads: [] as any[] },
+      { id: 19, name: 'Deal closed', leads: [] as any[] },
+      { id: 20, name: 'Follow up, not now', leads: [] as any[] },
+      { id: 21, name: 'N/A "unreachable"', leads:[] as any[] },
+      { id: 22, name: 'Lost Not interested', leads: [] as any[] },
+      { id: 23, name: 'Low Budget', leads: [] as any[] },
+      { id: 24, name: 'Number Issue', leads: [] as any[] },
+      { id: 25, name: 'Broker', leads:[] as any[] },
+      { id: 26, name: 'Recommend to shift', leads:[] as any[] }
     ];
 
-    filtered.forEach(lead => {
+    filtered.forEach((lead: any) => {
       const column = freshColumns.find(c => c.id === lead.statusId);
       if (column) column.leads.push(lead);
     });
 
     this.boardColumns.set(freshColumns); 
 
-    // 👇 هنا السحر: الشاشة هتنزل بس لو اليوزر هو اللي استخدم الفلتر
     if (isUserAction) {
       const element = document.getElementById('pipeline-section');
       if (element) {
@@ -135,7 +139,6 @@ export class LeadsDashboardComponent implements OnInit {
     }
   }
 
-  // دالة صغيرة لتفريغ الفلاتر بضغطة زرار
   clearFilters() {
     this.searchText.set('');
     this.filterCampaign.set('');
@@ -146,38 +149,10 @@ export class LeadsDashboardComponent implements OnInit {
     this.applyFilters(true);
   }
 
-  preventNegative(event: any) {
-    if (event.key === '-' || event.key === 'e' || event.key === '+') {
-      event.preventDefault();
-    }
-  }
-
-  onSubmit() {
-    if (this.leadForm.valid) {
-      this.alertService.showLoading('Adding new lead...'); 
-      this.crmService.createLead(this.leadForm.value).subscribe({
-        next: (res) => {
-          this.alertService.close();
-          this.alertService.success('Lead has been added!');
-          this.leadForm.reset();
-          this.initForm(); 
-          this.loadLeads(this.currentBrokerId); 
-        },
-        error: (err) => {
-          this.alertService.close();
-          this.alertService.error('Failed to add the lead.');
-        }
-      });
-    }
-  }
-
-  // 👇 دالة السحب والإفلات السحرية
   drop(event: CdkDragDrop<LeadResponseDto[]>, newStatusId: number) {
     if (event.previousContainer === event.container) {
-      // لو حركه في نفس العمود (مجرد ترتيب)
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
-      // لو نقله لعمود تاني
       transferArrayItem(
         event.previousContainer.data,
         event.container.data,
@@ -187,18 +162,21 @@ export class LeadsDashboardComponent implements OnInit {
 
       const movedLead = event.container.data[event.currentIndex];
       
-      // 🟢 الجزء الجديد: تحديث حالة العميل في النسخة الأصلية عشان الفلتر ميبوظهاش
+      // 🟢 تحديث التاريخ والحالة محلياً فوراً في الكارت نفسه عشان العين تشوفه
+      movedLead.statusId = newStatusId;
+      movedLead.updatedAt = new Date() as any; // يتحدث للوقت الحالي
+      
+      // تحديث النسخة الأصلية عشان الفلاتر
       const masterLeads = this.allLeads();
       const index = masterLeads.findIndex(l => l.id === movedLead.id);
       if (index > -1) {
         masterLeads[index].statusId = newStatusId;
-        // بنعمل نسخة جديدة من المصفوفة عشان الـ Signal يحس بالتغيير
+        masterLeads[index].updatedAt = movedLead.updatedAt;
         this.allLeads.set([...masterLeads]); 
       }
       
       this.alertService.showLoading('Updating Pipeline...');
       
-      // بنبعت للباك إند إن العميل ده حالته اتغيرت
       this.crmService.updateLeadStatus(movedLead.id, {
         newStatusId: newStatusId,
         brokerId: this.currentBrokerId,
@@ -210,7 +188,7 @@ export class LeadsDashboardComponent implements OnInit {
         error: (err) => {
           this.alertService.close();
           this.alertService.error('Failed to update pipeline.');
-          this.loadLeads(this.currentBrokerId); // نرجع الداتا زي ما كانت لو حصل إيرور
+          this.loadLeads(this.currentBrokerId); 
         }
       });
     }

@@ -45,40 +45,50 @@ export class LeadDetailsComponent implements OnInit {
   visitForm!: FormGroup;
   activityForm!: FormGroup;
 
-  ngOnInit() {
-    // جلب الـ ID بتاع البروكر
+  stages =[
+    { id: 1, name: 'New "To Call"' }, { id: 2, name: 'Waiting response on wtp msg' }, { id: 3, name: 'Request call another time' },
+    { id: 4, name: 'Calls (request)' }, { id: 5, name: 'Waiting Client Feedback on unit' }, { id: 6, name: 'Follow Up For Visit' },
+    { id: 7, name: 'Visit scheduled' }, { id: 8, name: 'Follow up After visit' }, { id: 9, name: 'Waiting feedback on project' },
+    { id: 10, name: 'Follow up for Meeting' }, { id: 11, name: 'Meeting Scheduled' }, { id: 12, name: 'Follow up after meeting' },
+    { id: 13, name: 'Follow up for developer meeting' }, { id: 14, name: 'Follow up for site visit' }, { id: 15, name: 'Site visit scheduled' },
+    { id: 16, name: 'Follow up for event' }, { id: 17, name: 'Follow up after event' }, { id: 18, name: 'Follow up for closing' },
+    { id: 19, name: 'Deal closed' }, { id: 20, name: 'Follow up, not now' }, { id: 21, name: 'N/A "unreachable"' },
+    { id: 22, name: 'Lost Not interested' }, { id: 23, name: 'Low Budget' }, { id: 24, name: 'Number Issue' },
+    { id: 25, name: 'Broker' }, { id: 26, name: 'Recommend to shift' }
+  ];
+
+
+   ngOnInit() {
     const userString = localStorage.getItem('user');
     if (userString) {
       const user = JSON.parse(userString);
       this.currentBrokerId = user.id || user.userId || ''; 
     }
 
+    const now = new Date();
+    this.minDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
     this.leadId = Number(this.route.snapshot.paramMap.get('id'));
     if (this.leadId) {
       this.loadLeadData(this.leadId);
       this.initForms();
     }
-
-    // حساب الوقت الحالي لمنع اختيار تواريخ سابقة
-  const now = new Date();
-  this.minDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   }
 
-  initForms() {
+ initForms() {
     this.visitForm = this.fb.group({
-      leadId:[this.leadId],
-      brokerId: [this.currentBrokerId],
+      leadId: [this.leadId],
+      brokerId:[this.currentBrokerId],
       propertyId: [''],
-      visitDate: ['', [Validators.required, futureDateValidator()]], 
-      location:['', Validators.required]
+      visitDate: ['',[Validators.required, futureDateValidator()]],
+      location: ['', Validators.required]
     });
 
     this.activityForm = this.fb.group({
       leadId:[this.leadId],
       assignedToId: [this.currentBrokerId],
-      activityType: ['Call', Validators.required],
+      activityType:['Call', Validators.required],
       summary: ['', Validators.required],
-      // 👇 وضفنا المُدقق هنا
       dueDate: ['',[Validators.required, futureDateValidator()]],
       notes: ['']
     });
@@ -87,13 +97,65 @@ export class LeadDetailsComponent implements OnInit {
   loadLeadData(id: number) {
     this.crmService.getLeadDetails(id).subscribe({
       next: (res) => {
+        
+        // 🟢 السطرين دول هما اللي بيحلوا مشكلة الـ 3 ساعات لتواريخ العميل
+        if (res.leadInfo) {
+          if (res.leadInfo.createdAt && !res.leadInfo.createdAt.endsWith('Z')) res.leadInfo.createdAt += 'Z';
+          if (res.leadInfo.updatedAt && !res.leadInfo.updatedAt.endsWith('Z')) res.leadInfo.updatedAt += 'Z';
+        }
+
+        // ضبط التوقيت لسجل الحركات
+        if (res.statusHistory) {
+          res.statusHistory.forEach((h: any) => {
+            if (h.changedAt && !h.changedAt.endsWith('Z')) h.changedAt += 'Z';
+          });
+        }
+
+        // ضبط التوقيت للزيارات والمهام
+        if (res.visits) {
+          res.visits.forEach((v: any) => {
+            if (v.visitDate && !v.visitDate.endsWith('Z')) v.visitDate += 'Z';
+          });
+        }
+        if (res.activities) {
+          res.activities.forEach((a: any) => {
+            if (a.dueDate && !a.dueDate.endsWith('Z')) a.dueDate += 'Z';
+          });
+        }
+
+        // حفظ الداتا بعد التعديل
         this.leadInfo.set(res.leadInfo);
         this.requestDetails.set(res.requestDetails);
-        this.visits.set(res.visits || []);
+        this.visits.set(res.visits ||[]);
         this.activities.set(res.activities ||[]);
         this.statusHistory.set(res.statusHistory ||[]);
       },
-      error: (err) => console.error('Error fetching lead details:', err)
+      error: (err) => {
+        console.error('Error fetching lead details:', err);   
+      }
+    });
+  }
+
+  // 👇 الدالة الجديدة لتغيير الحالة من الـ Dropdown
+  onStageChange(event: any) {
+    const newStatusId = Number(event.target.value);
+    
+    this.alertService.showLoading('Updating Stage...');
+    this.crmService.updateLeadStatus(this.leadId, {
+      newStatusId: newStatusId,
+      brokerId: this.currentBrokerId,
+      notes: 'Stage updated from Profile'
+    }).subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success('Stage updated successfully!');
+        this.loadLeadData(this.leadId); // تحديث الداتا عشان الهيستوري يتكتب فيه
+      },
+      error: () => {
+        this.alertService.close();
+        this.alertService.error('Failed to update stage.');
+        this.loadLeadData(this.leadId); // نرجعها زي ما كانت لو حصل خطأ
+      }
     });
   }
 
@@ -130,20 +192,5 @@ export class LeadDetailsComponent implements OnInit {
     }
   }
 
-  onDeleteLead() {
-  this.alertService.confirm('Are you sure you want to completely delete this lead? All associated visits and calls will be permanently removed.', () => {
-    this.alertService.showLoading('Deleting Lead...');
-    this.crmService.deleteLead(this.leadId).subscribe({
-      next: () => {
-        this.alertService.close();
-        this.alertService.success('Lead deleted permanently.');
-        this.router.navigate(['/crm/leads']); // نرجعه لصفحة الأعمدة
-      },
-      error: () => {
-        this.alertService.close();
-        this.alertService.error('Failed to delete lead.');
-      }
-    });
-  });
-}
+  
 }

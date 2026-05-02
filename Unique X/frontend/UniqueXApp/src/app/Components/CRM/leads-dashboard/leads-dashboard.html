@@ -1,212 +1,180 @@
-<div class="container mt-4" dir="ltr">
+<div class="container-fluid mt-4 px-4" dir="ltr">
   
-  <!-- ========================================== -->
-  <!-- 1. الهيدر وشريط الفلاتر المتقدمة           -->
-  <!-- ========================================== -->
-  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
-    <h2 class="m-0 fw-bold"><i class="bi bi-graph-up-arrow text-danger me-2"></i>CRM Dashboard</h2>
-    <button class="btn btn-outline-danger btn-sm rounded-pill fw-bold px-3" (click)="clearFilters()">
-      <i class="bi bi-x-circle me-1"></i> Clear All Filters
-    </button>
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <h2 class="m-0 fw-bold"><i class="bi bi-kanban text-danger me-2"></i>My Pipeline</h2>
+      
+      <!-- زراير التبديل (List / Kanban) -->
+      <div class="btn-group shadow-sm" role="group">
+        <button type="button" class="btn" [class.btn-dark]="viewMode() === 'kanban'" [class.btn-outline-dark]="viewMode() !== 'kanban'" (click)="viewMode.set('kanban')">
+          <i class="bi bi-layout-three-columns me-1"></i> Board
+        </button>
+        <button type="button" class="btn" [class.btn-dark]="viewMode() === 'list'" [class.btn-outline-dark]="viewMode() !== 'list'" (click)="viewMode.set('list')">
+          <i class="bi bi-list-ul me-1"></i> List
+        </button>
+      </div>
+    </div>
+    
+    <div class="d-flex gap-2">
+      <!-- 👈 زرار الذهاب لصفحة إضافة العميل -->
+      <button class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" routerLink="/crm/add-lead">
+        <i class="bi bi-plus-lg me-1"></i> Add Lead
+      </button>
+      <button class="btn btn-outline-danger btn-sm rounded-pill fw-bold px-3" (click)="clearFilters()">
+        <i class="bi bi-x-circle me-1"></i> Clear Filters
+      </button>
+    </div>
   </div>
 
-  <!-- كارت الفلاتر (Advanced Filters) -->
+  <!-- الفلاتر (نفسها اللي عندك) -->
   <div class="card p-3 mb-4 shadow-sm border-0 bg-white rounded-3">
-    <div class="row g-2">
-      
-      <!-- 1. البحث السريع -->
-      <div class="col-12 col-md-4">
-        <div class="input-group input-group-sm">
-          <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-          <input type="text" class="form-control border-start-0 bg-light" placeholder="Search name or phone..."
-                 [ngModel]="searchText()" (ngModelChange)="searchText.set($event); applyFilters(true)">
-        </div>
-      </div>
-
-      <!-- 2. فلتر التاريخ -->
-      <div class="col-6 col-md-2">
-        <input type="date" class="form-control form-control-sm bg-light w-100" title="Filter by Date"
-               [ngModel]="filterDate()" (ngModelChange)="filterDate.set($event); applyFilters(true)">
-      </div>
-
-      <!-- 3. فلتر الحالة -->
-      <div class="col-6 col-md-2">
-        <select class="form-select form-select-sm bg-light w-100" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); applyFilters(true)">
-          <option value="">All Statuses</option>
-          <option value="1">New "To Call"</option>
-          <option value="2">Visit Scheduled</option>
-          <option value="3">Meeting Scheduled</option>
-          <option value="5">Deal Closed</option>
-        </select>
-      </div>
-
-      <!-- 4. فلتر الحملات -->
-      <div class="col-6 col-md-2">
-        <select class="form-select form-select-sm bg-light w-100" [ngModel]="filterCampaign()" (ngModelChange)="filterCampaign.set($event); applyFilters(true)">
-          <option value="">All Campaigns</option>
-          <option value="No Campaign">Direct / Website</option>
-          @for (c of campaignsList(); track c.id) {
-            <option [value]="c.name">{{ c.name }}</option>
-          }
-        </select>
-      </div>
-
-      <!-- 5. فلتر نوع العقار -->
-      <div class="col-6 col-md-2">
-        <select class="form-select form-select-sm bg-light w-100" [ngModel]="filterPropertyType()" (ngModelChange)="filterPropertyType.set($event); applyFilters(true)">
-          <option value="">All Property Types</option>
-          <option value="Apartment">Apartment</option>
-          <option value="Villa">Villa</option>
-          <option value="Chalet">Chalet</option>
-          <option value="FullFloor">Full Floor</option>
-          <option value="Shop">Shop</option>
-        </select>
-      </div>
-
-    </div>
+    <!-- ... حطي كود الفلاتر بتاعك هنا ... -->
   </div>
 
-  <!-- ========================================== -->
-  <!-- 2. فورم إضافة العميل (Add Lead Form)       -->
-  <!-- ========================================== -->
-  <div class="card p-4 mb-4 shadow-sm border-0 border-top border-danger border-4">
-    <h5 class="mb-3 fw-bold"><i class="bi bi-person-plus-fill me-2 text-danger"></i>Add New Lead</h5>
-    
-    <!-- رسالة تحذير لو مش عامل لوجن -->
-    <div *ngIf="!currentBrokerId" class="alert alert-danger">
-      Please log in first to be able to add leads!
-    </div>
-
-    <form [formGroup]="leadForm" (ngSubmit)="onSubmit()">
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label small fw-bold text-muted">Client Name *</label>
-          <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="fullName" placeholder="e.g. John Doe">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label small fw-bold text-muted">Phone Number *</label>
-          <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="phoneNumber" placeholder="e.g. 01234567890">
-        </div>
+  <!-- ================= طريقة العرض: Kanban (Grid Layout) ================= -->
+  @if(viewMode() === 'kanban') {
+    <div class="row g-3 pb-4" cdkDropListGroup>
+      
+      <div class="col-12 col-md-6 col-xl-3" *ngFor="let col of boardColumns()">
         
-        <div class="col-md-4">
-          <label class="form-label small fw-bold text-muted">Property Type</label>
-          <select class="form-select bg-light border-0 rounded-3" formControlName="propertyType">
-            <option value="Apartment">Apartment</option>
-            <option value="Villa">Villa</option>
-            <option value="Chalet">Chalet</option>
-            <option value="Shop">Shop</option>
-            <option value="FullFloor">Full Floor</option>
-          </select>
+        <div class="bg-light rounded-4 p-2 shadow-sm border d-flex flex-column h-100">
+          
+          <div class="column-header d-flex justify-content-between align-items-center mb-3 p-2 border-bottom">
+            <h6 class="m-0 fw-bold text-dark text-truncate"[title]="col.name">{{ col.name }}</h6>
+            <span class="badge bg-danger rounded-pill">{{ col.leads.length }}</span>
+          </div>
+
+          <div 
+            cdkDropList 
+            [cdkDropListData]="col.leads" 
+            (cdkDropListDropped)="drop($event, col.id)" 
+            class="kanban-drop-list flex-grow-1"
+            style="min-height: 150px;">
+            
+            <!-- كارت العميل -->
+            <div class="lead-card bg-white p-3 mb-2 rounded-3 shadow-sm border-start border-4 border-danger" *ngFor="let lead of col.leads" cdkDrag>
+              <div class="fw-bold mb-1 text-dark">{{ lead.fullName }}</div>
+              
+              <div class="text-muted small mb-2"><i class="bi bi-telephone-fill me-1"></i> {{ lead.phoneNumber }}</div>
+              
+              <!-- 🟢 التعديل: تجميع (الحملة، نوع العقار، الغرض) في بادجات شيك جنب بعض -->
+              <div class="d-flex flex-wrap gap-1 mb-2">
+                <!-- مصدر الحملة -->
+                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill" style="font-size: 0.65rem;">
+                  <i class="bi" [ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
+                  {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
+                </span>
+                
+                <!-- نوع العقار (Property Type) -->
+                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle rounded-pill" style="font-size: 0.65rem;">
+                  <i class="bi bi-building me-1"></i> {{ lead.propertyType }}
+                </span>
+
+                <!-- الغرض (Listing Type / Purpose) -->
+                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill" style="font-size: 0.65rem;">
+                  <i class="bi bi-tag-fill me-1"></i> {{ lead.purpose }}
+                </span>
+              </div>
+
+              <div class="fw-bold text-success small" *ngIf="lead.totalAmount > 0">
+                  <i class="bi bi-wallet2"></i> {{ (lead.totalAmount) | number:'1.1-2' }}M
+                </div>
+              
+
+              <!-- التاريخ (آخر تحديث) وزرار التفاصيل -->
+              <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                <span class="text-muted" style="font-size: 0.65rem; font-weight: 600;" [title]="'Created: ' + (lead.createdAt | date:'medium')">
+                  <i class="bi bi-clock-history me-1 text-danger"></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
+                </span>
+                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" [routerLink]="['/crm/leads', lead.id]">Details</button>
+              </div>
+            </div>
+
+            <!-- رسالة لو العمود فاضي -->
+            <div class="text-center text-muted small py-4" *ngIf="col.leads.length === 0">
+              Drop leads here
+            </div>
+
+          </div>
         </div>
-        <div class="col-md-4">
-          <label class="form-label small fw-bold text-muted">Purpose</label>
-          <select class="form-select bg-light border-0 rounded-3" formControlName="purpose">
-            <option value="Primary">Primary</option>
-            <option value="Rent">Rent</option>
-            <option value="Resale">Resale</option>
-            <option value="ResaleProject">Resale Project</option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label small fw-bold text-muted">Campaign Source</label>
-          <select class="form-select bg-light border-0 rounded-3" formControlName="campaignId">
-            <option value="">-- No Campaign (Direct) --</option>
-            @for (c of campaignsList(); track c.id) {
-              <option [value]="c.id">{{ c.name }} ({{ c.source }})</option>
+      </div>
+      
+    </div>
+  }
+
+  <!-- ================= طريقة العرض: List ================= -->
+  @if(viewMode() === 'list') {
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden animate__animated animate__fadeIn">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4">Client</th>
+              <th>Stage</th>
+              <th>Campaign</th>
+              <th>Property Info</th>
+              <th>Budget</th>
+              <th>Created Date</th>
+              <th>Last Update</th>
+              <th class="text-end pe-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (lead of filteredLeadsForList(); track lead.id) {
+              <tr>
+                <!-- الاسم والرقم -->
+                <td class="ps-4">
+                  <div class="fw-bold text-dark">{{ lead.fullName }}</div>
+                  <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ lead.phoneNumber }}</small>
+                </td>
+                
+                <!-- الحالة -->
+                <td><span class="badge bg-dark">{{ lead.statusName }}</span></td>
+                
+                <!-- الحملة -->
+                <td>
+                  <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm" style="font-size: 0.7rem;">
+                    <i class="bi" [ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
+                    {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
+                  </span>
+                </td>
+
+                <!-- تفاصيل العقار (النوع والغرض) -->
+                <td>
+                  <div class="fw-bold small text-dark">{{ lead.propertyType }}</div>
+                  <div class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill mt-1" style="font-size: 0.65rem;">
+                    {{ lead.purpose }}
+                  </div>
+                </td>
+
+                <td class="fw-bold text-success">
+                  {{ lead.totalAmount > 0 ? (lead.totalAmount | currency:'EGP ') : 'N/A' }}
+                </td>
+                
+                <!-- تاريخ الإنشاء -->
+                <td><div class="small fw-bold text-dark">{{ lead.createdAt | date:'mediumDate' }}</div></td>
+                
+                <!-- تاريخ آخر تحديث -->
+                <td>
+                  <div class="small fw-bold text-dark -subtle px-2 py-1 rounded d-inline-block">
+                    {{ lead.updatedAt | date:'MMM d, h:mm a' }}
+                  </div>
+                </td>
+
+                <!-- زرار الأكشن -->
+                <td class="text-end pe-4">
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" [routerLink]="['/crm/leads', lead.id]">
+                    Details &rarr;
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="text-center py-5 text-muted">No leads found.</td></tr>
             }
-          </select>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label small fw-bold text-muted">Budget</label>
-          <input type="number" class="form-control bg-light border-0 rounded-3" formControlName="totalAmount" 
-                 placeholder="e.g. 5000000" min="0" (keydown)="preventNegative($event)">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label small fw-bold text-muted">Payment Method</label>
-          <select class="form-select bg-light border-0 rounded-3" formControlName="paymentMethod">
-            <option value="Cash">Cash</option>
-            <option value="Installment">Installment</option>
-          </select>
-        </div>
-        
-        <div class="col-md-12">
-          <label class="form-label small fw-bold text-muted">Preferred Location</label>
-          <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="preferredLocation" placeholder="e.g. New Cairo, Zayed...">
-        </div>
-        <div class="col-md-12">
-          <label class="form-label small fw-bold text-muted">Notes</label>
-          <textarea class="form-control bg-light border-0 rounded-3" formControlName="notes" rows="2" placeholder="Any additional requirements..."></textarea>
-        </div>
-        
-        <div class="col-12 mt-3 text-end">
-          <button type="submit" class="btn btn-danger px-5 rounded-pill fw-bold shadow-sm" [disabled]="leadForm.invalid || !currentBrokerId">
-            <i class="bi bi-plus-lg me-1"></i> Save Lead
-          </button>
-        </div>
-      </div>
-    </form>
-  </div>
-
-  <!-- ========================================== -->
-  <!-- 3. لوحة السحب والإفلات (Kanban Board)      -->
-  <!-- ========================================== -->
-  <h4 id="pipeline-section" class="mb-3 mt-5 fw-bold"><i class="bi bi-kanban me-2 text-danger"></i>My Pipeline</h4>
-  <div class="kanban-wrapper d-flex gap-3 overflow-auto pb-3" cdkDropListGroup>
-    
-    <!-- حلقة تكرار لرسم الأعمدة -->
-    <div class="kanban-column bg-light rounded-4 p-2 shadow-sm border" *ngFor="let col of boardColumns()">
-      
-      <!-- اسم العمود وعدد العملاء فيه -->
-      <div class="column-header d-flex justify-content-between align-items-center mb-3 p-2 border-bottom">
-        <h6 class="m-0 fw-bold text-dark">{{ col.name }}</h6>
-        <span class="badge bg-danger rounded-pill">{{ col.leads.length }}</span>
-      </div>
-
-      <!-- منطقة السحب والإفلات لكل عمود -->
-      <div 
-        cdkDropList 
-        [cdkDropListData]="col.leads" 
-        (cdkDropListDropped)="drop($event, col.id)"
-        class="kanban-drop-list"
-        style="min-height: 200px;">
-        
-        <!-- كارت العميل -->
-        <div 
-          class="lead-card bg-white p-3 mb-2 rounded-3 shadow-sm border-start border-4 border-danger" 
-          *ngFor="let lead of col.leads" 
-          cdkDrag>
-          
-          <div class="fw-bold mb-1 text-dark">{{ lead.fullName }}</div>
-          <div class="text-muted small mb-2">
-            <i class="bi bi-telephone-fill me-1"></i> {{ lead.phoneNumber }}
-          </div>
-          
-          <!-- مصدر الحملة -->
-          <div *ngIf="lead.campaignName && lead.campaignName !== 'No Campaign'" class="mb-2">
-            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill" style="font-size: 0.65rem;">
-              <i class="bi bi-megaphone-fill me-1"></i> {{ lead.campaignName }}
-            </span>
-          </div>
-
-           <!-- 🟢 ضفنا flex-wrap و gap-2 عشان لو الشاشة صغيرة ينزلوا تحت بعض بشياكة وميتقطعوش -->
-          <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-2 border-top gap-2">
-            <span class="text-muted" style="font-size: 0.7rem;">
-              <i class="bi bi-calendar-event me-1"></i> {{ lead.createdAt | date:'MMM d' }}
-            </span>
-            <!-- 🟢 ضفنا كلاس btn-nowrap -->
-            <button class="btn btn-sm btn-outline-danger rounded-pill px-3 btn-nowrap" title="View Details" [routerLink]="['/crm/leads', lead.id]">
-              Details &rarr;
-            </button>
-          </div>
-        </div>
-
-        <!-- رسالة لو العمود فاضي -->
-        <div class="text-center text-muted small py-4" *ngIf="col.leads.length === 0">
-          Drop leads here
-        </div>
-
+          </tbody>
+        </table>
       </div>
     </div>
-  </div>
+  }
 
 </div>

@@ -22,6 +22,7 @@ export interface LeadResponseDto {
   statusName: string;
   campaignName: string;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface AdminDashboardDto {
@@ -74,6 +75,7 @@ export interface BrokerProfileDataDto {
   leads: LeadResponseDto[];
   visits: VisitResponseDto[];
   activities: BrokerTaskDto[];
+  zones: LeadResponseDto[];
 }
 
 export interface CampaignDto {

@@ -35,6 +35,7 @@ namespace Unique_X.Controllers.CRM
                 BrokerId = dto.BrokerId,
                 CampaignId = dto.CampaignId,
                 LeadStatusId = dto.LeadStatusId,
+                ReferredBy = dto.ReferredBy,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -50,7 +51,12 @@ namespace Unique_X.Controllers.CRM
                 TotalAmount = dto.TotalAmount,
                 PaymentMethod = dto.PaymentMethod ?? "", // بياخد اللي البروكر كتبه
                 PreferredLocation = dto.PreferredLocation ?? "",
-                Notes = dto.Notes ?? ""
+                Notes = dto.Notes ?? "",
+                ZoneId = dto.ZoneId,
+                SelectedRegions = dto.SelectedRegions ?? "",
+                SelectedProjects = dto.SelectedProjects ?? "",
+                DownPayment = dto.DownPayment,
+                InstallmentYears = dto.InstallmentYears
             };
 
             _context.LeadRequests.Add(newLeadRequest);
@@ -90,10 +96,27 @@ namespace Unique_X.Controllers.CRM
                 BrokerName = l.Broker.UserName,
                 StatusId = l.LeadStatusId,
                 StatusName = l.Status.Name,
+                CampaignName = l.Campaign != null ? l.Campaign.Name : "No Campaign",
+                CampaignSource = l.Campaign != null ? l.Campaign.Source : "", // 👈 السطر ده جديد
+                ReferredBy = l.ReferredBy ?? "", // 👈 السطر ده جديد
+                CreatedAt = l.CreatedAt,
+
+                // 👇 ده السطر اللي بيجيب تاريخ آخر تعديل، ولو مفيش بيجيب تاريخ الإنشاء
+                UpdatedAt = _context.LeadStatusHistories.Where(h => h.LeadId == l.Id).Max(h => (DateTime?)h.ChangedAt) ?? l.CreatedAt,
+
                 PropertyType = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PropertyType ?? "",
                 Purpose = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).Purpose ?? "",
-                CampaignName = l.Campaign != null ? l.Campaign.Name : "No Campaign",
-                CreatedAt = l.CreatedAt
+                TotalAmount = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).TotalAmount ?? 0,
+                PreferredLocation = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PreferredLocation ?? "Not Specified",
+
+                ZoneName = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 1 ? "Cairo" :
+                       _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 2 ? "Alexandria" :
+                       _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 3 ? "North Coast" : "N/A",
+
+                // 👇 الحقول المالية الجديدة
+                PaymentMethod = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PaymentMethod ?? "",
+                DownPayment = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).DownPayment,
+                InstallmentYears = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).InstallmentYears
             }).ToListAsync();
 
             return Ok(leads);
@@ -245,20 +268,38 @@ namespace Unique_X.Controllers.CRM
                     lead.FullName,
                     lead.PhoneNumber,
                     lead.Email,
-                    BrokerName = lead.Broker.UserName,
+                    // 👇 التعديل الأول: عرض اسم البروكر بدل الإيميل
+                    BrokerName = lead.Broker.FirstName + " " + lead.Broker.LastName,
+                    StatusId = lead.LeadStatusId,
                     StatusName = lead.Status.Name,
-                    CampaignName = lead.Campaign?.Name,
-                    lead.ExpectedRevenue,
-                    lead.Probability,
-                    lead.CreatedAt
+                    CampaignId = lead.CampaignId,
+                    CampaignName = lead.Campaign != null ? lead.Campaign.Name : "No Campaign",
+                    CampaignSource = lead.Campaign != null ? lead.Campaign.Source : "",
+                    ReferredBy = lead.ReferredBy ?? "",
+                    lead.CreatedAt,
+                    UpdatedAt = history.Any() ? history.First().ChangedAt : lead.CreatedAt
                 },
-                RequestDetails = request,
+                RequestDetails = new
+                {
+                    request?.PropertyType,
+                    request?.Purpose,
+                    request?.TotalAmount,
+                    request?.PaymentMethod,
+                    request?.DownPayment,
+                    request?.InstallmentYears,
+                    ZoneId = request?.ZoneId,
+                    ZoneName = request?.ZoneId == 1 ? "Cairo" : request?.ZoneId == 2 ? "Alexandria" : request?.ZoneId == 3 ? "North Coast" : "",
+                    request?.SelectedRegions,
+                    request?.SelectedProjects,
+                    request?.PreferredLocation,
+                    request?.Notes
+                },
                 Visits = visits,
                 Activities = activities,
                 StatusHistory = history.Select(h => new {
                     OldStatusName = statuses.ContainsKey(h.OldStatusId) ? statuses[h.OldStatusId] : "None",
                     NewStatusName = statuses.ContainsKey(h.NewStatusId) ? statuses[h.NewStatusId] : "Unknown",
-                    ChangedBy = h.ChangedBy.UserName,
+                    ChangedBy = h.ChangedBy.FirstName + " " + h.ChangedBy.LastName,
                     h.ChangedAt,
                     h.Notes
                 })
@@ -289,6 +330,60 @@ namespace Unique_X.Controllers.CRM
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Lead deleted successfully" });
+        }
+
+        [HttpPut("{id}/update-details")]
+        public async Task<IActionResult> UpdateLeadDetails(int id, [FromBody] UpdateLeadDetailsDto dto)
+        {
+            // 1. تحديث بيانات العميل الأساسية
+            var lead = await _context.Leads.FindAsync(id);
+            if (lead == null) return NotFound("Lead not found");
+
+            // 👇 السحر هنا: لو البروكر غير الحالة من جوه صفحة التعديل، نسجلها في الـ History فوراً
+            if (lead.LeadStatusId != dto.LeadStatusId)
+            {
+                var history = new LeadStatusHistory
+                {
+                    LeadId = lead.Id,
+                    OldStatusId = lead.LeadStatusId,
+                    NewStatusId = dto.LeadStatusId,
+                    ChangedById = lead.BrokerId,
+                    Notes = "Stage updated from Edit Request Form", // رسالة توضح إنها اتعدلت من الفورم
+                    ChangedAt = DateTime.UtcNow
+                };
+                _context.LeadStatusHistories.Add(history);
+            }
+
+            lead.FullName = dto.FullName;
+            lead.PhoneNumber = dto.PhoneNumber;
+            lead.Email = dto.Email;
+            lead.LeadStatusId = dto.LeadStatusId;
+            lead.CampaignId = dto.CampaignId;
+            lead.ReferredBy = dto.ReferredBy;
+
+            _context.Leads.Update(lead);
+
+            // 2. تحديث الطلب العقاري
+            var request = await _context.LeadRequests.FirstOrDefaultAsync(r => r.LeadId == id);
+            if (request != null)
+            {
+                request.PropertyType = dto.PropertyType;
+                request.Purpose = dto.Purpose;
+                request.TotalAmount = dto.TotalAmount;
+                request.PaymentMethod = dto.PaymentMethod ?? "";
+                request.ZoneId = dto.ZoneId;
+                request.SelectedRegions = dto.SelectedRegions ?? "";
+                request.SelectedProjects = dto.SelectedProjects ?? "";
+                request.DownPayment = dto.DownPayment;
+                request.InstallmentYears = dto.InstallmentYears;
+                request.PreferredLocation = dto.PreferredLocation ?? "";
+                request.Notes = dto.Notes ?? "";
+
+                _context.LeadRequests.Update(request);
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Lead updated successfully!" });
         }
     }
 }
