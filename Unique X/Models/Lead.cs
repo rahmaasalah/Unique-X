@@ -14,8 +14,8 @@
         // ربط الـ Lead بالحملة الإعلانية
         public int? CampaignId { get; set; }
         public Campaign Campaign { get; set; }
+        public string? ReferredBy { get; set; }
 
-        // حالة الـ Lead (هنجيبها من الصورة اللي بعتيها)
         public int LeadStatusId { get; set; }
         public LeadStatus Status { get; set; }
 

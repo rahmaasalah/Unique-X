@@ -1,0 +1,176 @@
+<div class="container mt-4 mb-5" dir="ltr">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="m-0 fw-bold"><i class="bi bi-pencil-square text-danger me-2"></i>Edit Lead Details</h2>
+    <button class="btn btn-outline-secondary rounded-pill px-4 fw-bold" [routerLink]="['/crm/leads', leadId]">
+      <i class="bi bi-arrow-left me-1"></i> Back to Profile
+    </button>
+  </div>
+
+  <div class="card p-4 shadow-sm border-0 bg-white rounded-4 border-top border-danger border-4">
+    <form [formGroup]="editRequestForm" (ngSubmit)="onUpdateRequest()">
+      
+      <div class="row g-4">
+        <!-- 1. الأساسيات -->
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-dark">Client Name *</label>
+          <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="fullName">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-dark">Phone Number *</label>
+          <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="phoneNumber">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-dark">Email</label>
+          <input type="email" class="form-control bg-light border-0 rounded-3" formControlName="email">
+        </div>
+
+        <!-- 2. الحالة والحملة والبروكر -->
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-dark">Current Stage *</label>
+          <select class="form-select bg-light border-0 rounded-3 text-dark fw-bold" formControlName="leadStatusId">
+            <option value="1">New "To Call"</option>
+            <option value="2">Waiting response on wtp msg</option>
+            <option value="3">Request call another time</option>
+            <option value="4">Calls (request)</option>
+            <option value="5">Waiting Client Feedback on unit</option>
+            <option value="6">Follow Up For Visit</option>
+            <option value="7">Visit scheduled</option>
+            <option value="8">Follow up After visit</option>
+            <option value="9">Waiting feedback on project</option>
+            <option value="10">Follow up for Meeting</option>
+            <option value="11">Meeting Scheduled</option>
+            <option value="12">Follow up after meeting</option>
+            <option value="13">Follow up for developer meeting</option>
+            <option value="14">Follow up for site visit</option>
+            <option value="15">Site visit scheduled</option>
+            <option value="16">Follow up for event</option>
+            <option value="17">Follow up after event</option>
+            <option value="18">Follow up for closing</option>
+            <option value="19">Deal closed</option>
+            <option value="20">Follow up, not now</option>
+            <option value="21">N/A "unreachable"</option>
+            <option value="22">Lost Not interested</option>
+            <option value="23">Low Budget</option>
+            <option value="24">Number Issue</option>
+            <option value="25">Broker</option>
+            <option value="26">Recommend to shift</option>
+          </select>
+        </div>
+        
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-dark">Campaign Source</label>
+          <select class="form-select bg-light border-0 rounded-3" formControlName="campaignId">
+            <option value="">-- No Campaign (Website) --</option>
+            <option *ngFor="let c of campaignsList" [value]="c.id">{{ c.name }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-dark">Broker Code (Referred By)</label>
+          <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="referredBy" placeholder="e.g. AR123">
+        </div>
+
+        <hr class="my-3 text-muted">
+
+        <!-- 3. تفاصيل العقار -->
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-dark">Property Type</label>
+          <select class="form-select bg-light border-0 rounded-3" formControlName="propertyType">
+            <option value="Apartment">Apartment</option>
+            <option value="Villa">Villa</option>
+            <option value="Chalet">Chalet</option>
+            <option value="Shop">Shop</option>
+            <option value="Office">Office</option>
+            <option value="Full Floor">Full Floor</option>
+          </select>
+        </div>
+        
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-dark">Purpose</label>
+          <select class="form-select bg-light border-0 rounded-3" formControlName="purpose">
+           <option value="Resale">Resale</option>
+            <option value="Primary">Primary</option>
+            <option value="Resale Project">Resale Project</option>
+            <option value="Rent">Rent</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-dark">Zone</label>
+          <select class="form-select bg-light border-0 rounded-3 border-start border-danger border-4 fw-bold" formControlName="zoneId">
+            <option value="">-- Select Zone --</option>
+            <option *ngFor="let zone of zones" [value]="zone.id">{{ zone.name }}</option>
+          </select>
+        </div>
+
+        <!-- المناطق والمشاريع -->
+        <div class="col-12 animate__animated animate__fadeIn" *ngIf="showRegionSelection && availableRegions.length > 0">
+          <label class="form-label small fw-bold text-dark">Regions</label>
+          <div class="p-3 bg-light rounded-3 border" style="max-height: 150px; overflow-y: auto;">
+            <div class="form-check form-check-inline" *ngFor="let region of availableRegions">
+              <input class="form-check-input" type="checkbox" [id]="region" [checked]="editRequestForm.value.selectedRegions.includes(region)" (change)="onRegionChange($event, region)">
+              <label class="form-check-label small" [for]="region">{{ region }}</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 animate__animated animate__fadeIn" *ngIf="showProjectSelection && availableProjects.length > 0">
+          <label class="form-label small fw-bold text-dark">Projects</label>
+          <div class="p-4 bg-white-subtle rounded-3 border border-danger-subtle shadow-sm" 
+               style="max-height: 350px; overflow-y: auto; column-width: 250px; column-count: 3; column-gap: 20px;">
+            <div class="form-check mb-2 d-block" style="break-inside: avoid;" *ngFor="let project of availableProjects">
+              <input class="form-check-input" type="checkbox" [id]="project" [checked]="editRequestForm.value.selectedProjects.includes(project)" (change)="onProjectChange($event, project)">
+              <label class="form-check-label small fw-medium text-dark" [for]="project">{{ project }}</label>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-3 text-muted">
+
+        <!-- 4. التفاصيل المالية -->
+        <div class="col-md-6">
+          <label class="form-label small fw-bold text-dark">Budget</label>
+          <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
+                 placeholder="e.g. 5,000,000" formControlName="totalAmount" (input)="formatCurrency($event, 'totalAmount')">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-bold text-dark">Payment Method</label>
+          <select class="form-select bg-light border-0 rounded-3" formControlName="paymentMethod">
+            <option value="Cash">Cash</option>
+            <option value="Installment">Installment</option>
+          </select>
+        </div>
+
+        <ng-container *ngIf="showFinancialDetails">
+          <div class="col-md-6 animate__animated animate__fadeIn">
+            <label class="form-label small fw-bold text-dark">Down Payment</label>
+            <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
+                   placeholder="e.g. 1,000,000" formControlName="downPayment" (input)="formatCurrency($event, 'downPayment')">
+          </div>
+          <div class="col-md-6 animate__animated animate__fadeIn">
+            <label class="form-label small fw-bold text-dark">Installment Years</label>
+            <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
+                   placeholder="e.g. 5" formControlName="installmentYears" (input)="formatCurrency($event, 'installmentYears')">
+          </div>
+        </ng-container>
+
+        <div class="col-md-12 mt-2">
+          <label class="form-label small fw-bold text-dark">Additional Preferred Location</label>
+          <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="preferredLocation">
+        </div>
+        
+        <div class="col-md-12 mt-2">
+          <label class="form-label small fw-bold text-dark">Notes</label>
+          <textarea class="form-control bg-light border-0 rounded-3" formControlName="notes" rows="3"></textarea>
+        </div>
+        
+        <div class="col-12 mt-4 text-end border-top pt-4">
+          <button type="submit" class="btn btn-danger btn-lg px-5 rounded-pill fw-bold shadow" [disabled]="editRequestForm.invalid">
+            <i class="bi bi-save2-fill me-2"></i> Save Changes
+          </button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</div>

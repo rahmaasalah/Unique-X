@@ -106,4 +106,8 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
   deleteVisit(visitId: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/visits/${visitId}`);
   }
+
+   updateLeadDetails(leadId: number, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/leads/${leadId}/update-details`, data);
+  }
 }

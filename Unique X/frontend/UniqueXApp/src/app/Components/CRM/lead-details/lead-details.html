@@ -1,16 +1,23 @@
 <div class="container mt-4" dir="ltr" *ngIf="leadInfo()">
   
   <!-- Header: اسم العميل وحالته -->
-  <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+ <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 flex-wrap gap-3">
     <div>
       <h2 class="fw-bold mb-1">{{ leadInfo().fullName }}</h2>
-      <p class="text-muted m-0"><i class="fas fa-user-tie"></i> Broker: {{ leadInfo().brokerName }}</p>
+      <p class="text-muted m-0"><i class="bi bi-person-badge-fill text-danger me-1"></i> Broker: {{ leadInfo().brokerName }}</p>
     </div>
-    <div>
-      <!-- <span class="badge bg-danger fs-6 p-2">{{ leadInfo().statusName }}</span> -->
-      <!-- 👇 زرار الحذف الجديد -->
-      <button class="btn btn-danger ms-2 shadow-sm" (click)="onDeleteLead()" title="Delete Lead">
-        <i class="bi bi-trash3-fill"></i>
+    
+    <div class="d-flex align-items-center gap-2">
+      <!-- 👇 القائمة المنسدلة السحرية لتغيير الحالة -->
+      <select class="form-select bg-dark text-white fw-bold shadow-sm border-0" 
+              style="width: 250px; cursor: pointer;"
+              [ngModel]="leadInfo().statusId" 
+              (change)="onStageChange($event)">
+        <option *ngFor="let stage of stages" [value]="stage.id">{{ stage.name }}</option>
+      </select>
+
+      <button class="btn btn-danger fw-bold shadow-sm" [routerLink]="['/crm/leads', leadId, 'edit']">
+        <i class="bi bi-pencil-square me-1"></i> Edit Request
       </button>
       <button class="btn btn-outline-secondary ms-2 fw-bold shadow-sm" routerLink="/crm/leads">
         <i class="bi bi-arrow-left"></i> Pipeline
@@ -25,89 +32,128 @@
     <div class="col-md-8">
       
       <!-- كارت أرقام التواصل -->
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white fw-bold"><i class="fas fa-address-book"></i> Contact Info</div>
-        <div class="card-body row">
-          <!-- التليفون -->
-          <div class="col-md-4">
-            <label class="text-muted small">Phone</label>
-            <p class="fw-bold">{{ leadInfo().phoneNumber }}</p>
-          </div>
+     <div class="card shadow-sm mb-4">
+        
+        <!-- الهيدر زي الكارت اللي تحته بالظبط -->
+        <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
+          <span class="fs-5"><i class="bi bi-person-lines-fill text-danger me-2"></i>Contact Info</span>
+        </div>
+        
+        <div class="card-body row g-4 align-items-center">
           
-          <!-- 👇 مصدر الحملة (ده الجزء الجديد) -->
-          <div class="col-md-4">
-            <label class="text-muted small">Campaign Source</label>
-            <p class="fw-bold text-success">
-              <span *ngIf="leadInfo().campaignName && leadInfo().campaignName !== 'No Campaign'">
-                <i class="bi bi-megaphone-fill me-1"></i> {{ leadInfo().campaignName }}
-              </span>
-              <span *ngIf="!leadInfo().campaignName || leadInfo().campaignName === 'No Campaign'" class="text-dark">
-                <i class="bi bi-globe me-1"></i> Direct Website
-              </span>
-            </p>
+          <!-- أزرار الاتصال والواتساب -->
+          <div class="col-md-3 border-end">
+             <div class="d-flex flex-column gap-2">
+               <!-- 🟢 زرار الاتصال (ضفنا text-nowrap) -->
+               <a [href]="'tel:' + leadInfo().phoneNumber" class="d-block fw-bold text-dark text-decoration-none border rounded p-2 text-center bg-light text-nowrap" style="font-size: 0.9rem;">
+                 <i class="bi bi-telephone-fill text-primary me-1"></i> {{ leadInfo().phoneNumber }}
+               </a>
+               <!-- 🟢 زرار الواتساب (ضفنا text-nowrap عشان مينزلش سطر جديد) -->
+               <a [href]="'https://wa.me/+2' + leadInfo().phoneNumber" target="_blank" class="d-block fw-bold text-success text-decoration-none border rounded p-2 text-center bg-success-subtle border-success-subtle text-nowrap" style="font-size: 0.9rem;">
+                Wa.me/+2{{ leadInfo().phoneNumber }}
+               </a>
+             </div>
           </div>
 
-          <!-- تاريخ الإضافة -->
-          <div class="col-md-4">
-            <label class="text-muted small">Creation Date</label>
-            <p class="fw-bold">{{ leadInfo().createdAt | date:'medium' }}</p>
+          <!-- مصدر الحملة -->
+          <div class="col-md-3 border-end text-center">
+            <label class="text-muted small fw-bold text-uppercase border-bottom w-100 pb-1 mb-2">Campaign Source</label>
+            <div class="mb-0">
+              <!-- اسم الحملة -->
+              <span *ngIf="leadInfo().campaignName && leadInfo().campaignName !== 'No Campaign'" class="fw-bold text-info-emphasis d-block fs-6">
+                <i class="bi bi-megaphone-fill me-1"></i> {{ leadInfo().campaignName }}
+              </span>
+              <span *ngIf="!leadInfo().campaignName || leadInfo().campaignName === 'No Campaign'" class="fw-bold text-success d-block fs-6">
+                <i class="bi bi-globe me-1"></i> Website
+              </span>
+              
+              <!-- مصدر الحملة (بخط أصغر تحتها) -->
+              <small class="text-muted d-block mt-1" *ngIf="leadInfo().campaignSource">
+                <i class="bi bi-funnel-fill me-1"></i> {{ leadInfo().campaignSource }}
+              </small>
+
+              <!-- كود البروكر (يظهر كـ Badge فقط لو موجود) -->
+              <span class="badge bg-danger-subtle text-danger-emphasis mt-2" *ngIf="leadInfo().referredBy">
+                <i class="bi bi-person-bounding-box me-1"></i> Ref: {{ leadInfo().referredBy }}
+              </span>
+            </div>
           </div>
+
+          <!-- تاريخ الإنشاء (بدون وقت) -->
+          <div class="col-md-3 border-end text-center">
+            <label class="text-muted small fw-bold text-uppercase border-bottom w-100 pb-1 mb-2">Creation Date</label>
+            <p class="fw-bold text-dark fs-5 mb-0">{{ leadInfo().createdAt | date:'mediumDate' }}</p>
+          </div>
+
+          <!-- آخر تحديث (بدون وقت) -->
+         <div class="col-md-3 text-center">
+            <label class="text-muted small fw-bold text-uppercase border-bottom w-100 pb-1 mb-2">Last Update</label>
+            <!-- 🟢 غيرنا اللون لـ text-dark واستخدمنا نفس الفورمات بدون ثواني -->
+            <p class="fw-bold text-dark fs-6 mb-0">{{ leadInfo().updatedAt | date:'MMM d, y, h:mm a' }}</p>
+          </div>
+
         </div>
       </div>
 
       <!-- كارت تفاصيل الطلب العقاري -->
       <div class="card shadow-sm mb-4" *ngIf="requestDetails()">
-        <div class="card-header bg-white fw-bold"><i class="fas fa-home"></i> Property Request</div>
-        <div class="card-body row">
-          <div class="col-4">
-            <label class="text-muted small">Type</label>
-            <p class="fw-bold">{{ requestDetails().propertyType }}</p>
+        <div class="card-header bg-white fw-bold py-3"><i class="bi bi-house-door-fill text-danger me-2"></i>Property Requirements</div>
+        <div class="card-body row g-3">
+          
+          <!-- الأساسيات -->
+          <div class="col-md-4">
+            <label class="text-muted small fw-bold">Property Type</label>
+            <p class="fw-bold text-dark">{{ requestDetails().propertyType || 'N/A' }}</p>
           </div>
-          <div class="col-4">
-            <label class="text-muted small">Purpose</label>
-            <p class="fw-bold">{{ requestDetails().purpose }}</p>
+          <div class="col-md-4">
+            <label class="text-muted small fw-bold">Listing Type</label>
+            <p class="fw-bold text-dark">{{ requestDetails().purpose || 'N/A' }}</p>
           </div>
-          <div class="col-4">
-            <label class="text-muted small">Budget</label>
-            <p class="fw-bold text-dark">{{ requestDetails().totalAmount | currency:'EGP ' }}</p>
+          <div class="col-md-4">
+            <label class="text-muted small fw-bold">Budget</label>
+            <p class="fw-bold text-dark fs-5">{{ requestDetails().totalAmount > 0 ? (requestDetails().totalAmount | currency:'EGP ') : 'N/A' }}</p>
           </div>
-          <div class="col-12 mt-2" *ngIf="requestDetails().notes">
-            <label class="text-muted small">Notes</label>
-            <p class="bg-light p-2 rounded border">{{ requestDetails().notes }}</p>
+
+          <!-- تفاصيل الدفع -->
+          <div class="col-md-4" *ngIf="requestDetails().paymentMethod">
+            <label class="text-muted small fw-bold">Payment Method</label>
+            <p class="fw-bold text-dark"><span class="badge bg-secondary">{{ requestDetails().paymentMethod }}</span></p>
           </div>
+          <div class="col-md-4" *ngIf="requestDetails().paymentMethod === 'Installment'">
+            <label class="text-muted small fw-bold">Down Payment</label>
+            <p class="fw-bold text-dark">{{ requestDetails().downPayment | currency:'EGP ' }}</p>
+          </div>
+          <div class="col-md-4" *ngIf="requestDetails().paymentMethod === 'Installment'">
+            <label class="text-muted small fw-bold">Installment Years</label>
+            <p class="fw-bold text-dark">{{ requestDetails().installmentYears }} Years</p>
+          </div>
+
+          <!-- المواقع والمشاريع -->
+          <div class="col-md-12" *ngIf="requestDetails().zoneName">
+            <label class="text-muted small fw-bold">Target Zone</label>
+            <p class="fw-bold text-dark">{{ requestDetails().zoneName }}</p>
+          </div>
+          <div class="col-md-12" *ngIf="requestDetails().selectedRegions">
+            <label class="text-muted small fw-bold">Selected Regions</label>
+            <p class="fw-bold text-primary">{{ requestDetails().selectedRegions }}</p>
+          </div>
+          <div class="col-md-12" *ngIf="requestDetails().selectedProjects">
+            <label class="text-muted small fw-bold">Interested Projects</label>
+            <div class="p-2 bg-light rounded border small fw-bold lh-lg">{{ requestDetails().selectedProjects }}</div>
+          </div>
+          <div class="col-md-12" *ngIf="requestDetails().preferredLocation">
+            <label class="text-muted small fw-bold">Additional Location Prefs</label>
+            <p class="fw-bold text-dark">{{ requestDetails().preferredLocation }}</p>
+          </div>
+
+          <!-- الملاحظات -->
+          <div class="col-12 mt-3" *ngIf="requestDetails().notes">
+            <label class="text-muted small fw-bold">Notes</label>
+            <div class="bg-light p-3 rounded-3 border small text-dark" style="white-space: pre-line;">{{ requestDetails().notes }}</div>
+          </div>
+
         </div>
       </div>
-
-      <!-- Upcoming Activities & Visits (تصميم أبيض شيك بلمسة حمراء) -->
-      <div class="card shadow-sm mt-5 border-0 border-top border-danger border-4 rounded-4" *ngIf="activities().length > 0 || visits().length > 0">
-        <div class="card-header bg-white fw-bold py-3 border-bottom-0">
-          <i class="bi bi-list-task text-danger me-2 fs-5"></i> Planned Activities & Visits
-        </div>
-        <div class="card-body p-0">
-          <ul class="list-group list-group-flush rounded-bottom-4">
-            <!-- عرض المهام -->
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3" *ngFor="let act of activities()">
-              <div>
-                <span class="badge bg-dark rounded-pill mb-1">{{ act.activityType }}</span>
-                <span class="fw-bold d-block text-dark">{{ act.summary }}</span>
-                <div class="text-danger small mt-1 fw-bold"><i class="bi bi-clock me-1"></i> Due: {{ act.dueDate | date:'medium' }}</div>
-              </div>
-              <button class="btn btn-sm btn-outline-success rounded-pill px-3 shadow-sm fw-bold" *ngIf="!act.isDone" title="Mark as Done">
-                <i class="bi bi-check2-circle me-1"></i> Waiting
-              </button>
-              <span class="badge bg-success rounded-pill px-3" *ngIf="act.isDone">Completed</span>
-            </li>
-            <!-- عرض الزيارات -->
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3 bg-light" *ngFor="let visit of visits()">
-              <div>
-                <span class="badge bg-danger rounded-pill mb-1">Visit</span>
-                <span class="fw-bold d-block text-dark">Location: {{ visit.location }}</span>
-                <div class="text-muted small mt-1 fw-bold"><i class="bi bi-calendar-event me-1"></i> Date: {{ visit.visitDate | date:'medium' }}</div>
-              </div>
-            </li>
-          </ul>
-        </div>
-    </div>
 
       <!-- زراير إضافة زيارة ومهمة -->
      <div class="d-flex gap-3 mt-4">

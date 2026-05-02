@@ -91,12 +91,13 @@ namespace Unique_X.Data
                 .HasColumnType("decimal(18,2)");
 
             builder.Entity<LeadRequest>()
-                .Property(lr => lr.DpAmount)
+                .Property(lr => lr.DownPayment)
                 .HasColumnType("decimal(18,2)");
 
             builder.Entity<LeadRequest>()
-                .Property(lr => lr.InstallmentAmount)
+                .Property(lr => lr.InstallmentYears)
                 .HasColumnType("decimal(18,2)");
+
 
             // يفضل كمان نمنع مسح البروكر لو ماسك Leads (عشان الداتا ماتضربش)
             builder.Entity<Lead>()

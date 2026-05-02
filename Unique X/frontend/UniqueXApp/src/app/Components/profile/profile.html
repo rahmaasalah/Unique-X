@@ -8,11 +8,11 @@
         <div class="text-center position-relative" style="margin-top: -60px; padding-bottom: 20px;">
           <div class="position-relative d-inline-block">
             <img [src]="userData()?.profileImageUrl || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" 
-                 class="rounded-circle border border-5 border-white shadow" 
+                 class="rounded-circle border shadow" 
                  style="width: 130px; height: 130px; object-fit: cover; background: white;">
             
             <label for="profileUpload" class="btn btn-dark btn-sm rounded-circle position-absolute bottom-0 end-0 shadow" 
-                   style="width: 35px; height: 35px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white;">
+                   style="width: 35px; height: 35px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;">
               <i class="bi bi-camera-fill"></i>
               <input type="file" id="profileUpload" class="d-none" (change)="onImageChange($event)" accept="image/*">
             </label>

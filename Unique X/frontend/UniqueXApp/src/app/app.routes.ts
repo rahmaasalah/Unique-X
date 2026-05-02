@@ -18,6 +18,8 @@ import { LeadsDashboardComponent } from './Components/CRM/leads-dashboard/leads-
 import { LeadDetailsComponent } from './Components/CRM/lead-details/lead-details';
 import { CrmDashboardComponent } from './Components/CRM/crm-dashboard/crm-dashboard';
 import { BrokerProfileComponent } from './Components/CRM/broker-profile/broker-profile';
+import { AddLeadComponent } from './Components/CRM/add-lead/add-lead';
+import { EditRequestComponent } from './Components/CRM/edit-request/edit-request';
 
 export const routes: Routes = [
   { 
@@ -57,6 +59,8 @@ export const routes: Routes = [
   path: 'crm/profile', 
   component: BrokerProfileComponent 
 },
+{ path: 'crm/leads/:id/edit', component: EditRequestComponent },
+{ path: 'crm/add-lead', component: AddLeadComponent },
  { path: '', component: HomeComponent, pathMatch: 'full' }, 
  { path: '**', redirectTo: '/login' }
 ];

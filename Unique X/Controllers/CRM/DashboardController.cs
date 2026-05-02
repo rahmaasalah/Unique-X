@@ -127,7 +127,19 @@ namespace Unique_X.Controllers.CRM
                     StatusId = l.LeadStatusId,
                     StatusName = l.Status.Name,
                     CampaignName = l.Campaign != null ? l.Campaign.Name : "No Campaign",
-                    CreatedAt = l.CreatedAt
+                    CreatedAt = l.CreatedAt,
+                    UpdatedAt = _context.LeadStatusHistories.Where(h => h.LeadId == l.Id).Max(h => (DateTime?)h.ChangedAt) ?? l.CreatedAt,
+
+                    PropertyType = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PropertyType ?? "",
+                    Purpose = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).Purpose ?? "",
+                    TotalAmount = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).TotalAmount ?? 0,
+                    PreferredLocation = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PreferredLocation ?? "Not Specified",
+                    ZoneName = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 1 ? "Cairo" :
+                       _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 2 ? "Alexandria" :
+                       _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 3 ? "North Coast" : "N/A",
+                    PaymentMethod = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PaymentMethod ?? "",
+                    DownPayment = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).DownPayment,
+                    InstallmentYears = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).InstallmentYears
                 }).ToListAsync();
 
             var visits = await _context.Visits
