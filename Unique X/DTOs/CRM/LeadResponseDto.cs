@@ -13,6 +13,7 @@
         public decimal TotalAmount { get; set; }
         public string PropertyType { get; set; }
         public string PreferredLocation { get; set; }
+        public string GeneralFeedback { get; set; }
         public string Purpose { get; set; }
         public string CampaignSource { get; set; } // مصدر الحملة
         public string ReferredBy { get; set; } // كود البروكر

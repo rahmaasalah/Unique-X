@@ -62,10 +62,11 @@ namespace Unique_X.Controllers.CRM
             var myRevenue = await _context.Leads.Where(l => l.BrokerId == brokerId).SumAsync(l => l.ExpectedRevenue ?? 0);
 
             // بنجيب المهام (المكالمات أو المواعيد) اللي المفروض البروكر يعملها النهاردة أو متأخرة عليه
-            var today = DateTime.UtcNow.Date;
+            var today = DateTime.UtcNow.AddHours(3).Date;
             var pendingTasksList = await _context.LeadActivities
                 .Include(a => a.Lead)
-                .Where(a => a.AssignedToId == brokerId && !a.IsDone && a.DueDate.Date <= today)
+                // 👇 التعديل هنا: بنعتمد على Status == "Pending"
+                .Where(a => a.AssignedToId == brokerId && a.Status == "Pending" && a.DueDate.Date <= today)
                 .OrderBy(a => a.DueDate)
                 .Select(a => new BrokerTaskDto
                 {
@@ -74,12 +75,23 @@ namespace Unique_X.Controllers.CRM
                     LeadName = a.Lead.FullName,
                     ActivityType = a.ActivityType,
                     Summary = a.Summary,
-                    DueDate = a.DueDate
+                    IsDone = a.IsDone,
+
+                    // 👇 ضفنا قراءة الحقول دي من الداتابيز عشان تتبعت للجدول
+                    PropertyCode = a.PropertyCode,
+                    PropertyName = a.PropertyName,
+                    BrokerPhone = a.BrokerPhone,
+                    ZoneId = a.ZoneId,
+                    ListingType = a.ListingType ?? "",
+                    Region = a.Region,
+                    Project = a.Project,
+                    Notes = a.Notes
                 }).ToListAsync();
 
             var pendingVisitsList = await _context.Visits
                 .Include(v => v.Lead)
-                .Where(v => v.BrokerId == brokerId && !v.IsCompleted && v.VisitDate.Date <= today)
+                // 👇 التعديل هنا: بنعتمد على Status == "Pending"
+                .Where(v => v.BrokerId == brokerId && v.Status == "Pending" && v.VisitDate.Date <= today)
                 .OrderBy(v => v.VisitDate)
                 .Select(v => new VisitResponseDto
                 {
@@ -87,11 +99,18 @@ namespace Unique_X.Controllers.CRM
                     LeadId = v.LeadId,
                     LeadName = v.Lead.FullName,
                     LeadPhone = v.Lead.PhoneNumber,
-                    PropertyId = v.PropertyId,
+                    PropertyCode = v.PropertyCode,
+                    PropertyName = v.PropertyName,
+                    BrokerPhone = v.BrokerPhone,
+                    ZoneId = v.ZoneId,
+                    ListingType = v.ListingType,
+                    Notes = v.Notes,
+                    Region = v.Region,
+                    Project = v.Project,
                     VisitDate = v.VisitDate,
                     Location = v.Location,
                     Feedback = v.Feedback,
-                    IsCompleted = v.IsCompleted
+                    Status = v.Status
                 }).ToListAsync();
 
             var result = new BrokerDashboardDto
@@ -125,6 +144,7 @@ namespace Unique_X.Controllers.CRM
                     PhoneNumber = l.PhoneNumber,
                     BrokerName = l.Broker.UserName,
                     StatusId = l.LeadStatusId,
+                    GeneralFeedback = l.GeneralFeedback ?? "",
                     StatusName = l.Status.Name,
                     CampaignName = l.Campaign != null ? l.Campaign.Name : "No Campaign",
                     CreatedAt = l.CreatedAt,
@@ -151,11 +171,18 @@ namespace Unique_X.Controllers.CRM
                     Id = v.Id,
                     LeadName = v.Lead.FullName,
                     LeadPhone = v.Lead.PhoneNumber,
-                    PropertyId = v.PropertyId,
+                    PropertyCode = v.PropertyCode,
+                    PropertyName = v.PropertyName,
+                    BrokerPhone = v.BrokerPhone,
+                    ZoneId = v.ZoneId,
+                    ListingType = v.ListingType,
+                    Notes = v.Notes,
+                    Region = v.Region,
+                    Project = v.Project,
                     VisitDate = v.VisitDate,
                     Location = v.Location,
                     Feedback = v.Feedback,
-                    IsCompleted = v.IsCompleted
+                    Status = v.Status
                 }).ToListAsync();
 
             var activities = await _context.LeadActivities
@@ -170,7 +197,18 @@ namespace Unique_X.Controllers.CRM
                     ActivityType = a.ActivityType,
                     Summary = a.Summary,
                     DueDate = a.DueDate,
-                    IsDone = a.IsDone
+                    Status = a.Status,
+                    IsDone = a.IsDone,
+
+                    // 👇 ضفنا قراءة الحقول دي من الداتابيز عشان تتبعت للجدول
+                    PropertyCode = a.PropertyCode,
+                    PropertyName = a.PropertyName,
+                    BrokerPhone = a.BrokerPhone,
+                    ZoneId = a.ZoneId,
+                    ListingType = a.ListingType ?? "",
+                    Region = a.Region,
+                    Project = a.Project,
+                    Notes = a.Notes
                 }).ToListAsync();
 
             return Ok(new BrokerProfileDataDto { Leads = leads, Visits = visits, Activities = activities });

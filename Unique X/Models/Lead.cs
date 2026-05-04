@@ -15,6 +15,7 @@
         public int? CampaignId { get; set; }
         public Campaign Campaign { get; set; }
         public string? ReferredBy { get; set; }
+        public string? GeneralFeedback { get; set; }
 
         public int LeadStatusId { get; set; }
         public LeadStatus Status { get; set; }

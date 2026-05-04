@@ -110,4 +110,39 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
    updateLeadDetails(leadId: number, data: any): Observable<any> {
     return this.http.put(`${this.apiUrl}/leads/${leadId}/update-details`, data);
   }
+
+  updateVisitStatus(id: number, status: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/visits/${id}/status`, `"${status}"`, { headers: { 'Content-Type': 'application/json' }});
+  }
+  rescheduleVisit(id: number, newDate: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/visits/${id}/reschedule`, `"${newDate}"`, { headers: { 'Content-Type': 'application/json' }});
+  }
+  updateActivityStatus(id: number, status: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/activities/${id}/status`, `"${status}"`, { headers: { 'Content-Type': 'application/json' }});
+  }
+  rescheduleActivity(id: number, newDate: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/activities/${id}/reschedule`, `"${newDate}"`, { headers: { 'Content-Type': 'application/json' }});
+  }
+
+  addGeneralNote(leadId: number, brokerId: string, note: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/leads/${leadId}/add-note?brokerId=${brokerId}`, `"${note}"`, { headers: { 'Content-Type': 'application/json' }});
+  }
+
+  addVisitFeedback(id: number, feedback: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/visits/${id}/feedback`, `"${feedback}"`, { headers: { 'Content-Type': 'application/json' }});
+  }
+
+  addActivityFeedback(id: number, feedback: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/activities/${id}/feedback`, `"${feedback}"`, { headers: { 'Content-Type': 'application/json' }});
+  }
+
+  // جلب الترشيحات
+  getLeadRecommendations(leadId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/leads/${leadId}/recommendations`);
+  }
+
+  // تسجيل إن البروكر داس على الترشيح
+  markPropertyAsProposed(leadId: number, propertyId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/leads/${leadId}/mark-proposed/${propertyId}`, {});
+  }
 }

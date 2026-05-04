@@ -95,6 +95,7 @@ namespace Unique_X.Controllers.CRM
                 PhoneNumber = l.PhoneNumber,
                 BrokerName = l.Broker.UserName,
                 StatusId = l.LeadStatusId,
+                GeneralFeedback = l.GeneralFeedback ?? "",
                 StatusName = l.Status.Name,
                 CampaignName = l.Campaign != null ? l.Campaign.Name : "No Campaign",
                 CampaignSource = l.Campaign != null ? l.Campaign.Source : "", // 👈 السطر ده جديد
@@ -276,6 +277,7 @@ namespace Unique_X.Controllers.CRM
                     CampaignName = lead.Campaign != null ? lead.Campaign.Name : "No Campaign",
                     CampaignSource = lead.Campaign != null ? lead.Campaign.Source : "",
                     ReferredBy = lead.ReferredBy ?? "",
+                    GeneralFeedback = lead.GeneralFeedback ?? "",
                     lead.CreatedAt,
                     UpdatedAt = history.Any() ? history.First().ChangedAt : lead.CreatedAt
                 },
@@ -384,6 +386,81 @@ namespace Unique_X.Controllers.CRM
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Lead updated successfully!" });
+        }
+        [HttpPost("{id}/add-note")]
+        public async Task<IActionResult> AddGeneralNote(int id, [FromBody] string note, [FromQuery] string brokerId)
+        {
+            var lead = await _context.Leads.FindAsync(id);
+            if (lead == null) return NotFound("Lead not found");
+
+            // 👇 شيلنا التاريخ والوقت، الفيدباك هينزل صافي
+            // ولو في فيدباك قديم، هنحط خط فاصل صغير ونحط الجديد تحته
+            lead.GeneralFeedback = string.IsNullOrEmpty(lead.GeneralFeedback)
+                ? note
+                : lead.GeneralFeedback + "\n\n---\n" + note;
+
+            _context.Leads.Update(lead);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Note added successfully" });
+        }
+
+        // 1. نظام الترشيحات الذكي (Recommendation Engine)
+        [HttpGet("{id}/recommendations")]
+        public async Task<IActionResult> GetRecommendations(int id)
+        {
+            var request = await _context.LeadRequests.FirstOrDefaultAsync(r => r.LeadId == id);
+            if (request == null || request.TotalAmount <= 0) return Ok(new List<object>());
+
+            // معادلة الميزانية (أقل بـ 200 ألف، وأكتر بـ 600 ألف)
+            decimal minBudget = request.TotalAmount.Value - 200000;
+            decimal maxBudget = request.TotalAmount.Value + 600000;
+
+
+            // بنجيب العقارات اللي البروكر اقترحها قبل كده عشان نلونها في الفرونت إند
+            var proposedIds = string.IsNullOrEmpty(request.ProposedPropertyIds)
+                ? new List<string>()
+                : request.ProposedPropertyIds.Split(',').ToList();
+
+            // فلترة العقارات (نشطة + معتمدة + مش مباعة + في نفس رينج السعر)
+            var recommendations = await _context.Properties
+                .Where(p => p.IsActive && p.IsApproved && !p.IsSold)
+                .Where(p => p.Price >= minBudget && p.Price <= maxBudget)
+                // لو حابة تضيفي تطابق نوع العقار (اختياري)
+                // .Where(p => p.PropertyType.ToString() == request.PropertyType)
+                .Select(p => new
+                {
+                    Id = p.Id,
+                    Code = p.Code ?? ("PROP-" + p.Id),
+                    Title = p.Title,
+                    Price = p.Price,
+                    IsProposed = proposedIds.Contains(p.Id.ToString()) // لو الـ ID موجود، يبقى البروكر داس عليه
+                })
+                .Take(12) // هنجيب أفضل 12 عقار بس عشان الشاشة متزحمش
+                .ToListAsync();
+
+            return Ok(recommendations);
+        }
+
+        // 2. تسجيل العقار كـ (تم اقتراحه للعميل)
+        [HttpPut("{id}/mark-proposed/{propertyId}")]
+        public async Task<IActionResult> MarkPropertyProposed(int id, int propertyId)
+        {
+            var request = await _context.LeadRequests.FirstOrDefaultAsync(r => r.LeadId == id);
+            if (request == null) return NotFound();
+
+            var proposedList = string.IsNullOrEmpty(request.ProposedPropertyIds)
+                ? new List<string>()
+                : request.ProposedPropertyIds.Split(',').ToList();
+
+            if (!proposedList.Contains(propertyId.ToString()))
+            {
+                proposedList.Add(propertyId.ToString());
+                request.ProposedPropertyIds = string.Join(",", proposedList);
+                _context.LeadRequests.Update(request);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok();
         }
     }
 }

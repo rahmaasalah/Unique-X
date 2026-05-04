@@ -27,11 +27,18 @@ namespace Unique_X.Controllers.CRM
             {
                 LeadId = dto.LeadId,
                 BrokerId = dto.BrokerId,
-                PropertyId = dto.PropertyId,
                 VisitDate = dto.VisitDate,
                 Location = dto.Location,
                 IsCompleted = false,
-                Feedback = "" // لسه مفيش فيدباك لأن الزيارة لسه هتحصل
+                Feedback = "", // لسه مفيش فيدباك لأن الزيارة لسه هتحصل
+                PropertyCode = dto.PropertyCode,
+                PropertyName = dto.PropertyName,
+                BrokerPhone = dto.BrokerPhone,
+                ZoneId = dto.ZoneId,
+                ListingType = dto.ListingType,
+                Region = dto.Region,
+                Notes = dto.Notes,
+                Project = dto.Project
             };
 
             _context.Visits.Add(visit);
@@ -54,8 +61,15 @@ namespace Unique_X.Controllers.CRM
                     LeadId = v.LeadId,
                     LeadName = v.Lead.FullName,
                     LeadPhone = v.Lead.PhoneNumber,
-                    PropertyId = v.PropertyId,
+                    PropertyCode = v.PropertyCode,
+                    PropertyName = v.PropertyName,
+                    BrokerPhone = v.BrokerPhone,
+                    ZoneId = v.ZoneId,
+                    ListingType = v.ListingType,
+                    Region = v.Region,
+                    Project = v.Project,
                     VisitDate = v.VisitDate,
+                    Notes = v.Notes,
                     Location = v.Location,
                     Feedback = v.Feedback,
                     IsCompleted = v.IsCompleted
@@ -89,6 +103,37 @@ namespace Unique_X.Controllers.CRM
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Visit deleted successfully" });
+        }
+
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateVisitStatus(int id, [FromBody] string status)
+        {
+            var visit = await _context.Visits.FindAsync(id);
+            if (visit == null) return NotFound("Visit not found");
+            visit.Status = status;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPut("{id}/reschedule")]
+        public async Task<IActionResult> RescheduleVisit(int id, [FromBody] DateTime newDate)
+        {
+            var visit = await _context.Visits.FindAsync(id);
+            if (visit == null) return NotFound("Visit not found");
+            visit.VisitDate = newDate;
+            visit.Status = "Pending"; // بترجع قيد الانتظار للميعاد الجديد
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPut("{id}/feedback")]
+        public async Task<IActionResult> AddVisitFeedback(int id, [FromBody] string feedback)
+        {
+            var visit = await _context.Visits.FindAsync(id);
+            if (visit == null) return NotFound("Visit not found");
+            visit.Feedback = feedback;
+            await _context.SaveChangesAsync();
+            return Ok();
         }
     }
 }

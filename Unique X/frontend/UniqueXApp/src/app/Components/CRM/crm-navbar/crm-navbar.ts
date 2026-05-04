@@ -58,31 +58,46 @@ export class CrmNavbarComponent implements OnInit {
     this.crmService.getBrokerDashboard(brokerId).subscribe({
       next: (res) => {
         if (res) {
-          // 1. دمج المهام
-          const tasks = (res.pendingTasksList ||[]).map(t => ({
-            id: 'task_' + t.id,
-            leadId: t.leadId,
-            leadName: t.leadName,
-            type: t.activityType, // Call, Meeting, etc.
-            summary: t.summary,
-            date: new Date(t.dueDate)
-          }));
+          
+          // 1. دمج المهام وضبط فرق التوقيت (استخدمنا t: any عشان نحل الإيرور)
+          const tasks = (res.pendingTasksList ||[]).map((t: any) => {
+            let dStr = t.dueDate;
+            if (dStr && typeof dStr === 'string' && !dStr.endsWith('Z')) dStr += 'Z';
+            return {
+              id: 'task_' + t.id,
+              leadId: t.leadId,
+              leadName: t.leadName,
+              type: t.activityType,
+              summary: t.summary,
+              date: new Date(dStr)
+            };
+          });
 
-          // 2. دمج الزيارات
-          const visits = (res.pendingVisitsList ||[]).map(v => ({
-            id: 'visit_' + v.id,
-            leadId: v.leadId,
-            leadName: v.leadName,
-            type: 'Visit',
-            summary: 'Location: ' + v.location,
-            date: new Date(v.visitDate)
-          }));
+          // 2. دمج الزيارات وضبط فرق التوقيت (استخدمنا v: any عشان نحل الإيرور)
+          const visits = (res.pendingVisitsList ||[]).map((v: any) => {
+            let dStr = v.visitDate;
+            if (dStr && typeof dStr === 'string' && !dStr.endsWith('Z')) dStr += 'Z';
+            return {
+              id: 'visit_' + v.id,
+              leadId: v.leadId,
+              leadName: v.leadName,
+              type: 'Visit',
+              summary: 'Location: ' + v.location,
+              date: new Date(dStr)
+            };
+          });
 
-          // 3. ترتيب الكل حسب الوقت (الأقرب فالأقرب)
-          const allNotifs = [...tasks, ...visits].sort((a, b) => a.date.getTime() - b.date.getTime());
+          // 3. 🟢 الفلترة السحرية: متظهرش المهمة إلا لو وقتها جه أو عدى!
+          const now = new Date().getTime();
+          
+          const allNotifs =[...tasks, ...visits]
+            .filter(item => item.date.getTime() <= now) // 👈 لو وقت المهمة أصغر من أو يساوي وقتك الحالي، تظهر
+            .sort((a, b) => b.date.getTime() - a.date.getTime()); // الأحدث يظهر فوق
+
+          // 4. تحديث الجرس
           this.notifications.set(allNotifs);
 
-          // 4. فحص لو فيه حاجة ميعادها "دلوقتي" عشان نطلع Popup
+          // 5. بوب أب التنبيهات
           this.checkForImmediateAlerts(allNotifs);
         }
       }

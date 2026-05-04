@@ -19,5 +19,7 @@
         public string? SelectedProjects { get; set; } // هيتخزن كنص مفصول بفاصلة
         public decimal? DownPayment { get; set; }
         public int? InstallmentYears { get; set; }
+        // الحقل ده هيخزن أرقام العقارات اللي البروكر اقترحها (داس عليها) مفصولة بفاصلة
+        public string? ProposedPropertyIds { get; set; }
     }
 }
