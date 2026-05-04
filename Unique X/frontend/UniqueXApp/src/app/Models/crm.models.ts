@@ -23,6 +23,7 @@ export interface LeadResponseDto {
   campaignName: string;
   createdAt: Date;
   updatedAt: Date;
+  generalFeedback: string;
 }
 
 export interface AdminDashboardDto {
@@ -49,6 +50,7 @@ export interface BrokerTaskDto {
   summary: string;
   dueDate: Date;
   isDone: boolean;
+  status: string;
 }
 
 export interface WebsiteInquiryDto {
@@ -68,7 +70,9 @@ export interface VisitResponseDto {
   visitDate: Date;
   location: string;
   feedback: string;
+  status: string;
   isCompleted: boolean;
+  notes: string;
 }
 
 export interface BrokerProfileDataDto {

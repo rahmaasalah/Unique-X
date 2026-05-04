@@ -58,13 +58,70 @@ export class BrokerProfileComponent implements OnInit {
     if (camp) leads = leads.filter((l: any) => l.campaignName === camp);
     if (stage) leads = leads.filter((l: any) => l.statusId.toString() === stage);
     if (zone) leads = leads.filter((l: any) => l.zoneName === zone);
-    if (cDate) leads = leads.filter((l: any) => new Date(l.createdAt).toISOString().split('T')[0] === cDate);
-    if (uDate) leads = leads.filter((l: any) => new Date(l.updatedAt || l.createdAt).toISOString().split('T')[0] === uDate);
+    if (cDate) leads = leads.filter((l: any) => this.formatDateForFilter(l.createdAt) === cDate);
+    if (uDate) leads = leads.filter((l: any) => this.formatDateForFilter(l.updatedAt || l.createdAt) === uDate);
     if (minB !== null) leads = leads.filter((l: any) => l.totalAmount >= minB);
     if (maxB !== null) leads = leads.filter((l: any) => l.totalAmount <= maxB);
 
     return leads;
   });
+
+   visitSearch = signal<string>('');
+  visitStatus = signal<string>('');
+  visitDate = signal<string>('');
+
+  filteredVisits = computed(() => {
+    const data = this.profileData();
+    if (!data || !data.visits) return[];
+    let visits = data.visits;
+    
+    const q = this.visitSearch().toLowerCase();
+    const status = this.visitStatus();
+    const date = this.visitDate();
+
+    if (q) visits = visits.filter((v:any) => v.leadName.toLowerCase().includes(q) || v.leadPhone.includes(q) || (v.location || '').toLowerCase().includes(q));
+    if (status) visits = visits.filter((v:any) => (v.status || 'Pending') === status);
+    if (date) visits = visits.filter((v:any) => this.formatDateForFilter(v.visitDate) === date);
+
+    return visits;
+  });
+
+  clearVisitFilters() {
+    this.visitSearch.set('');
+    this.visitStatus.set('');
+    this.visitDate.set('');
+  }
+
+  // ================== فلاتر المهام والمكالمات ==================
+  activitySearch = signal<string>('');
+  activityStatus = signal<string>('');
+  activityDate = signal<string>('');
+  activityType = signal<string>('');
+
+  filteredActivities = computed(() => {
+    const data = this.profileData();
+    if (!data || !data.activities) return[];
+    let activities = data.activities;
+
+    const q = this.activitySearch().toLowerCase();
+    const status = this.activityStatus();
+    const date = this.activityDate();
+    const type = this.activityType();
+
+    if (q) activities = activities.filter((a:any) => a.leadName.toLowerCase().includes(q) || (a.summary || '').toLowerCase().includes(q));
+    if (status) activities = activities.filter((a:any) => (a.status || 'Pending') === status);
+    if (date) activities = activities.filter((a:any) => this.formatDateForFilter(a.dueDate) === date);
+    if (type) activities = activities.filter((a:any) => a.activityType === type);
+
+    return activities;
+  });
+
+  clearActivityFilters() {
+    this.activitySearch.set('');
+    this.activityStatus.set('');
+    this.activityDate.set('');
+    this.activityType.set('');
+  }
 
   ngOnInit() {
     const userString = localStorage.getItem('user');
@@ -110,38 +167,27 @@ export class BrokerProfileComponent implements OnInit {
     this.filterMaxBudget.set(null);
   }
 
-  toggleTask(task: any) {
-    task.isDone = !task.isDone; 
-    this.crmService.toggleTaskStatus(task.id).subscribe({
-      next: () => this.crmService.refreshNavbar$.next(),
-      error: () => { task.isDone = !task.isDone; this.alertService.error('Failed to update task status.'); }
-    });
+  // دالة لاستخراج الفيدباك من المكالمات
+  extractFeedback(notes: string): string | null {
+    if (!notes) return null;
+    const parts = notes.split('[Feedback]:');
+    return parts.length > 1 ? parts[1].trim() : null;
   }
 
-  toggleVisit(visit: any) {
-    visit.isCompleted = !visit.isCompleted;
-    this.crmService.toggleVisitStatus(visit.id).subscribe({
-      next: () => this.crmService.refreshNavbar$.next(),
-      error: () => { visit.isCompleted = !visit.isCompleted; this.alertService.error('Failed to update visit status.'); }
-    });
+  // دالة لاستخراج الملاحظات الأصلية
+ extractOriginalNotes(notes: string): string | null {
+    if (!notes) return null;
+    const parts = notes.split('[Feedback]:');
+    // 👇 لازم ترجع null عشان الـ HTML يخفي السطر
+    return parts[0].trim() !== '' ? parts[0].trim() : null; 
   }
 
-  deleteVisit(visitId: number) {
-    this.alertService.confirm('Delete this scheduled visit?', () => {
-      this.alertService.showLoading('Deleting...');
-      this.crmService.deleteVisit(visitId).subscribe({
-        next: () => {
-          this.alertService.close();
-          this.alertService.success('Visit deleted.');
-          this.crmService.refreshNavbar$.next(); 
-          const userString = localStorage.getItem('user');
-          if (userString) {
-            const brokerId = JSON.parse(userString).id || JSON.parse(userString).userId;
-            this.loadProfileData(brokerId);
-          }
-        },
-        error: () => { this.alertService.close(); this.alertService.error('Failed to delete visit.'); }
-      });
-    });
+  formatDateForFilter(dateString: string): string {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

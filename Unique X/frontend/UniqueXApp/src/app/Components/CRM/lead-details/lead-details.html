@@ -32,23 +32,19 @@
     <div class="col-md-8">
       
       <!-- كارت أرقام التواصل -->
-     <div class="card shadow-sm mb-4">
-        
-        <!-- الهيدر زي الكارت اللي تحته بالظبط -->
+      <div class="card shadow-sm mb-4">
+        <!-- الهيدر -->
         <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
           <span class="fs-5"><i class="bi bi-person-lines-fill text-danger me-2"></i>Contact Info</span>
         </div>
         
         <div class="card-body row g-4 align-items-center">
-          
           <!-- أزرار الاتصال والواتساب -->
           <div class="col-md-3 border-end">
              <div class="d-flex flex-column gap-2">
-               <!-- 🟢 زرار الاتصال (ضفنا text-nowrap) -->
                <a [href]="'tel:' + leadInfo().phoneNumber" class="d-block fw-bold text-dark text-decoration-none border rounded p-2 text-center bg-light text-nowrap" style="font-size: 0.9rem;">
                  <i class="bi bi-telephone-fill text-primary me-1"></i> {{ leadInfo().phoneNumber }}
                </a>
-               <!-- 🟢 زرار الواتساب (ضفنا text-nowrap عشان مينزلش سطر جديد) -->
                <a [href]="'https://wa.me/+2' + leadInfo().phoneNumber" target="_blank" class="d-block fw-bold text-success text-decoration-none border rounded p-2 text-center bg-success-subtle border-success-subtle text-nowrap" style="font-size: 0.9rem;">
                 Wa.me/+2{{ leadInfo().phoneNumber }}
                </a>
@@ -59,39 +55,32 @@
           <div class="col-md-3 border-end text-center">
             <label class="text-muted small fw-bold text-uppercase border-bottom w-100 pb-1 mb-2">Campaign Source</label>
             <div class="mb-0">
-              <!-- اسم الحملة -->
               <span *ngIf="leadInfo().campaignName && leadInfo().campaignName !== 'No Campaign'" class="fw-bold text-info-emphasis d-block fs-6">
                 <i class="bi bi-megaphone-fill me-1"></i> {{ leadInfo().campaignName }}
               </span>
               <span *ngIf="!leadInfo().campaignName || leadInfo().campaignName === 'No Campaign'" class="fw-bold text-success d-block fs-6">
                 <i class="bi bi-globe me-1"></i> Website
               </span>
-              
-              <!-- مصدر الحملة (بخط أصغر تحتها) -->
               <small class="text-muted d-block mt-1" *ngIf="leadInfo().campaignSource">
                 <i class="bi bi-funnel-fill me-1"></i> {{ leadInfo().campaignSource }}
               </small>
-
-              <!-- كود البروكر (يظهر كـ Badge فقط لو موجود) -->
               <span class="badge bg-danger-subtle text-danger-emphasis mt-2" *ngIf="leadInfo().referredBy">
                 <i class="bi bi-person-bounding-box me-1"></i> Ref: {{ leadInfo().referredBy }}
               </span>
             </div>
           </div>
 
-          <!-- تاريخ الإنشاء (بدون وقت) -->
+          <!-- تاريخ الإنشاء -->
           <div class="col-md-3 border-end text-center">
             <label class="text-muted small fw-bold text-uppercase border-bottom w-100 pb-1 mb-2">Creation Date</label>
             <p class="fw-bold text-dark fs-5 mb-0">{{ leadInfo().createdAt | date:'mediumDate' }}</p>
           </div>
 
-          <!-- آخر تحديث (بدون وقت) -->
+          <!-- آخر تحديث -->
          <div class="col-md-3 text-center">
             <label class="text-muted small fw-bold text-uppercase border-bottom w-100 pb-1 mb-2">Last Update</label>
-            <!-- 🟢 غيرنا اللون لـ text-dark واستخدمنا نفس الفورمات بدون ثواني -->
             <p class="fw-bold text-dark fs-6 mb-0">{{ leadInfo().updatedAt | date:'MMM d, y, h:mm a' }}</p>
           </div>
-
         </div>
       </div>
 
@@ -100,7 +89,6 @@
         <div class="card-header bg-white fw-bold py-3"><i class="bi bi-house-door-fill text-danger me-2"></i>Property Requirements</div>
         <div class="card-body row g-3">
           
-          <!-- الأساسيات -->
           <div class="col-md-4">
             <label class="text-muted small fw-bold">Property Type</label>
             <p class="fw-bold text-dark">{{ requestDetails().propertyType || 'N/A' }}</p>
@@ -114,7 +102,6 @@
             <p class="fw-bold text-dark fs-5">{{ requestDetails().totalAmount > 0 ? (requestDetails().totalAmount | currency:'EGP ') : 'N/A' }}</p>
           </div>
 
-          <!-- تفاصيل الدفع -->
           <div class="col-md-4" *ngIf="requestDetails().paymentMethod">
             <label class="text-muted small fw-bold">Payment Method</label>
             <p class="fw-bold text-dark"><span class="badge bg-secondary">{{ requestDetails().paymentMethod }}</span></p>
@@ -128,7 +115,6 @@
             <p class="fw-bold text-dark">{{ requestDetails().installmentYears }} Years</p>
           </div>
 
-          <!-- المواقع والمشاريع -->
           <div class="col-md-12" *ngIf="requestDetails().zoneName">
             <label class="text-muted small fw-bold">Target Zone</label>
             <p class="fw-bold text-dark">{{ requestDetails().zoneName }}</p>
@@ -146,28 +132,152 @@
             <p class="fw-bold text-dark">{{ requestDetails().preferredLocation }}</p>
           </div>
 
-          <!-- الملاحظات -->
           <div class="col-12 mt-3" *ngIf="requestDetails().notes">
             <label class="text-muted small fw-bold">Notes</label>
             <div class="bg-light p-3 rounded-3 border small text-dark" style="white-space: pre-line;">{{ requestDetails().notes }}</div>
           </div>
+        </div>
+      </div>
 
+
+
+      <!-- 🟢 كارت الترشيحات الذكية (Smart Recommendations) -->
+      <div class="card shadow-sm mb-4 border-0 bg-white rounded-4 border-start border-success border-4 animate__animated animate__fadeInUp" *ngIf="recommendations().length > 0">
+        <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center border-bottom-0">
+          <span class="fs-5"><i class="bi bi-magic text-success me-2"></i>Smart Recommendations</span>
+          <span class="badge bg-success-subtle text-success-emphasis rounded-pill px-3 py-2">Found {{ recommendations().length }} Matches</span>
+        </div>
+        
+        <div class="card-body pt-0">
+          <p class="text-muted small mb-3">Based on the client's budget (EGP {{ requestDetails()?.totalAmount | number }}), here are the best matching properties. Click a code to open details.</p>
+          
+          <div class="d-flex flex-wrap gap-2">
+            <!-- 
+               لو isProposed بـ false (محدش داس عليه): هيكون btn-outline-success (فاضي من جوه)
+               لو isProposed بـ true (اقتُرِح قبل كده): هيكون btn-success (مليان لونه أخضر)
+            -->
+            <button *ngFor="let prop of recommendations()" 
+                    class="btn btn-sm rounded-pill px-3 shadow-sm fw-bold d-flex align-items-center transition-all"
+                    [ngClass]="prop.isProposed ? 'btn-success text-white' : 'btn-outline-success'"
+                    (click)="onRecommendClick(prop)"
+                    [title]="prop.title + ' - EGP ' + (prop.price | number)">
+              
+              <i class="bi me-2" [ngClass]="prop.isProposed ? 'bi-check2-all' : 'bi-building'"></i>
+              {{ prop.code }}
+            </button>
+          </div>
         </div>
       </div>
 
       <!-- زراير إضافة زيارة ومهمة -->
-     <div class="d-flex gap-3 mt-4">
-        <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#visitModal">
+      <div class="d-flex gap-3 mt-4 mb-4">
+        <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#visitModal" (click)="openNewModal('visit')">
           <i class="bi bi-calendar-check me-2"></i> Schedule Visit
         </button>
-        <button class="btn btn-dark rounded-pill px-4 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#activityModal">
+        <button class="btn btn-dark rounded-pill px-4 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#activityModal" (click)="openNewModal('activity')">
           <i class="bi bi-telephone-plus me-2"></i> Log Call
+        </button>
+        <!-- 👇 الزرار العمومي الجديد -->
+        <button class="btn btn-outline-danger rounded-pill px-4 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#generalNoteModal">
+          <i class="bi bi-chat-text-fill me-2"></i> Log Feedback
         </button>
       </div>
 
-    </div>
+      <!-- 👇 نقلنا הـ Action Plan هنا جوه הـ col-md-8 تحت الزراير مباشرة -->
+       <div class="card shadow-sm mb-4 mt-4 " *ngIf="combinedTimeline().length > 0">
+        <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
+          <span class="fs-5"><i class="bi bi-list-task text-dark me-2"></i>Action Plan</span>
+        </div>
+        <div class="card-body p-4">
+          <div class="row align-items-center border-bottom pb-3 mb-3" 
+               *ngFor="let item of combinedTimeline(); let last = last"[class.border-bottom-0]="last" [class.mb-0]="last">
+            
+            <!-- 1. نوع المهمة وكلللل التفاصيل -->
+           <div class="col-md-6 mb-3 mb-md-0">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge" [ngClass]="item._type === 'visit' ? 'bg-danger' : 'bg-dark'">
+                  <i class="bi" [ngClass]="item._type === 'visit' ? 'bi-geo-alt-fill' : 'bi-telephone-fill'"></i> 
+                  {{ item._type === 'visit' ? 'Visit' : item.activityType }}
+                </span>
+                <span class="fw-bold text-dark fs-6">{{ item.location || item.summary }}</span>
+              </div>
+              
+              <!-- البادجات -->
+              <div class="d-flex flex-wrap gap-1 mt-1">
+                <span class="badge bg-light text-dark border" *ngIf="item.zoneId">{{ item.zoneId === 1 ? 'Cairo' : item.zoneId === 2 ? 'Alexandria' : 'North Coast' }}</span>
+                <span class="badge bg-light text-dark border" *ngIf="item.listingType">{{ item.listingType }}</span>
+                <span class="badge bg-light text-dark border" *ngIf="item.region">{{ item.region }}</span>
+                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle" *ngIf="item.project">{{ item.project }}</span>
+              </div>
 
-    <!-- الجزء الأيمن: الـ Chatter / History (زي Odoo بالظبط) -->
+              <!-- המلاحظات ورقم البروكر -->
+              <div class="text-muted small mt-2">
+                <div *ngIf="item.brokerPhone" class="mb-1"><span class="text-muted">Broker Phone:</span> <span class="fw-bold text-dark">{{ item.brokerPhone }}</span></div>
+                
+                <div *ngIf="item._type === 'visit' && item.notes">
+                  <span class="text-muted">Notes:</span> <span class="fw-bold text-dark">{{ item.notes }}</span>
+                </div>
+                
+                <div *ngIf="item._type === 'activity' && extractOriginalNotes(item.notes)">
+                  <span class="text-muted">Notes:</span> <span class="fw-bold text-dark">{{ extractOriginalNotes(item.notes) }}</span>
+                </div>
+              </div>
+
+              <!-- 🟢 إظهار الفيدباك لو موجود -->
+              <div *ngIf="(item._type === 'visit' && item.feedback) || (item._type === 'activity' && extractFeedback(item.notes))" 
+                   class="mt-2 p-2 bg-secondary-subtle border border-secondary-subtle rounded-3 small text-dark fw-medium">
+                <i class="bi bi-chat-quote-fill text-dark me-1"></i> 
+                {{ item._type === 'visit' ? item.feedback : extractFeedback(item.notes) }}
+              </div>
+            </div>
+
+            <!-- تاريخ المهمة -->
+            <div class="col-md-3 mb-3 mb-md-0 text-center">
+              <label class="text-muted small fw-bold  d-block mb-1">Due Date</label>
+              <p class="fw-bold text-danger mb-0"><i class="bi bi-clock-history me-1"></i>{{ item._date | date:'short' }}</p>
+            </div>
+
+            <!-- حالة المهمة (التحكم) -->
+            <div class="col-md-3 text-center">
+              <label class="text-muted small fw-bold  d-block mb-2">Status</label>
+              <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm" *ngIf="!isTimePassed(item._date)">
+                <i class="bi bi-hourglass-split me-1"></i> Pending
+              </span>
+              <select *ngIf="isTimePassed(item._date)" 
+                      class="form-select form-select-sm fw-bold shadow-sm d-inline-block w-auto mx-auto text-center" 
+                      style="cursor: pointer;"[ngClass]="{'bg-success text-white': item.status === 'Completed', 'bg-danger text-white': item.status === 'Cancelled', 'bg-light text-dark': item.status === 'Pending' || !item.status}"
+                      [ngModel]="item.status || 'Pending'" (change)="onStatusChange(item, $event)">
+                <option value="Pending" [disabled]="item.status !== 'Pending'" class="bg-white text-dark">Pending</option>
+                <option value="Completed" class="bg-white text-success">Completed</option>
+                <option value="Rescheduled" class="bg-white text-warning">Rescheduled</option>
+                <option value="Cancelled" class="bg-white text-danger">Cancelled</option>
+              </select>
+
+              <!-- 🟢 زرار Add Feedback يظهر فقط لو المهمة Completed ومفيش فيدباك متسجل -->
+              <button *ngIf="item.status === 'Completed' && ((item._type === 'visit' && !item.feedback) || (item._type === 'activity' && !extractFeedback(item.notes)))"
+                      class="btn btn-sm btn-outline-danger rounded-pill mt-2 fw-bold" 
+                      (click)="openFeedbackModal(item)">
+                + Add Feedback
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4 mt-4 " *ngIf="leadInfo().generalFeedback">
+        <div class="card-body p-4">
+          <div class="p-3 bg-info-subtle border border-info-subtle rounded-3 small text-dark fw-medium lh-lg">
+            <span class="text-info-emphasis fw-bold d-block mb-1 fs-6">
+              <i class="bi bi-chat-quote-fill me-1"></i> Feedback:
+            </span>
+            <span style="white-space: pre-line;">{{ leadInfo().generalFeedback }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- 👈 قفلة العمود الأيسر (col-md-8) -->
+
+    <!-- الجزء الأيمن: الـ Chatter / History -->
     <div class="col-md-4">
       <div class="card shadow-sm border-0 bg-light">
         <div class="card-header bg-white fw-bold border-bottom-0 pt-3">
@@ -175,9 +285,7 @@
         </div>
         <div class="card-body p-0">
           <ul class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
-            
-            <!-- حلقة التكرار للتاريخ -->
-            <li class="list-group-item bg-transparent border-bottom" *ngFor="let history of statusHistory()">
+            <li class="list-group-item bg-transparent border-bottom" *ngFor="let history of statusHistory()" [hidden]="history.oldStatusName === history.newStatusName">
               <div class="d-flex w-100 justify-content-between mb-1">
                 <small class="fw-bold text-danger">{{ history.changedBy }}</small>
                 <small class="text-muted">{{ history.changedAt | date:'MMM d, h:mm a' }}</small>
@@ -187,41 +295,107 @@
               </p>
               <small class="text-muted" *ngIf="history.notes"><i class="fas fa-comment-dots"></i> {{ history.notes }}</small>
             </li>
-
           </ul>
         </div>
       </div>
     </div>
 
-  </div>
-</div>
+  </div> <!-- 👈 قفلة الـ row -->
+</div> <!-- 👈 قفلة الـ container -->
 
 
 <!-- Modal: Schedule Visit -->
 <div class="modal fade" id="visitModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-lg modal-dialog-centered"> <!-- خلينا المودال كبير modal-lg -->
     <div class="modal-content border-0 shadow-lg rounded-4">
       <div class="modal-header border-0 bg-danger text-white rounded-top-4 p-4">
         <h5 class="modal-title fw-bold"><i class="bi bi-calendar-check me-2"></i>Schedule Visit</h5>
         <button type="button" class="btn-close btn-close-white" id="closeVisitModal" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
+        
         <form [formGroup]="visitForm" (ngSubmit)="submitVisit()">
-          <div class="mb-3">
-            <label class="form-label small fw-bold text-muted">Visit Date & Time *</label>
-            <input type="datetime-local" class="form-control form-control-lg bg-light border-0 rounded-3" formControlName="visitDate" [min]="minDateTime">
-            <div *ngIf="visitForm.get('visitDate')?.hasError('pastDate')" class="text-danger small mt-1">Please select a valid future date.</div>
+          <div class="row g-3">
+            
+            <!-- 1. الوقت والعنوان -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-muted">Visit Date & Time *</label>
+              <input type="datetime-local" class="form-control bg-light border-0 rounded-3" formControlName="visitDate" [min]="minDateTime">
+              <div *ngIf="visitForm.get('visitDate')?.hasError('pastDate')" class="text-danger small mt-1">Please select a future date.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-muted">Location*</label>
+              <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="location" placeholder="e.g. Compound Gate">
+            </div>
+
+            <hr class="my-2 text-muted">
+
+            <!-- 2. نوع الزيارة والمنطقة -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-dark">Zone *</label>
+              <select class="form-select bg-light border-0 rounded-3 fw-bold" formControlName="zoneId">
+                <option value="">-- Select Zone --</option>
+                <option *ngFor="let zone of zones"[value]="zone.id">{{ zone.name }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-dark">Listing Type *</label>
+              <select class="form-select bg-light border-0 rounded-3" formControlName="listingType">
+                <option value="">-- Select Type --</option>
+                <option value="Resale">Resale</option>
+                <option value="Primary">Primary</option>
+                <option value="Resale Project">Resale Project</option>
+                <option value="Rent">Rent</option>
+              </select>
+            </div>
+
+            <!-- 3. المنطقة والمشروع (Dynamic) -->
+            <div class="col-md-6 animate__animated animate__fadeIn" *ngIf="showVisitRegion">
+              <label class="form-label small fw-bold text-dark">Region *</label>
+              <select class="form-select bg-light border-0 rounded-3" formControlName="region">
+                <option value="">-- Select Region --</option>
+                <option *ngFor="let r of visitAvailableRegions" [value]="r">{{ r }}</option>
+              </select>
+            </div>
+            <div class="col-md-6 animate__animated animate__fadeIn" *ngIf="showVisitProject">
+              <label class="form-label small fw-bold text-dark">Project *</label>
+              <select class="form-select bg-light border-0 rounded-3" formControlName="project">
+                <option value="">-- Select Project --</option>
+                <option *ngFor="let p of visitAvailableProjects" [value]="p">{{ p }}</option>
+              </select>
+            </div>
+
+            <hr class="my-2 text-muted">
+
+            <!-- 4. اختياري (كود العقار، اسمه، ورقم البروكر) -->
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Property Code (Optional)</label>
+              <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="propertyCode" placeholder="e.g. ARP-123">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Property Name (Optional)</label>
+              <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="propertyName" placeholder="e.g. Villa in Zed">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Broker Phone (Optional)</label>
+              <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="brokerPhone" placeholder="e.g. 01012345678">
+            </div>
+
+            <div class="col-12 mt-2">
+              <label class="form-label small fw-bold text-muted">Notes</label>
+              <textarea class="form-control bg-light border-0 rounded-3" formControlName="notes" rows="2" placeholder="Add any details..."></textarea>
+            </div>
+
+            <!-- زرار الحفظ -->
+            <div class="col-12 mt-4 text-end">
+              <button type="submit" class="btn btn-danger px-5 rounded-pill fw-bold shadow-sm" [disabled]="visitForm.invalid">
+                <i class="bi bi-calendar-check me-1"></i> Save Visit
+              </button>
+            </div>
+
           </div>
-          <div class="mb-3">
-            <label class="form-label small fw-bold text-muted">Location / Meeting Point *</label>
-            <input type="text" class="form-control form-control-lg bg-light border-0 rounded-3" formControlName="location" placeholder="e.g. Compound Gate">
-          </div>
-          <div class="mb-4">
-            <label class="form-label small fw-bold text-muted">Property ID (Optional)</label>
-            <input type="number" class="form-control form-control-lg bg-light border-0 rounded-3" formControlName="propertyId" placeholder="Enter Property ID if known">
-          </div>
-          <button type="submit" class="btn btn-danger btn-lg w-100 rounded-pill fw-bold shadow-sm" [disabled]="visitForm.invalid">Save Visit</button>
         </form>
+
       </div>
     </div>
   </div>
@@ -229,36 +403,144 @@
 
 <!-- Modal: Log Activity -->
 <div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-lg modal-dialog-centered"> <!-- كبرنا المودال لـ modal-lg -->
     <div class="modal-content border-0 shadow-lg rounded-4">
       <div class="modal-header border-0 bg-dark text-white rounded-top-4 p-4">
-        <h5 class="modal-title fw-bold"><i class="bi bi-telephone-plus me-2"></i>Log Call / Activity</h5>
+        <h5 class="modal-title fw-bold"><i class="bi bi-telephone-plus me-2"></i>Log Call</h5>
         <button type="button" class="btn-close btn-close-white" id="closeActivityModal" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
+        
         <form [formGroup]="activityForm" (ngSubmit)="submitActivity()">
+          <div class="row g-3">
+            
+            <!-- 1. النوع، الملخص، والوقت -->
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Type *</label>
+              <select class="form-select bg-light border-0 rounded-3" formControlName="activityType">
+                <option value="Call">Call</option>
+                <option value="WhatsApp">WhatsApp</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Summary *</label>
+              <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="summary" placeholder="e.g. Discussed pricing">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Due Date & Time *</label>
+              <input type="datetime-local" class="form-control bg-light border-0 rounded-3" formControlName="dueDate" [min]="minDateTime">
+              <div *ngIf="activityForm.get('dueDate')?.hasError('pastDate')" class="text-danger small mt-1">Select a future date.</div>
+            </div>
+
+            <hr class="my-2 text-muted">
+
+            <!-- 2. تفاصيل العقار (نسخة من الزيارة) -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-dark">Zone *</label>
+              <select class="form-select bg-light border-0 rounded-3 fw-bold" formControlName="zoneId">
+                <option value="">-- Select Zone --</option>
+                <option *ngFor="let zone of zones"[value]="zone.id">{{ zone.name }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-dark">Listing Type *</label>
+              <select class="form-select bg-light border-0 rounded-3" formControlName="listingType">
+                <option value="">-- Select Type --</option>
+                <option value="Resale">Resale</option>
+                <option value="Primary">Primary</option>
+                <option value="Resale Project">Resale Project</option>
+                <option value="Rent">Rent</option>
+              </select>
+            </div>
+
+            <!-- المنطقة والمشروع (Dynamic) -->
+            <div class="col-md-6 animate__animated animate__fadeIn" *ngIf="showActivityRegion">
+              <label class="form-label small fw-bold text-dark">Region *</label>
+              <select class="form-select bg-light border-0 rounded-3" formControlName="region">
+                <option value="">-- Select Region --</option>
+                <option *ngFor="let r of activityAvailableRegions" [value]="r">{{ r }}</option>
+              </select>
+            </div>
+            <div class="col-md-6 animate__animated animate__fadeIn" *ngIf="showActivityProject">
+              <label class="form-label small fw-bold text-dark">Project *</label>
+              <select class="form-select bg-light border-0 rounded-3" formControlName="project">
+                <option value="">-- Select Project --</option>
+                <option *ngFor="let p of activityAvailableProjects" [value]="p">{{ p }}</option>
+              </select>
+            </div>
+
+            <hr class="my-2 text-muted">
+
+            <!-- 3. البيانات الاختيارية -->
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Property Code (Optional)</label>
+              <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="propertyCode" placeholder="e.g. ARP-123">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Property Name (Optional)</label>
+              <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="propertyName" placeholder="e.g. Villa in Zed">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Broker Phone (Optional)</label>
+              <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="brokerPhone" placeholder="e.g. 01012345678">
+            </div>
+
+            <div class="col-12 mt-2">
+              <label class="form-label small fw-bold text-muted">Notes</label>
+              <textarea class="form-control bg-light border-0 rounded-3" formControlName="notes" rows="2" placeholder="Add any details..."></textarea>
+            </div>
+
+            <!-- زرار الحفظ -->
+            <div class="col-12 mt-4 text-end">
+              <button type="submit" class="btn btn-dark px-5 rounded-pill fw-bold shadow-sm" [disabled]="activityForm.invalid">
+                <i class="bi bi-telephone-plus me-1"></i> Save Activity
+              </button>
+            </div>
+
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: General Feedback (العمومي) -->
+<div class="modal fade" id="generalNoteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 bg-danger text-white rounded-top-4 p-4">
+        <h5 class="modal-title fw-bold"><i class="bi bi-chat-text-fill me-2"></i>Log General Feedback</h5>
+        <button type="button" class="btn-close btn-close-white" id="closeGeneralNoteModal" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form [formGroup]="generalNoteForm" (ngSubmit)="submitGeneralNote()">
           <div class="mb-3">
-            <label class="form-label small fw-bold text-muted">Type *</label>
-            <select class="form-select form-select-lg bg-light border-0 rounded-3" formControlName="activityType">
-              <option value="Call">Call</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Email">Email</option>
-            </select>
+            <label class="form-label small fw-bold text-muted">Feedback Details *</label>
+            <textarea class="form-control bg-light border-0 rounded-3" formControlName="note" rows="4" placeholder="Write any updates or notes about this client..."></textarea>
           </div>
+          <button type="submit" class="btn btn-danger w-100 rounded-pill fw-bold" [disabled]="generalNoteForm.invalid">Save Feedback</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Action Feedback (للمهمة المحددة) -->
+<div class="modal fade" id="actionFeedbackModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 bg-success text-white rounded-top-4 p-4">
+        <h5 class="modal-title fw-bold"><i class="bi bi-check-circle-fill me-2"></i>Action Outcome</h5>
+        <button type="button" class="btn-close btn-close-white" id="closeActionFeedbackModal" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form [formGroup]="actionFeedbackForm" (ngSubmit)="submitActionFeedback()">
           <div class="mb-3">
-            <label class="form-label small fw-bold text-muted">Summary *</label>
-            <input type="text" class="form-control form-control-lg bg-light border-0 rounded-3" formControlName="summary" placeholder="e.g. Discussed pricing">
+            <label class="form-label small fw-bold text-muted">What happened during this {{ feedbackActionType() }}? *</label>
+            <textarea class="form-control bg-light border-0 rounded-3" formControlName="feedback" rows="3" placeholder="e.g. Client liked the villa but requested a longer installment plan..."></textarea>
           </div>
-          <div class="mb-3">
-            <label class="form-label small fw-bold text-muted">Due Date *</label>
-            <input type="datetime-local" class="form-control form-control-lg bg-light border-0 rounded-3" formControlName="dueDate" [min]="minDateTime">
-            <div *ngIf="activityForm.get('dueDate')?.hasError('pastDate')" class="text-danger small mt-1">Please select a valid future date.</div>
-          </div>
-          <div class="mb-4">
-            <label class="form-label small fw-bold text-muted">Notes</label>
-            <textarea class="form-control bg-light border-0 rounded-3" formControlName="notes" rows="2" placeholder="Add any details..."></textarea>
-          </div>
-          <button type="submit" class="btn btn-dark btn-lg w-100 rounded-pill fw-bold shadow-sm" [disabled]="activityForm.invalid">Save Activity</button>
+          <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold" [disabled]="actionFeedbackForm.invalid">Save Outcome</button>
         </form>
       </div>
     </div>

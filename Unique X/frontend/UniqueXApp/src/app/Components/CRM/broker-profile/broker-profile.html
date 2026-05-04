@@ -126,9 +126,16 @@
           </thead>
           <tbody>
             <tr *ngFor="let lead of filteredLeads()">
-              <td class="ps-3">
+              <td class="ps-3" style="max-width: 280px;"> <!-- 🟢 حددنا عرض أقصى عشان الكلام الطويل ينزل سطر -->
                 <div class="fw-bold text-dark">{{ lead.fullName }}</div>
-                <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ lead.phoneNumber }}</small>
+                <small class="text-muted d-block mb-1"><i class="bi bi-telephone me-1"></i>{{ lead.phoneNumber }}</small>
+                
+                <!-- 🟢 كارت الفيدباك الصغير تحت الرقم -->
+                <div *ngIf="lead.generalFeedback" class="mt-2 p-2 bg-light border rounded-3 small text-wrap text-break lh-sm">
+                  <span class="text-danger fw-bold d-block mb-1"><i class="bi bi-chat-quote-fill me-1"></i>Feedback:</span>
+                  <!-- white-space: pre-line بتخلي الـ Enters اللي كتبناها في الباك إند تنزل سطور بجد -->
+                  <span class="text-muted" style="white-space: pre-line; font-size: 0.75rem;">{{ lead.generalFeedback }}</span>
+                </div>
               </td>
               <td><span class="badge bg-dark">{{ lead.statusName }}</span></td>
               <td>
@@ -175,100 +182,220 @@
         </table>
       </div>
     </div>
+
+     <!-- ======================= 2. جدول الزيارات (Visits) ======================= -->
+    <div class="tab-pane fade" id="visits" role="tabpanel">
+      
+      <!-- 🟢 فلاتر الزيارات -->
+      <div class="row g-2 mb-4 p-3 bg-light rounded-3 border">
+        <div class="col-md-4">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" class="form-control border-start-0" placeholder="Search client or location..." [ngModel]="visitSearch()" (ngModelChange)="visitSearch.set($event)">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select form-select-sm" [ngModel]="visitStatus()" (ngModelChange)="visitStatus.set($event)">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Completed">Completed</option>
+            <option value="Rescheduled">Rescheduled</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-center gap-2">
+          <label class="small text-muted mb-0 text-nowrap">Date:</label>
+          <input type="date" class="form-control form-control-sm"[ngModel]="visitDate()" (ngModelChange)="visitDate.set($event)">
+        </div>
+        <div class="col-md-2 text-end">
+          <button class="btn btn-sm btn-outline-danger fw-bold w-100" (click)="clearVisitFilters()">Clear</button>
+        </div>
+      </div>
+
+      <!-- جدول الزيارات -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">Client & Date</th>
+              <th>Location</th>
+              <th>Property Specs</th>
+              <th>Property Details</th>
+              <th>Status & Feedback</th>
+              <th class="text-end pe-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let visit of filteredVisits()">
+              <!-- العميل والتاريخ -->
+              <td class="ps-3">
+                <div class="fw-bold text-dark"><i class="bi bi-person-circle text-muted me-1"></i> {{ visit.leadName }}</div>
+                <div class="small fw-bold text-danger mt-1"><i class="bi bi-clock-history me-1"></i> {{ visit.visitDate | date:'MMM d, y, h:mm a' }}</div>
+              </td>
+              <!-- المكان -->
+              <td><span class="fw-medium text-dark">{{ visit.location || '-' }}</span></td>
+              <!-- 🟢 مواصفات العقار (بشروط الإظهار) -->
+              <td>
+                <div class="d-flex flex-wrap gap-1 mb-1">
+                  <span class="badge bg-light text-dark border" *ngIf="visit.zoneId">{{ visit.zoneId === 1 ? 'Cairo' : visit.zoneId === 2 ? 'Alexandria' : 'North Coast' }}</span>
+                  <span class="badge bg-light text-dark border" *ngIf="visit.listingType">{{ visit.listingType }}</span>
+                </div>
+                <div class="small text-muted fw-bold">
+                  <div *ngIf="visit.region"><i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ visit.region }}</div>
+                  <div *ngIf="visit.project" [class.mt-1]="visit.region"><i class="bi bi-building text-primary me-1"></i>{{ visit.project }}</div>
+                </div>
+                <div class="text-muted small" *ngIf="!visit.zoneId && !visit.listingType && !visit.region && !visit.project">-</div>
+              </td>
+              <!-- 🟢 تفاصيل إضافية (بشروط الإظهار) -->
+              <td>
+                <div class="small mb-1" *ngIf="visit.propertyCode"><span class="text-muted">Code:</span> <span class="fw-bold text-dark">{{ visit.propertyCode }}</span></div>
+                <div class="small mb-1" *ngIf="visit.propertyName"><span class="text-muted">Name:</span> <span class="fw-bold text-dark">{{ visit.propertyName }}</span></div>
+                <div class="small mb-1" *ngIf="visit.brokerPhone"><span class="text-muted">Broker Phone:</span> <span class="fw-bold text-dark">{{ visit.brokerPhone }}</span></div>
+                
+                <!-- الملاحظات الجديدة -->
+                <div class="small pt-1 text-muted" *ngIf="visit.notes" [class.mt-1]="visit.propertyCode || visit.propertyName || visit.brokerPhone">
+                  Notes: <span class="fw-bold text-dark">{{ visit.notes }}</span>
+                </div>
+                
+                <!-- لو كله فاضي -->
+                <div class="text-muted text-center" *ngIf="!visit.propertyCode && !visit.propertyName && !visit.brokerPhone && !visit.notes">-</div>
+              </td>
+              <!-- الحالة والفيدباك -->
+              <td style="max-width: 250px;">
+                <span class="badge px-3 py-2 rounded-pill shadow-sm"
+                      [ngClass]="{'bg-warning text-dark': visit.status === 'Pending', 'bg-success': visit.status === 'Completed', 'bg-danger': visit.status === 'Cancelled', 'bg-info text-dark': visit.status === 'Rescheduled'}">
+                  {{ visit.status || 'Pending' }}
+                </span>
+                <div *ngIf="visit.feedback" class="mt-2 p-2 bg-info-subtle border border-info-subtle rounded-3 small text-dark fw-medium lh-sm text-wrap text-break">
+                  <i class="bi bi-chat-quote-fill text-info-emphasis me-1"></i> {{ visit.feedback }}
+                </div>
+              </td>
+              <!-- الأكشن -->
+              <td class="text-end pe-3">
+                 <button class="btn btn-sm btn-danger rounded-pill px-4 shadow-sm fw-bold" [routerLink]="['/crm/leads', visit.leadId]">Client File &rarr;</button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredVisits().length === 0">
+              <td colspan="6" class="text-center text-muted py-5"><i class="bi bi-search fs-2 d-block mb-2 opacity-50"></i>No visits found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======================= 3. جدول المهام والمكالمات (Activities) ======================= -->
+    <div class="tab-pane fade" id="activities" role="tabpanel">
+      
+      <!-- 🟢 فلاتر المهام -->
+      <div class="row g-2 mb-4 p-3 bg-light rounded-3 border">
+        <div class="col-md-3">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" class="form-control border-start-0" placeholder="Search client or summary..." [ngModel]="activitySearch()" (ngModelChange)="activitySearch.set($event)">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm" [ngModel]="activityType()" (ngModelChange)="activityType.set($event)">
+            <option value="">All Types</option>
+            <option value="Call">Call</option>
+            <option value="WhatsApp">WhatsApp</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm" [ngModel]="activityStatus()" (ngModelChange)="activityStatus.set($event)">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Completed">Completed</option>
+            <option value="Rescheduled">Rescheduled</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-center gap-2">
+          <label class="small text-muted mb-0 text-nowrap">Due Date:</label>
+          <input type="date" class="form-control form-control-sm" [ngModel]="activityDate()" (ngModelChange)="activityDate.set($event)">
+        </div>
+        <div class="col-md-2 text-end">
+          <button class="btn btn-sm btn-outline-danger fw-bold w-100" (click)="clearActivityFilters()">Clear</button>
+        </div>
+      </div>
+
+      <!-- جدول المهام -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">Client & Date</th>
+              <th>Type & Summary</th>
+              <th>Property Specs</th>
+              <th>Property Details</th>
+              <th>Status & Feedback</th>
+              <th class="text-end pe-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let task of filteredActivities()">
+              <!-- العميل والتاريخ -->
+              <td class="ps-3">
+                <div class="fw-bold text-dark"><i class="bi bi-person-circle text-muted me-1"></i> {{ task.leadName }}</div>
+                <div class="small fw-bold text-danger mt-1"><i class="bi bi-clock-history me-1"></i> {{ task.dueDate | date:'MMM d, y, h:mm a' }}</div>
+              </td>
+              <!-- النوع والملخص -->
+              <td>
+                <span class="badge mb-1" [ngClass]="task.activityType === 'Call' ? 'bg-dark text-white' : 'bg-success text-white'">
+                  <i class="bi"[ngClass]="task.activityType === 'Call' ? 'bi-telephone-fill' : 'bi-whatsapp'"></i> {{ task.activityType }}
+                </span>
+                <div class="fw-bold text-dark small">{{ task.summary || '-' }}</div>
+              </td>
+               <td>
+                <div class="d-flex flex-wrap gap-1 mb-1" *ngIf="task.zoneId || task.listingType">
+                  <span class="badge bg-light text-dark border" *ngIf="task.zoneId">{{ task.zoneId === 1 ? 'Cairo' : task.zoneId === 2 ? 'Alexandria' : task.zoneId === 3 ? 'North Coast' : '' }}</span>
+                  <span class="badge bg-light text-dark border" *ngIf="task.listingType">{{ task.listingType }}</span>
+                </div>
+                <div class="small text-muted fw-bold" *ngIf="task.region || task.project">
+                  <div *ngIf="task.region"><i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ task.region }}</div>
+                  <div *ngIf="task.project" [class.mt-1]="task.region"><i class="bi bi-building text-primary me-1"></i>{{ task.project }}</div>
+                </div>
+                <div class="text-muted text-center" *ngIf="!task.zoneId && !task.listingType && !task.region && !task.project">-</div>
+              </td>
+
+              <!-- 4. تفاصيل إضافية والملاحظات -->
+              <td>
+                <div class="small mb-1" *ngIf="task.propertyCode"><span class="text-muted">Code: </span> <span class="fw-bold text-dark">{{ task.propertyCode }}</span></div>
+                <div class="small mb-1" *ngIf="task.propertyName"><span class="text-muted">Name: </span> <span class="fw-bold text-dark">{{ task.propertyName }}</span></div>
+                <div class="small mb-1" *ngIf="task.brokerPhone"><span class="text-muted">Broker Phone: </span> <span class="fw-bold text-dark">{{ task.brokerPhone }}</span></div>
+                
+                <!-- الملاحظات الأصلية للمكالمة -->
+                <div class="small pt-1 text-muted" *ngIf="extractOriginalNotes(task.notes)"[class.mt-1]="task.propertyCode || task.propertyName || task.brokerPhone">
+                  Notes: <span class="fw-bold text-dark">{{ extractOriginalNotes(task.notes) }}</span>
+                </div>
+                
+                <!-- لو كله فاضي -->
+                <div class="text-muted text-center" *ngIf="!task.propertyCode && !task.propertyName && !task.brokerPhone && !extractOriginalNotes(task.notes)">-</div>
+              </td>
+              <td style="max-width: 250px;">
+                <span class="badge px-3 py-2 rounded-pill shadow-sm"
+                      [ngClass]="{'bg-warning text-dark': task.status === 'Pending', 'bg-success': task.status === 'Completed', 'bg-danger': task.status === 'Cancelled', 'bg-info text-dark': task.status === 'Rescheduled'}">
+                  {{ task.status || 'Pending' }}
+                </span>
+                <div *ngIf="extractFeedback(task.notes)" class="mt-2 p-2 bg-info-subtle border border-info-subtle rounded-3 small text-dark fw-medium lh-sm text-wrap text-break">
+                  <i class="bi bi-chat-quote-fill text-info-emphasis me-1"></i> {{ extractFeedback(task.notes) }}
+                </div>
+              </td>
+              <!-- الأكشن -->
+              <td class="text-end pe-3">
+                 <button class="btn btn-sm btn-danger rounded-pill px-4 shadow-sm fw-bold" [routerLink]="['/crm/leads', task.leadId]">Client File &rarr;</button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredActivities().length === 0">
+              <td colspan="6" class="text-center text-muted py-5"><i class="bi bi-search fs-2 d-block mb-2 opacity-50"></i>No calls or tasks found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    
+
   </div>
 </div>
-    <!-- جدول الزيارات (Visits) -->
-    <div class="tab-pane fade" id="visits" role="tabpanel">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>Client</th>
-              <th>Location</th>
-              <th>Date & Time</th>
-              <th>Property ID</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let visit of profileData().visits">
-              <td class="fw-bold text-dark"><i class="fas fa-user-circle me-1"></i> {{ visit.leadName }}</td>
-              <td>{{ visit.location }}</td>
-              <td><i class="fas fa-clock text-muted me-1"></i> {{ visit.visitDate | date:'medium' }}</td>
-              <td><span class="badge bg-light text-dark border">{{ visit.propertyId || 'N/A' }}</span></td>
-               <td style="min-width: 140px;">
-                 <div class="d-flex flex-column gap-2">
-                   
-                   <!-- 1. زرار ملف العميل -->
-                   <button class="btn btn-sm btn-dark rounded-pill px-3 shadow-sm w-100 d-flex justify-content-center align-items-center" [routerLink]="['/crm/leads', visit.leadId]">
-                     <i class="bi bi-person-lines-fill me-2"></i> Client File
-                   </button>
-                   
-                   <!-- 2. زرار الإنجاز (Toggle) -->
-                   <button class="btn btn-sm rounded-pill w-100 shadow-sm d-flex justify-content-center align-items-center" 
-                           [ngClass]="visit.isCompleted ? 'btn-success text-white' : 'btn-outline-secondary'"
-                           (click)="toggleVisit(visit)"
-                           style="transition: all 0.3s ease;">
-                     <i class="bi" [ngClass]="visit.isCompleted ? 'bi-check-circle-fill me-2' : 'bi-circle me-2'"></i> 
-                     {{ visit.isCompleted ? 'Done' : 'Mark Done' }}
-                   </button>
-
-                   <!-- 3. زرار الحذف -->
-                   <button class="btn btn-sm btn-outline-danger rounded-pill w-100 shadow-sm d-flex justify-content-center align-items-center" 
-                           (click)="deleteVisit(visit.id)">
-                     <i class="bi bi-trash3 me-2"></i> Delete
-                   </button>
-
-                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- جدول المهام والمكالمات (Activities) -->
-    <div class="tab-pane fade" id="activities" role="tabpanel">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>Type</th>
-              <th>Summary</th>
-              <th>Client</th>
-              <th>Due Date</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let task of profileData().activities">
-              <td><span class="badge bg-success text-white">{{ task.activityType }}</span></td>
-              <td class="fw-bold">{{ task.summary }}</td>
-              <td><i class="fas fa-user-circle text-muted me-1"></i> {{ task.leadName }}</td>
-              <td class="text-dark fw-bold">{{ task.dueDate | date:'short' }}</td>
-
-               <td style="min-width: 140px;">
-                 <div class="d-flex flex-column gap-2">
-                   
-                   <!-- زرار العميل -->
-                   <button class="btn btn-sm btn-dark rounded-pill px-3 shadow-sm w-100 d-flex justify-content-center align-items-center" [routerLink]="['/crm/leads', task.leadId]">
-                     <i class="bi bi-person-lines-fill me-2"></i> Client File
-                   </button>
-                   
-                   <!-- زرار الإنجاز (بيتغير لونه وحالته) -->
-                   <button class="btn btn-sm rounded-pill px-3 shadow-sm w-100 d-flex justify-content-center align-items-center" 
-                           [ngClass]="task.isDone ? 'btn-success text-white' : 'btn-outline-secondary'"
-                           (click)="toggleTask(task)"
-                           style="transition: all 0.3s ease;">
-                     <i class="bi" [ngClass]="task.isDone ? 'bi-check-circle-fill me-2' : 'bi-circle me-2'"></i> 
-                     {{ task.isDone ? 'Marked' : 'Mark Done' }}
-                   </button>
-
-                 </div>
-              </td>
-            
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+   

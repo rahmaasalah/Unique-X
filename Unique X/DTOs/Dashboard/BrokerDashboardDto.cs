@@ -20,6 +20,16 @@ namespace Unique_X.DTOs.Dashboard
         public string ActivityType { get; set; }
         public string Summary { get; set; }
         public bool IsDone { get; set; }
+        public string Status { get; set; }
+
         public DateTime DueDate { get; set; }
+        public string? PropertyCode { get; set; }
+        public string? PropertyName { get; set; }
+        public string? BrokerPhone { get; set; }
+        public int ZoneId { get; set; }
+        public string ListingType { get; set; }
+        public string? Region { get; set; }
+        public string? Project { get; set; }
+        public string? Notes { get; set; }
     }
 }
