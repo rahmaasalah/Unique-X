@@ -63,6 +63,9 @@ export class BrokerProfileComponent implements OnInit {
     if (minB !== null) leads = leads.filter((l: any) => l.totalAmount >= minB);
     if (maxB !== null) leads = leads.filter((l: any) => l.totalAmount <= maxB);
 
+    const ids = leads.map((l: any) => l.id);
+    sessionStorage.setItem('crm_filtered_leads', JSON.stringify(ids));
+
     return leads;
   });
 

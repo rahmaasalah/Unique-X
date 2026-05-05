@@ -158,9 +158,12 @@ export class AddLeadComponent implements OnInit {
   }
 
   get showFinancialDetails() {
+    if (!this.leadForm) return false;
     const purpose = this.leadForm.get('purpose')?.value;
     const payment = this.leadForm.get('paymentMethod')?.value;
-    return payment === 'Installment' && ['Primary', 'Resale Project'].includes(purpose);
+    
+    // 🟢 التعديل هنا: هتظهر دايماً مع التقسيط بشرط إن الغرض ميكونش "إيجار"
+    return payment === 'Installment' && purpose !== 'Rent'; 
   }
 
   preventNegative(event: any) {

@@ -191,9 +191,12 @@ export class EditRequestComponent implements OnInit {
   }
 
   get showFinancialDetails() {
+    if (!this.editRequestForm) return false;
     const purpose = this.editRequestForm.get('purpose')?.value;
     const payment = this.editRequestForm.get('paymentMethod')?.value;
-    return payment === 'Installment' && ['Primary', 'Resale Project'].includes(purpose);
+    
+    // 🟢 التعديل هنا: هتظهر دايماً مع التقسيط بشرط إن الغرض ميكونش "إيجار"
+    return payment === 'Installment' && purpose !== 'Rent'; 
   }
 
   // 👇 دالة تنسيق الأرقام بـفواصل (12,000,000)
