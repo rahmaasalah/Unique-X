@@ -172,6 +172,7 @@ export class LeadDetailsComponent implements OnInit {
       project: [''], // اختياري مبدئياً وهيتغير برمجياً
       visitDate: ['',[Validators.required, futureDateValidator()]],
       location: ['', Validators.required],
+      visitType: ['', Validators.required],
       notes:['']
     });
 
@@ -277,6 +278,18 @@ export class LeadDetailsComponent implements OnInit {
 
       regionCtrl?.updateValueAndValidity();
       projectCtrl?.updateValueAndValidity();
+    });
+
+    this.visitForm.get('visitType')?.valueChanges.subscribe(type => {
+      const codeCtrl = this.visitForm.get('propertyCode');
+      
+      if (type === 'Broker') {
+        codeCtrl?.setValidators(Validators.required); // إجباري
+      } else {
+        codeCtrl?.clearValidators(); // اختياري
+      }
+      
+      codeCtrl?.updateValueAndValidity(); // تحديث الفورم
     });
   }
 

@@ -14,6 +14,7 @@
         public string? PropertyName { get; set; }
         public string? BrokerPhone { get; set; }
         public int ZoneId { get; set; }
+        public string? VisitType { get; set; }
         public string? Notes { get; set; }
         public string Status { get; set; }
         public string ListingType { get; set; }

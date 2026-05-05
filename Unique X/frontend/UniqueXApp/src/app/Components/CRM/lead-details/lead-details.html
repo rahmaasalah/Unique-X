@@ -228,14 +228,14 @@
 
               <!-- الملاحظات ورقم البروكر -->
               <div class="text-muted small mt-2">
-                <div *ngIf="item.brokerPhone" class="mb-1"><span class="text-muted">Broker Phone:</span> <span class="fw-bold text-dark">{{ item.brokerPhone }}</span></div>
+                <div *ngIf="item.brokerPhone" class="mb-1"><span class="text-muted">Broker Phone: </span> <span class="fw-bold text-dark">{{ item.brokerPhone }}</span></div>
                 
                 <div *ngIf="item._type === 'visit' && item.notes">
-                  <span class="text-muted">Notes:</span> <span class="fw-bold text-dark">{{ item.notes }}</span>
+                  <span class="text-muted">Notes: </span> <span class="fw-bold text-dark">{{ item.notes }}</span>
                 </div>
                 
                 <div *ngIf="item._type === 'activity' && extractOriginalNotes(item.notes)">
-                  <span class="text-muted">Notes:</span> <span class="fw-bold text-dark">{{ extractOriginalNotes(item.notes) }}</span>
+                  <span class="text-muted">Notes: </span> <span class="fw-bold text-dark">{{ extractOriginalNotes(item.notes) }}</span>
                 </div>
               </div>
 
@@ -284,7 +284,7 @@
         <div class="card-body p-4">
           <div class="p-3 bg-info-subtle border border-info-subtle rounded-3 small text-dark fw-medium lh-lg">
             <span class="text-info-emphasis fw-bold d-block mb-1 fs-6">
-              <i class="bi bi-chat-quote-fill me-1"></i> Feedback:
+              <i class="bi bi-chat-quote-fill me-1"></i> Feedback: 
             </span>
             <span style="white-space: pre-line;">{{ leadInfo().generalFeedback }}</span>
           </div>
@@ -334,14 +334,23 @@
           <div class="row g-3">
             
             <!-- 1. الوقت والعنوان -->
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label small fw-bold text-muted">Visit Date & Time *</label>
               <input type="datetime-local" class="form-control bg-light border-0 rounded-3" formControlName="visitDate" [min]="minDateTime">
               <div *ngIf="visitForm.get('visitDate')?.hasError('pastDate')" class="text-danger small mt-1">Please select a future date.</div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label small fw-bold text-muted">Location*</label>
               <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="location" placeholder="e.g. Compound Gate">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Visit Type *</label>
+              <select class="form-select bg-light border-0 rounded-3 fw-bold" formControlName="visitType">
+                <option value="">-- Select Type --</option>
+                <option value="Client">Client</option>
+                <option value="Broker">Broker</option>
+              </select>
             </div>
 
             <hr class="my-2 text-muted">
@@ -384,9 +393,18 @@
             <hr class="my-2 text-muted">
 
             <!-- 4. اختياري (كود العقار، اسمه، ورقم البروكر) -->
-            <div class="col-md-4">
-              <label class="form-label small fw-bold text-muted">Property Code (Optional)</label>
+             <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">
+                Property Code
+                <!-- 🟢 الكلمة هتتغير لـ * حمرا لو اختار Broker -->
+                <span *ngIf="visitForm.get('visitType')?.value === 'Broker'" class="text-danger">*</span>
+                <span *ngIf="visitForm.get('visitType')?.value !== 'Broker'">(Optional)</span>
+              </label>
               <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="propertyCode" placeholder="e.g. ARP-123">
+              <!-- 🟢 رسالة الإيرور هتظهر لو اختار Broker وسابها فاضية -->
+              <div *ngIf="visitForm.get('propertyCode')?.invalid && (visitForm.get('propertyCode')?.touched || visitForm.get('propertyCode')?.dirty)" class="text-danger small mt-1">
+                Property code is required.
+              </div>
             </div>
             <div class="col-md-4">
               <label class="form-label small fw-bold text-muted">Property Name (Optional)</label>
@@ -448,9 +466,8 @@
               <div *ngIf="activityForm.get('dueDate')?.hasError('pastDate')" class="text-danger small mt-1">Select a future date.</div>
             </div>
 
-            <hr class="my-2 text-muted">
+            <!-- <hr class="my-2 text-muted">
 
-            <!-- 2. تفاصيل العقار (نسخة من الزيارة) -->
             <div class="col-md-6">
               <label class="form-label small fw-bold text-dark">Zone *</label>
               <select class="form-select bg-light border-0 rounded-3 fw-bold" formControlName="zoneId">
@@ -469,7 +486,6 @@
               </select>
             </div>
 
-            <!-- المنطقة والمشروع (Dynamic) -->
             <div class="col-md-6 animate__animated animate__fadeIn" *ngIf="showActivityRegion">
               <label class="form-label small fw-bold text-dark">Region *</label>
               <select class="form-select bg-light border-0 rounded-3" formControlName="region">
@@ -487,7 +503,6 @@
 
             <hr class="my-2 text-muted">
 
-            <!-- 3. البيانات الاختيارية -->
             <div class="col-md-4">
               <label class="form-label small fw-bold text-muted">Property Code (Optional)</label>
               <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="propertyCode" placeholder="e.g. ARP-123">
@@ -500,7 +515,7 @@
               <label class="form-label small fw-bold text-muted">Broker Phone (Optional)</label>
               <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="brokerPhone" placeholder="e.g. 01012345678">
             </div>
-
+ -->
             <div class="col-12 mt-2">
               <label class="form-label small fw-bold text-muted">Notes</label>
               <textarea class="form-control bg-light border-0 rounded-3" formControlName="notes" rows="2" placeholder="Add any details..."></textarea>
