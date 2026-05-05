@@ -409,38 +409,89 @@ namespace Unique_X.Controllers.CRM
         public async Task<IActionResult> GetRecommendations(int id)
         {
             var request = await _context.LeadRequests.FirstOrDefaultAsync(r => r.LeadId == id);
-            if (request == null || request.TotalAmount <= 0) return Ok(new List<object>());
 
-            // معادلة الميزانية (أقل بـ 200 ألف، وأكتر بـ 600 ألف)
-            decimal minBudget = request.TotalAmount.Value - 200000;
-            decimal maxBudget = request.TotalAmount.Value + 600000;
+            // لو مفيش طلب أو مفيش ميزانية، نرجع لستة فاضية
+            if (request == null || !request.TotalAmount.HasValue || request.TotalAmount.Value <= 0)
+                return Ok(new List<object>());
 
+            // 1. حساب الميزانية (أقل بـ 200 ألف، وأكتر بـ 600 ألف)
+            decimal baseAmount = request.TotalAmount.Value;
+            decimal minBudget = baseAmount - 200000m;
+            decimal maxBudget = baseAmount + 600000m;
 
-            // بنجيب العقارات اللي البروكر اقترحها قبل كده عشان نلونها في الفرونت إند
+            // بنجيب العقارات اللي البروكر اقترحها قبل كده
             var proposedIds = string.IsNullOrEmpty(request.ProposedPropertyIds)
                 ? new List<string>()
                 : request.ProposedPropertyIds.Split(',').ToList();
 
-            // فلترة العقارات (نشطة + معتمدة + مش مباعة + في نفس رينج السعر)
-            var recommendations = await _context.Properties
-                .Where(p => p.IsActive && p.IsApproved && !p.IsSold)
-                .Where(p => p.Price >= minBudget && p.Price <= maxBudget)
-                // لو حابة تضيفي تطابق نوع العقار (اختياري)
-                // .Where(p => p.PropertyType.ToString() == request.PropertyType)
-                .Select(p => new
+            // 2. البناء الديناميكي للبحث (Query)
+            var query = _context.Properties.Where(p => p.IsActive && p.IsApproved && !p.IsSold);
+
+            // -- أ) فلتر الميزانية (Range)
+            query = query.Where(p => p.Price >= minBudget && p.Price <= maxBudget);
+
+            // -- ب) فلتر طريقة الدفع (تطابق تام)
+            if (!string.IsNullOrEmpty(request.PaymentMethod))
+            {
+                query = query.Where(p => p.PaymentMethod == request.PaymentMethod);
+            }
+
+            // -- ج) فلتر الغرض / نوع العرض (Primary, Resale, Rent)
+            if (!string.IsNullOrEmpty(request.Purpose))
+            {
+                // بنشيل المسافات عشان لو الكلمة "Resale Project" تطابق הـ Enum "ResaleProject"
+                string purposeClean = request.Purpose.Replace(" ", "");
+                if (Enum.TryParse(typeof(PropEnums.ListingType), purposeClean, true, out var parsedListingType))
                 {
+                    var listingEnum = (PropEnums.ListingType)parsedListingType;
+                    query = query.Where(p => p.ListingType == listingEnum);
+                }
+            }
+
+            // -- د) فلتر نوع العقار (تطابق تام - Apartment, Villa, etc)
+            if (!string.IsNullOrEmpty(request.PropertyType))
+            {
+                string typeClean = request.PropertyType.Replace(" ", "");
+                if (Enum.TryParse(typeof(PropEnums.PropertyType), typeClean, true, out var parsedType))
+                {
+                    var typeEnum = (PropEnums.PropertyType)parsedType;
+                    query = query.Where(p => p.PropertyType == typeEnum);
+                }
+            }
+
+            // -- هـ) فلتر المناطق والمشاريع
+            var regionsList = string.IsNullOrEmpty(request.SelectedRegions)
+                ? new List<string>()
+                : request.SelectedRegions.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries).Select(r => r.Trim()).ToList();
+
+            var projectsList = string.IsNullOrEmpty(request.SelectedProjects)
+                ? new List<string>()
+                : request.SelectedProjects.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).ToList();
+
+            if (regionsList.Any() || projectsList.Any())
+            {
+                query = query.Where(p =>
+                    (regionsList.Any() && p.Region != null && regionsList.Contains(p.Region)) ||
+                    (projectsList.Any() && p.ProjectName != null && projectsList.Contains(p.ProjectName))
+                );
+            }
+
+            // 3. ترتيب وتجهيز الخرج للفرونت إند
+            var recommendations = await query
+                .OrderByDescending(p => p.CreatedAt) // الأحدث أولاً
+                .Take(12) // نكتفي بـ 12 ترشيح فقط عشان الشاشة
+                .Select(p => new {
                     Id = p.Id,
                     Code = p.Code ?? ("PROP-" + p.Id),
                     Title = p.Title,
                     Price = p.Price,
-                    IsProposed = proposedIds.Contains(p.Id.ToString()) // لو الـ ID موجود، يبقى البروكر داس عليه
+                    // 👈 السطر ده اللي بيعرف الفرونت إند إن العقار ده تم اقتراحه للعميل ده قبل كده فيلونه أخضر
+                    IsProposed = proposedIds.Contains(p.Id.ToString())
                 })
-                .Take(12) // هنجيب أفضل 12 عقار بس عشان الشاشة متزحمش
                 .ToListAsync();
 
             return Ok(recommendations);
         }
-
         // 2. تسجيل العقار كـ (تم اقتراحه للعميل)
         [HttpPut("{id}/mark-proposed/{propertyId}")]
         public async Task<IActionResult> MarkPropertyProposed(int id, int propertyId)

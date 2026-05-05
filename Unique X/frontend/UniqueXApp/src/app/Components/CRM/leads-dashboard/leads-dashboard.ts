@@ -137,6 +137,9 @@ export class LeadsDashboardComponent implements OnInit {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
+
+    const ids = filtered.map((l: any) => l.id);
+    sessionStorage.setItem('crm_filtered_leads', JSON.stringify(ids));
   }
 
   clearFilters() {

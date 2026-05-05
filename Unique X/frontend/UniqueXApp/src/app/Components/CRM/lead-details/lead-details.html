@@ -5,6 +5,17 @@
     <div>
       <h2 class="fw-bold mb-1">{{ leadInfo().fullName }}</h2>
       <p class="text-muted m-0"><i class="bi bi-person-badge-fill text-danger me-1"></i> Broker: {{ leadInfo().brokerName }}</p>
+
+      <div class="btn-group shadow-sm" *ngIf="filteredIds.length > 1">
+          <button class="btn btn-sm btn-light border fw-bold px-3 text-danger" 
+                  [disabled]="!hasPrev()" (click)="navigateLead('prev')" title="Previous Lead">
+            <i class="bi bi-chevron-left me-1"></i> 
+          </button>
+          <button class="btn btn-sm btn-light border fw-bold px-3 text-danger" 
+                  [disabled]="!hasNext()" (click)="navigateLead('next')" title="Next Lead">
+             <i class="bi bi-chevron-right ms-1"></i>
+          </button>
+        </div>
     </div>
     
     <div class="d-flex align-items-center gap-2">
@@ -121,7 +132,7 @@
           </div>
           <div class="col-md-12" *ngIf="requestDetails().selectedRegions">
             <label class="text-muted small fw-bold">Selected Regions</label>
-            <p class="fw-bold text-primary">{{ requestDetails().selectedRegions }}</p>
+            <p class="fw-bold text-dark">{{ requestDetails().selectedRegions }}</p>
           </div>
           <div class="col-md-12" *ngIf="requestDetails().selectedProjects">
             <label class="text-muted small fw-bold">Interested Projects</label>
@@ -142,30 +153,35 @@
 
 
       <!-- 🟢 كارت الترشيحات الذكية (Smart Recommendations) -->
-      <div class="card shadow-sm mb-4 border-0 bg-white rounded-4 border-start border-success border-4 animate__animated animate__fadeInUp" *ngIf="recommendations().length > 0">
+      <div class="card shadow-sm mb-4 border-0 bg-white rounded-4 border-start border-success border-4 animate__animated animate__fadeInUp">
+        
         <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center border-bottom-0">
           <span class="fs-5"><i class="bi bi-magic text-success me-2"></i>Smart Recommendations</span>
           <span class="badge bg-success-subtle text-success-emphasis rounded-pill px-3 py-2">Found {{ recommendations().length }} Matches</span>
         </div>
         
         <div class="card-body pt-0">
-          <p class="text-muted small mb-3">Based on the client's budget (EGP {{ requestDetails()?.totalAmount | number }}), here are the best matching properties. Click a code to open details.</p>
+          <p class="text-muted small mb-3">Based on the client's budget (EGP {{ requestDetails()?.totalAmount | number }}) and requirements, here are the best matching properties.</p>
           
-          <div class="d-flex flex-wrap gap-2">
-            <!-- 
-               لو isProposed بـ false (محدش داس عليه): هيكون btn-outline-success (فاضي من جوه)
-               لو isProposed بـ true (اقتُرِح قبل كده): هيكون btn-success (مليان لونه أخضر)
-            -->
+          <!-- لو في عقارات متطابقة هتظهر هنا -->
+          <div class="d-flex flex-wrap gap-2" *ngIf="recommendations().length > 0">
             <button *ngFor="let prop of recommendations()" 
                     class="btn btn-sm rounded-pill px-3 shadow-sm fw-bold d-flex align-items-center transition-all"
                     [ngClass]="prop.isProposed ? 'btn-success text-white' : 'btn-outline-success'"
                     (click)="onRecommendClick(prop)"
                     [title]="prop.title + ' - EGP ' + (prop.price | number)">
-              
               <i class="bi me-2" [ngClass]="prop.isProposed ? 'bi-check2-all' : 'bi-building'"></i>
               {{ prop.code }}
             </button>
           </div>
+
+          <!-- 🟢 لو مفيش عقارات متطابقة، هنظهر الرسالة دي بدل ما الكارت يختفي -->
+          <div class="text-center p-4 bg-light rounded-3 border" *ngIf="recommendations().length === 0">
+            <i class="bi bi-search text-muted fs-2 d-block mb-2 opacity-50"></i>
+            <h6 class="fw-bold text-dark mb-1">No exact matches found!</h6>
+            <p class="text-muted small mb-0">Try adjusting the client's requirements or budget to find matching properties.</p>
+          </div>
+
         </div>
       </div>
 
@@ -210,7 +226,7 @@
                 <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle" *ngIf="item.project">{{ item.project }}</span>
               </div>
 
-              <!-- המلاحظات ورقم البروكر -->
+              <!-- الملاحظات ورقم البروكر -->
               <div class="text-muted small mt-2">
                 <div *ngIf="item.brokerPhone" class="mb-1"><span class="text-muted">Broker Phone:</span> <span class="fw-bold text-dark">{{ item.brokerPhone }}</span></div>
                 

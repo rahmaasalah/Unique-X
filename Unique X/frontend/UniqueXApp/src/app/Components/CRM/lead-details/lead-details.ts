@@ -42,6 +42,11 @@ export class LeadDetailsComponent implements OnInit {
   minDateTime: string = '';
 
   combinedTimeline = signal<any[]>([]); // اللستة المجمعة
+
+  filteredIds: number[] =[];
+  hasPrev = signal<boolean>(false);
+  hasNext = signal<boolean>(false);
+
   
   // متغيرات الـ Reschedule
   isRescheduling = signal<boolean>(false);
@@ -116,10 +121,41 @@ export class LeadDetailsComponent implements OnInit {
     const now = new Date();
     this.minDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
-    this.leadId = Number(this.route.snapshot.paramMap.get('id'));
-    if (this.leadId) {
-      this.loadLeadData(this.leadId);
-      this.initForms();
+    // 👇 1. نقرأ قائمة الأرقام المتفلترة من الذاكرة
+    const storedIds = sessionStorage.getItem('crm_filtered_leads');
+    if (storedIds) {
+      this.filteredIds = JSON.parse(storedIds);
+    }
+
+    // 👇 2. نستخدم subscribe عشان الشاشة تتحدث أوتوماتيك لما ندوس Next بدون ريفريش
+    this.route.paramMap.subscribe(params => {
+      this.leadId = Number(params.get('id'));
+      if (this.leadId) {
+        this.checkPagination(); // نفحص هل فيه Next ولا Previous
+        this.initForms(); // نجهز الفورمز على الـ ID الجديد
+        this.loadLeadData(this.leadId); // نحمل بيانات العميل الجديد
+      }
+    });
+  }
+
+  // 👇 دالة لمعرفة هل فيه عميل سابق أو تالي
+  checkPagination() {
+    if (this.filteredIds.length > 0) {
+      const currentIndex = this.filteredIds.indexOf(this.leadId);
+      this.hasPrev.set(currentIndex > 0);
+      this.hasNext.set(currentIndex < this.filteredIds.length - 1 && currentIndex !== -1);
+    }
+  }
+
+  // 👇 دالة التقليب
+  navigateLead(direction: 'prev' | 'next') {
+    const currentIndex = this.filteredIds.indexOf(this.leadId);
+    if (direction === 'prev' && currentIndex > 0) {
+      const prevId = this.filteredIds[currentIndex - 1];
+      this.router.navigate(['/crm/leads', prevId]);
+    } else if (direction === 'next' && currentIndex < this.filteredIds.length - 1) {
+      const nextId = this.filteredIds[currentIndex + 1];
+      this.router.navigate(['/crm/leads', nextId]);
     }
   }
 
