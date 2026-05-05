@@ -12,6 +12,7 @@
         public string? BrokerPhone { get; set; }
         public int ZoneId { get; set; }
         public string ListingType { get; set; }
+        public string? VisitType { get; set; }
         public string? Notes { get; set; }
         public string? Region { get; set; }
         public string? Project { get; set; }

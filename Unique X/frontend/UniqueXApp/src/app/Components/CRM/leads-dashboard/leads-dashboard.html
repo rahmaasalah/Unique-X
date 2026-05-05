@@ -20,9 +20,6 @@
       <button class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" routerLink="/crm/add-lead">
         <i class="bi bi-plus-lg me-1"></i> Add Lead
       </button>
-      <button class="btn btn-outline-danger btn-sm rounded-pill fw-bold px-3" (click)="clearFilters()">
-        <i class="bi bi-x-circle me-1"></i> Clear Filters
-      </button>
     </div>
   </div>
 
@@ -103,15 +100,66 @@
   }
 
   <!-- ================= طريقة العرض: List ================= -->
-  @if(viewMode() === 'list') {
+ @if(viewMode() === 'list') {
+    
+    <!-- 🟢 شريط الفلاتر بيظهر هنا بس مع الـ List -->
+    <div class="row g-2 mb-4 p-3 bg-light rounded-3 border animate__animated animate__fadeIn">
+      <div class="col-md-3">
+        <input type="text" class="form-control form-control-sm" placeholder="Search Name/Phone..."[ngModel]="searchText()" (ngModelChange)="searchText.set($event); applyFilters(true)">
+      </div>
+      <div class="col-md-2">
+        <select class="form-select form-select-sm" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); applyFilters(true)">
+          <option value="">All Stages</option>
+          <option value="1">New "To Call"</option>
+          <option value="2">Waiting response on wtp msg</option>
+          <option value="7">Visit scheduled</option>
+          <option value="11">Meeting Scheduled</option>
+          <option value="19">Deal closed</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select form-select-sm"[ngModel]="filterCampaign()" (ngModelChange)="filterCampaign.set($event); applyFilters(true)">
+          <option value="">All Campaigns</option>
+          <option value="No Campaign">Direct / Website</option>
+          @for (c of campaignsList(); track c.id) { <option [value]="c.name">{{ c.name }}</option> }
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select form-select-sm" [ngModel]="filterZone()" (ngModelChange)="filterZone.set($event); applyFilters(true)">
+          <option value="">All Zones</option>
+          <option *ngFor="let zone of zones" [value]="zone.name">{{ zone.name }}</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-1">
+        <input type="number" class="form-control form-control-sm" placeholder="Min Budget" [ngModel]="filterMinBudget()" (ngModelChange)="filterMinBudget.set($event); applyFilters(true)">
+        <input type="number" class="form-control form-control-sm" placeholder="Max Budget" [ngModel]="filterMaxBudget()" (ngModelChange)="filterMaxBudget.set($event); applyFilters(true)">
+      </div>
+      <div class="col-md-4 d-flex align-items-center gap-2 mt-2">
+        <label class="small text-muted mb-0 text-nowrap">Created:</label>
+        <input type="date" class="form-control form-control-sm" [ngModel]="filterCreationDate()" (ngModelChange)="filterCreationDate.set($event); applyFilters(true)">
+      </div>
+      <div class="col-md-4 d-flex align-items-center gap-2 mt-2">
+        <label class="small text-muted mb-0 text-nowrap">Updated:</label>
+        <input type="date" class="form-control form-control-sm"[ngModel]="filterLastUpdate()" (ngModelChange)="filterLastUpdate.set($event); applyFilters(true)">
+      </div>
+      <div class="col-md-4 mt-2 text-end">
+        <!-- 🟢 زرار Clear Filters اتنقل هنا -->
+        <button class="btn btn-sm btn-outline-danger fw-bold w-100" (click)="clearFilters()">
+          <i class="bi bi-x-circle me-1"></i> Clear Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- جدول الـ List -->
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden animate__animated animate__fadeIn">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th class="ps-4">Client</th>
-              <th>Stage</th>
+              <th>Stage (Status)</th>
               <th>Campaign</th>
+              <th>Zone</th>
               <th>Property Info</th>
               <th>Budget</th>
               <th>Created Date</th>
@@ -122,54 +170,49 @@
           <tbody>
             @for (lead of filteredLeadsForList(); track lead.id) {
               <tr>
-                <!-- الاسم والرقم -->
                 <td class="ps-4">
                   <div class="fw-bold text-dark">{{ lead.fullName }}</div>
                   <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ lead.phoneNumber }}</small>
                 </td>
                 
-                <!-- الحالة -->
                 <td><span class="badge bg-dark">{{ lead.statusName }}</span></td>
                 
-                <!-- الحملة -->
                 <td>
                   <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm" style="font-size: 0.7rem;">
-                    <i class="bi" [ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
+                    <i class="bi"[ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
                     {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
                   </span>
                 </td>
 
-                <!-- تفاصيل العقار (النوع والغرض) -->
+                <td><span class="fw-bold small text-secondary">{{ lead.zoneName }}</span></td>
+
                 <td>
                   <div class="fw-bold small text-dark">{{ lead.propertyType }}</div>
                   <div class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill mt-1" style="font-size: 0.65rem;">
                     {{ lead.purpose }}
                   </div>
                 </td>
-
+                
                 <td class="fw-bold text-success">
                   {{ lead.totalAmount > 0 ? (lead.totalAmount | currency:'EGP ') : 'N/A' }}
                 </td>
-                
-                <!-- تاريخ الإنشاء -->
+
                 <td><div class="small fw-bold text-dark">{{ lead.createdAt | date:'mediumDate' }}</div></td>
                 
-                <!-- تاريخ آخر تحديث -->
                 <td>
-                  <div class="small fw-bold text-dark -subtle px-2 py-1 rounded d-inline-block">
-                    {{ lead.updatedAt | date:'MMM d, h:mm a' }}
+                  <div class="small fw-bold text-danger bg-danger-subtle px-2 py-1 rounded d-inline-block">
+                    <i class="bi bi-clock-history me-1"></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
                   </div>
                 </td>
 
-                <!-- زرار الأكشن -->
                 <td class="text-end pe-4">
-                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" [routerLink]="['/crm/leads', lead.id]">
-                    Details &rarr;
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"[routerLink]="['/crm/leads', lead.id]">
+                    Client File &rarr;
                   </button>
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="7" class="text-center py-5 text-muted">No leads found.</td></tr>
+              <tr><td colspan="9" class="text-center py-5 text-muted">No leads found.</td></tr>
             }
           </tbody>
         </table>

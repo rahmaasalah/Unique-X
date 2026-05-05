@@ -38,7 +38,8 @@ namespace Unique_X.Controllers.CRM
                 ListingType = dto.ListingType,
                 Region = dto.Region,
                 Notes = dto.Notes,
-                Project = dto.Project
+                Project = dto.Project,
+                VisitType = dto.VisitType
             };
 
             _context.Visits.Add(visit);
@@ -72,6 +73,7 @@ namespace Unique_X.Controllers.CRM
                     Notes = v.Notes,
                     Location = v.Location,
                     Feedback = v.Feedback,
+                    VisitType = v.VisitType,
                     IsCompleted = v.IsCompleted
                 }).ToListAsync();
 

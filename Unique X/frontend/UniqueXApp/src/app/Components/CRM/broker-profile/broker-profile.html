@@ -248,9 +248,9 @@
               </td>
               <!-- 🟢 تفاصيل إضافية (بشروط الإظهار) -->
               <td>
-                <div class="small mb-1" *ngIf="visit.propertyCode"><span class="text-muted">Code:</span> <span class="fw-bold text-dark">{{ visit.propertyCode }}</span></div>
-                <div class="small mb-1" *ngIf="visit.propertyName"><span class="text-muted">Name:</span> <span class="fw-bold text-dark">{{ visit.propertyName }}</span></div>
-                <div class="small mb-1" *ngIf="visit.brokerPhone"><span class="text-muted">Broker Phone:</span> <span class="fw-bold text-dark">{{ visit.brokerPhone }}</span></div>
+                <div class="small mb-1" *ngIf="visit.propertyCode"><span class="text-muted">Code: </span> <span class="fw-bold text-dark">{{ visit.propertyCode }}</span></div>
+                <div class="small mb-1" *ngIf="visit.propertyName"><span class="text-muted">Name: </span> <span class="fw-bold text-dark">{{ visit.propertyName }}</span></div>
+                <div class="small mb-1" *ngIf="visit.brokerPhone"><span class="text-muted">Broker Phone: </span> <span class="fw-bold text-dark">{{ visit.brokerPhone }}</span></div>
                 
                 <!-- الملاحظات الجديدة -->
                 <div class="small pt-1 text-muted" *ngIf="visit.notes" [class.mt-1]="visit.propertyCode || visit.propertyName || visit.brokerPhone">
