@@ -463,6 +463,35 @@ namespace Unique_X.Services.Implementation
             return await _context.SaveChangesAsync() > 0;
         }
 
+
+        // دالة مسح صورة محددة من العقار
+        public async Task<bool> DeletePhotoAsync(int propertyId, int photoId, string brokerId)
+        {
+            // 1. نجيب العقار ونتأكد إن البروكر ده هو صاحبه
+            var property = await _context.Properties
+                .Include(p => p.Photos)
+                .FirstOrDefaultAsync(p => p.Id == propertyId && p.BrokerId == brokerId);
+
+            if (property == null) return false;
+
+            // 2. نجيب الصورة المطلوبة
+            var photo = property.Photos.FirstOrDefault(p => p.Id == photoId);
+            if (photo == null) return false;
+
+            // 3. نمنع مسح الصورة الرئيسية (عشان العقار ميبقاش من غير صورة)
+            if (photo.IsMain) return false;
+
+            // 4. نمسح الصورة من Cloudinary (لو ليها PublicId)
+            if (!string.IsNullOrEmpty(photo.PublicId))
+            {
+                await _photoService.DeletePhotoAsync(photo.PublicId);
+            }
+
+            // 5. نمسحها من الداتابيز
+            property.Photos.Remove(photo);
+            return await _context.SaveChangesAsync() > 0;
+        }
+
         private PropertyResponseDto MapToResponseDto(Property property)
         {
             return new PropertyResponseDto
