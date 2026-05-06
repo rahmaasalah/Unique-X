@@ -66,4 +66,8 @@ getFinancialHistory(code: string): Observable<any[]> {
     // 🟢 إضافة encodeURIComponent لحماية الأكواد اللي فيها رموز زي #
     return this.http.get<any[]>(`${this.baseUrl}/${encodeURIComponent(code)}/financial-history`);
   }
+
+   deletePhoto(propertyId: number, photoId: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/${propertyId}/photos/${photoId}`);
+  }
 }

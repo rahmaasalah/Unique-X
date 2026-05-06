@@ -795,4 +795,34 @@ filteredProjects: string[] = [];
       }, index * 500); 
     });
   }
+
+  // 🟢 3. دالة حذف الصورة القديمة من قاعدة البيانات والشاشة
+  deleteExistingPhoto(photoId: number, index: number, event: Event) {
+    event.stopPropagation(); // عشان المتصفح ميعتبرش إننا بندوس Set as Main
+
+    this.alertService.confirm('Are you sure you want to permanently delete this photo?', () => {
+      this.alertService.showLoading('Deleting photo...');
+      
+      // هنا بننادي على سيرفيس العقارات لمسح الصورة 
+      // (تأكدي إن عندك دالة deletePhoto في PropertyService)
+      this.propertyService.deletePhoto(this.propertyId, photoId).subscribe({
+        next: () => {
+          this.alertService.close();
+          this.alertService.success('Photo deleted successfully.');
+          
+          // مسح الصورة من الشاشة فوراً (تحديث الـ Signal)
+          this.existingPhotos.update(photos => {
+            const newPhotos = [...photos];
+            newPhotos.splice(index, 1);
+            return newPhotos;
+          });
+        },
+        error: (err) => {
+          console.error(err);
+          this.alertService.close();
+          this.alertService.error('Failed to delete the photo.');
+        }
+      });
+    });
+  }
 }

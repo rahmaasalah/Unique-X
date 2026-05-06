@@ -410,9 +410,7 @@
             <!-- القسم السابع: الميديا والوصف -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-images me-2 text-danger"></i>Photos & Description</h5>
             
-            @if (existingPhotos().length > 0) {
-              <!-- 🟢 الهيدر بتاع الصور وفيه زرار تحميل الكل -->
-              <div class="d-flex justify-content-between align-items-center mb-3">
+             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="fw-bold small text-muted mb-0">Current Photos (Click to set as Main)</h6>
                 <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-bold" 
                         (click)="downloadAllPhotos()">
@@ -420,35 +418,43 @@
                 </button>
               </div>
 
-              <div class="row g-2 mb-4">
-                <!-- 🟢 ضفنا let i = $index عشان نرقم الصور وهي بتنزل -->
+              <!-- 🟢 التعديل هنا: استخدمنا d-flex flex-wrap عشان نضمن إنهم دايماً جنب بعض -->
+              <div class="d-flex flex-wrap gap-3 mb-4">
+                
                 @for (photo of existingPhotos(); track photo.id; let i = $index) {
-                  <div class="col-md-2 col-4">
-                    <div class="position-relative rounded-3 overflow-hidden border cursor-pointer shadow-sm"[class.border-danger]="photo.isMain"[style.border-width]="photo.isMain ? '3px' : '1px'"
-                         (click)="!photo.isMain ? setExistingAsMain(photo.id) : null">
-                      
-                      <img [src]="photo.url" class="w-100 object-fit-cover" style="height: 120px;">
-                      
-                      @if (photo.isMain) {
-                        <span class="badge bg-danger position-absolute top-0 start-0 m-1" style="font-size: 0.6rem;">MAIN</span>
-                      } @else {
-                        <div class="photo-overlay d-flex align-items-center justify-content-center">
-                           <i class="bi bi-star text-white"></i>
-                        </div>
-                      }
+                  <!-- 🟢 ثبتنا العرض بـ 150px والطول بـ 120px عشان يبقوا مربعات متناسقة جنب بعض -->
+                  <div class="position-relative rounded-3 overflow-hidden border cursor-pointer shadow-sm"
+                       [class.border-danger]="photo.isMain"
+                       [style.border-width]="photo.isMain ? '3px' : '1px'"
+                       (click)="!photo.isMain ? setExistingAsMain(photo.id) : null"
+                       style="width: 150px; height: 120px; flex-shrink: 0;">
+                    
+                    <!-- الصورة مالية المربع بتاعها -->
+                    <img [src]="photo.url" class="w-100 h-100" style="object-fit: cover;">
+                    
+                    @if (photo.isMain) {
+                      <span class="badge bg-danger position-absolute top-0 start-0 m-1" style="font-size: 0.6rem;">MAIN</span>
+                    }
 
-                      <!-- 🟢 زرار تحميل الصورة الفردية -->
-                      <button type="button" class="btn btn-dark btn-sm rounded-circle position-absolute bottom-0 end-0 m-1 shadow"
-                              style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; opacity: 0.85;"
-                              (click)="downloadPhoto(photo.url, i, $event)" title="Download Image">
-                        <i class="bi bi-download"></i>
+                    <!-- 🟢 زرار الحذف الجديد للصور القديمة -->
+                    @if (!photo.isMain) {
+                      <button type="button" class="btn border-0 p-0 position-absolute top-0 end-0 m-1" 
+                              style="z-index: 10;" 
+                              (click)="deleteExistingPhoto(photo.id, i, $event)" title="Delete Photo">
+                        <i class="bi bi-x-circle-fill text-danger bg-white rounded-circle d-flex align-items-center justify-content-center" style="font-size: 1.2rem; width: 22px; height: 22px;"></i>
                       </button>
+                    }
 
-                    </div>
+                    <!-- زرار تحميل الصورة الفردية -->
+                    <button type="button" class="btn btn-dark btn-sm rounded-circle position-absolute bottom-0 end-0 m-1 shadow"
+                            style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; opacity: 0.85;"
+                            (click)="downloadPhoto(photo.url, i, $event)" title="Download Image">
+                      <i class="bi bi-download"></i>
+                    </button>
+
                   </div>
                 }
               </div>
-            }
             <div class="upload-box border border-dashed rounded-4 p-4 text-center bg-light mb-4 shadow-sm">
               <i class="bi bi-cloud-arrow-up fs-1 text-danger d-block mb-2"></i>
               <input type="file" (change)="onFileSelect($event)" multiple class="form-control mx-auto" style="max-width: 400px;" accept="image/*">

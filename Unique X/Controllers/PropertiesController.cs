@@ -219,5 +219,19 @@ namespace Unique_X.Controllers
 
             return Ok(history);
         }
+
+        [HttpDelete("{propertyId}/photos/{photoId}")]
+        [Authorize] // لازم يكون عامل لوجن
+        public async Task<IActionResult> DeletePropertyPhoto(int propertyId, int photoId)
+        {
+            var brokerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var result = await _propertiesService.DeletePhotoAsync(propertyId, photoId, brokerId);
+
+            if (!result)
+                return BadRequest("Failed to delete photo. It may not exist, or you cannot delete the MAIN photo.");
+
+            return Ok(new { message = "Photo deleted successfully" });
+        }
     }
 }

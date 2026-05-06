@@ -15,5 +15,7 @@ namespace Unique_X.Services.Interface
 
         Task<bool> MarkAsSoldAsync(int id, string brokerId);
         Task<bool> SetExistingPhotoAsMainAsync(int propertyId, int photoId, string brokerId);
+
+        Task<bool> DeletePhotoAsync(int propertyId, int photoId, string brokerId);
     }
 }
