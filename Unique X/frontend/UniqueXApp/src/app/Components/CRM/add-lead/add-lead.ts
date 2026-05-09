@@ -1,9 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
 import { Router } from '@angular/router';
+import { AdminService } from '../../../Services/admin';
+import { forkJoin } from 'rxjs';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-add-lead',
@@ -13,6 +16,7 @@ import { Router } from '@angular/router';
 })
 export class AddLeadComponent implements OnInit {
   private crmService = inject(CrmService);
+  private adminService = inject(AdminService);
   private fb = inject(FormBuilder);
   private alertService = inject(AlertService);
   public router = inject(Router);
@@ -20,6 +24,14 @@ export class AddLeadComponent implements OnInit {
   leadForm!: FormGroup;
   currentBrokerId: string = '';
   campaignsList: any[] =[];
+
+   isAdmin = signal<boolean>(false);
+  brokersList = signal<any[]>([]);
+  selectedBulkBroker: string = '';
+  bulkFile: File | null = null;
+
+  importedLeads = signal<any[]>([]);
+  masterBrokerId = signal<string>('');
 
   // الداتا الثابتة للمناطق والمشاريع
   zones =[
@@ -64,12 +76,20 @@ export class AddLeadComponent implements OnInit {
     const userString = localStorage.getItem('user');
     if (userString) {
       const user = JSON.parse(userString);
-      this.currentBrokerId = user.id || user.userId || '';
+      this.currentBrokerId = user.id || user.userId || ''; 
+      
+      if (user.roles && user.roles.includes('Admin')) {
+        this.isAdmin.set(true);
+        this.adminService.getAllUsers().subscribe(users => {
+          this.brokersList.set(users.filter((u: any) => u.userType === 1));
+        });
+      }
     }
-
+    
     this.crmService.getCampaigns().subscribe(data => this.campaignsList = data);
     this.initForm();
     this.setupDynamicFields();
+  
   }
 
   initForm() {
@@ -77,7 +97,7 @@ export class AddLeadComponent implements OnInit {
       fullName: ['', Validators.required],
       phoneNumber: ['', Validators.required],
       email: [''],
-      brokerId: [this.currentBrokerId, Validators.required],
+      brokerId:[this.isAdmin() ? '' : this.currentBrokerId, Validators.required],
       leadStatusId: [1, Validators.required], // الـ 26 حالة موجودين في الـ HTML
       propertyType: ['Apartment', Validators.required],
       purpose: ['Resale', Validators.required], // القيمة الافتراضية
@@ -190,32 +210,185 @@ export class AddLeadComponent implements OnInit {
       this.alertService.showLoading('Adding new lead...');
       
       const submitData = { ...this.leadForm.value };
-      
-      // تحويل المصفوفة لنص عشات تتبعت للباك إند صح
       submitData.selectedRegions = submitData.selectedRegions.join(', ');
       submitData.selectedProjects = submitData.selectedProjects.join(', ');
 
-      // 👇 الجزء الجديد لحل مشكلة الـ 400 Bad Request
-      // تحويل النص الفاضي لـ null عشان الداتابيز تقبله كأرقام
-      if (submitData.campaignId === '') {
-        submitData.campaignId = null;
-      }
-      if (submitData.zoneId === '') {
-        submitData.zoneId = null;
-      }
+      submitData.totalAmount = submitData.totalAmount ? parseInt(String(submitData.totalAmount).replace(/,/g, ''), 10) : 0;
+      submitData.downPayment = submitData.downPayment ? parseInt(String(submitData.downPayment).replace(/,/g, ''), 10) : 0;
+      submitData.installmentYears = submitData.installmentYears ? parseInt(String(submitData.installmentYears).replace(/,/g, ''), 10) : 0;
+
+      if (submitData.campaignId === '') submitData.campaignId = null;
+      if (submitData.zoneId === '') submitData.zoneId = null;
 
       this.crmService.createLead(submitData).subscribe({
-        next: () => {
+        next: (res) => {
           this.alertService.close();
-          this.alertService.success('Lead added successfully!');
-          this.router.navigate(['/crm/leads']);
+          
+          // 🟢 السحر هنا: فحص التكرار
+          if (res.isDuplicate) {
+            const swal = (window as any).Swal;
+            swal.fire({
+              title: 'Duplicate Lead Detected!',
+              text: 'This phone number already exists. The lead has been saved but requires Admin approval before you can manage it in your pipeline.',
+              icon: 'info',
+              confirmButtonColor: '#ef3341'
+            }).then(() => {
+              this.router.navigate(['/crm/leads']);
+            });
+          } else {
+            this.alertService.success('Lead added successfully!');
+            this.router.navigate(['/crm/leads']);
+          }
         },
-        error: (err) => {
-          console.error(err); // هيطبعلك تفاصيل الإيرور لو حصل تاني
+        error: () => {
           this.alertService.close();
           this.alertService.error('Failed to add lead.');
         }
       });
     }
+  }
+
+
+  // 👇 الدالة السحرية لقراءة الإكسيل والـ CSV (مضادة للتكرار)
+  // 👇 الدالة السحرية لقراءة الإكسيل والـ CSV (معدلة ومحمية)
+  onFileSelect(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const validExts = ['.csv', '.xlsx', '.xls'];
+    const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    
+    if (!validExts.includes(fileExt)) {
+      this.alertService.error('Invalid file format. Please upload an Excel (.xlsx) or CSV file.', 'Wrong File');
+      event.target.value = ''; 
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        
+        // 🟢 استخدمنا XLSX المستوردة فوق مباشرة بدل (window as any)
+        const workbook = XLSX.read(data, { type: 'array' }); 
+        
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        const parsed =[];
+        const phoneSet = new Set<string>(); // لمنع التكرار
+
+        for (let i = 1; i < json.length; i++) {
+          const row = json[i];
+          
+          if (row.length > 0 && row[0]) {
+            const phone = row[1]?.toString().trim() || '';
+
+            if (phone && !phoneSet.has(phone)) {
+              phoneSet.add(phone); 
+              
+              parsed.push({
+                fullName: row[0]?.toString().trim() || '',
+                phoneNumber: phone,
+                email: row[2]?.toString().trim() || '',
+                propertyType: row[3]?.toString().trim() || 'Apartment',
+                brokerId: '', // لسه الأدمن هيختاره
+                
+                // قيم افتراضية 
+                leadStatusId: 1, 
+                purpose: 'Sale', 
+                paymentMethod: 'Cash',
+                totalAmount: 0, 
+                notes: 'Imported from Excel',
+                campaignId: null,
+                zoneId: null,
+                referredBy: '',
+                preferredLocation: '',
+                selectedRegions: '',
+                selectedProjects: '',
+                downPayment: 0,
+                installmentYears: 0
+              });
+            }
+          }
+        }
+        
+        this.importedLeads.set(parsed); 
+        event.target.value = ''; 
+
+      } catch (error) {
+        console.error('Excel Parsing Error:', error);
+        this.alertService.error('Failed to read the file. Ensure it is a valid Excel/CSV file.');
+      }
+    };
+    
+    reader.readAsArrayBuffer(file);
+  }
+  // دالة لتطبيق بروكر واحد على كل الجدول بضغطة زرار
+  applyMasterBroker() {
+    const broker = this.masterBrokerId();
+    if (!broker) return;
+    
+    const updated = this.importedLeads().map(l => ({ ...l, brokerId: broker }));
+    this.importedLeads.set(updated);
+  }
+
+  // حذف صف من الجدول قبل الحفظ
+  removeImportedRow(index: number) {
+    const current = [...this.importedLeads()];
+    current.splice(index, 1);
+    this.importedLeads.set(current);
+  }
+
+  // حفظ كل الجدول للداتابيز
+  saveImportedLeads() {
+    const leads = this.importedLeads();
+    
+    // التأكد إن كل صف واخد بروكر
+    const unassigned = leads.filter(l => !l.brokerId);
+    if (unassigned.length > 0) {
+      this.alertService.error(`Please assign a broker to all leads. ${unassigned.length} leads are missing a broker.`);
+      return;
+    }
+
+    this.alertService.showLoading('Saving all leads...');
+    
+    // بنجهز كل الطلبات
+    const requests = leads.map(leadData => this.crmService.createLead(leadData));
+
+    // forkJoin بتبعتهم كلهم للباك إند وتستنى يخلصوا كلهم
+    forkJoin(requests).subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success(`${leads.length} Leads imported successfully!`);
+        this.importedLeads.set([]); // تفريغ الجدول
+      },
+      error: (err) => {
+        this.alertService.close();
+        console.error(err);
+        this.alertService.error('An error occurred while saving some leads.');
+      }
+    });
+  }
+
+  uploadBulk() {
+    if (!this.bulkFile || !this.selectedBulkBroker) {
+      this.alertService.error('Please select a file and a broker.');
+      return;
+    }
+    this.alertService.showLoading('Uploading Leads...');
+    this.crmService.uploadBulkLeads(this.bulkFile, this.selectedBulkBroker).subscribe({
+      next: (res) => {
+        this.alertService.close();
+        this.alertService.success(res.message);
+        this.bulkFile = null;
+        this.selectedBulkBroker = '';
+      },
+      error: () => {
+        this.alertService.close();
+        this.alertService.error('Failed to upload leads.');
+      }
+    });
   }
 }

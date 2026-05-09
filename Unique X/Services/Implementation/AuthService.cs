@@ -111,6 +111,7 @@ namespace Unique_X.Services
                 PhoneNumber = user.PhoneNumber,
                 Roles = userRoles.ToList(),
                 ExpiresOn = token.ValidTo,
+                UserType = user.UserType,
                 ProfileImageUrl = user.ProfileImageUrl
             };
         }

@@ -27,6 +27,10 @@
         <option *ngFor="let stage of stages" [value]="stage.id">{{ stage.name }}</option>
       </select>
 
+      <button *ngIf="isAdmin()" class="btn btn-warning fw-bold shadow-sm text-dark" data-bs-toggle="modal" data-bs-target="#transferModal">
+        <i class="bi bi-arrow-left-right me-1"></i> Transfer Lead
+      </button>
+
       <button class="btn btn-danger fw-bold shadow-sm" [routerLink]="['/crm/leads', leadId, 'edit']">
         <i class="bi bi-pencil-square me-1"></i> Edit Request
       </button>
@@ -186,14 +190,13 @@
       </div>
 
       <!-- زراير إضافة زيارة ومهمة -->
-      <div class="d-flex gap-3 mt-4 mb-4">
+      <div class="d-flex gap-3 mt-4 mb-4" *ngIf="!isAdmin()">
         <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#visitModal" (click)="openNewModal('visit')">
           <i class="bi bi-calendar-check me-2"></i> Schedule Visit
         </button>
         <button class="btn btn-dark rounded-pill px-4 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#activityModal" (click)="openNewModal('activity')">
           <i class="bi bi-telephone-plus me-2"></i> Log Call
         </button>
-        <!-- 👇 الزرار العمومي الجديد -->
         <button class="btn btn-outline-danger rounded-pill px-4 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#generalNoteModal">
           <i class="bi bi-chat-text-fill me-2"></i> Log Feedback
         </button>
@@ -573,6 +576,34 @@
           </div>
           <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold" [disabled]="actionFeedbackForm.invalid">Save Outcome</button>
         </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal: Transfer Lead (للأدمن فقط) -->
+<div class="modal fade" id="transferModal" tabindex="-1" aria-hidden="true" *ngIf="isAdmin()">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 bg-warning text-dark rounded-top-4 p-4">
+        <h5 class="modal-title fw-bold"><i class="bi bi-arrow-left-right me-2"></i>Transfer Lead</h5>
+        <button type="button" class="btn-close" id="closeTransferModal" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        <p class="text-muted small mb-3">Select a new broker for <b>{{ leadInfo().fullName }}</b>. All pending tasks and visits will be transferred automatically.</p>
+        <div class="mb-4">
+          <label class="form-label fw-bold text-dark">Assign To</label>
+          <select class="form-select form-select-lg border-0 shadow-sm rounded-3 fw-bold text-primary" [ngModel]="selectedTransferBroker()" (ngModelChange)="selectedTransferBroker.set($event)">
+            <option value="">-- Choose New Broker --</option>
+            <option *ngFor="let b of brokersList()" [value]="b.id" [disabled]="b.id === leadInfo().brokerId">
+              {{ b.firstName }} {{ b.lastName }} {{ b.id === leadInfo().brokerId ? '(Current Broker)' : '' }}
+            </option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-warning btn-lg w-100 rounded-pill fw-bold shadow-sm" [disabled]="!selectedTransferBroker()" (click)="submitTransfer()">
+          Confirm Transfer
+        </button>
       </div>
     </div>
   </div>

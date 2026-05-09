@@ -88,4 +88,42 @@ forgotPassword(email: string): Observable<any> {
   resetPassword(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}reset-password`, data);
   }
+
+  readonly ALLOWED_CRM_BROKERS =[
+    'e08be7c4-b9bd-47bd-af4c-a342e40ae138', // hussien ehab
+    'eb1e66ec-7f68-4b96-a06a-9a7b552f13e6', // alaa ashraf
+    'ec5711a3-e0f7-46a6-8005-1e35b2a83340', // Abdelrahman ashraf
+    'ed4dd2c3-cdf6-441d-a9a2-c152ff2bb420', // mohammed Khaled
+    'f578d13d-463c-4e0f-b7ba-5085f40c45da', // mohammed ali
+    'fad6773a-1817-438f-823b-ad506fa24bf5', // nadia salem
+    '6aca6241-1f79-46d3-8b7a-f201fe74aed5', // Hager I
+    '963361c9-5ebd-4f85-b64a-a6cb735f880f', // Mostafa elsayed
+    '9c380943-0426-44e4-8c67-0483757146aa', // yassmin mohammed
+    '371bc67c-e4dc-43e6-9179-4649ea029d06', // Ibrahim Mahmoud
+    '4ea34b6d-dec4-4da3-af6e-cc0f40abf52b', // belal el sayed
+    '55ef8463-f1f4-4df9-baaf-8dff22cdd749', // ahmed Ramadan 
+    '0e831dbd-0759-47ed-9c04-228b035e9dfd', // Mahmoud ali
+    '181a5dca-351a-4591-92b0-21bf8f0d8ec7', // hager mohammed 
+    '1cd68260-56f3-4170-acc2-6006f07a70db', // Menna ameen
+    '31231037-96e7-405a-ab41-9894c91c5563', // mayar elkhalil
+    '5a48b6c0-d4ee-4559-a9b1-3791a155b3c4'  // Tarek test
+  ];
+
+  // 👇 2. دالة الفحص (بتسمح للأدمن وللبروكرز اللي في القائمة بس)
+  isAllowedToOpenCrm(): boolean {
+    const userString = localStorage.getItem('user');
+    if (!userString) return false;
+    
+    const user = JSON.parse(userString);
+    const roles = user.roles ||[];
+    
+    // لو أدمن، دايماً مسموحله يدخل
+    if (roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin') {
+      return true;
+    }
+
+    // لو بروكر، نفحص هل الـ ID بتاعه موجود في القائمة ولا لأ
+    const userId = user.id || user.userId;
+    return this.ALLOWED_CRM_BROKERS.includes(userId);
+  }
 }

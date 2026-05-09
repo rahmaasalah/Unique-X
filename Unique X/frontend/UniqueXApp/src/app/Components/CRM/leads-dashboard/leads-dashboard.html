@@ -49,10 +49,26 @@
             style="min-height: 150px;">
             
             <!-- كارت العميل -->
-            <div class="lead-card bg-white p-3 mb-2 rounded-3 shadow-sm border-start border-4 border-danger" *ngFor="let lead of col.leads" cdkDrag>
+            <div class="lead-card bg-white p-3 mb-2 rounded-3 shadow-sm border-start border-4 border-danger" 
+                 *ngFor="let lead of col.leads" 
+                 [hidden]="!isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate"
+                 cdkDrag>
               <div class="fw-bold mb-1 text-dark">{{ lead.fullName }}</div>
               
               <div class="text-muted small mb-2"><i class="bi bi-telephone-fill me-1"></i> {{ lead.phoneNumber }}</div>
+
+              <div *ngIf="lead.isDuplicate && !lead.isApprovedDuplicate" class="mb-2">
+                <span class="badge bg-danger rounded-pill px-2 py-1 shadow-sm w-100 text-center mb-1" style="font-size: 0.65rem;">
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i> Pending Duplicate
+                </span>
+                <button *ngIf="isAdmin()" class="btn btn-sm btn-success rounded-pill w-100 fw-bold" style="font-size: 0.7rem;" (click)="approveDuplicate(lead.id)">
+                  Approve Lead
+                </button>
+              </div>
+
+              <div class="text-primary small fw-bold mb-2 pb-2 border-bottom" *ngIf="isAdmin()">
+                <i class="bi bi-person-badge-fill me-1"></i> Broker: {{ lead.brokerName }}
+              </div>
               
               <!-- 🟢 التعديل: تجميع (الحملة، نوع العقار، الغرض) في بادجات شيك جنب بعض -->
               <div class="d-flex flex-wrap gap-1 mb-2">
@@ -74,7 +90,7 @@
               </div>
 
               <div class="fw-bold text-success small" *ngIf="lead.totalAmount > 0">
-                  <i class="bi bi-wallet2"></i> {{ (lead.totalAmount) | number:'1.1-2' }}M
+                  <i class="bi bi-wallet2"></i> {{ (lead.totalAmount) | number:'1.1-1' }}M
                 </div>
               
 
@@ -157,7 +173,9 @@
           <thead class="table-light">
             <tr>
               <th class="ps-4">Client</th>
-              <th>Stage (Status)</th>
+              <th *ngIf="isAdmin()">Broker</th>
+              <th>Stage</th>
+              <th>Activity Stats</th>
               <th>Campaign</th>
               <th>Zone</th>
               <th>Property Info</th>
@@ -169,13 +187,31 @@
           </thead>
           <tbody>
             @for (lead of filteredLeadsForList(); track lead.id) {
-              <tr>
+             <tr [ngClass]="{'bg-danger-subtle': lead.isDuplicate && !lead.isApprovedDuplicate}">
                 <td class="ps-4">
                   <div class="fw-bold text-dark">{{ lead.fullName }}</div>
                   <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ lead.phoneNumber }}</small>
+                  <!-- رسالة التكرار -->
+                  <div *ngIf="lead.isDuplicate && !lead.isApprovedDuplicate" class="text-danger small fw-bold mt-1">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Pending Duplicate
+                  </div>
+                </td>
+
+                 <td *ngIf="isAdmin()">
+                  <span class="fw-bold text-primary small"><i class="bi bi-person-badge-fill me-1"></i>{{ lead.brokerName }}</span>
                 </td>
                 
                 <td><span class="badge bg-dark">{{ lead.statusName }}</span></td>
+
+                <td>
+                  <div class="d-flex flex-column gap-1" style="font-size: 0.75rem;">
+                    <span class="text-muted fw-bold"><i class="bi bi-telephone-fill text-dark me-1"></i> Calls: {{ lead.activitiesCount || 0 }}</span>
+                    <span class="text-muted fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Visits: {{ lead.visitsCount || 0 }}</span>
+                    <span *ngIf="lead.closedDealsCount > 0" class="badge bg-success rounded-pill mt-1 w-auto d-inline-block">
+                      <i class="bi bi-check-circle-fill me-1"></i> {{ lead.closedDealsCount }} Closed Deal(s)
+                    </span>
+                  </div>
+                </td>
                 
                 <td>
                   <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm" style="font-size: 0.7rem;">
@@ -193,21 +229,28 @@
                   </div>
                 </td>
                 
-                <td class="fw-bold text-success">
-                  {{ lead.totalAmount > 0 ? (lead.totalAmount | currency:'EGP ') : 'N/A' }}
+                <td class="fw-bold text-success text-nowrap">
+                  {{ lead.totalAmount > 0 ? 'EGP ' + (lead.totalAmount | number:'1.0-0') : 'N/A' }}
                 </td>
 
-                <td><div class="small fw-bold text-dark">{{ lead.createdAt | date:'mediumDate' }}</div></td>
+                <td class="text-nowrap">
+                  <div class="small fw-bold text-dark">{{ lead.createdAt | date:'mediumDate' }}</div>
+                </td>
                 
-                <td>
+                <td class="text-nowrap">
                   <div class="small fw-bold text-danger bg-danger-subtle px-2 py-1 rounded d-inline-block">
                     <i class="bi bi-clock-history me-1"></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
                   </div>
                 </td>
 
                 <td class="text-end pe-4">
-                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"[routerLink]="['/crm/leads', lead.id]">
-                    Client File &rarr;
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" [routerLink]="['/crm/leads', lead.id]">
+                    Details &rarr;
+                  </button>
+                  <button *ngIf="isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate" 
+                          class="btn btn-sm btn-success rounded-pill px-3 fw-bold me-2 shadow-sm" 
+                          (click)="approveDuplicate(lead.id)">
+                    Approve
                   </button>
                 </td>
               </tr>
@@ -220,4 +263,38 @@
     </div>
   }
 
+</div>
+
+
+
+<!-- 🟢 Modal: Quick Request Details (يظهر للأدمن فقط) -->
+<div class="modal fade" id="requestModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4" *ngIf="selectedRequest() as req">
+      <div class="modal-header border-0 bg-primary text-white rounded-top-4 p-4">
+        <h5 class="modal-title fw-bold"><i class="bi bi-card-list me-2"></i>Client Request Overview</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">{{ req.fullName }}'s Requirements</h6>
+        <div class="row g-3">
+          <div class="col-6">
+            <span class="d-block small text-muted fw-bold text-uppercase">Property Type</span>
+            <span class="fw-bold text-dark fs-6">{{ req.propertyType || '-' }}</span>
+          </div>
+          <div class="col-6">
+            <span class="d-block small text-muted fw-bold text-uppercase">Purpose</span>
+            <span class="badge bg-primary-subtle text-primary-emphasis border px-2 py-1">{{ req.purpose || '-' }}</span>
+          </div>
+          <div class="col-12 mt-3">
+            <span class="d-block small text-muted fw-bold text-uppercase">Budget</span>
+            <span class="fw-bold text-success fs-4">{{ req.totalAmount > 0 ? (req.totalAmount | currency:'EGP ') : 'Not Specified' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 p-3 bg-white rounded-bottom-4">
+        <button type="button" class="btn btn-secondary rounded-pill px-5 fw-bold w-100" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>

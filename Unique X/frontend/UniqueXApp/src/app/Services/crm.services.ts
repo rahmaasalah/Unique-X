@@ -22,9 +22,16 @@ export class CrmService {
 
   // 2. جلب الـ Leads
   getLeads(brokerId?: string, statusId?: number): Observable<LeadResponseDto[]> {
-    let url = `${this.apiUrl}/leads?`;
-    if (brokerId) url += `brokerId=${brokerId}&`;
-    if (statusId) url += `statusId=${statusId}`;
+    let url = `${this.apiUrl}/leads`;
+    let params =[];
+    
+    if (brokerId) params.push(`brokerId=${brokerId}`);
+    if (statusId) params.push(`statusId=${statusId}`);
+    
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
+    
     return this.http.get<LeadResponseDto[]>(url);
   }
 
@@ -144,5 +151,20 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
   // تسجيل إن البروكر داس على الترشيح
   markPropertyAsProposed(leadId: number, propertyId: number): Observable<any> {
     return this.http.put(`${this.apiUrl}/leads/${leadId}/mark-proposed/${propertyId}`, {});
+  }
+
+  // رفع ملف CSV
+  uploadBulkLeads(file: File, brokerId: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/leads/upload-bulk?brokerId=${brokerId}`, formData);
+  }
+
+  transferLead(leadId: number, newBrokerId: string, adminId: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/leads/${leadId}/transfer?adminId=${adminId}`, { newBrokerId });
+  }
+
+  approveDuplicateLead(leadId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/leads/${leadId}/approve-duplicate`, {});
   }
 }

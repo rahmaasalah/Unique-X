@@ -150,6 +150,8 @@ namespace Unique_X.Controllers.CRM
                     CampaignName = l.Campaign != null ? l.Campaign.Name : "No Campaign",
                     CreatedAt = l.CreatedAt,
                     UpdatedAt = _context.LeadStatusHistories.Where(h => h.LeadId == l.Id).Max(h => (DateTime?)h.ChangedAt) ?? l.CreatedAt,
+                    IsDuplicate = l.IsDuplicate,
+                    IsApprovedDuplicate = l.IsApprovedDuplicate,
 
                     PropertyType = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PropertyType ?? "",
                     Purpose = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).Purpose ?? "",

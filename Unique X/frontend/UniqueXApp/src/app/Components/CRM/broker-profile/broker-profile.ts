@@ -4,6 +4,8 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms'; // 👈 استيراد FormsModule مهم للفلاتر
 import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
+import { AuthService } from '../../../Services/auth';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-broker-profile',
@@ -15,12 +17,17 @@ import { AlertService } from '../../../Services/alert';
 export class BrokerProfileComponent implements OnInit {
   private crmService = inject(CrmService);
   private alertService = inject(AlertService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   brokerName = signal<string>('');
   brokerImage = signal<string>('https://cdn-icons-png.flaticon.com/512/149/149071.png');
   
   profileData = signal<any>(null);
   campaignsList = signal<any[]>([]); // 👈 لستة الحملات للفلتر
+
+  isAdmin = signal<boolean>(false);
+  currentBrokerId: string = '';
 
   // 🟢 الفلاتر
  searchQuery = signal<string>('');
@@ -44,6 +51,11 @@ export class BrokerProfileComponent implements OnInit {
     const data = this.profileData();
     if (!data || !data.leads) return[];
     let leads = data.leads;
+
+    if (!this.isAdmin()) {
+      leads = leads.filter((l: any) => !(l.isDuplicate && !l.isApprovedDuplicate));
+    }
+
 
     const q = this.searchQuery().toLowerCase();
     const camp = this.filterCampaign();
@@ -127,35 +139,85 @@ export class BrokerProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+
+    if (!this.authService.isAllowedToOpenCrm()) {
+      this.router.navigate(['/home']);
+      return; // وقف تنفيذ باقي الكود
+    }
     const userString = localStorage.getItem('user');
+    let fetchId = '';
+
     if (userString) {
       const user = JSON.parse(userString);
-      this.brokerName.set(user.username || 'Broker Profile');
-      if (user.profileImageUrl) this.brokerImage.set(user.profileImageUrl);
+      this.currentBrokerId = user.id || user.userId || '';
+      
+      const roles = user.roles ||[];
+      const isUserAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
 
-      const brokerId = user.id || user.userId || '';
-      if (brokerId) {
-        this.loadProfileData(brokerId);
+      if (isUserAdmin) {
+        this.isAdmin.set(true);
+        this.brokerName.set('Admin Workspace');
+        fetchId = ''; 
+      } else {
+        this.isAdmin.set(false);
+        this.brokerName.set(user.username || 'Broker Profile');
+        fetchId = this.currentBrokerId;
       }
+      
+      if (user.profileImageUrl) this.brokerImage.set(user.profileImageUrl);
     }
     
-    // تحميل الحملات عشان الفلتر
+    this.loadProfileData(fetchId);
     this.crmService.getCampaigns().subscribe(data => this.campaignsList.set(data));
   }
 
+
   loadProfileData(brokerId: string) {
-    this.crmService.getBrokerProfileData(brokerId).subscribe({
-      next: (data) => {
-        // 👇 نفس الحل لضبط التوقيت في صفحة البروفايل
-        if (data && data.leads) {
-          data.leads.forEach((lead: any) => {
-            if (lead.createdAt && !lead.createdAt.endsWith('Z')) lead.createdAt += 'Z';
-            if (lead.updatedAt && !lead.updatedAt.endsWith('Z')) lead.updatedAt += 'Z';
-          });
+    if (this.isAdmin()) {
+      this.crmService.getLeads('').subscribe({
+        next: (data) => {
+          if (data) {
+            data.forEach((lead: any) => {
+              if (lead.createdAt && !lead.createdAt.endsWith('Z')) lead.createdAt += 'Z';
+              if (lead.updatedAt && !lead.updatedAt.endsWith('Z')) lead.updatedAt += 'Z';
+            });
+          }
+          this.profileData.set({ leads: data, visits: [], activities:[] });
+        },
+        error: (err) => console.error('Error fetching admin data', err)
+      });
+    } 
+    else {
+      this.crmService.getBrokerProfileData(brokerId).subscribe({
+        next: (data) => {
+          if (data && data.leads) {
+            data.leads.forEach((lead: any) => {
+              if (lead.createdAt && !lead.createdAt.endsWith('Z')) lead.createdAt += 'Z';
+              if (lead.updatedAt && !lead.updatedAt.endsWith('Z')) lead.updatedAt += 'Z';
+            });
+          }
+          this.profileData.set(data);
+        },
+        error: (err) => console.error('Error fetching profile data', err)
+      });
+    }
+  }
+
+  // 👇 دالة موافقة الأدمن على العميل المتكرر (زي ما عملناها في البايبلاين)
+  approveDuplicate(leadId: number) {
+    this.alertService.confirm('Approve this duplicate lead?', () => {
+      this.alertService.showLoading('Approving...');
+      this.crmService.approveDuplicateLead(leadId).subscribe({
+        next: () => {
+          this.alertService.close();
+          this.alertService.success('Lead Approved!');
+          this.loadProfileData(''); // ريفريش لبيانات الأدمن
+        },
+        error: () => {
+          this.alertService.close();
+          this.alertService.error('Failed to approve lead.');
         }
-        this.profileData.set(data);
-      },
-      error: (err) => console.error('Error fetching profile data', err)
+      });
     });
   }
 

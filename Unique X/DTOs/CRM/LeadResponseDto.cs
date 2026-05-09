@@ -23,5 +23,12 @@
         public string PaymentMethod { get; set; }
         public decimal? DownPayment { get; set; }
         public int? InstallmentYears { get; set; }
+
+        public int VisitsCount { get; set; }
+        public int ActivitiesCount { get; set; }
+
+        public bool IsDuplicate { get; set; }
+        public bool IsApprovedDuplicate { get; set; }
+        public int ClosedDealsCount { get; set; }
     }
 }

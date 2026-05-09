@@ -23,15 +23,15 @@
   <ul class="nav nav-tabs fw-bold mb-4" id="profileTabs" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link active text-dark" id="leads-tab" data-bs-toggle="tab" data-bs-target="#leads" type="button" role="tab">
-        <i class="bi bi-people-fill text-danger me-2"></i> My Leads ({{ profileData().leads.length }})
+        <i class="bi bi-people-fill text-danger me-2"></i> {{ isAdmin() ? 'All Clients' : 'My Leads' }} ({{ profileData().leads.length }})
       </button>
     </li>
-    <li class="nav-item" role="presentation">
+    <li class="nav-item" role="presentation" *ngIf="!isAdmin()">
       <button class="nav-link text-dark" id="visits-tab" data-bs-toggle="tab" data-bs-target="#visits" type="button" role="tab">
         <i class="bi bi-geo-alt-fill text-success me-2"></i> Visits ({{ profileData().visits.length }})
       </button>
     </li>
-    <li class="nav-item" role="presentation">
+    <li class="nav-item" role="presentation" *ngIf="!isAdmin()">
       <button class="nav-link text-dark" id="activities-tab" data-bs-toggle="tab" data-bs-target="#activities" type="button" role="tab">
         <i class="bi bi-telephone-fill text-warning me-2"></i> Calls ({{ profileData().activities.length }})
       </button>
@@ -115,9 +115,12 @@
           <thead class="table-light">
             <tr>
               <th class="ps-3">Client</th>
+              <th *ngIf="isAdmin()">Broker</th>
               <th>Stage</th>
+              <th *ngIf="isAdmin()">Activity Stats</th> 
               <th>Campaign</th>
               <th>Zone</th>
+              <th *ngIf="isAdmin()">Property Info</th>
               <th>Budget</th>
               <th>Created Date</th>
               <th>Last Update</th>
@@ -129,15 +132,28 @@
               <td class="ps-3" style="max-width: 280px;"> <!-- 🟢 حددنا عرض أقصى عشان الكلام الطويل ينزل سطر -->
                 <div class="fw-bold text-dark">{{ lead.fullName }}</div>
                 <small class="text-muted d-block mb-1"><i class="bi bi-telephone me-1"></i>{{ lead.phoneNumber }}</small>
+
+                <div *ngIf="isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate" class="text-danger small fw-bold mt-1">
+                  <i class="bi bi-exclamation-triangle-fill"></i> Pending Duplicate
+                </div>
                 
                 <!-- 🟢 كارت الفيدباك الصغير تحت الرقم -->
-                <div *ngIf="lead.generalFeedback" class="mt-2 p-2 bg-light border rounded-3 small text-wrap text-break lh-sm">
+                <div *ngIf="!isAdmin() && lead.generalFeedback" class="mt-2 p-2 bg-light border rounded-3 small text-wrap text-break lh-sm">
                   <span class="text-danger fw-bold d-block mb-1"><i class="bi bi-chat-quote-fill me-1"></i>Feedback:</span>
-                  <!-- white-space: pre-line بتخلي الـ Enters اللي كتبناها في الباك إند تنزل سطور بجد -->
                   <span class="text-muted" style="white-space: pre-line; font-size: 0.75rem;">{{ lead.generalFeedback }}</span>
                 </div>
               </td>
+               <td *ngIf="isAdmin()">
+                <span class="fw-bold text-primary small"><i class="bi bi-person-badge-fill me-1"></i>{{ lead.brokerName }}</span>
+              </td>
               <td><span class="badge bg-dark">{{ lead.statusName }}</span></td>
+
+              <td *ngIf="isAdmin()">
+                <div class="d-flex flex-column gap-1" style="font-size: 0.75rem;">
+                  <span class="text-muted fw-bold"><i class="bi bi-telephone-fill text-dark me-1"></i> Calls: {{ lead.activitiesCount || 0 }}</span>
+                  <span class="text-muted fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Visits: {{ lead.visitsCount || 0 }}</span>
+                </div>
+              </td>
               <td>
                 <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-3 py-2 shadow-sm">
                   <i class="bi" [ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
@@ -145,9 +161,15 @@
                 </span>
               </td>
               <td><span class="fw-bold small text-secondary">{{ lead.zoneName }}</span></td>
+
+              <td *ngIf="isAdmin()">
+                <div class="fw-bold small text-dark">{{ lead.propertyType }}</div>
+                <div class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill mt-1" style="font-size: 0.65rem;">{{ lead.purpose }}</div>
+              </td>
               
               <td>
-                <div class="fw-bold text-success fs-6">{{ lead.totalAmount | currency:'EGP ' }}</div>
+                <div class="fw-bold text-success text-nowrap">
+                  {{ lead.totalAmount > 0 ? 'EGP ' + (lead.totalAmount | number:'1.0-0') : 'N/A' }}</div>
                 <div class="mt-1" *ngIf="lead.paymentMethod">
                   <span class="badge bg-light text-dark border">{{ lead.paymentMethod }}</span>
                   <div *ngIf="lead.paymentMethod === 'Installment'" class="mt-1 text-muted" style="font-size: 0.65rem; font-weight: 600;">
@@ -157,17 +179,19 @@
                 </div>
               </td>
               
-             <td>
-                <div class="small fw-bold text-dark">{{ lead.createdAt | date:'mediumDate' }}</div>
-              </td>
-              
-              <!-- 5. عمود تاريخ التحديث (ضفنا الوقت بالساعات والدقايق عشان يبان التغيير) -->
-             <td>
+             <td class="text-nowrap"><div class="small fw-bold text-dark">{{ lead.createdAt | date:'mediumDate' }}</div></td>
+              <td class="text-nowrap">
                 <div class="small fw-bold text-danger bg-danger-subtle px-2 py-1 rounded d-inline-block">
                   <i class="bi bi-clock-history me-1"></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
                 </div>
               </td>
-              <td class="text-end pe-3">
+              <td class="text-end pe-3 text-nowrap">
+                <!-- زرار الموافقة للأدمن -->
+                <button *ngIf="isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate" 
+                        class="btn btn-sm btn-success rounded-pill px-3 fw-bold me-2 shadow-sm" 
+                        (click)="approveDuplicate(lead.id)">
+                  Approve
+                </button>
                 <button class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm fw-bold" [routerLink]="['/crm/leads', lead.id]">
                   Client File &rarr;
                 </button>

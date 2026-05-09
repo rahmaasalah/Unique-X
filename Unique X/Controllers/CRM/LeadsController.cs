@@ -26,6 +26,8 @@ namespace Unique_X.Controllers.CRM
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            bool isDuplicate = await _context.Leads.AnyAsync(l => l.PhoneNumber == dto.PhoneNumber);
+
             // 1. إنشاء وحفظ الـ Lead الأساسي
             var newLead = new Lead
             {
@@ -36,6 +38,8 @@ namespace Unique_X.Controllers.CRM
                 CampaignId = dto.CampaignId,
                 LeadStatusId = dto.LeadStatusId,
                 ReferredBy = dto.ReferredBy,
+                IsDuplicate = isDuplicate, // لو متكرر هيبقى True
+                IsApprovedDuplicate = !isDuplicate,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -62,13 +66,18 @@ namespace Unique_X.Controllers.CRM
             _context.LeadRequests.Add(newLeadRequest);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Lead and Request created successfully!", leadId = newLead.Id });
+            return Ok(new
+            {
+                message = "Lead and Request created successfully!",
+                leadId = newLead.Id,
+                isDuplicate = isDuplicate // 👈 السطر ده جديد
+            });
         }
 
-        // 2. Endpoint: عشان البروكر يجيب الـ Leads بتاعته (بالفلاتر)
-        // GET: api/crm/leads?brokerId=123&statusId=5
-        [HttpGet]
-        public async Task<IActionResult> GetLeads([FromQuery] string brokerId, [FromQuery] int? statusId)
+            // 2. Endpoint: عشان البروكر يجيب الـ Leads بتاعته (بالفلاتر)
+            // GET: api/crm/leads?brokerId=123&statusId=5
+            [HttpGet]
+        public async Task<IActionResult> GetLeads([FromQuery] string? brokerId, [FromQuery] int? statusId)
         {
             var query = _context.Leads
                 .Include(l => l.Status)
@@ -93,13 +102,17 @@ namespace Unique_X.Controllers.CRM
                 Id = l.Id,
                 FullName = l.FullName,
                 PhoneNumber = l.PhoneNumber,
-                BrokerName = l.Broker.UserName,
+                BrokerName = l.Broker.FirstName + " " + l.Broker.LastName,
                 StatusId = l.LeadStatusId,
                 GeneralFeedback = l.GeneralFeedback ?? "",
                 StatusName = l.Status.Name,
                 CampaignName = l.Campaign != null ? l.Campaign.Name : "No Campaign",
                 CampaignSource = l.Campaign != null ? l.Campaign.Source : "", // 👈 السطر ده جديد
                 ReferredBy = l.ReferredBy ?? "", // 👈 السطر ده جديد
+                IsDuplicate = l.IsDuplicate,
+                IsApprovedDuplicate = l.IsApprovedDuplicate,
+                // بيحسب كام عميل مسجل بنفس الرقم ده وحالته 19 (Deal Closed)
+                ClosedDealsCount = _context.Leads.Count(c => c.PhoneNumber == l.PhoneNumber && c.LeadStatusId == 19),
                 CreatedAt = l.CreatedAt,
 
                 // 👇 ده السطر اللي بيجيب تاريخ آخر تعديل، ولو مفيش بيجيب تاريخ الإنشاء
@@ -117,7 +130,9 @@ namespace Unique_X.Controllers.CRM
                 // 👇 الحقول المالية الجديدة
                 PaymentMethod = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PaymentMethod ?? "",
                 DownPayment = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).DownPayment,
-                InstallmentYears = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).InstallmentYears
+                InstallmentYears = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).InstallmentYears,
+                VisitsCount = _context.Visits.Count(v => v.LeadId == l.Id),
+                ActivitiesCount = _context.LeadActivities.Count(a => a.LeadId == l.Id)
             }).ToListAsync();
 
             return Ok(leads);
@@ -512,6 +527,117 @@ namespace Unique_X.Controllers.CRM
             }
 
             return Ok();
+        }
+
+        [HttpPost("upload-bulk")]
+        public async Task<IActionResult> UploadBulkLeads(IFormFile file, [FromQuery] string brokerId)
+        {
+            if (file == null || file.Length == 0) return BadRequest("Please upload a valid CSV file.");
+            if (string.IsNullOrEmpty(brokerId)) return BadRequest("Broker ID is required.");
+
+            var newLeadsCount = 0;
+
+            using (var stream = new StreamReader(file.OpenReadStream()))
+            {
+                // قراءة أول سطر (الهيدر) وتجاهله
+                await stream.ReadLineAsync();
+
+                while (!stream.EndOfStream)
+                {
+                    var line = await stream.ReadLineAsync();
+                    var values = line.Split(',');
+
+                    // نتأكد إن السطر فيه على الأقل (الاسم والرقم)
+                    if (values.Length >= 2 && !string.IsNullOrWhiteSpace(values[0]) && !string.IsNullOrWhiteSpace(values[1]))
+                    {
+                        var phone = values[1].Trim();
+
+                        // نتأكد إن العميل ده مش متسجل قبل كده بنفس الرقم
+                        bool isDuplicate = await _context.Leads.AnyAsync(l => l.PhoneNumber == phone);
+                            var newLead = new Lead
+                            {
+                                FullName = values[0].Trim(),
+                                PhoneNumber = phone,
+                                Email = values.Length > 2 ? values[2].Trim() : "",
+                                BrokerId = brokerId,
+                                LeadStatusId = 1, // New
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            _context.Leads.Add(newLead);
+                            await _context.SaveChangesAsync();
+
+                            // إضافة Request افتراضي للعميل ده
+                            _context.LeadRequests.Add(new LeadRequest
+                            {
+                                LeadId = newLead.Id,
+                                PropertyType = values.Length > 3 ? values[3].Trim() : "Apartment",
+                                Purpose = "Sale",
+                                PaymentMethod = "Cash",
+                                Notes = "Imported via Bulk CSV Upload"
+                            });
+                            await _context.SaveChangesAsync();
+
+                            // إضافة هيستوري
+                            _context.LeadStatusHistories.Add(new LeadStatusHistory
+                            {
+                                LeadId = newLead.Id,
+                                OldStatusId = 0,
+                                NewStatusId = 1,
+                                ChangedById = brokerId,
+                                Notes = "Imported from CSV Sheet",
+                                ChangedAt = DateTime.UtcNow
+                            });
+                            newLeadsCount++;
+                        
+                    }
+                }
+            }
+            await _context.SaveChangesAsync();
+            return Ok(new { message = $"{newLeadsCount} leads imported successfully!" });
+        }
+
+        [HttpPut("{id}/transfer")]
+        public async Task<IActionResult> TransferLead(int id, [FromBody] TransferLeadDto dto, [FromQuery] string adminId)
+        {
+            var lead = await _context.Leads.FindAsync(id);
+            if (lead == null) return NotFound("Lead not found");
+
+            lead.BrokerId = dto.NewBrokerId;
+            _context.Leads.Update(lead);
+
+            // نقل المهام والزيارات المعلقة للبروكر الجديد
+            var pendingActivities = await _context.LeadActivities.Where(a => a.LeadId == id && a.Status == "Pending").ToListAsync();
+            foreach (var activity in pendingActivities) { activity.AssignedToId = dto.NewBrokerId; }
+
+            var pendingVisits = await _context.Visits.Where(v => v.LeadId == id && v.Status == "Pending").ToListAsync();
+            foreach (var visit in pendingVisits) { visit.BrokerId = dto.NewBrokerId; }
+
+            // تسجيل حركة النقل في الـ History
+            _context.LeadStatusHistories.Add(new LeadStatusHistory
+            {
+                LeadId = lead.Id,
+                OldStatusId = lead.LeadStatusId,
+                NewStatusId = lead.LeadStatusId,
+                ChangedById = adminId,
+                Notes = "Admin transferred this lead to a new broker.",
+                ChangedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Lead transferred successfully!" });
+        }
+
+        [HttpPut("{id}/approve-duplicate")]
+        public async Task<IActionResult> ApproveDuplicate(int id)
+        {
+            var lead = await _context.Leads.FindAsync(id);
+            if (lead == null) return NotFound();
+
+            lead.IsApprovedDuplicate = true;
+            _context.Leads.Update(lead);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Duplicate lead approved successfully." });
         }
     }
 }
