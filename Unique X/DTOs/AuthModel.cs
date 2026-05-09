@@ -13,5 +13,7 @@
         public string? ProfileImageUrl { get; set; }
 
         public DateTime ExpiresOn { get; set; }
+
+        public int UserType { get; set; }
     }
 }

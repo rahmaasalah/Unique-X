@@ -6,6 +6,8 @@ import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
 import { LeadResponseDto } from '../../../Models/crm.models';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../../Services/auth';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-leads-dashboard',
@@ -17,6 +19,8 @@ import { RouterModule } from '@angular/router';
 export class LeadsDashboardComponent implements OnInit {
   private crmService = inject(CrmService);
   private alertService = inject(AlertService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   currentBrokerId: string = ''; 
   campaignsList = signal<any[]>([]);
@@ -40,13 +44,35 @@ export class LeadsDashboardComponent implements OnInit {
 
   boardColumns = signal<any[]>([]);
 
+  isAdmin = signal<boolean>(false); // 👈 متغير جديد
+  selectedRequest = signal<any>(null);
+
   ngOnInit() {
+    if (!this.authService.isAllowedToOpenCrm()) {
+      this.router.navigate(['/home']);
+      return; // وقف تنفيذ باقي الكود
+    }
     const userString = localStorage.getItem('user');
+    let fetchId = ''; 
+    
     if (userString) {
       const user = JSON.parse(userString);
       this.currentBrokerId = user.id || user.userId || ''; 
+      
+      // 🟢 فحص ذكي وشامل عشان نلقط الأدمن (بكل الطرق اللي بيرجع بيها من الباك إند)
+      const roles = user.roles ||[];
+      const isUserAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
+      
+      if (isUserAdmin) {
+        this.isAdmin.set(true);
+        fetchId = ''; // للأدمن بنبعت ID فاضي عشان يجيب كل العملاء بتوع كل البروكرز
+      } else {
+        this.isAdmin.set(false);
+        fetchId = this.currentBrokerId; // للبروكر بنبعت الـ ID بتاعه هو بس
+      }
     }
-    this.loadLeads(this.currentBrokerId);
+    
+    this.loadLeads(fetchId);
     this.loadCampaigns();
   }
 
@@ -58,7 +84,8 @@ export class LeadsDashboardComponent implements OnInit {
   }
 
   loadLeads(brokerId: string) {
-    if (!brokerId) return; 
+    // لو مش أدمن ومفيش بروكر ID، ميحملش
+    if (!brokerId && !this.isAdmin()) return; 
     
     this.crmService.getLeads(brokerId).subscribe({
       next: (data) => {
@@ -66,12 +93,18 @@ export class LeadsDashboardComponent implements OnInit {
           if (lead.createdAt && !lead.createdAt.endsWith('Z')) lead.createdAt += 'Z';
           if (lead.updatedAt && !lead.updatedAt.endsWith('Z')) lead.updatedAt += 'Z';
         });
-
         this.allLeads.set(data); 
         this.applyFilters(); 
       },
       error: (err) => console.error('Error fetching leads:', err)
     });
+  }
+
+  // 👇 دالة فتح مودال الطلب
+  openRequestModal(lead: any) {
+    this.selectedRequest.set(lead);
+    const bootstrap = (window as any).bootstrap;
+    new bootstrap.Modal(document.getElementById('requestModal')).show();
   }
 
   // دالة ضبط التواريخ للفلتر
@@ -95,6 +128,10 @@ export class LeadsDashboardComponent implements OnInit {
     const maxB = this.filterMaxBudget();
 
     const filtered = this.allLeads().filter(lead => {
+      if (!this.isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate) {
+        return false;
+      }
+
       const matchSearch = lead.fullName.toLowerCase().includes(search) || lead.phoneNumber.includes(search);
       const matchCamp = campaign === '' || lead.campaignName === campaign;
       const matchStatus = status === '' || lead.statusId.toString() === status;
@@ -107,6 +144,8 @@ export class LeadsDashboardComponent implements OnInit {
       const matchMaxB = maxB === null || lead.totalAmount <= maxB;
 
       return matchSearch && matchCamp && matchStatus && matchZone && matchCDate && matchUDate && matchMinB && matchMaxB;
+
+      
     });
 
     this.filteredLeadsForList.set(filtered);
@@ -211,5 +250,22 @@ export class LeadsDashboardComponent implements OnInit {
         }
       });
     }
+  }
+
+  approveDuplicate(leadId: number) {
+    this.alertService.confirm('Approve this duplicate lead? This will allow the broker to work on it.', () => {
+      this.alertService.showLoading('Approving...');
+      this.crmService.approveDuplicateLead(leadId).subscribe({
+        next: () => {
+          this.alertService.close();
+          this.alertService.success('Lead Approved!');
+          this.loadLeads(this.currentBrokerId); // ريفريش للداتا
+        },
+        error: () => {
+          this.alertService.close();
+          this.alertService.error('Failed to approve lead.');
+        }
+      });
+    });
   }
 }

@@ -25,5 +25,8 @@
         public DateTime? ExpectedClosingDate { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public bool IsDuplicate { get; set; } = false; // هل العميل ده متكرر؟
+        public bool IsApprovedDuplicate { get; set; } = true; // هل الأدمن وافق على التكرار ده؟
     }
 }

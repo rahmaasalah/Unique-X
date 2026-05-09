@@ -21,7 +21,7 @@ export class ProfileComponent implements OnInit {
   userData = signal<any>(null); 
   
   private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
   private alertService = inject(AlertService);
   private router = inject(Router);
   ngOnInit(): void {

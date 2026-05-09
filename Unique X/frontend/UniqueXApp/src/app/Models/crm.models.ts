@@ -24,6 +24,9 @@ export interface LeadResponseDto {
   createdAt: Date;
   updatedAt: Date;
   generalFeedback: string;
+  isDuplicate: boolean;
+  isApprovedDuplicate: boolean;
+  closedDealsCount: number;
 }
 
 export interface AdminDashboardDto {

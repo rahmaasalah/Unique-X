@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
+import { AdminService } from '../../../Services/admin';
 
 
 
@@ -31,6 +32,7 @@ export class LeadDetailsComponent implements OnInit {
   private fb = inject(FormBuilder);
   private alertService = inject(AlertService);
   private router = inject(Router);
+  private adminService = inject(AdminService);
   leadInfo = signal<any>(null);
   requestDetails = signal<any>(null);
   visits = signal<any[]>([]);
@@ -110,30 +112,60 @@ export class LeadDetailsComponent implements OnInit {
   visitAvailableRegions: string[] = [];
   visitAvailableProjects: string[] =[];
 
+  isAdmin = signal<boolean>(false);
+  brokersList = signal<any[]>([]);
+  selectedTransferBroker = signal<string>('');
+
 
    ngOnInit() {
     const userString = localStorage.getItem('user');
     if (userString) {
       const user = JSON.parse(userString);
       this.currentBrokerId = user.id || user.userId || ''; 
+      
+      // 🟢 فحص هل المستخدم أدمن
+      if (user.roles && user.roles.includes('Admin')) {
+        this.isAdmin.set(true);
+        // جلب قائمة البروكرز عشان الأدمن يختار منهم
+        this.adminService.getAllUsers().subscribe(users => {
+          this.brokersList.set(users.filter((u: any) => u.userType === 1));
+        });
+      }
     }
 
     const now = new Date();
     this.minDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
-    // 👇 1. نقرأ قائمة الأرقام المتفلترة من الذاكرة
     const storedIds = sessionStorage.getItem('crm_filtered_leads');
     if (storedIds) {
       this.filteredIds = JSON.parse(storedIds);
     }
 
-    // 👇 2. نستخدم subscribe عشان الشاشة تتحدث أوتوماتيك لما ندوس Next بدون ريفريش
     this.route.paramMap.subscribe(params => {
       this.leadId = Number(params.get('id'));
       if (this.leadId) {
-        this.checkPagination(); // نفحص هل فيه Next ولا Previous
-        this.initForms(); // نجهز الفورمز على الـ ID الجديد
-        this.loadLeadData(this.leadId); // نحمل بيانات العميل الجديد
+        this.checkPagination(); 
+        this.initForms(); 
+        this.loadLeadData(this.leadId); 
+      }
+    });
+  }
+
+  submitTransfer() {
+    const newBroker = this.selectedTransferBroker();
+    if (!newBroker) return;
+
+    this.alertService.showLoading('Transferring Lead...');
+    this.crmService.transferLead(this.leadId, newBroker, this.currentBrokerId).subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success('Lead transferred successfully!');
+        this.loadLeadData(this.leadId); // تحديث الداتا بعد النقل
+        document.getElementById('closeTransferModal')?.click(); // قفل المودال
+      },
+      error: () => {
+        this.alertService.close();
+        this.alertService.error('Failed to transfer lead.');
       }
     });
   }
