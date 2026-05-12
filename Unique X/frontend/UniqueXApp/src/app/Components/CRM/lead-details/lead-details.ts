@@ -55,9 +55,6 @@ export class LeadDetailsComponent implements OnInit {
   rescheduleId = signal<number | null>(null);
   rescheduleType = signal<'visit' | 'activity' | null>(null);
 
-  activityAvailableRegions: string[] = [];
-  activityAvailableProjects: string[] =[];
-
   recommendations = signal<any[]>([]); // لتخزين العقارات المرشحة
 
   // الفورمز
@@ -224,55 +221,13 @@ export class LeadDetailsComponent implements OnInit {
       activityType:['Call', Validators.required],
       summary: ['', Validators.required],
       dueDate: ['',[Validators.required, futureDateValidator()]],
-      notes: [''],
-      
+      notes: ['']
     });
 
     this.setupVisitDynamicFields(); 
-    this.setupActivityDynamicFields();
   }
 
-  setupActivityDynamicFields() {
-    this.activityForm.get('zoneId')?.valueChanges.subscribe(zoneId => {
-      this.activityForm.patchValue({ region: '', project: '' });
-      this.activityAvailableRegions = this.regionsMapping[zoneId] ||[];
-      
-      this.activityAvailableProjects =[];
-      if (zoneId && this.projectsMapping[zoneId]) {
-        Object.values(this.projectsMapping[zoneId]).forEach((projArray: any) => {
-          this.activityAvailableProjects =[...this.activityAvailableProjects, ...projArray];
-        });
-        this.activityAvailableProjects.sort();
-      }
-    });
-
-    this.activityForm.get('listingType')?.valueChanges.subscribe(type => {
-      this.activityForm.patchValue({ region: '', project: '' });
-      
-      const regionCtrl = this.activityForm.get('region');
-      const projectCtrl = this.activityForm.get('project');
-
-      regionCtrl?.clearValidators();
-      projectCtrl?.clearValidators();
-
-      if (['Resale', 'Rent'].includes(type)) regionCtrl?.setValidators(Validators.required);
-      if (['Primary', 'Resale Project', 'Rent'].includes(type)) projectCtrl?.setValidators(Validators.required);
-
-      regionCtrl?.updateValueAndValidity();
-      projectCtrl?.updateValueAndValidity();
-    });
-  }
-
-  get showActivityRegion() {
-    const type = this.activityForm.get('listingType')?.value;
-    return['Resale', 'Rent'].includes(type);
-  }
-
-  get showActivityProject() {
-    const type = this.activityForm.get('listingType')?.value;
-    return['Primary', 'Resale Project', 'Rent'].includes(type);
-  }
-
+  
   setupVisitDynamicFields() {
     // لما الـ Zone تتغير
     this.visitForm.get('zoneId')?.valueChanges.subscribe(zoneId => {
@@ -422,10 +377,10 @@ export class LeadDetailsComponent implements OnInit {
       } 
       // 🟢 2. لو إحنا في وضع "إنشاء زيارة جديدة"
       else {
-        const submitData = { ...this.visitForm.getRawValue() }; // getRawValue بتجيب الداتا حتى لو الخانات مقفولة
+        const submitData = { ...this.visitForm.getRawValue() }; 
         
-        // تنظيف الداتا لمنع خطأ 400 Bad Request
-        if (submitData.zoneId === '') submitData.zoneId = null;
+        // 🟢 تأكيد تحويل zoneId لرقم عشان ميضربش 400 Bad Request
+        submitData.zoneId = submitData.zoneId ? Number(submitData.zoneId) : 0;
 
         this.crmService.scheduleVisit(submitData).subscribe({
           next: () => {
@@ -467,9 +422,8 @@ export class LeadDetailsComponent implements OnInit {
     if (this.activityForm.valid) {
       this.alertService.showLoading('Saving activity...');
 
-      // 🟢 1. لو إحنا في وضع "تأجيل الميعاد" (Reschedule)
       if (this.isRescheduling() && this.rescheduleId()) {
-        const newDate = this.activityForm.get('dueDate')?.value; // بناخد التاريخ الجديد بس
+        const newDate = this.activityForm.get('dueDate')?.value; 
         
         this.crmService.rescheduleActivity(this.rescheduleId()!, newDate).subscribe({
           next: () => {
@@ -484,14 +438,18 @@ export class LeadDetailsComponent implements OnInit {
             this.alertService.error('Error rescheduling activity.');
           }
         });
-      } 
-      // 🟢 2. لو إحنا في وضع "إنشاء مهمة جديدة"
-      else {
+      } else {
+        // إنشاء مهمة جديدة
         const submitData = { ...this.activityForm.getRawValue() };
-        
-        // تنظيف الداتا لمنع خطأ 400 Bad Request
-        if (submitData.zoneId === '') submitData.zoneId = null;
 
+        submitData.zoneId = 0;
+        submitData.listingType = '';
+        submitData.propertyCode = '';
+        submitData.propertyName = '';
+        submitData.brokerPhone = '';
+        submitData.region = '';
+        submitData.project = '';
+        
         this.crmService.logActivity(submitData).subscribe({
           next: () => {
             this.alertService.close();
@@ -509,7 +467,6 @@ export class LeadDetailsComponent implements OnInit {
       }
     }
   }
-
   onStatusChange(item: any, event: any) {
     const newStatus = event.target.value;
     
