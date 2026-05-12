@@ -408,11 +408,20 @@ namespace Unique_X.Controllers.CRM
             var lead = await _context.Leads.FindAsync(id);
             if (lead == null) return NotFound("Lead not found");
 
-            // 👇 شيلنا التاريخ والوقت، الفيدباك هينزل صافي
-            // ولو في فيدباك قديم، هنحط خط فاصل صغير ونحط الجديد تحته
+            // 1. نجيب اسم البروكر اللي كتب الفيدباك
+            var broker = await _context.Users.FindAsync(brokerId);
+            string brokerName = broker != null ? $"{broker.FirstName} {broker.LastName}" : "Unknown Broker";
+
+            // 2. نجيب التاريخ بصيغة عالمية عشان Angular يعرف يحولها لمصر
+            string dateStr = DateTime.UtcNow.ToString("o");
+
+            // 3. ندمجهم بفاصل سري (عشان لو العميل كتب أي علامات عادية متأثرش)
+            string newEntry = $"{brokerName}_#|#_{dateStr}_#|#_{note}";
+
+            // 4. بنحط الفيدباك الجديد في الأول، وبعدين القديم، عشان يترتب من الأحدث للأقدم
             lead.GeneralFeedback = string.IsNullOrEmpty(lead.GeneralFeedback)
-                ? note
-                : lead.GeneralFeedback + "\n\n---\n" + note;
+                ? newEntry
+                : newEntry + "_@|@_" + lead.GeneralFeedback;
 
             _context.Leads.Update(lead);
             await _context.SaveChangesAsync();
@@ -429,17 +438,31 @@ namespace Unique_X.Controllers.CRM
             if (request == null || !request.TotalAmount.HasValue || request.TotalAmount.Value <= 0)
                 return Ok(new List<object>());
 
-            // 1. حساب الميزانية (أقل بـ 200 ألف، وأكتر بـ 600 ألف)
             decimal baseAmount = request.TotalAmount.Value;
-            decimal minBudget = baseAmount - 200000m;
-            decimal maxBudget = baseAmount + 600000m;
+            decimal minBudget;
+            decimal maxBudget;
+
+            // 🟢 التعديل السحري هنا: فحص لو نوع العقار "فيلا"
+            if (!string.IsNullOrEmpty(request.PropertyType) && request.PropertyType.Replace(" ", "").Equals("Villa", StringComparison.OrdinalIgnoreCase))
+            {
+                minBudget = baseAmount - 5000000m; // أقل بـ 5 مليون للفيلا
+                maxBudget = baseAmount + 5000000m; // أكثر بـ 5 مليون للفيلا
+            }
+            else
+            {
+                // الرينج العادي لباقي أنواع العقارات
+                minBudget = baseAmount - 200000m;
+                maxBudget = baseAmount + 600000m;
+            }
+
+            if (minBudget < 0) minBudget = 0;
 
             // بنجيب العقارات اللي البروكر اقترحها قبل كده
             var proposedIds = string.IsNullOrEmpty(request.ProposedPropertyIds)
                 ? new List<string>()
                 : request.ProposedPropertyIds.Split(',').ToList();
 
-            // 2. البناء الديناميكي للبحث (Query)
+            // البناء الديناميكي للبحث بصرامة (Strict Matching)
             var query = _context.Properties.Where(p => p.IsActive && p.IsApproved && !p.IsSold);
 
             // -- أ) فلتر الميزانية (Range)
@@ -454,7 +477,6 @@ namespace Unique_X.Controllers.CRM
             // -- ج) فلتر الغرض / نوع العرض (Primary, Resale, Rent)
             if (!string.IsNullOrEmpty(request.Purpose))
             {
-                // بنشيل المسافات عشان لو الكلمة "Resale Project" تطابق הـ Enum "ResaleProject"
                 string purposeClean = request.Purpose.Replace(" ", "");
                 if (Enum.TryParse(typeof(PropEnums.ListingType), purposeClean, true, out var parsedListingType))
                 {
@@ -474,7 +496,13 @@ namespace Unique_X.Controllers.CRM
                 }
             }
 
-            // -- هـ) فلتر المناطق والمشاريع
+            // -- هـ) فلتر المحافظة (الـ Zone) 
+            if (request.ZoneId.HasValue && request.ZoneId.Value > 0)
+            {
+                query = query.Where(p => (int)p.City == request.ZoneId.Value);
+            }
+
+            // -- و) فلتر المناطق والمشاريع (تطابق تام في النطاق المحدد)
             var regionsList = string.IsNullOrEmpty(request.SelectedRegions)
                 ? new List<string>()
                 : request.SelectedRegions.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries).Select(r => r.Trim()).ToList();
@@ -491,22 +519,29 @@ namespace Unique_X.Controllers.CRM
                 );
             }
 
-            // 3. ترتيب وتجهيز الخرج للفرونت إند
+            // 3. استبعاد العقارات التي تم اقتراحها مسبقاً (اختياري، خليتها هنا عشان ميظهرش القديم)
+            if (proposedIds.Any())
+            {
+                var proposedIntIds = proposedIds.Select(id => int.TryParse(id, out int res) ? res : 0).Where(id => id > 0).ToList();
+                query = query.Where(p => !proposedIntIds.Contains(p.Id));
+            }
+
+            // 4. ترتيب وتجهيز الخرج للفرونت إند
             var recommendations = await query
-                .OrderByDescending(p => p.CreatedAt) // الأحدث أولاً
-                .Take(12) // نكتفي بـ 12 ترشيح فقط عشان الشاشة
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(12)
                 .Select(p => new {
                     Id = p.Id,
                     Code = p.Code ?? ("PROP-" + p.Id),
                     Title = p.Title,
                     Price = p.Price,
-                    // 👈 السطر ده اللي بيعرف الفرونت إند إن العقار ده تم اقتراحه للعميل ده قبل كده فيلونه أخضر
                     IsProposed = proposedIds.Contains(p.Id.ToString())
                 })
                 .ToListAsync();
 
             return Ok(recommendations);
         }
+
         // 2. تسجيل العقار كـ (تم اقتراحه للعميل)
         [HttpPut("{id}/mark-proposed/{propertyId}")]
         public async Task<IActionResult> MarkPropertyProposed(int id, int propertyId)

@@ -138,9 +138,17 @@
                 </div>
                 
                 <!-- 🟢 كارت الفيدباك الصغير تحت الرقم -->
-                <div *ngIf="!isAdmin() && lead.generalFeedback" class="mt-2 p-2 bg-light border rounded-3 small text-wrap text-break lh-sm">
-                  <span class="text-danger fw-bold d-block mb-1"><i class="bi bi-chat-quote-fill me-1"></i>Feedback:</span>
-                  <span class="text-muted" style="white-space: pre-line; font-size: 0.75rem;">{{ lead.generalFeedback }}</span>
+                <div *ngIf="lead.generalFeedback" class="mt-2 p-2 bg-light border rounded-3 small text-wrap text-break lh-sm">
+                  <span class="text-danger fw-bold d-block mb-1"><i class="bi bi-chat-quote-fill me-1"></i>Latest Feedback:</span>
+                  
+                  <span class="text-dark d-block mb-2 fw-medium" style="white-space: pre-line; font-size: 0.8rem;">
+                    {{ parseFeedbacks(lead.generalFeedback)[0].text }}
+                  </span>
+                  
+                  <div class="text-muted text-end border-top pt-1" style="font-size: 0.65rem;">
+                     <span class="fw-bold"><i class="bi bi-person-fill"></i> {{ parseFeedbacks(lead.generalFeedback)[0].broker }}</span>
+                     <span *ngIf="parseFeedbacks(lead.generalFeedback)[0].date"> | {{ parseFeedbacks(lead.generalFeedback)[0].date | date:'MMM d, h:mm a' }}</span>
+                  </div>
                 </div>
               </td>
                <td *ngIf="isAdmin()">

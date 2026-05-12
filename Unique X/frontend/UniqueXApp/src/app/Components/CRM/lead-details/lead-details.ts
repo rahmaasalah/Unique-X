@@ -225,13 +225,7 @@ export class LeadDetailsComponent implements OnInit {
       summary: ['', Validators.required],
       dueDate: ['',[Validators.required, futureDateValidator()]],
       notes: [''],
-      propertyCode: [''], 
-      propertyName: [''], 
-      brokerPhone: [''], 
-      zoneId:['', Validators.required],
-      listingType:['', Validators.required],
-      region: [''], 
-      project:[''], 
+      
     });
 
     this.setupVisitDynamicFields(); 
@@ -449,6 +443,24 @@ export class LeadDetailsComponent implements OnInit {
         });
       }
     }
+  }
+
+  parseFeedbacks(feedbackStr: string) {
+    if (!feedbackStr) return[];
+    
+    // لو دي داتا قديمة قبل التعديل
+    if (!feedbackStr.includes('_#|#_')) {
+      return [{ broker: 'System/Legacy', date: null, text: feedbackStr }];
+    }
+
+    const records = feedbackStr.split('_@|@_');
+    return records.map(rec => {
+      const parts = rec.split('_#|#_');
+      if (parts.length >= 3) {
+        return { broker: parts[0], date: parts[1], text: parts[2] };
+      }
+      return { broker: 'Unknown', date: null, text: rec };
+    });
   }
 
   submitActivity() {
