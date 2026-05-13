@@ -200,6 +200,23 @@
               </div>
             </div>
 
+            <div class="row g-3 mb-4 border-top pt-4 mt-2">
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Owner Name <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                  <input type="text" formControlName="ownerName" class="form-control shadow-sm" placeholder="e.g. Ahmed Ali">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Owner Phone <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white"><i class="bi bi-telephone"></i></span>
+                  <input type="text" formControlName="ownerPhone" class="form-control shadow-sm" placeholder="e.g. 01012345678">
+                </div>
+              </div>
+            </div>
+
             <!-- القسم الثاني: مواصفات الوحدة -->
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-house-door me-2 text-danger"></i>Unit Specifications</h5>
             
@@ -284,6 +301,18 @@
       </select>
     </div>
   }
+
+   @if (isPrimary()) {
+                <div class="col-md-4 animate__animated animate__fadeIn">
+                  <label class="form-label fw-bold small text-dark">Developer Name <span class="text-danger">*</span></label>
+                  <select formControlName="developerName" class="form-select shadow-sm">
+                    <option value="">-- Select Developer --</option>
+                    @for (dev of dummyDevelopers; track dev) {
+                      <option [value]="dev">{{ dev }}</option>
+                    }
+                  </select>
+                </div>
+              }
               
             </div>
 

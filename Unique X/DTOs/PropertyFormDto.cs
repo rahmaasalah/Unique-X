@@ -35,6 +35,10 @@ namespace Unique_X.DTOs
         public decimal CommissionPercentage { get; set; } = 2.5m; // العمولة
         public bool? HasBalcony { get; set; }
         public bool? IsFurnished { get; set; }
+
+        public string? OwnerName { get; set; }
+        public string? OwnerPhone { get; set; }
+        public string? DeveloperName { get; set; }
         public string? PaymentMethod { get; set; } // "Cash" or "Installment"
         //public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
         public DeliveryStatus? DeliveryStatus { get; set; }

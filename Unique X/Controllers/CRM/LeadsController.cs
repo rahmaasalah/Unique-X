@@ -122,6 +122,9 @@ namespace Unique_X.Controllers.CRM
                 Purpose = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).Purpose ?? "",
                 TotalAmount = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).TotalAmount ?? 0,
                 PreferredLocation = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PreferredLocation ?? "Not Specified",
+                SelectedRegions = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).SelectedRegions ?? "",
+                SelectedProjects = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).SelectedProjects ?? "",
+                Notes = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).Notes ?? "",
 
                 ZoneName = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 1 ? "Cairo" :
                        _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 2 ? "Alexandria" :

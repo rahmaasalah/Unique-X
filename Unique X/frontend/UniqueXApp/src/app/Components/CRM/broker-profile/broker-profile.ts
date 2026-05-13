@@ -6,6 +6,7 @@ import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
 import { AuthService } from '../../../Services/auth';
 import { Router } from '@angular/router';
+import { AdminService } from '../../../Services/admin'; // 👈 استيراد AdminService
 
 @Component({
   selector: 'app-broker-profile',
@@ -19,7 +20,7 @@ export class BrokerProfileComponent implements OnInit {
   private alertService = inject(AlertService);
   private authService = inject(AuthService);
   private router = inject(Router);
-
+  private adminService = inject(AdminService);
   brokerName = signal<string>('');
   brokerImage = signal<string>('https://cdn-icons-png.flaticon.com/512/149/149071.png');
   
@@ -28,6 +29,12 @@ export class BrokerProfileComponent implements OnInit {
 
   isAdmin = signal<boolean>(false);
   currentBrokerId: string = '';
+
+  brokerTitle = signal<string>('');
+  brokerDescription = signal<string>('');
+
+  brokersList = signal<any[]>([]);
+  filterBroker = signal<string>('');
 
   // 🟢 الفلاتر
  searchQuery = signal<string>('');
@@ -38,6 +45,7 @@ export class BrokerProfileComponent implements OnInit {
   filterLastUpdate = signal<string>('');
   filterMinBudget = signal<number | null>(null);
   filterMaxBudget = signal<number | null>(null);
+  filterReferredBy = signal<string>('');
 
   // 👇 نقلنا تعريف المناطق هنا عشان الـ HTML يقدر يشوفه
   zones =[
@@ -45,6 +53,13 @@ export class BrokerProfileComponent implements OnInit {
     { id: 2, name: 'Alexandria' },
     { id: 3, name: 'North Coast' }
   ];
+
+  uniqueBrokerCodes = computed(() => {
+    const data = this.profileData();
+    if (!data || !data.leads) return[];
+    const codes = data.leads.map((l:any) => l.referredBy).filter((c:any) => c && c.trim() !== '');
+    return [...new Set(codes)].sort();
+  });
 
   // 🟢 فلترة العملاء لحظياً
   filteredLeads = computed(() => {
@@ -58,6 +73,7 @@ export class BrokerProfileComponent implements OnInit {
 
 
     const q = this.searchQuery().toLowerCase();
+    const broker = this.filterBroker();
     const camp = this.filterCampaign();
     const stage = this.filterStage();
     const zone = this.filterZone(); // شيلنا الـ toLowerCase عشان يطابق الاسم بالظبط
@@ -65,8 +81,10 @@ export class BrokerProfileComponent implements OnInit {
     const uDate = this.filterLastUpdate();
     const minB = this.filterMinBudget();
     const maxB = this.filterMaxBudget();
+    const refBy = this.filterReferredBy();
 
     if (q) leads = leads.filter((l: any) => l.fullName.toLowerCase().includes(q) || l.phoneNumber.includes(q));
+    if (broker) leads = leads.filter((l: any) => l.brokerName === broker);
     if (camp) leads = leads.filter((l: any) => l.campaignName === camp);
     if (stage) leads = leads.filter((l: any) => l.statusId.toString() === stage);
     if (zone) leads = leads.filter((l: any) => l.zoneName === zone);
@@ -74,6 +92,7 @@ export class BrokerProfileComponent implements OnInit {
     if (uDate) leads = leads.filter((l: any) => this.formatDateForFilter(l.updatedAt || l.createdAt) === uDate);
     if (minB !== null) leads = leads.filter((l: any) => l.totalAmount >= minB);
     if (maxB !== null) leads = leads.filter((l: any) => l.totalAmount <= maxB);
+    if (refBy) leads = leads.filter((l: any) => l.referredBy === refBy);
 
     const ids = leads.map((l: any) => l.id);
     sessionStorage.setItem('crm_filtered_leads', JSON.stringify(ids));
@@ -155,6 +174,9 @@ export class BrokerProfileComponent implements OnInit {
       const isUserAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
 
       if (isUserAdmin) {
+        this.adminService.getAllUsers().subscribe(users => {
+        this.brokersList.set(users.filter((u: any) => u.userType === 1));
+      });
         this.isAdmin.set(true);
         this.brokerName.set('Admin Workspace');
         fetchId = ''; 
@@ -162,6 +184,16 @@ export class BrokerProfileComponent implements OnInit {
         this.isAdmin.set(false);
         this.brokerName.set(user.username || 'Broker Profile');
         fetchId = this.currentBrokerId;
+
+        this.authService.getProfile().subscribe({
+          next: (data: any) => {
+            if (data) {
+              this.brokerTitle.set(data.brokerTitle || '');
+              this.brokerDescription.set(data.brokerDescription || '');
+            }
+          }
+        });
+      
       }
       
       if (user.profileImageUrl) this.brokerImage.set(user.profileImageUrl);
@@ -245,9 +277,11 @@ export class BrokerProfileComponent implements OnInit {
     this.filterStage.set('');
     this.filterZone.set('');
     this.filterCreationDate.set('');
+    this.filterBroker.set('');
     this.filterLastUpdate.set('');
     this.filterMinBudget.set(null);
     this.filterMaxBudget.set(null);
+    this.filterReferredBy.set('');
   }
 
   // دالة لاستخراج الفيدباك من المكالمات

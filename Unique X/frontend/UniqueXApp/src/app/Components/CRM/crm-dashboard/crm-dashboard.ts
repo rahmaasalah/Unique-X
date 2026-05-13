@@ -1,96 +1,169 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { CrmService } from '../../../Services/crm.services';
-import { AlertService } from '../../../Services/alert';
-import { AdminDashboardDto, BrokerDashboardDto } from '../../../Models/crm.models';
+import { RouterModule, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { CrmService } from '../../../Services/crm.services';
+import { AdminService } from '../../../Services/admin';
+import { AuthService } from '../../../Services/auth';
+import { AlertService } from '../../../Services/alert';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-crm-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
   templateUrl: './crm-dashboard.html',
-  styleUrls: ['./crm-dashboard.css']
+  styleUrls: ['./crm-dashboard.css'] // لو عندك ملف ستايل، لو مفيش ممكن تمسحي السطر ده
 })
 export class CrmDashboardComponent implements OnInit {
   private crmService = inject(CrmService);
-  private fb = inject(FormBuilder);
+  private adminService = inject(AdminService);
+  public authService = inject(AuthService);
   private alertService = inject(AlertService);
+  private router = inject(Router);
+
   isAdmin = signal<boolean>(false);
-  adminStats = signal<AdminDashboardDto | null>(null);
-  brokerStats = signal<BrokerDashboardDto | null>(null);
+  activeTab = signal<'brokers' | 'clients'>('brokers');
 
-  showTasksList = signal<boolean>(false);
+  // الداتا الأساسية
+  allLeads = signal<any[]>([]);
+  vipBrokers = signal<any[]>([]);
+  
+  // إحصائيات عامة للأدمن
+  systemTotalLeads = computed(() => this.allLeads().length);
+  systemClosedDeals = computed(() => this.allLeads().filter(l => l.statusId === 19).length);
+  systemExpectedRevenue = computed(() => {
+    return this.allLeads().reduce((sum, lead) => sum + (lead.totalAmount || 0), 0);
+  });
 
-  campaignsList = signal<any[]>([]);
-  campaignForm!: FormGroup;
+  // 🟢 1. فلاتر ولوجيك تاب البروكرز
+  searchBroker = signal<string>('');
+  
+  brokersStats = computed(() => {
+    let stats = this.vipBrokers().map(broker => {
+      const bName = broker.firstName + ' ' + broker.lastName;
+      const myLeads = this.allLeads().filter(l => l.brokerName === bName);
+      
+      const calls = myLeads.reduce((sum, l) => sum + (l.activitiesCount || 0), 0);
+      const visits = myLeads.reduce((sum, l) => sum + (l.visitsCount || 0), 0);
+      const closedDeals = myLeads.filter(l => l.statusId === 19);
 
-  toggleTasks() {
-    this.showTasksList.update(v => !v);
-  }
+      return {
+        ...broker,
+        fullName: bName,
+        brokerCode: broker.id.substring(0, 8).toUpperCase(), // كود مختصر للبروكر
+        leads: myLeads,
+        totalLeads: myLeads.length,
+        totalCalls: calls,
+        totalVisits: visits,
+        closedDeals: closedDeals,
+        isExpanded: false // للتحكم في فتح وقفل قائمة عملاء البروكر
+      };
+    });
+
+    const q = this.searchBroker().toLowerCase();
+    if (q) {
+      stats = stats.filter(b => b.fullName.toLowerCase().includes(q) || (b.phoneNumber && b.phoneNumber.includes(q)));
+    }
+    return stats;
+  });
+
+  // 🟢 2. فلاتر ولوجيك تاب العملاء
+  searchClient = signal<string>('');
+  filterClientStage = signal<string>('');
+  filterClientBroker = signal<string>('');
+  
+  filteredClients = computed(() => {
+    let leads = this.allLeads();
+    const q = this.searchClient().toLowerCase();
+    const stage = this.filterClientStage();
+    const broker = this.filterClientBroker();
+
+    if (q) leads = leads.filter(l => l.fullName.toLowerCase().includes(q) || l.phoneNumber.includes(q));
+    if (stage) leads = leads.filter(l => l.statusId.toString() === stage);
+    if (broker) leads = leads.filter(l => l.brokerName === broker);
+
+    return leads;
+  });
+
+  // المودال
+  selectedRequest = signal<any>(null);
+
+  stages =[
+    { id: 1, name: 'New "To Call"' }, { id: 2, name: 'Waiting response on wtp msg' }, { id: 3, name: 'Request call another time' },
+    { id: 4, name: 'Calls (request)' }, { id: 5, name: 'Waiting Client Feedback on unit' }, { id: 6, name: 'Follow Up For Visit' },
+    { id: 7, name: 'Visit scheduled' }, { id: 8, name: 'Follow up After visit' }, { id: 9, name: 'Waiting feedback on project' },
+    { id: 10, name: 'Follow up for Meeting' }, { id: 11, name: 'Meeting Scheduled' }, { id: 12, name: 'Follow up after meeting' },
+    { id: 13, name: 'Follow up for developer meeting' }, { id: 14, name: 'Follow up for site visit' }, { id: 15, name: 'Site visit scheduled' },
+    { id: 16, name: 'Follow up for event' }, { id: 17, name: 'Follow up after event' }, { id: 18, name: 'Follow up for closing' },
+    { id: 19, name: 'Deal closed' }, { id: 20, name: 'Follow up, not now' }, { id: 21, name: 'N/A "unreachable"' },
+    { id: 22, name: 'Lost Not interested' }, { id: 23, name: 'Low Budget' }, { id: 24, name: 'Number Issue' },
+    { id: 25, name: 'Broker' }, { id: 26, name: 'Recommend to shift' }
+  ];
 
   ngOnInit() {
+    // 1. حماية الصفحة: لو مش أدمن، اطرده
     const userString = localStorage.getItem('user');
-    if (userString) {
-      const user = JSON.parse(userString);
-      const brokerId = user.id || user.userId || '';
-      const roles = user.roles ||[];
-
-      // لو اليوزر أدمن، نجيب إحصائيات الشركة
-      if (roles.includes('Admin')) {
-       this.isAdmin.set(true);
-       this.loadAdminDashboard();
-       // 👇 تحميل الحملات وتعريف الفورم
-       this.loadCampaigns();
-       this.campaignForm = this.fb.group({
-         name: ['', Validators.required],
-         source: ['Facebook', Validators.required]
-       });
+    if (!userString) { this.router.navigate(['/home']); return; }
+    
+    const user = JSON.parse(userString);
+    const roles = user.roles ||[];
+    const isUserAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
+    
+    if (!isUserAdmin) {
+      this.router.navigate(['/home']);
+      return;
     }
-      // لو اليوزر بروكر، نجيب إحصائياته الشخصية
-      else if (roles.includes('Broker')) {
-        this.isAdmin.set(false);
-        this.loadBrokerDashboard(brokerId);
+
+    this.isAdmin.set(true);
+    this.loadAdminData();
+  }
+
+  loadAdminData() {
+    this.alertService.showLoading('Loading CRM Data...');
+    
+    // 🟢 بنجيب المستخدمين والعملاء في نفس الوقت
+    forkJoin({
+      users: this.adminService.getAllUsers(),
+      leads: this.crmService.getLeads('') // ID فاضي يعني هات كل العملاء
+    }).subscribe({
+      next: ({ users, leads }) => {
+        // فلترة البروكرز المسموح ليهم يدخلوا الـ CRM
+        const vipUsers = users.filter((u: any) => this.authService.ALLOWED_CRM_BROKERS.includes(u.id));
+        this.vipBrokers.set(vipUsers);
+
+        // تظبيط توقيت العملاء
+        leads.forEach((lead: any) => {
+          if (lead.createdAt && !lead.createdAt.endsWith('Z')) lead.createdAt += 'Z';
+          if (lead.updatedAt && !lead.updatedAt.endsWith('Z')) lead.updatedAt += 'Z';
+        });
+        this.allLeads.set(leads);
+        
+        this.alertService.close();
+      },
+      error: (err) => {
+        console.error(err);
+        this.alertService.close();
+        this.alertService.error('Failed to load CRM data.');
       }
-    }
-  }
-
-  loadCampaigns() {
-    this.crmService.getCampaigns().subscribe(data => this.campaignsList.set(data));
-  }
-
-  onSubmitCampaign() {
-    if (this.campaignForm.valid) {
-      this.alertService.showLoading('Adding Campaign...');
-      this.crmService.createCampaign(this.campaignForm.value).subscribe({
-        next: () => {
-          this.alertService.close();
-          this.alertService.success('Campaign Added!');
-          this.campaignForm.reset({ source: 'Facebook' });
-          this.loadCampaigns();
-        }
-      });
-    }
-  }
-
-  onDeleteCampaign(id: number) {
-    this.alertService.confirm('Delete this campaign?', () => {
-      this.crmService.deleteCampaign(id).subscribe(() => this.loadCampaigns());
     });
   }
 
-  loadAdminDashboard() {
-    this.crmService.getAdminDashboard().subscribe({
-      next: (data) => this.adminStats.set(data),
-      error: (err) => console.error('Error loading admin dashboard', err)
-    });
+  toggleBrokerExpand(brokerIndex: number) {
+    // فتح وقفل قائمة العملاء جوا صف البروكر
+    const stats = this.brokersStats();
+    stats[brokerIndex].isExpanded = !stats[brokerIndex].isExpanded;
   }
 
-  loadBrokerDashboard(brokerId: string) {
-    this.crmService.getBrokerDashboard(brokerId).subscribe({
-      next: (data) => this.brokerStats.set(data),
-      error: (err) => console.error('Error loading broker dashboard', err)
-    });
+  openRequestModal(lead: any) {
+    this.selectedRequest.set(lead);
+    const bootstrap = (window as any).bootstrap;
+    new bootstrap.Modal(document.getElementById('requestModal')).show();
+  }
+
+  clearClientFilters() {
+    this.searchClient.set('');
+    this.filterClientStage.set('');
+    this.filterClientBroker.set('');
   }
 }

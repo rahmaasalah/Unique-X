@@ -95,6 +95,10 @@ namespace Unique_X.Models
         public bool IsApproved { get; set; } = false;
         public string? RejectionReason { get; set; }
 
+        public string OwnerName { get; set; } = string.Empty;
+        public string OwnerPhone { get; set; } = string.Empty;
+        public string? DeveloperName { get; set; }
+
         // العلاقة مع الصور
         public ICollection<Photo> Photos { get; set; }
 

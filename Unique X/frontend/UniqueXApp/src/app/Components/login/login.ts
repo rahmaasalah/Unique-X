@@ -24,11 +24,17 @@ export class LoginComponent implements OnInit {
     private alertService: AlertService
   ) {}
 
+  showPassword = false;
+
   ngOnInit(): void {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 
   onSubmit() {

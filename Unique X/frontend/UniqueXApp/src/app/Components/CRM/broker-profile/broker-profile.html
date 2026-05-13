@@ -3,13 +3,31 @@
   <!-- رأس البروفايل (الزراير الجديدة على اليمين) -->
   <div class="d-flex align-items-center mb-4 bg-white p-4 rounded-4 shadow-sm ">
     <img [src]="brokerImage()" class="rounded-circle border border-3  shadow-sm me-4" style="width: 100px; height: 100px; object-fit: cover;">
-    <div>
+    <div class="flex-grow-1">
       <h2 class="fw-bold mb-1">{{ brokerName() }}</h2>
-      <p class="text-muted mb-0"><i class="fas fa-briefcase text-danger me-2"></i> Real Estate Broker Workspace</p>
+      
+      <!-- 🟢 لو اللي فاتح أدمن -->
+      <p class="text-muted fw-bold mb-0" *ngIf="isAdmin()">
+        <i class="bi bi-person-badge-fill text-danger me-2"></i> Master Admin Workspace
+      </p>
+
+      <!-- 🟢 لو اللي فاتح بروكر -->
+      <div *ngIf="!isAdmin()">
+        <p class="text-danger fw-bold mb-1" style="font-size: 0.95rem;">
+          <i class="bi bi-briefcase-fill me-1"></i> {{ brokerTitle() || 'Real Estate Consultant' }}
+        </p>
+        <p class="text-muted small mb-0" style="max-width: 600px; white-space: pre-line; line-height: 1.5;">
+          {{ brokerDescription() || 'Welcome to your CRM workspace. Manage your leads, visits, and tasks efficiently.' }}
+        </p>
+      </div>
     </div>
     
     <!-- 👇 الزراير الجديدة (Add Lead & Pipeline) -->
     <div class="ms-auto d-flex gap-2 flex-wrap">
+
+       <button *ngIf="isAdmin()" class="btn btn-dark rounded-pill fw-bold px-4 shadow-sm" routerLink="/crm/campaigns">
+        <i class="bi bi-megaphone-fill me-1"></i> Add Campaign
+      </button>
       <button class="btn btn-outline-danger rounded-pill fw-bold px-4" routerLink="/crm/add-lead">
         <i class="bi bi-person-plus-fill me-1"></i> Add Lead
       </button>
@@ -46,7 +64,7 @@
       <!-- 🟢 شريط الفلاتر الشامل -->
       <div class="row g-2 mb-4 p-3 bg-light rounded-3 border">
         <div class="col-md-3">
-          <input type="text" class="form-control form-control-sm" placeholder="Search Name/Phone..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+          <input type="text" class="form-control form-control-sm" placeholder="Search Name,Phone..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
         </div>
         <div class="col-md-2">
           <select class="form-select form-select-sm" [ngModel]="filterStage()" (ngModelChange)="filterStage.set($event)">
@@ -86,6 +104,20 @@
             @for (c of campaignsList(); track c.id) { <option [value]="c.name">{{ c.name }}</option> }
           </select>
         </div>
+
+        <div class="col-md-2" *ngIf="isAdmin()">
+          <select class="form-select form-select-sm" [ngModel]="filterBroker()" (ngModelChange)="filterBroker.set($event)">
+            <option value="">All Sales Persons</option>
+            <option *ngFor="let b of brokersList()" [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
+          </select>
+        </div>
+
+         <div class="col-md-2">
+          <select class="form-select form-select-sm" [ngModel]="filterReferredBy()" (ngModelChange)="filterReferredBy.set($event)">
+            <option value="">All Broker Codes</option>
+            <option *ngFor="let code of uniqueBrokerCodes()" [value]="code">Ref: {{ code }}</option>
+          </select>
+        </div>
        <div class="col-md-2">
           <select class="form-select form-select-sm" [ngModel]="filterZone()" (ngModelChange)="filterZone.set($event)">
             <option value="">All Zones</option>
@@ -117,7 +149,7 @@
               <th class="ps-3">Client</th>
               <th *ngIf="isAdmin()">Broker</th>
               <th>Stage</th>
-              <th *ngIf="isAdmin()">Activity Stats</th> 
+              <th *ngIf="isAdmin()">Activity</th> 
               <th>Campaign</th>
               <th>Zone</th>
               <th *ngIf="isAdmin()">Property Info</th>
@@ -131,23 +163,22 @@
             <tr *ngFor="let lead of filteredLeads()">
               <td class="ps-3" style="max-width: 280px;"> <!-- 🟢 حددنا عرض أقصى عشان الكلام الطويل ينزل سطر -->
                 <div class="fw-bold text-dark">{{ lead.fullName }}</div>
-                <small class="text-muted d-block mb-1"><i class="bi bi-telephone me-1"></i>{{ lead.phoneNumber }}</small>
+                <div class="text-muted d-flex align-items-center mt-1" style="font-size: 0.8rem;">
+                  <i class="bi bi-telephone-fill me-1 text-secondary"></i> {{ lead.phoneNumber }}
+                </div>
 
                 <div *ngIf="isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate" class="text-danger small fw-bold mt-1">
                   <i class="bi bi-exclamation-triangle-fill"></i> Pending Duplicate
                 </div>
-                
-                <!-- 🟢 كارت الفيدباك الصغير تحت الرقم -->
-                <div *ngIf="lead.generalFeedback" class="mt-2 p-2 bg-light border rounded-3 small text-wrap text-break lh-sm">
-                  <span class="text-danger fw-bold d-block mb-1"><i class="bi bi-chat-quote-fill me-1"></i>Latest Feedback:</span>
-                  
-                  <span class="text-dark d-block mb-2 fw-medium" style="white-space: pre-line; font-size: 0.8rem;">
-                    {{ parseFeedbacks(lead.generalFeedback)[0].text }}
+
+                <!-- 🟢 الفيدباك (بياخد مساحة وينزل سطور لوحده) -->
+                <div *ngIf="lead.generalFeedback" class="mt-2 p-2 bg-light border rounded-3 w-100" style="white-space: normal;">
+                  <span class="text-danger fw-bold d-block mb-1" style="font-size: 0.7rem;">Latest Feedback:</span>
+                  <span class="text-dark fw-medium d-block" style="white-space: pre-line; font-size: 0.75rem;">
+                    {{ parseFeedbacks(lead.generalFeedback)[0]?.text || lead.generalFeedback }}
                   </span>
-                  
-                  <div class="text-muted text-end border-top pt-1" style="font-size: 0.65rem;">
-                     <span class="fw-bold"><i class="bi bi-person-fill"></i> {{ parseFeedbacks(lead.generalFeedback)[0].broker }}</span>
-                     <span *ngIf="parseFeedbacks(lead.generalFeedback)[0].date"> | {{ parseFeedbacks(lead.generalFeedback)[0].date | date:'MMM d, h:mm a' }}</span>
+                  <div class="text-muted text-end mt-1 pt-1 border-top" style="font-size: 0.65rem;" *ngIf="parseFeedbacks(lead.generalFeedback)[0]?.date">
+                     {{ parseFeedbacks(lead.generalFeedback)[0]?.broker }} | {{ parseFeedbacks(lead.generalFeedback)[0]?.date | date:'MMM d, h:mm a' }}
                   </div>
                 </div>
               </td>
@@ -156,17 +187,28 @@
               </td>
               <td><span class="badge bg-dark">{{ lead.statusName }}</span></td>
 
-              <td *ngIf="isAdmin()">
-                <div class="d-flex flex-column gap-1" style="font-size: 0.75rem;">
-                  <span class="text-muted fw-bold"><i class="bi bi-telephone-fill text-dark me-1"></i> Calls: {{ lead.activitiesCount || 0 }}</span>
-                  <span class="text-muted fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Visits: {{ lead.visitsCount || 0 }}</span>
+              <td *ngIf="isAdmin()" class="text-nowrap">
+                <div class="d-flex flex-column gap-1" style="font-size: 0.7rem;">
+                  <span class="text-muted fw-bold">Calls: {{ lead.activitiesCount || 0 }}</span>
+                  <span class="text-muted fw-bold">Visits: {{ lead.visitsCount || 0 }}</span>
                 </div>
               </td>
-              <td>
-                <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-3 py-2 shadow-sm">
+               <td class="text-nowrap">
+                <!-- اسم الحملة -->
+                <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm d-inline-block mb-1">
                   <i class="bi" [ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
                   {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
                 </span>
+                
+                <!-- مصدر الحملة (يظهر لو موجود) -->
+                <div *ngIf="lead.campaignSource" class="text-muted fw-bold" style="font-size: 0.65rem;">
+                  <i class="bi bi-funnel-fill me-1"></i>{{ lead.campaignSource }}
+                </div>
+
+                <!-- كود البروكر (يظهر لو موجود) -->
+                <div *ngIf="lead.referredBy" class="text-danger fw-bold mt-1" style="font-size: 0.65rem;">
+                  <i class="bi bi-person-bounding-box me-1"></i>Ref: {{ lead.referredBy }}
+                </div>
               </td>
               <td><span class="fw-bold small text-secondary">{{ lead.zoneName }}</span></td>
 
@@ -189,8 +231,8 @@
               
              <td class="text-nowrap"><div class="small fw-bold text-dark">{{ lead.createdAt | date:'mediumDate' }}</div></td>
               <td class="text-nowrap">
-                <div class="small fw-bold text-danger bg-danger-subtle px-2 py-1 rounded d-inline-block">
-                  <i class="bi bi-clock-history me-1"></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
+                <div class="small fw-bold text-dark d-inline-block">
+                  <i class=""></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
                 </div>
               </td>
               <td class="text-end pe-3 text-nowrap">

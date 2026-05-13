@@ -40,6 +40,13 @@ export class AddLeadComponent implements OnInit {
     { id: 3, name: 'North Coast' }
   ];
 
+  dummyBrokers = [
+    { code: 'AR123', name: 'Ahmed Ramadan' },
+    { code: 'MH456', name: 'Mohamed Hassan' },
+    { code: 'SH789', name: 'Shimaa Ali' },
+    { code: 'TR001', name: 'Tarek Refaat' }
+  ];
+
   regionsMapping: any = {
     1:['Sheikh Zayed', 'Green belt', '6th of October', 'North Expansions', 'October Gardens', 'Eastern Expansions', 'New Cairo'],
     2:['zizinia', 'Janaklis', 'Gliem', 'Fleming', 'San Stefano', 'Shods', 'Elshalalat', 'Wabur al-miyah', 'Al-Ibrahimiya', 'Al-Manshiyya', 'Camp Schésar', 'Muharram Bik', 'Mahattat Misr', 'Cleopatra', 'Al-Azariṭa', 'Al-Shatibi', 'Saba Basha', 'Sidi Gaber', 'Roshdy', 'Bolkley', 'Moustafa Kamel', 'Kafr Abdo', 'Stanly', 'Sidi Beshr', 'El-Mandara', 'Al-Suyuf', 'Victoria', 'Al-Aasafirah', 'Al-Maamoura', 'Toson', 'Smouha', 'New Smouha', 'Borj Al-Arab', 'Loran', 'Al-Agamy', 'King Mariout'],

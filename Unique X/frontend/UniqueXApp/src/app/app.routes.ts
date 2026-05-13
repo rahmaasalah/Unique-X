@@ -20,6 +20,7 @@ import { CrmDashboardComponent } from './Components/CRM/crm-dashboard/crm-dashbo
 import { BrokerProfileComponent } from './Components/CRM/broker-profile/broker-profile';
 import { AddLeadComponent } from './Components/CRM/add-lead/add-lead';
 import { EditRequestComponent } from './Components/CRM/edit-request/edit-request';
+import { CampaignsManagerComponent } from './Components/CRM/campaigns-manager/campaigns-manager';
 
 export const routes: Routes = [
   { 
@@ -59,6 +60,7 @@ export const routes: Routes = [
   path: 'crm/profile', 
   component: BrokerProfileComponent 
 },
+{ path: 'crm/campaigns', component: CampaignsManagerComponent },
 { path: 'crm/leads/:id/edit', component: EditRequestComponent },
 { path: 'crm/add-lead', component: AddLeadComponent },
  { path: '', component: HomeComponent, pathMatch: 'full' }, 

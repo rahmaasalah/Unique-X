@@ -145,7 +145,13 @@
 
         <div class="col-md-4">
           <label class="form-label small fw-bold text-dark">Broker Code (Referred By)</label>
-          <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="referredBy" placeholder="e.g. AR123">
+          <!-- 🟢 حولناها لـ Select Menu -->
+          <select class="form-select form-select-lg bg-light border-0 rounded-3" formControlName="referredBy">
+            <option value="">-- Direct (No Referral) --</option>
+            <option *ngFor="let broker of dummyBrokers" [value]="broker.code">
+              {{ broker.name }} ({{ broker.code }})
+            </option>
+          </select>
         </div>
 
         <hr class="my-3 text-muted">
@@ -222,7 +228,7 @@
         <ng-container *ngIf="showFinancialDetails">
           <div class="col-md-6 animate__animated animate__fadeIn">
             <label class="form-label small fw-bold text-dark">Down Payment</label>
-            <input type="text" class="form-control bg-light border-0 rounded-3 text-danger fw-bold" 
+            <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
                    placeholder="e.g. 1,000,000" (input)="formatCurrency($event, 'downPayment')">
           </div>
           <div class="col-md-6 animate__animated animate__fadeIn">

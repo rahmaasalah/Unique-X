@@ -88,6 +88,8 @@ projectsMapping: any = {
   }
 };
 
+dummyDevelopers = ['Sodic', 'Palm Hills', 'Emaar', 'Mountain View', 'Tatweer Misr', 'La Vista', 'City Edge', 'Ora', 'Hassan Allam', 'Madinet Masr'];
+
 filteredProjects: string[] = [];
 
   private fb = inject(FormBuilder);
@@ -117,6 +119,9 @@ filteredProjects: string[] = [];
       elevatorsCount: [0,[Validators.min(0)]],
       buildYear: ['',[Validators.min(1950), Validators.max(this.currentYear)]],
       hasHotelEntrance: [false],
+      ownerName: ['', Validators.required],
+      ownerPhone: ['', Validators.required],
+      developerName: [''],
       hasSecurity: [false],
       isFirstOwner: [false],
       isLegalReconciled: [false],
@@ -158,12 +163,16 @@ filteredProjects: string[] = [];
       const priceControl = this.propertyForm.get('price');
       const ppmControl = this.propertyForm.get('pricePerMeter');
       const securityControl = this.propertyForm.get('securityDeposit');
+      const devControl = this.propertyForm.get('developerName');
 
       if (typeNum === 2) { 
         ppmControl?.setValidators([Validators.required]);
+        devControl?.setValidators([Validators.required]);
       } else {
         ppmControl?.clearValidators();
-        ppmControl?.setValue(''); 
+        ppmControl?.setValue('');
+        devControl?.clearValidators(); // المطور اختياري
+        devControl?.setValue('');
       }
 
       if (typeNum === 1) { 
@@ -177,6 +186,7 @@ filteredProjects: string[] = [];
       priceControl?.updateValueAndValidity();
       ppmControl?.updateValueAndValidity();
       securityControl?.updateValueAndValidity();
+      devControl?.updateValueAndValidity();
     });
 
     this.updateRegions(this.propertyForm.get('city')?.value);
@@ -629,6 +639,9 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
     // إرسال الحقول النصية
     formData.append('Title', f.title || '');
     formData.append('Description', f.description || '');
+    formData.append('OwnerName', f.ownerName || '');
+    formData.append('OwnerPhone', f.ownerPhone || '');
+    formData.append('DeveloperName', f.developerName || '');
     formData.append('ProjectName', f.projectName || ''); 
     formData.append('Code', f.code || '');
     formData.append('City', f.city.toString());

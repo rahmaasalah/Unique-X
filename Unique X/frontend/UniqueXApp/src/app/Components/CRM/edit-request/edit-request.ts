@@ -24,6 +24,13 @@ export class EditRequestComponent implements OnInit {
   currentBrokerId: string = '';
 
   zones =[{ id: 1, name: 'Cairo' }, { id: 2, name: 'Alexandria' }, { id: 3, name: 'North Coast' }];
+
+  dummyBrokers = [
+    { code: 'AR123', name: 'Ahmed Ramadan' },
+    { code: 'MH456', name: 'Mohamed Hassan' },
+    { code: 'SH789', name: 'Shimaa Ali' },
+    { code: 'TR001', name: 'Tarek Refaat' }
+  ];
   
   regionsMapping: any = {
     1:['Sheikh Zayed', 'Green belt', '6th of October', 'North Expansions', 'October Gardens', 'Eastern Expansions', 'New Cairo'],
