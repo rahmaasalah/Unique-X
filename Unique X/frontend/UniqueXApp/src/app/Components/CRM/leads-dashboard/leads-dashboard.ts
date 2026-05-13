@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 import { CdkDragDrop, moveItemInArray, transferArrayItem, DragDropModule } from '@angular/cdk/drag-drop'; 
@@ -8,6 +8,7 @@ import { LeadResponseDto } from '../../../Models/crm.models';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../Services/auth';
 import { Router } from '@angular/router';
+import { AdminService } from '../../../Services/admin';
 
 @Component({
   selector: 'app-leads-dashboard',
@@ -21,9 +22,13 @@ export class LeadsDashboardComponent implements OnInit {
   private alertService = inject(AlertService);
   private authService = inject(AuthService);
   private router = inject(Router);
-
+  private adminService = inject(AdminService);
   currentBrokerId: string = ''; 
   campaignsList = signal<any[]>([]);
+
+  brokersList = signal<any[]>([]);
+  filterBroker = signal<string>('');
+  filterReferredBy = signal<string>('');
 
   viewMode = signal<'kanban' | 'list'>('kanban'); 
   filteredLeadsForList = signal<any[]>([]);
@@ -43,6 +48,12 @@ export class LeadsDashboardComponent implements OnInit {
   zones =[{ id: 1, name: 'Cairo' }, { id: 2, name: 'Alexandria' }, { id: 3, name: 'North Coast' }];
 
   boardColumns = signal<any[]>([]);
+
+  uniqueBrokerCodes = computed(() => {
+    const leads = this.allLeads();
+    const codes = leads.map(l => l.referredBy).filter(c => c && c.trim() !== '');
+    return [...new Set(codes)].sort(); // Set لمنع التكرار
+  });
 
   isAdmin = signal<boolean>(false); // 👈 متغير جديد
   selectedRequest = signal<any>(null);
@@ -64,6 +75,10 @@ export class LeadsDashboardComponent implements OnInit {
       const isUserAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
       
       if (isUserAdmin) {
+
+        this.adminService.getAllUsers().subscribe(users => {
+        this.brokersList.set(users.filter((u: any) => u.userType === 1));
+      });
         this.isAdmin.set(true);
         fetchId = ''; // للأدمن بنبعت ID فاضي عشان يجيب كل العملاء بتوع كل البروكرز
       } else {
@@ -126,6 +141,8 @@ export class LeadsDashboardComponent implements OnInit {
     const uDate = this.filterLastUpdate();
     const minB = this.filterMinBudget();
     const maxB = this.filterMaxBudget();
+    const broker = this.filterBroker();
+    const refBy = this.filterReferredBy();
 
     const filtered = this.allLeads().filter(lead => {
       if (!this.isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate) {
@@ -136,14 +153,16 @@ export class LeadsDashboardComponent implements OnInit {
       const matchCamp = campaign === '' || lead.campaignName === campaign;
       const matchStatus = status === '' || lead.statusId.toString() === status;
       const matchZone = zone === '' || lead.zoneName === zone;
-      
+      const matchBroker = broker === '' || lead.brokerId === broker;
+      const matchRefBy = refBy === '' || lead.referredBy === refBy;
+
       const matchCDate = cDate === '' || this.formatDateForFilter(lead.createdAt) === cDate;
       const matchUDate = uDate === '' || this.formatDateForFilter(lead.updatedAt || lead.createdAt) === uDate;
       
       const matchMinB = minB === null || lead.totalAmount >= minB;
       const matchMaxB = maxB === null || lead.totalAmount <= maxB;
 
-      return matchSearch && matchCamp && matchStatus && matchZone && matchCDate && matchUDate && matchMinB && matchMaxB;
+      return matchSearch && matchCamp && matchStatus && matchZone && matchBroker && matchCDate && matchUDate && matchMinB && matchMaxB && matchRefBy;
 
       
     });
@@ -184,7 +203,7 @@ export class LeadsDashboardComponent implements OnInit {
       if (column) column.leads.push(lead);
     });
 
-    this.boardColumns.set(freshColumns); 
+    this.boardColumns.set(freshColumns);
 
     if (isUserAction) {
       const element = document.getElementById('pipeline-section');
@@ -207,6 +226,8 @@ export class LeadsDashboardComponent implements OnInit {
     this.filterMinBudget.set(null);
     this.filterMaxBudget.set(null);
     this.applyFilters(true);
+    this.filterBroker.set('');
+    this.filterReferredBy.set('');
   }
 
   drop(event: CdkDragDrop<LeadResponseDto[]>, newStatusId: number) {

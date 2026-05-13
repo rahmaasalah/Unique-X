@@ -35,7 +35,11 @@ namespace Unique_X.DTOs
         public int BuildYear { get; set; }                 
         public bool HasHotelEntrance { get; set; }        
         public bool HasSecurity { get; set; }             
-        public bool IsFirstOwner { get; set; }           
+        public bool IsFirstOwner { get; set; }
+
+        public string? OwnerName { get; set; }
+        public string? OwnerPhone { get; set; }
+        public string? DeveloperName { get; set; }
         public bool IsLegalReconciled { get; set; }       
         public bool HasParking { get; set; }             
         public decimal CommissionPercentage { get; set; } = 2.5m; 

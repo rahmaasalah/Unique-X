@@ -16,6 +16,10 @@
     </div>
     
     <div class="d-flex gap-2">
+
+      <button *ngIf="isAdmin()" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm" routerLink="/crm/campaigns">
+        <i class="bi bi-megaphone-fill me-1"></i> Add Campaign
+      </button>
       <!-- 👈 زرار الذهاب لصفحة إضافة العميل -->
       <button class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" routerLink="/crm/add-lead">
         <i class="bi bi-plus-lg me-1"></i> Add Lead
@@ -127,10 +131,31 @@
         <select class="form-select form-select-sm" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); applyFilters(true)">
           <option value="">All Stages</option>
           <option value="1">New "To Call"</option>
-          <option value="2">Waiting response on wtp msg</option>
-          <option value="7">Visit scheduled</option>
-          <option value="11">Meeting Scheduled</option>
-          <option value="19">Deal closed</option>
+            <option value="2">Wait response on wtp msg</option>
+            <option value="3">Request call another time</option>
+            <option value="4">Calls (request)</option>
+            <option value="5">Wait Client Feedback on unit</option>
+            <option value="6">Follow Up For Visit</option>
+            <option value="7">Visit scheduled</option>
+            <option value="8">Follow up After visit</option>
+            <option value="9">Wait feedback on project</option>
+            <option value="10">Follow up for Meeting</option>
+            <option value="11">Meeting Scheduled</option>
+            <option value="12">Follow up after meeting</option>
+            <option value="13">Follow up for developer meeting</option>
+            <option value="14">Follow up for site visit</option>
+            <option value="15">Site visit scheduled</option>
+            <option value="16">Follow up for event</option>
+            <option value="17">Follow up after event</option>
+            <option value="18">Follow up for closing</option>
+            <option value="19">Deal closed</option>
+            <option value="20">Follow up, not now</option>
+            <option value="21">N/A "unreachable"</option>
+            <option value="22">Lost Not interested</option>
+            <option value="23">Low Budget</option>
+            <option value="24">Number Issue</option>
+            <option value="25">Broker</option>
+            <option value="26">Recommend to shift</option>
         </select>
       </div>
       <div class="col-md-2">
@@ -138,6 +163,22 @@
           <option value="">All Campaigns</option>
           <option value="No Campaign">Direct / Website</option>
           @for (c of campaignsList(); track c.id) { <option [value]="c.name">{{ c.name }}</option> }
+        </select>
+      </div>
+
+      <div class="col-md-2" *ngIf="isAdmin()">
+        <select class="form-select form-select-sm" [ngModel]="filterBroker()" (ngModelChange)="filterBroker.set($event); applyFilters(true)">
+          <option value="">All Sales Persons</option>
+          <option *ngFor="let b of brokersList()" [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
+        </select>
+      </div>
+
+       <div class="col-md-2">
+        <select class="form-select form-select-sm" [ngModel]="filterReferredBy()" (ngModelChange)="filterReferredBy.set($event); applyFilters(true)">
+          <option value="">All Broker Codes</option>
+          @for (code of uniqueBrokerCodes(); track code) { 
+            <option [value]="code">Ref: {{ code }}</option> 
+          }
         </select>
       </div>
       <div class="col-md-2">
@@ -213,11 +254,22 @@
                   </div>
                 </td>
                 
-                <td>
-                  <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm" style="font-size: 0.7rem;">
+                <td class="text-nowrap">
+                  <!-- اسم الحملة -->
+                  <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm d-inline-block mb-1">
                     <i class="bi"[ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
                     {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
                   </span>
+                  
+                  <!-- مصدر الحملة (يظهر لو موجود) -->
+                  <div *ngIf="lead.campaignSource" class="text-muted fw-bold" style="font-size: 0.65rem;">
+                    <i class="bi bi-funnel-fill me-1"></i>{{ lead.campaignSource }}
+                  </div>
+
+                  <!-- كود البروكر (يظهر لو موجود) -->
+                  <div *ngIf="lead.referredBy" class="text-danger fw-bold mt-1" style="font-size: 0.65rem;">
+                    <i class="bi bi-person-bounding-box me-1"></i>Ref: {{ lead.referredBy }}
+                  </div>
                 </td>
 
                 <td><span class="fw-bold small text-secondary">{{ lead.zoneName }}</span></td>

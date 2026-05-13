@@ -25,24 +25,42 @@ export class CrmNavbarComponent implements OnInit {
   private pollingInterval: any; // مؤقت التحديث التلقائي
   private alertedItems = new Set<string>();
 
-  ngOnInit() {
+  isAdmin = signal<boolean>(false); // 👈 متغير جديد لتحديد الأدمن
+
+
+   ngOnInit() {
     const userString = localStorage.getItem('user');
     if (userString) {
       const user = JSON.parse(userString);
-      this.brokerName.set(user.username || 'Broker');
+      
+      // 🟢 فحص هل المستخدم أدمن
+      const roles = user.roles ||[];
+      const isUserAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
+      this.isAdmin.set(isUserAdmin);
+
+      // تحديد الاسم بناءً على الصلاحية
+      if (isUserAdmin) {
+        this.brokerName.set('Admin Control');
+      } else {
+        this.brokerName.set(user.username || 'Broker');
+      }
+
       if (user.profileImageUrl) this.brokerImage.set(user.profileImageUrl);
 
-      const brokerId = user.id || user.userId || '';
-      if (brokerId) {
-        this.loadNotifications(brokerId);
-
-        this.pollingInterval = setInterval(() => {
+      // 🟢 تحميل الإشعارات وتشغيل الجرس (فقط لو مش أدمن)
+      if (!isUserAdmin) {
+        const brokerId = user.id || user.userId || '';
+        if (brokerId) {
           this.loadNotifications(brokerId);
-        }, 60000); 
+          
+          this.pollingInterval = setInterval(() => {
+            this.loadNotifications(brokerId);
+          }, 60000); 
 
-         this.crmService.refreshNavbar$.subscribe(() => {
-          this.loadNotifications(brokerId);
-        });
+          this.crmService.refreshNavbar$.subscribe(() => {
+            this.loadNotifications(brokerId);
+          });
+        }
       }
     }
   }

@@ -15,7 +15,7 @@
       </a>
 
       <!-- الإشعارات (Notifications Bell) -->
-      <div class="dropdown mt-1">
+      <div class="dropdown mt-1" *ngIf="!isAdmin()">
         <a class="nav-link text-white position-relative d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" style="cursor: pointer;">
           <i class="bi bi-bell-fill fs-4"></i> 
           <span *ngIf="notifications().length > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm" style="font-size: 0.7rem;">

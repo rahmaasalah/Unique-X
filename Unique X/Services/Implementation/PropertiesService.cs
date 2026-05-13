@@ -32,6 +32,10 @@ namespace Unique_X.Services.Implementation
                 Bathrooms = dto.Bathrooms ?? 0,
                 Code = dto.Code ?? string.Empty,
 
+                OwnerName = dto.OwnerName ?? string.Empty,
+                OwnerPhone = dto.OwnerPhone ?? string.Empty,
+                DeveloperName = dto.DeveloperName,
+
                 // التصنيفات (Enums)
                 City = (City)(dto.City ?? 1),
                 ListingType = (ListingType)(dto.ListingType ?? 0),

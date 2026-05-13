@@ -30,5 +30,9 @@
         public bool IsDuplicate { get; set; }
         public bool IsApprovedDuplicate { get; set; }
         public int ClosedDealsCount { get; set; }
+
+        public string SelectedRegions { get; set; }
+        public string SelectedProjects { get; set; }
+        public string Notes { get; set; }
     }
 }

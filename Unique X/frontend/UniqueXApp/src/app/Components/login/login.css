@@ -16,3 +16,8 @@
 .btn-danger:hover {
   background-color: #d12b36;
 }
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
