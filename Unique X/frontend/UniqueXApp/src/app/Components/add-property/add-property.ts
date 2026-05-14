@@ -88,7 +88,18 @@ projectsMapping: any = {
   }
 };
 
-dummyDevelopers = ['Sodic', 'Palm Hills', 'Emaar', 'Mountain View', 'Tatweer Misr', 'La Vista', 'City Edge', 'Ora', 'Hassan Allam', 'Madinet Masr'];
+dummyDevelopers =[
+  { code: 'D01', name: 'Sodic' },
+  { code: 'D02', name: 'Palm Hills' },
+  { code: 'D03', name: 'Emaar' },
+  { code: 'D04', name: 'Mountain View' },
+  { code: 'D05', name: 'Tatweer Misr' },
+  { code: 'D06', name: 'La Vista' },
+  { code: 'D07', name: 'City Edge' },
+  { code: 'D08', name: 'Ora' },
+  { code: 'D09', name: 'Hassan Allam' },
+  { code: 'D10', name: 'Madinet Masr' }
+];
 
 filteredProjects: string[] = [];
 

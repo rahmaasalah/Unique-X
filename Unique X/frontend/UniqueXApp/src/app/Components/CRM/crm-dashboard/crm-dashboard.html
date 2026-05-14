@@ -1,10 +1,10 @@
-<!-- 🟢 التعديل الأول: قفلنا السكرول الخارجي للصفحة كلها (overflow: hidden) -->
+<!-- 🟢 مثبتين الشاشة ومفيش سكرول خارجي -->
 <div class="d-flex bg-light" dir="ltr" *ngIf="isAdmin()" style="height: 100vh; overflow: hidden;">
   
   <!-- ================= 1. Sidebar ================= -->
-  <!-- 🟢 السايد بار واخد 100vh وبيلف جواه لو الشاشة صغيرة -->
   <aside class="bg-dark text-white shadow-lg d-flex flex-column p-3 flex-shrink-0" style="width: 280px; height: 100vh; overflow-y: auto;">
     <div class="mb-4 text-center py-3 border-bottom border-secondary flex-shrink-0">
+      <div class="fs-4 fw-bold"><span class="text-white">BET</span><span class="text-danger">K</span> CRM</div>
       <p class="text-muted small text-uppercase mt-1" style="letter-spacing: 1px; font-size: 0.65rem;">Master Control</p>
     </div>
     <nav class="flex-grow-1">
@@ -23,42 +23,39 @@
             <i class="bi bi-people-fill me-3 fs-5"></i> All Clients Data
           </button>
         </li>
+        <!-- 🟢 تاب الكاليندر الجديد -->
+        <li class="mb-2">
+          <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
+                  [ngClass]="activeTab() === 'calendar' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+                  (click)="activeTab.set('calendar')">
+            <i class="bi bi-calendar-month-fill me-3 fs-5"></i> Master Calendar
+          </button>
+        </li>
       </ul>
     </nav>
   </aside>
 
   <!-- ================= 2. Main Content ================= -->
-  <!-- 🟢 المحتوى الرئيسي متقسم Flex عشان الجدول ياخد الباقي ويسكرول -->
   <main class="flex-grow-1 p-4 p-md-5 d-flex flex-column bg-light" style="height: 100vh; overflow: hidden;">
     
-    <!-- كروت الإحصائيات العلوية (ثابتة مبتتحركش flex-shrink-0) -->
+    <!-- 🟢 كروت الإحصائيات (7 كروت كاملة) -->
     <div class="row g-3 mb-4 flex-shrink-0 animate__animated animate__fadeInDown">
-      <div class="col-md-4">
-        <div class="card p-4 bg-white shadow-sm border-0 border-start border-primary border-5 rounded-4 h-100">
-          <small class="text-muted fw-bold text-uppercase">Total System Leads</small>
-          <h2 class="fw-bold mb-0 text-dark">{{ systemTotalLeads() }}</h2>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card p-4 bg-white shadow-sm border-0 border-start border-success border-5 rounded-4 h-100">
-          <small class="text-muted fw-bold text-uppercase">Total Closed Deals</small>
-          <h2 class="fw-bold mb-0 text-success">{{ systemClosedDeals() }}</h2>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card p-4 bg-white shadow-sm border-0 border-start border-danger border-5 rounded-4 h-100">
-          <small class="text-muted fw-bold text-uppercase">Total Expected Revenue</small>
-          <h2 class="fw-bold mb-0 text-danger">{{ systemExpectedRevenue() | currency:'EGP ':'symbol':'1.0-0' }}</h2>
-        </div>
-      </div>
+      <div class="col-md-4"><div class="card p-3 bg-white shadow-sm border-0 border-start border-primary border-5 rounded-4 h-100"><small class="text-muted fw-bold text-uppercase">Total Leads</small><h3 class="fw-bold mb-0 text-dark">{{ systemTotalLeads() }}</h3></div></div>
+      <div class="col-md-4"><div class="card p-3 bg-white shadow-sm border-0 border-start border-success border-5 rounded-4 h-100"><small class="text-muted fw-bold text-uppercase">Closed Deals</small><h3 class="fw-bold mb-0 text-success">{{ systemClosedDeals() }}</h3></div></div>
+      <div class="col-md-4"><div class="card p-3 bg-white shadow-sm border-0 border-start border-danger border-5 rounded-4 h-100"><small class="text-muted fw-bold text-uppercase">Expected Revenue</small><h4 class="fw-bold mb-0 text-danger">{{ systemExpectedRevenue() | currency:'EGP ':'symbol':'1.0-0' }}</h4></div></div>
+      
+      <!-- الكروت الـ 4 الجديدة -->
+      <div class="col-md-3"><div class="card p-3 bg-white shadow-sm border-0 border-start border-warning border-5 rounded-4 h-100"><small class="text-muted fw-bold text-uppercase">Requests (Calls)</small><h3 class="fw-bold mb-0 text-warning">{{ systemRequests() }}</h3></div></div>
+      <div class="col-md-3"><div class="card p-3 bg-white shadow-sm border-0 border-start border-info border-5 rounded-4 h-100"><small class="text-muted fw-bold text-uppercase">Total Visits</small><h3 class="fw-bold mb-0 text-info">{{ systemVisits() }}</h3></div></div>
+      <div class="col-md-3"><div class="card p-3 bg-white shadow-sm border-0 border-start border-dark border-5 rounded-4 h-100"><small class="text-muted fw-bold text-uppercase">Total Activities</small><h3 class="fw-bold mb-0 text-dark">{{ systemActivities() }}</h3></div></div>
+      <div class="col-md-3"><div class="card p-3 bg-white shadow-sm border-0 border-start border-secondary border-5 rounded-4 h-100"><small class="text-muted fw-bold text-uppercase">Closing Stage</small><h3 class="fw-bold mb-0 text-secondary">{{ systemClosing() }}</h3></div></div>
     </div>
 
     <!-- ============================================== -->
-    <!-- تاب: أداء البروكرز -->
+    <!-- تاب: أداء البروكرز (يُسكرول داخلياً) -->
     <!-- ============================================== -->
     @if (activeTab() === 'brokers') {
       <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
-        
         <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
           <h4 class="fw-bold mb-0"><i class="bi bi-person-vcard-fill text-danger me-2"></i>CRM Brokers</h4>
           <div class="input-group input-group-sm w-auto shadow-sm">
@@ -66,8 +63,6 @@
             <input type="text" class="form-control border-start-0" placeholder="Search broker..." [ngModel]="searchBroker()" (ngModelChange)="searchBroker.set($event)">
           </div>
         </div>
-
-        <!-- 🟢 الجدول واخد المساحة الباقية ويسكرول من جواه بس -->
         <div class="card border-0 shadow-sm rounded-4 d-flex flex-column flex-grow-1" style="min-height: 0;">
           <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
             <table class="table align-middle mb-0">
@@ -82,14 +77,10 @@
               </thead>
               <tbody>
                 <ng-container *ngFor="let broker of brokersStats(); let i = index">
-                  <!-- صف البروكر الأساسي -->
                   <tr class="table-hover transition-all">
                     <td class="ps-4 py-3">
                       <div class="fw-bold text-dark fs-6">{{ broker.fullName }}</div>
-                      <div class="text-muted small mt-1">
-                        <i class="bi bi-telephone-fill me-1"></i> {{ broker.phoneNumber || 'N/A' }} | 
-                        <span class="badge bg-light text-dark border ms-1">Code: {{ broker.brokerCode }}</span>
-                      </div>
+                      <div class="text-muted small mt-1"><i class="bi bi-telephone-fill me-1"></i> {{ broker.phoneNumber || 'N/A' }} | <span class="badge bg-light text-dark border ms-1">Code: {{ broker.brokerCode }}</span></div>
                     </td>
                     <td class="text-center fw-bold fs-5 text-primary">{{ broker.totalLeads }}</td>
                     <td class="text-center">
@@ -99,22 +90,16 @@
                     <td>
                       <span class="badge bg-success rounded-pill px-3 py-2 fs-6 shadow-sm">{{ broker.closedDeals.length }}</span>
                       <div class="mt-2" *ngIf="broker.closedDeals.length > 0">
-                        <div class="small text-muted border-bottom pb-1 mb-1" *ngFor="let deal of broker.closedDeals">
-                          <i class="bi bi-check2-circle text-success me-1"></i> {{ deal.fullName }} 
-                          <span class="fw-bold text-dark">({{ deal.propertyType }})</span>
-                        </div>
+                        <div class="small text-muted border-bottom pb-1 mb-1" *ngFor="let deal of broker.closedDeals"><i class="bi bi-check2-circle text-success me-1"></i> {{ deal.fullName }}</div>
                       </div>
                     </td>
                     <td class="text-end pe-4">
-                      <button class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm" 
-                              [ngClass]="broker.isExpanded ? 'btn-dark' : 'btn-outline-danger'"
-                              (click)="toggleBrokerExpand(i)" [disabled]="broker.totalLeads === 0">
+                      <button class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm" [ngClass]="broker.isExpanded ? 'btn-dark' : 'btn-outline-danger'" (click)="toggleBrokerExpand(i)" [disabled]="broker.totalLeads === 0">
                         {{ broker.isExpanded ? 'Hide Clients' : 'View Clients' }}
                       </button>
                     </td>
                   </tr>
-
-                  <!-- صف العملاء (المنسدل) -->
+                  <!-- صف العملاء المنسدل -->
                   <tr *ngIf="broker.isExpanded" class="bg-light animate__animated animate__fadeIn">
                     <td colspan="5" class="p-4 border-bottom">
                       <h6 class="fw-bold text-danger mb-3"><i class="bi bi-people-fill me-1"></i> Clients assigned to {{ broker.firstName }}</h6>
@@ -132,7 +117,6 @@
                     </td>
                   </tr>
                 </ng-container>
-                <tr *ngIf="brokersStats().length === 0"><td colspan="5" class="text-center py-5 text-muted">No CRM Brokers found.</td></tr>
               </tbody>
             </table>
           </div>
@@ -147,7 +131,6 @@
       <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
         <h4 class="fw-bold mb-3 flex-shrink-0"><i class="bi bi-database-fill text-danger me-2"></i>All Clients Database</h4>
         
-        <!-- الفلاتر (ثابتة) -->
         <div class="row g-2 mb-3 p-3 bg-white rounded-4 border shadow-sm flex-shrink-0">
           <div class="col-md-3">
             <input type="text" class="form-control bg-light border-0" placeholder="Search Client Name/Phone..." [ngModel]="searchClient()" (ngModelChange)="searchClient.set($event)">
@@ -169,7 +152,6 @@
           </div>
         </div>
 
-        <!-- 🟢 الجدول واخد المساحة الباقية ويسكرول من جواه بس -->
         <div class="card border-0 shadow-sm rounded-4 d-flex flex-column flex-grow-1" style="min-height: 0;">
           <div class="table-responsive flex-grow-1" style="font-size: 0.85rem; overflow-y: auto;">
             <table class="table table-hover align-middle mb-0">
@@ -204,9 +186,55 @@
                     </button>
                   </td>
                 </tr>
-                <tr *ngIf="filteredClients().length === 0"><td colspan="5" class="text-center py-5 text-muted">No clients found.</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ============================================== -->
+    <!-- 🟢 تاب: النتيجة (Master Calendar)            -->
+    <!-- ============================================== -->
+    @if (activeTab() === 'calendar') {
+      <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
+        
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0 bg-white p-3 rounded-4 shadow-sm border">
+          <button class="btn btn-light border fw-bold" (click)="changeMonth(-1)"><i class="bi bi-chevron-left"></i></button>
+          <h4 class="fw-bold mb-0 text-danger text-uppercase" style="letter-spacing: 1px;">
+            <i class="bi bi-calendar-event me-2"></i> {{ monthNames[currentMonth().getMonth()] }} {{ currentMonth().getFullYear() }}
+          </h4>
+          <button class="btn btn-light border fw-bold" (click)="changeMonth(1)"><i class="bi bi-chevron-right"></i></button>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 d-flex flex-column flex-grow-1 bg-white" style="min-height: 0;">
+          <!-- أسماء الأيام -->
+          <div class="d-flex bg-light text-center fw-bold border-bottom flex-shrink-0">
+            <div class="flex-grow-1 py-3 border-end text-danger" style="flex-basis: 14%;">Sun</div>
+            <div class="flex-grow-1 py-3 border-end" style="flex-basis: 14%;">Mon</div>
+            <div class="flex-grow-1 py-3 border-end" style="flex-basis: 14%;">Tue</div>
+            <div class="flex-grow-1 py-3 border-end" style="flex-basis: 14%;">Wed</div>
+            <div class="flex-grow-1 py-3 border-end" style="flex-basis: 14%;">Thu</div>
+            <div class="flex-grow-1 py-3 border-end" style="flex-basis: 14%;">Fri</div>
+            <div class="flex-grow-1 py-3 text-danger" style="flex-basis: 14%;">Sat</div>
+          </div>
+
+          <!-- أيام الشهر (Scrolling) -->
+          <div class="d-flex flex-wrap flex-grow-1 overflow-auto align-content-start">
+            <div *ngFor="let day of calendarDays()" class="border-end border-bottom p-2 d-flex flex-column" 
+                 style="flex-basis: 14.28%; min-height: 140px; height: 140px;" [ngClass]="{'bg-light opacity-50': !day.date}">
+              
+              <div class="fw-bold text-end text-muted small mb-1" *ngIf="day.date">{{ day.date }}</div>
+              
+              <div class="d-flex flex-column gap-1 overflow-auto" *ngIf="day.date" style="flex-grow: 1;">
+                <div *ngFor="let evt of day.events" 
+                     class="badge text-start text-truncate shadow-sm p-2 w-100" style="cursor: pointer; font-size: 0.65rem;"
+                     [ngClass]="{'bg-danger': evt.type === 'Visit', 'bg-dark': evt.type !== 'Visit'}"
+                     (click)="openEventDetails(evt)">
+                  {{ evt.date | date:'shortTime' }} | {{ evt.brokerName.split(' ')[0] }}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -216,82 +244,131 @@
 </div>
 
 <!-- ========================================================= -->
-<!-- 🟢 Modal: Request Details (باللون الأحمر وتفاصيل شاملة) -->
+<!-- 🟢 Modal: Request Details (باللون الأحمر ותفاصيل شاملة) -->
 <!-- ========================================================= -->
 <div class="modal fade" id="requestModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content border-0 shadow-lg rounded-4" *ngIf="selectedRequest() as req">
-      
-      <!-- الهيدر أحمر -->
       <div class="modal-header border-0 bg-danger text-white rounded-top-4 p-4">
         <h5 class="modal-title fw-bold"><i class="bi bi-card-list me-2"></i>Client Request Details</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       
       <div class="modal-body p-4 bg-light">
-        <h6 class="fw-bold text-danger border-bottom border-danger border-opacity-25 pb-2 mb-3">
+        <h6 class="fw-bold text-danger border-bottom border-danger border-opacity-25 pb-2 mb-4">
           <i class="bi bi-person-circle me-1"></i> {{ req.fullName }}'s Requirements
         </h6>
         
-        <div class="row g-3">
-          <!-- الأساسيات -->
-          <div class="col-6">
-            <span class="d-block small text-muted fw-bold text-uppercase">Property Type</span>
+        <div class="row g-4">
+          <div class="col-md-4">
+            <span class="d-block small text-muted fw-bold text-uppercase mb-1">Property Type</span>
             <span class="fw-bold text-dark fs-6">{{ req.propertyType || '-' }}</span>
           </div>
-          <div class="col-6">
-            <span class="d-block small text-muted fw-bold text-uppercase">Listing Type</span>
-            <span class="badge bg-success-subtle text-success-emphasis border px-2 py-1">{{ req.purpose || '-' }}</span>
+          <div class="col-md-4">
+            <span class="d-block small text-muted fw-bold text-uppercase mb-1">Listing Type</span>
+            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle px-3 py-2">{{ req.purpose || '-' }}</span>
           </div>
-          
-          <div class="col-12 mt-3">
-            <span class="d-block small text-muted fw-bold text-uppercase">Budget</span>
-            <span class="fw-bold text-success fs-5">{{ req.totalAmount > 0 ? ('EGP ' + (req.totalAmount | number:'1.0-0')) : 'Not Specified' }}</span>
+          <div class="col-md-4">
+            <span class="d-block small text-muted fw-bold text-uppercase mb-1">Target Zone</span>
+            <span class="fw-bold text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ req.zoneName || '-' }}</span>
           </div>
 
-          <!-- الدفع -->
+          <div class="col-12 mt-2 border-top pt-3">
+            <span class="d-block small text-muted fw-bold text-uppercase mb-1">Budget</span>
+            <span class="fw-bold text-success fs-4">{{ req.totalAmount > 0 ? (req.totalAmount | currency:'EGP ':'symbol':'1.0-0') : 'Not Specified' }}</span>
+          </div>
+
           <div class="col-12" *ngIf="req.paymentMethod">
-            <span class="d-block small text-muted fw-bold text-uppercase mb-1">Payment Details</span>
-            <span class="badge bg-secondary me-2">{{ req.paymentMethod }}</span>
-            <span class="badge bg-light text-dark border me-2" *ngIf="req.paymentMethod === 'Installment' && req.downPayment">
-              DP: {{ req.downPayment | currency:'EGP ':'symbol':'1.0-0' }}
+            <span class="d-block small text-muted fw-bold text-uppercase mb-2">Payment Details</span>
+            <span class="badge bg-secondary px-3 py-2 me-2">{{ req.paymentMethod }}</span>
+            <span class="badge bg-white text-dark border px-3 py-2 me-2 shadow-sm" *ngIf="req.paymentMethod === 'Installment' && req.downPayment">
+              DP: <span class="text-success">{{ req.downPayment | currency:'EGP ':'symbol':'1.0-0' }}</span>
             </span>
-            <span class="badge bg-light text-danger border" *ngIf="req.paymentMethod === 'Installment' && req.installmentYears">
+            <span class="badge bg-white text-danger border px-3 py-2 shadow-sm" *ngIf="req.paymentMethod === 'Installment' && req.installmentYears">
               {{ req.installmentYears }} Years
             </span>
           </div>
-
-          <!-- المواقع والمشاريع -->
-          <div class="col-12 mt-2" *ngIf="req.zoneName">
-            <span class="d-block small text-muted fw-bold text-uppercase">Target Zone</span>
-            <span class="fw-bold text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ req.zoneName }}</span>
-          </div>
           
           <div class="col-12" *ngIf="req.selectedRegions">
-            <span class="d-block small text-muted fw-bold text-uppercase">Regions</span>
-            <span class="fw-bold text-primary small">{{ req.selectedRegions }}</span>
+            <span class="d-block small text-muted fw-bold text-uppercase border-bottom pb-1 mb-2 mt-2">Selected Regions</span>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge bg-light text-dark border p-2 shadow-sm" *ngFor="let r of req.selectedRegions.split(', ')">{{ r }}</span>
+            </div>
           </div>
           
           <div class="col-12" *ngIf="req.selectedProjects">
-            <span class="d-block small text-muted fw-bold text-uppercase">Interested Projects</span>
-            <div class="p-2 bg-white rounded border small fw-bold text-danger">{{ req.selectedProjects }}</div>
+            <span class="d-block small text-muted fw-bold text-uppercase border-bottom pb-1 mb-2 mt-2">Interested Projects</span>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge bg-danger text-white p-2 shadow-sm" *ngFor="let p of req.selectedProjects.split(', ')">{{ p }}</span>
+            </div>
           </div>
           
           <div class="col-12" *ngIf="req.preferredLocation && req.preferredLocation !== 'Not Specified'">
-            <span class="d-block small text-muted fw-bold text-uppercase">Location Prefs</span>
-            <span class="fw-bold text-dark small">{{ req.preferredLocation }}</span>
+            <span class="d-block small text-muted fw-bold text-uppercase border-bottom pb-1 mb-2 mt-2">Additional Location Prefs</span>
+            <span class="fw-bold text-dark">{{ req.preferredLocation }}</span>
           </div>
           
-          <!-- الملاحظات -->
           <div class="col-12" *ngIf="req.notes">
-            <span class="d-block small text-muted fw-bold text-uppercase">Notes</span>
-            <div class="p-2 bg-white rounded border small text-muted" style="white-space: pre-line;">{{ req.notes }}</div>
+            <span class="d-block small text-muted fw-bold text-uppercase border-bottom pb-1 mb-2 mt-2">Notes</span>
+            <div class="bg-white p-3 rounded-3 border small text-dark shadow-sm" style="white-space: pre-line; line-height: 1.6;">{{ req.notes }}</div>
           </div>
         </div>
 
       </div>
       <div class="modal-footer border-0 p-3 bg-white rounded-bottom-4">
-        <button type="button" class="btn btn-dark rounded-pill px-5 fw-bold w-100" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-dark rounded-pill px-5 fw-bold w-100 shadow" data-bs-dismiss="modal">Close Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🟢 Modal: Event Details (الكاليندر) -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4" *ngIf="selectedEvent() as evt">
+      <div class="modal-header border-0 text-white rounded-top-4 p-4" [ngClass]="evt.type === 'Visit' ? 'bg-danger' : 'bg-dark'">
+        <h5 class="modal-title fw-bold">
+          <i class="bi me-2" [ngClass]="evt.type === 'Visit' ? 'bi-geo-alt-fill' : 'bi-telephone-fill'"></i> 
+          {{ evt.type }} Details
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        
+        <div class="mb-3 border-bottom pb-2">
+          <small class="text-muted fw-bold text-uppercase d-block">Client</small>
+          <span class="fw-bold fs-5 text-dark"><i class="bi bi-person-circle text-muted me-1"></i>{{ evt.clientName }}</span>
+        </div>
+        
+        <div class="mb-3 border-bottom pb-2">
+          <small class="text-muted fw-bold text-uppercase d-block">Assigned Broker</small>
+          <span class="fw-bold text-primary"><i class="bi bi-person-badge-fill me-1"></i>{{ evt.brokerName }}</span>
+        </div>
+        
+        <div class="mb-3 border-bottom pb-2">
+          <small class="text-muted fw-bold text-uppercase d-block">Date & Time</small>
+          <span class="fw-bold text-danger"><i class="bi bi-clock-history me-1"></i>{{ evt.date | date:'fullDate' }} at {{ evt.date | date:'shortTime' }}</span>
+        </div>
+        
+        <div class="mb-3 border-bottom pb-2">
+          <small class="text-muted fw-bold text-uppercase d-block">Location / Summary</small>
+          <span class="fw-bold text-dark">{{ evt.title }}</span>
+        </div>
+        
+        <div class="mb-3">
+          <small class="text-muted fw-bold text-uppercase d-block mb-2">Status & Feedback</small>
+          <span class="badge mb-2 px-3 py-2 fs-6 shadow-sm"
+                [ngClass]="{'bg-warning text-dark': evt.status === 'Pending', 'bg-success': evt.status === 'Completed', 'bg-danger': evt.status === 'Cancelled', 'bg-info text-dark': evt.status === 'Rescheduled'}">
+            {{ evt.status }}
+          </span>
+          <div *ngIf="evt.feedback" class="p-3 bg-white border rounded-3 small text-dark mt-2 fw-medium shadow-sm" style="white-space: pre-line; line-height: 1.5;">
+            <i class="bi bi-chat-quote-fill text-primary me-1"></i>{{ evt.feedback }}
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer border-0 p-3 bg-white rounded-bottom-4">
+        <button type="button" class="btn btn-secondary rounded-pill px-5 fw-bold w-100 shadow" data-bs-dismiss="modal">Close Details</button>
       </div>
     </div>
   </div>

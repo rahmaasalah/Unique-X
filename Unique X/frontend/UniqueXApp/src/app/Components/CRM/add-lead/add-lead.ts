@@ -41,11 +41,33 @@ export class AddLeadComponent implements OnInit {
   ];
 
   dummyBrokers = [
-    { code: 'AR123', name: 'Ahmed Ramadan' },
-    { code: 'MH456', name: 'Mohamed Hassan' },
-    { code: 'SH789', name: 'Shimaa Ali' },
-    { code: 'TR001', name: 'Tarek Refaat' }
+    { code: 'X7', name: 'Abdelrahman Ashraf' },
+    { code: 'X10', name: 'Menna Ameen' },
+    { code: 'X249', name: 'Ashraf Saad' },
+    { code: 'X646', name: 'Nadia Salem' },
+    { code: 'X9', name: 'Hussine Ehab' },
+    { code: 'X652', name: 'Mohamed Ali' },
+    { code: 'X653', name: 'Mohamed Khaled' },
+    { code: 'X656', name: 'Mayar Elkhalil' },
+    { code: 'X659', name: 'Yasmine Mohamed' },
+    { code: 'X660', name: 'Ahmed Ramadan' },
+    {code: 'X661', name: 'Ibrahim Mahmoud'},
+    {code: 'X665', name: 'Belal Elsayed'},
+    {code: 'X666', name: 'Mohmoud Ali'},
+    {code: 'X668', name: 'Mostafa Elsayed'},
+    {code: 'X2', name: 'Hagar Mohamed'},
+    {code: 'X101', name: 'Alaa Ashraf'},
+    {code: 'X8', name: 'Abeer Ashraf'},
+
   ];
+
+  sourcesList = [
+    'Facebook', 'Paid Ads', 'MarketPlace Ads', 'Google Ads', 'Property Finder', 
+    'Bayut', 'Akar map', 'Groups', 'WhatsApp', 'Betk page', 'Shaety Page', 
+    'Semsar Misr', 'Linkedin', 'Tiktok', 'Instagram', 'Market place'
+  ];
+  
+  availablePropertyCodes = signal<string[]>([]);
 
   regionsMapping: any = {
     1:['Sheikh Zayed', 'Green belt', '6th of October', 'North Expansions', 'October Gardens', 'Eastern Expansions', 'New Cairo'],
@@ -93,51 +115,62 @@ export class AddLeadComponent implements OnInit {
       }
     }
     
-    this.crmService.getCampaigns().subscribe(data => this.campaignsList = data);
     this.initForm();
     this.setupDynamicFields();
-  
+    
+    // تحميل أكواد العقارات للنوع الافتراضي (Resale)
+    this.fetchPropertyCodes('Resale');
   }
-
+  
   initForm() {
     this.leadForm = this.fb.group({
       fullName: ['', Validators.required],
       phoneNumber: ['', Validators.required],
       email: [''],
-      brokerId:[this.isAdmin() ? '' : this.currentBrokerId, Validators.required],
-      leadStatusId: [1, Validators.required], // الـ 26 حالة موجودين في الـ HTML
+      brokerId: [this.isAdmin() ? '' : this.currentBrokerId, Validators.required],
+      leadStatusId: [1, Validators.required], 
+      campaignSource: [''], // 👈 الحقل الجديد
+      campaignName: [''],   // 👈 الحقل الجديد
+      referredBy: [''],
       propertyType: ['Apartment', Validators.required],
-      purpose: ['Resale', Validators.required], // القيمة الافتراضية
-      campaignId: [''],
+      purpose: ['Resale', Validators.required], 
       totalAmount: [0, [Validators.min(0)]],
       paymentMethod: ['Cash'],
-      referredBy: [''],
       zoneId: [''],
       selectedRegions: [[]], 
       selectedProjects: [[]], 
       downPayment: [0, [Validators.min(0)]],
       installmentYears: [0, [Validators.min(0)]],
-      
       preferredLocation: [''],
       notes: ['']
     });
   }
 
-  setupDynamicFields() {
-    // لما الـ Zone تتغير: بنحدث المناطق والمشاريع مع بعض بناءً على الزون فقط
+ setupDynamicFields() {
+    // تحديث المناطق والمشاريع
     this.leadForm.get('zoneId')?.valueChanges.subscribe(zoneId => {
       this.leadForm.patchValue({ selectedRegions: [], selectedProjects: [] });
-      this.availableRegions = this.regionsMapping[zoneId] ||[];
+      this.availableRegions = this.regionsMapping[zoneId] || [];
       this.updateAvailableProjects(zoneId); 
     });
 
-    // لما الغرض أو الدفع يتغيروا بنفضي الداتا عشان لو غير رأيه
-    this.leadForm.get('purpose')?.valueChanges.subscribe(() => {
-      this.leadForm.patchValue({ selectedRegions: [], selectedProjects:[], downPayment: 0, installmentYears: 0 });
+    // 🟢 السحر هنا: لما يغير الغرض (Primary/Resale..) بنجيب أكواد العقارات من الداتابيز
+    this.leadForm.get('purpose')?.valueChanges.subscribe(purpose => {
+      this.leadForm.patchValue({ selectedRegions: [], selectedProjects: [], downPayment: 0, installmentYears: 0, campaignName: '' });
+      this.fetchPropertyCodes(purpose);
     });
+
     this.leadForm.get('paymentMethod')?.valueChanges.subscribe(() => {
       this.leadForm.patchValue({ downPayment: 0, installmentYears: 0 });
     });
+  }
+
+  fetchPropertyCodes(purpose: string) {
+    if (purpose) {
+      this.crmService.getPropertyCodesByPurpose(purpose).subscribe(codes => {
+        this.availablePropertyCodes.set(codes);
+      });
+    }
   }
 
   updateAvailableProjects(zoneId: number) {
@@ -275,17 +308,16 @@ export class AddLeadComponent implements OnInit {
     reader.onload = (e: any) => {
       try {
         const data = new Uint8Array(e.target.result);
-        
-        // 🟢 استخدمنا XLSX المستوردة فوق مباشرة بدل (window as any)
-        const workbook = XLSX.read(data, { type: 'array' }); 
+        const workbook = (window as any).XLSX.read(data, { type: 'array' }); 
         
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const json: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        const json: any[][] = (window as any).XLSX.utils.sheet_to_json(worksheet, { header: 1 });
         
-        const parsed =[];
-        const phoneSet = new Set<string>(); // لمنع التكرار
+        const parsed = [];
+        const phoneSet = new Set<string>(); // لمنع التكرار في نفس الشيت
 
+        // 🟢 نتجاهل أول سطر (الهيدر) ونبدأ من 1
         for (let i = 1; i < json.length; i++) {
           const row = json[i];
           
@@ -295,22 +327,40 @@ export class AddLeadComponent implements OnInit {
             if (phone && !phoneSet.has(phone)) {
               phoneSet.add(phone); 
               
+              // 🟢 السحر: البحث عن הـ ID بتاع البروكر بناءً على اسمه في الإكسيل
+              let matchedBrokerId = '';
+              const excelBrokerName = row[6]?.toString().trim().toLowerCase(); // عمود G (Sales person)
+              if (excelBrokerName) {
+                const foundBroker = this.brokersList().find(b => 
+                  (b.firstName + ' ' + b.lastName).toLowerCase().includes(excelBrokerName) ||
+                  excelBrokerName.includes(b.firstName.toLowerCase())
+                );
+                if (foundBroker) matchedBrokerId = foundBroker.id;
+              }
+
+              // تنظيف رقم الميزانية
+              const budgetRaw = row[8]?.toString().replace(/,/g, '').replace(/\D/g, ''); // عمود I (Budget)
+              const budgetAmount = budgetRaw ? parseInt(budgetRaw, 10) : 0;
+
+              // تسكين الداتا
               parsed.push({
-                fullName: row[0]?.toString().trim() || '',
-                phoneNumber: phone,
-                email: row[2]?.toString().trim() || '',
-                propertyType: row[3]?.toString().trim() || 'Apartment',
-                brokerId: '', // لسه الأدمن هيختاره
+                fullName: row[0]?.toString().trim() || '',               // A: Name
+                phoneNumber: phone,                                      // B: Phone
+                email: '',                                               // الإيميل مش في الصورة فخليناه فاضي
+                campaignSource: row[2]?.toString().trim() || '',         // C: Source
+                campaignName: row[3]?.toString().trim() || '',           // D: Campaign
+                referredBy: row[4]?.toString().trim() || '',             // E: Referred By
+                notes: row[5]?.toString().trim() || '',                  // F: Notes
+                brokerId: matchedBrokerId,                               // G: Sales person (Mapped to ID)
+                purpose: row[7]?.toString().trim() || 'Resale',          // H: Opportunity
+                totalAmount: budgetAmount,                               // I: Budget
+                propertyType: row[9]?.toString().trim() || 'Apartment',  // J: Property Type
                 
-                // قيم افتراضية 
-                leadStatusId: 1, 
-                purpose: 'Sale', 
+                // قيم افتراضية إجبارية عشان الـ API ميضربش
+                leadStatusId: 1, // New
                 paymentMethod: 'Cash',
-                totalAmount: 0, 
-                notes: 'Imported from Excel',
                 campaignId: null,
                 zoneId: null,
-                referredBy: '',
                 preferredLocation: '',
                 selectedRegions: '',
                 selectedProjects: '',
@@ -326,7 +376,7 @@ export class AddLeadComponent implements OnInit {
 
       } catch (error) {
         console.error('Excel Parsing Error:', error);
-        this.alertService.error('Failed to read the file. Ensure it is a valid Excel/CSV file.');
+        this.alertService.error('Failed to read the file. Ensure it is a valid Excel file.');
       }
     };
     

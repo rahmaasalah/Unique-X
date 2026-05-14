@@ -233,5 +233,13 @@ namespace Unique_X.Controllers
 
             return Ok(new { message = "Photo deleted successfully" });
         }
+
+        [HttpGet("hot-deals")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetHotDeals()
+        {
+            var result = await _propertiesService.GetHotDealsAsync();
+            return Ok(result);
+        }
     }
 }

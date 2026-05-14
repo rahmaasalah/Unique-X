@@ -54,12 +54,26 @@ export class BrokerProfileComponent implements OnInit {
     { id: 3, name: 'North Coast' }
   ];
 
-  uniqueBrokerCodes = computed(() => {
-    const data = this.profileData();
-    if (!data || !data.leads) return[];
-    const codes = data.leads.map((l:any) => l.referredBy).filter((c:any) => c && c.trim() !== '');
-    return [...new Set(codes)].sort();
-  });
+  dummyBrokers = [
+    { code: 'X7', name: 'Abdelrahman Ashraf' },
+    { code: 'X10', name: 'Menna Ameen' },
+    { code: 'X249', name: 'Ashraf Saad' },
+    { code: 'X646', name: 'Nadia Salem' },
+    { code: 'X9', name: 'Hussine Ehab' },
+    { code: 'X652', name: 'Mohamed Ali' },
+    { code: 'X653', name: 'Mohamed Khaled' },
+    { code: 'X656', name: 'Mayar Elkhalil' },
+    { code: 'X659', name: 'Yasmine Mohamed' },
+    { code: 'X660', name: 'Ahmed Ramadan' },
+    {code: 'X661', name: 'Ibrahim Mahmoud'},
+    {code: 'X665', name: 'Belal Elsayed'},
+    {code: 'X666', name: 'Mohmoud Ali'},
+    {code: 'X668', name: 'Mostafa Elsayed'},
+    {code: 'X2', name: 'Hagar Mohamed'},
+    {code: 'X101', name: 'Alaa Ashraf'},
+    {code: 'X8', name: 'Abeer Ashraf'},
+
+  ];
 
   // 🟢 فلترة العملاء لحظياً
   filteredLeads = computed(() => {

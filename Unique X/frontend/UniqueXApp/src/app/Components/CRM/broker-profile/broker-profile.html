@@ -24,10 +24,6 @@
     
     <!-- 👇 الزراير الجديدة (Add Lead & Pipeline) -->
     <div class="ms-auto d-flex gap-2 flex-wrap">
-
-       <button *ngIf="isAdmin()" class="btn btn-dark rounded-pill fw-bold px-4 shadow-sm" routerLink="/crm/campaigns">
-        <i class="bi bi-megaphone-fill me-1"></i> Add Campaign
-      </button>
       <button class="btn btn-outline-danger rounded-pill fw-bold px-4" routerLink="/crm/add-lead">
         <i class="bi bi-person-plus-fill me-1"></i> Add Lead
       </button>
@@ -112,10 +108,12 @@
           </select>
         </div>
 
-         <div class="col-md-2">
+          <div class="col-md-2" *ngIf="isAdmin()">
           <select class="form-select form-select-sm" [ngModel]="filterReferredBy()" (ngModelChange)="filterReferredBy.set($event)">
             <option value="">All Broker Codes</option>
-            <option *ngFor="let code of uniqueBrokerCodes()" [value]="code">Ref: {{ code }}</option>
+            <option *ngFor="let broker of dummyBrokers" [value]="broker.code">
+              {{ broker.name }} ({{ broker.code }})
+            </option>
           </select>
         </div>
        <div class="col-md-2">

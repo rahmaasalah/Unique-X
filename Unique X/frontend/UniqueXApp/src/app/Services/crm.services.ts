@@ -167,4 +167,12 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
   approveDuplicateLead(leadId: number): Observable<any> {
     return this.http.put(`${this.apiUrl}/leads/${leadId}/approve-duplicate`, {});
   }
+
+  getAdminCalendarEvents(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/dashboard/admin-calendar`);
+  }
+
+  getPropertyCodesByPurpose(purpose: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/leads/property-codes?purpose=${purpose}`);
+  }
 }

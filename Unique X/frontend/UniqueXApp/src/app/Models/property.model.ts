@@ -11,6 +11,10 @@ export interface Property {
   rooms: number;
   bathrooms: number;
   city: string;
+  ownerName: string;
+  ownerPhone: string;
+  developerName: string;
+  isHotDeal: boolean;
   region: string;
   address: string;
   listingType: string;

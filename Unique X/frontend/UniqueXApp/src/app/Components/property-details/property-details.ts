@@ -193,6 +193,16 @@ handleContact(event: Event, method: 'call' | 'whatsapp', brokerPhone: string) {
     }
   }
 
+  isBroker(): boolean {
+    const userString = localStorage.getItem('user');
+    if (userString) {
+      const user = JSON.parse(userString);
+      // بنفحص الـ Roles أو الـ UserType
+      return user.roles?.includes('Broker') || user.userType === 1 || user.roles?.includes('Admin');
+    }
+    return false;
+  }
+
   getWhatsAppLink(phone: string): string {
   if (!phone) return '#';
 

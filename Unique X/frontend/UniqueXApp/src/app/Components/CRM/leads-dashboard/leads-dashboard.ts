@@ -47,14 +47,28 @@ export class LeadsDashboardComponent implements OnInit {
 
   zones =[{ id: 1, name: 'Cairo' }, { id: 2, name: 'Alexandria' }, { id: 3, name: 'North Coast' }];
 
+  dummyBrokers = [
+    { code: 'X7', name: 'Abdelrahman Ashraf' },
+    { code: 'X10', name: 'Menna Ameen' },
+    { code: 'X249', name: 'Ashraf Saad' },
+    { code: 'X646', name: 'Nadia Salem' },
+    { code: 'X9', name: 'Hussine Ehab' },
+    { code: 'X652', name: 'Mohamed Ali' },
+    { code: 'X653', name: 'Mohamed Khaled' },
+    { code: 'X656', name: 'Mayar Elkhalil' },
+    { code: 'X659', name: 'Yasmine Mohamed' },
+    { code: 'X660', name: 'Ahmed Ramadan' },
+    {code: 'X661', name: 'Ibrahim Mahmoud'},
+    {code: 'X665', name: 'Belal Elsayed'},
+    {code: 'X666', name: 'Mohmoud Ali'},
+    {code: 'X668', name: 'Mostafa Elsayed'},
+    {code: 'X2', name: 'Hagar Mohamed'},
+    {code: 'X101', name: 'Alaa Ashraf'},
+    {code: 'X8', name: 'Abeer Ashraf'},
+
+  ];
+
   boardColumns = signal<any[]>([]);
-
-  uniqueBrokerCodes = computed(() => {
-    const leads = this.allLeads();
-    const codes = leads.map(l => l.referredBy).filter(c => c && c.trim() !== '');
-    return [...new Set(codes)].sort(); // Set لمنع التكرار
-  });
-
   isAdmin = signal<boolean>(false); // 👈 متغير جديد
   selectedRequest = signal<any>(null);
 

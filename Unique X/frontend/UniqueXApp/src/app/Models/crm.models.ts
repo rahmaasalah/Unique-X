@@ -33,6 +33,11 @@ export interface AdminDashboardDto {
   totalLeads: number;
   totalClosedDeals: number;
   totalExpectedRevenue: number;
+  totalVisits: number;
+  totalActivities: number;
+  totalRequests: number;
+  totalCalendarEvents: number;
+  totalClosingLeads: number;
   brokerPerformances: any[];
 }
 

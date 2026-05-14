@@ -35,7 +35,8 @@ namespace Unique_X.Controllers.CRM
                 PhoneNumber = dto.PhoneNumber,
                 Email = dto.Email,
                 BrokerId = dto.BrokerId,
-                CampaignId = dto.CampaignId,
+                CampaignSource = dto.CampaignSource,
+                CampaignName = dto.CampaignName,
                 LeadStatusId = dto.LeadStatusId,
                 ReferredBy = dto.ReferredBy,
                 IsDuplicate = isDuplicate, // لو متكرر هيبقى True
@@ -378,7 +379,8 @@ namespace Unique_X.Controllers.CRM
             lead.PhoneNumber = dto.PhoneNumber;
             lead.Email = dto.Email;
             lead.LeadStatusId = dto.LeadStatusId;
-            lead.CampaignId = dto.CampaignId;
+            lead.CampaignSource = dto.CampaignSource;
+            lead.CampaignName = dto.CampaignName;
             lead.ReferredBy = dto.ReferredBy;
 
             _context.Leads.Update(lead);
@@ -676,6 +678,25 @@ namespace Unique_X.Controllers.CRM
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Duplicate lead approved successfully." });
+        }
+
+        [HttpGet("property-codes")]
+        public async Task<IActionResult> GetPropertyCodesByListingType([FromQuery] string purpose)
+        {
+            var query = _context.Properties.Where(p => p.IsActive && p.IsApproved && !p.IsSold);
+
+            if (!string.IsNullOrEmpty(purpose))
+            {
+                string purposeClean = purpose.Replace(" ", "");
+                if (Enum.TryParse(typeof(PropEnums.ListingType), purposeClean, true, out var parsedListingType))
+                {
+                    var listingEnum = (PropEnums.ListingType)parsedListingType;
+                    query = query.Where(p => p.ListingType == listingEnum);
+                }
+            }
+
+            var codes = await query.Select(p => p.Code).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToListAsync();
+            return Ok(codes);
         }
     }
 }

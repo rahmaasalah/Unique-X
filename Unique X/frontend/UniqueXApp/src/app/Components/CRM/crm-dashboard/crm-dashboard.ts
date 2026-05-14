@@ -23,7 +23,7 @@ export class CrmDashboardComponent implements OnInit {
   private router = inject(Router);
 
   isAdmin = signal<boolean>(false);
-  activeTab = signal<'brokers' | 'clients'>('brokers');
+  activeTab = signal<'brokers' | 'clients' | 'calendar'>('brokers');
 
   // الداتا الأساسية
   allLeads = signal<any[]>([]);
@@ -35,6 +35,11 @@ export class CrmDashboardComponent implements OnInit {
   systemExpectedRevenue = computed(() => {
     return this.allLeads().reduce((sum, lead) => sum + (lead.totalAmount || 0), 0);
   });
+
+  systemRequests = computed(() => this.allLeads().filter(l => l.statusId === 4).length); // 4 = Calls (request)
+  systemClosing = computed(() => this.allLeads().filter(l => l.statusId === 18).length); // 18 = Follow up for closing
+  systemVisits = computed(() => this.allLeads().reduce((sum, l) => sum + (l.visitsCount || 0), 0));
+  systemActivities = computed(() => this.allLeads().reduce((sum, l) => sum + (l.activitiesCount || 0), 0));
 
   // 🟢 1. فلاتر ولوجيك تاب البروكرز
   searchBroker = signal<string>('');
@@ -101,6 +106,34 @@ export class CrmDashboardComponent implements OnInit {
     { id: 25, name: 'Broker' }, { id: 26, name: 'Recommend to shift' }
   ];
 
+
+  // ================= 🟢 متغيرات الكاليندر (النتيجة) =================
+  calendarEvents = signal<any[]>([]);
+  currentMonth = signal<Date>(new Date());
+  selectedEvent = signal<any>(null);
+  monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  calendarDays = computed(() => {
+    const year = this.currentMonth().getFullYear();
+    const month = this.currentMonth().getMonth();
+    const firstDay = new Date(year, month, 1).getDay(); 
+    const daysInMonth = new Date(year, month + 1, 0).getDate(); 
+    
+    const days = [];
+    for (let i = 0; i < firstDay; i++) { days.push({ date: null, events: [] }); }
+    
+    for (let i = 1; i <= daysInMonth; i++) {
+      const currentDateStr = new Date(year, month, i).toISOString().split('T')[0];
+      const dayEvents = this.calendarEvents().filter(e => {
+        if (!e.date) return false;
+        const evDate = new Date(e.date);
+        return evDate.getFullYear() === year && evDate.getMonth() === month && evDate.getDate() === i;
+      });
+      days.push({ date: i, fullDate: currentDateStr, events: dayEvents });
+    }
+    return days;
+  });
+
   ngOnInit() {
     // 1. حماية الصفحة: لو مش أدمن، اطرده
     const userString = localStorage.getItem('user');
@@ -125,9 +158,10 @@ export class CrmDashboardComponent implements OnInit {
     // 🟢 بنجيب المستخدمين والعملاء في نفس الوقت
     forkJoin({
       users: this.adminService.getAllUsers(),
-      leads: this.crmService.getLeads('') // ID فاضي يعني هات كل العملاء
+      leads: this.crmService.getLeads(''),
+      calendar: this.crmService.getAdminCalendarEvents() // ID فاضي يعني هات كل العملاء
     }).subscribe({
-      next: ({ users, leads }) => {
+      next: ({ users, leads, calendar }) => {
         // فلترة البروكرز المسموح ليهم يدخلوا الـ CRM
         const vipUsers = users.filter((u: any) => this.authService.ALLOWED_CRM_BROKERS.includes(u.id));
         this.vipBrokers.set(vipUsers);
@@ -138,6 +172,11 @@ export class CrmDashboardComponent implements OnInit {
           if (lead.updatedAt && !lead.updatedAt.endsWith('Z')) lead.updatedAt += 'Z';
         });
         this.allLeads.set(leads);
+        
+        calendar.forEach((e: any) => {
+          if (e.date && !e.date.endsWith('Z')) e.date += 'Z';
+        });
+        this.calendarEvents.set(calendar);
         
         this.alertService.close();
       },
@@ -165,5 +204,16 @@ export class CrmDashboardComponent implements OnInit {
     this.searchClient.set('');
     this.filterClientStage.set('');
     this.filterClientBroker.set('');
+  }
+
+  changeMonth(offset: number) {
+    const current = this.currentMonth();
+    this.currentMonth.set(new Date(current.getFullYear(), current.getMonth() + offset, 1));
+  }
+
+  openEventDetails(evt: any) {
+    this.selectedEvent.set(evt);
+    const bootstrap = (window as any).bootstrap;
+    new bootstrap.Modal(document.getElementById('eventModal')).show();
   }
 }

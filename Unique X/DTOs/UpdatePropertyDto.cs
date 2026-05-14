@@ -24,7 +24,11 @@ namespace Unique_X.DTOs
         public bool? HasSecurity { get; set; }             
         public bool? IsFirstOwner { get; set; }            
         public bool? IsLegalReconciled { get; set; }       
-        public bool? HasParking { get; set; }              
+        public bool? HasParking { get; set; }
+
+        public string? OwnerName { get; set; }
+        public string? OwnerPhone { get; set; }
+        public string? DeveloperName { get; set; }
         public decimal CommissionPercentage { get; set; } = 2.5m; 
         public bool? HasBalcony { get; set; }
         public bool? IsFurnished { get; set; }
