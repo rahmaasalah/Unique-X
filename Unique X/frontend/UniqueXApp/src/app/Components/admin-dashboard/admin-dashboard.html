@@ -69,6 +69,13 @@
             <i class="bi bi-bar-chart-fill me-3 fs-6"></i> Financial Charts
           </button>
         </li>
+
+        <li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
+          [class.active]="activeTab() === 'hotDeals'" (click)="switchTab('hotDeals')">
+    <i class="bi bi-fire me-3 fs-6"></i> Hot Deals
+  </button>
+</li>
         
       </ul>
     </nav>
@@ -144,6 +151,46 @@
         </div>
       </div>
     }
+
+   @if (activeTab() === 'hotDeals') {
+  <section class="animate__animated animate__fadeIn">
+    <h4 class="fw-bold mb-4">Manage Hot Deals ({{ hotDeals().length }}/12)</h4>
+    
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-10">
+          <label class="small fw-bold text-muted">Select Property Code</label>
+          <select #dealSelect class="form-select bg-light border-0 shadow-sm">
+            @for (prop of properties(); track prop.id) {
+              <option [value]="prop.code">{{ prop.code }} - {{ prop.title }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-danger w-100 rounded-pill fw-bold" 
+                  (click)="onAddHotDeal(dealSelect.value)" 
+                  [disabled]="hotDeals().length >= 12">
+            <i class="bi bi-plus-lg me-1"></i> Add
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- قائمة الـ Hot Deals المضافة -->
+    <div class="row g-3">
+      @for (deal of hotDeals(); track deal.id) {
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
+            <span class="fw-bold text-dark">{{ deal.property.code }}</span>
+            <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onRemoveHotDeal(deal.id)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+}
     <!-- تبويب إدارة المستخدمين -->
     @if (activeTab() === 'users') {
       <section class="animate__animated animate__fadeIn">
@@ -217,28 +264,29 @@
     @if (activeTab() === 'props') {
       <section class="animate__animated animate__fadeIn">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold mb-0"><i class="bi bi-houses me-2"></i>Full Listing</h4>
+            <h4 class="fw-bold mb-0"><i class="bi bi-houses text-danger me-2"></i>Full Listing</h4>
+            <span class="badge bg-danger rounded-pill px-3">{{ filteredProperties().length }} Properties</span>
         </div>
 
+        <!-- 🟢 الفلاتر الجديدة (مرصوصة في سطر واحد بشكل متناسق) -->
         <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
           <div class="row g-2">
-            <div class="col-md-4">
+            <div class="col-md-3">
               <input type="text" class="form-control bg-light border-0" placeholder="Search by title or code..."
                      [ngModel]="propSearchText()" (ngModelChange)="propSearchText.set($event)">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-2">
               <select class="form-select bg-light border-0" [ngModel]="propListingFilter()" (ngModelChange)="propListingFilter.set($event)">
                 <option value="">All Categories</option>
                 <option value="Resale">Resale</option>
                 <option value="Rent">Rent</option>
                 <option value="Primary">Primary</option>
                 <option value="ResaleProject">Resale Project</option>
-                
               </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-2">
               <select class="form-select bg-light border-0" [ngModel]="propTypeFilter()" (ngModelChange)="propTypeFilter.set($event)">
-                <option value="">All Property Types</option>
+                <option value="">All Types</option>
                 <option value="Apartment">Apartment</option>
                 <option value="Villa">Villa</option>
                 <option value="Shop">Shop</option>
@@ -247,110 +295,130 @@
                 <option value="FullFloor">Full Floor</option>
               </select>
             </div>
+            <!-- فلتر المطور -->
+ <div class="col-md-2">
+  <select class="form-select bg-light border-0" [ngModel]="propDeveloperFilter()" (ngModelChange)="propDeveloperFilter.set($event)">
+    <option value="">All Developers</option>
+    
+    <!-- هنا سنعرض الاسم والكود معاً -->
+    @for (dev of uniqueDevelopers(); track dev.code) { 
+      <option [value]="dev.name">
+        {{ dev.name }} - {{ dev.code }}
+      </option> 
+    }
+  </select>
+</div>
+            <!-- فلتر المالك -->
+            <div class="col-md-3">
+              <select class="form-select bg-light border-0" [ngModel]="propOwnerFilter()" (ngModelChange)="propOwnerFilter.set($event)">
+                <option value="">All Owners</option>
+                @for (owner of uniqueOwners(); track owner) { <option [value]="owner">{{ owner }}</option> }
+              </select>
+            </div>
           </div>
         </div>
-        <div class="card border-0 shadow-sm rounded-4 ">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th class="ps-4 py-3">PROPERTY & OWNER</th>
-                <th>CODE</th>
-                <th>TYPE</th>
-                <th>PRICE</th>
-                <th class="text-center">VISIBILITY</th>
-                <th class="text-end pe-4 text-nowrap" style="min-width: 280px;">REVIEW & CONTROL</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (prop of filteredProperties(); track prop.id) {
+
+        <!-- 🟢 الجدول بعد ضبط المسافات -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <div class="table-responsive">
+            <!-- ضفنا table-layout: fixed عشان نحكم عرض العواميد -->
+            <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%;">
+              <thead class="table-light">
                 <tr>
-                  <td class="ps-4 py-3">
-                    <div class="d-flex align-items-center">
-                       <img [src]="prop.photos[0]?.url" class="rounded-3 me-3 border shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">
-                       <div>
-                          <h6 class="mb-0 fw-bold text-dark">{{ prop.title }}</h6>
-                          <!-- قائمة نقل ملكية العقار (بتصميم جديد) -->
-<div class="mt-2">
-  <label class="text-muted d-block mb-1" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">ASSIGNED AGENT:</label>
-  <div class="input-group input-group-sm border border-secondary-subtle rounded-pill overflow-hidden shadow-sm bg-white" style="max-width: 200px; transition: all 0.3s ease;">
-    <span class="input-group-text bg-transparent border-0 text-danger ps-3 pe-1">
-      <i class="bi bi-person-fill-gear"></i>
-    </span>
-    <!-- لاحظي: غيرنا (change) عشان نبعت العقار كله (prop) مش بس الـ id -->
-    <select class="form-select border-0 bg-transparent fw-bold text-dark shadow-none" 
-            style="font-size: 0.8rem; cursor: pointer; outline: none;"
-            (change)="onReassignBroker(prop, $event)">
-      @for (b of brokersList(); track b.id) {
-        <option [value]="b.id" [selected]="b.id === prop.brokerId">
-          {{ b.firstName }} {{ b.lastName }}
-        </option>
-      } @empty {
-                <!-- 🟢 رسالة تظهر لو مفيش عقارات بجد -->
-                <tr>
-                  <td colspan="6" class="text-center py-5 text-muted">
-                    <i class="bi bi-houses-fill fs-1 d-block mb-3 opacity-25"></i>
-                    <h5 class="fw-bold text-dark">No Properties Found</h5>
-                    <p class="small">There are no property listings available in the system yet.</p>
-                  </td>
+                  <!-- حددنا نسبة لكل عمود عشان نلغي المسافات الفاضية الغريبة -->
+                  <th class="ps-4 py-3" style="width: 32%;">PROPERTY DETAILS</th>
+                  <th style="width: 10%;">CODE</th>
+                  <th style="width: 10%;">TYPE</th>
+                  <th style="width: 13%;">PRICE</th>
+                  <th class="text-center" style="width: 10%;">STATUS</th>
+                  <th class="text-end pe-4" style="width: 25%;">ACTION</th>
                 </tr>
-              }
-    </select>
-  </div>
-</div>
-                       </div>
-                    </div>
-                  </td>
-                  <td><span class="badge bg-light text-dark border">{{ prop.code }}</span></td>
-                  <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 ms-1 small">
+              </thead>
+              <tbody>
+                @for (prop of filteredProperties(); track prop.id) {
+                  <tr>
+                    <td class="ps-4 py-3">
+                      <div class="d-flex align-items-start">
+                         <img [src]="prop.photos[0]?.url" class="rounded-3 me-3 border shadow-sm mt-1" style="width: 60px; height: 60px; object-fit: cover;">
+                         <div>
+                            <h6 class="mb-1 fw-bold text-dark text-truncate" style="max-width: 250px;" [title]="prop.title">{{ prop.title }}</h6>
+                            
+                            <!-- 🟢 بيانات المالك والمطور (تظهر كـ Badges شيك لو موجودة) -->
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                              <span class="badge bg-light text-dark border fw-medium" *ngIf="prop.ownerName">
+                                <i class="bi bi-person-fill text-secondary me-1"></i>{{ prop.ownerName }}
+                              </span>
+                              <a [href]="'tel:' + prop.ownerPhone" class="badge bg-light text-primary border text-decoration-none fw-bold" *ngIf="prop.ownerPhone">
+                                <i class="bi bi-telephone-fill me-1"></i>{{ prop.ownerPhone }}
+                              </a>
+                             <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle fw-bold" *ngIf="prop.developerName">
+  <i class="bi bi-building-check me-1"></i>
+  {{ prop.developerName }} 
+  <!-- البحث عن الكود باستخدام الاسم -->
+  {{ getDeveloperCode(prop.developerName) ? '- ' + getDeveloperCode(prop.developerName) : '' }}
+</span>
+                            </div>
+
+                            <!-- قائمة نقل ملكية العقار -->
+                            <div class="input-group input-group-sm border border-secondary-subtle rounded-pill overflow-hidden shadow-sm bg-white mt-1" style="max-width: 200px;">
+                              <span class="input-group-text bg-transparent border-0 text-danger ps-3 pe-1"><i class="bi bi-person-fill-gear"></i></span>
+                              <select class="form-select border-0 bg-transparent fw-bold text-dark shadow-none" style="font-size: 0.75rem; cursor: pointer; outline: none;" (change)="onReassignBroker(prop, $event)">
+                                @for (b of brokersList(); track b.id) {
+                                  <option [value]="b.id" [selected]="b.id === prop.brokerId">{{ b.firstName }} {{ b.lastName }}</option>
+                                }
+                              </select>
+                            </div>
+                         </div>
+                      </div>
+                    </td>
+
+                    <!-- الكود والنوع -->
+                    <td><span class="badge bg-light text-dark border px-2 py-1">{{ prop.code }}</span></td>
+                    <td>
+                      <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small">
                         {{ prop.propertyType }}
-                    </span></td>
-                  <td class="fw-bold text-dark">EGP {{ prop.price | number }}</td>
-                  <td class="text-center">
-                    <!-- 🟢 عرض الحالة الحقيقية للعقار -->
-                    @if (!prop.isApproved && !prop.rejectionReason) {
-                      <span class="badge bg-warning text-dark rounded-pill px-3 shadow-sm"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
-                    } @else if (!prop.isApproved && prop.rejectionReason) {
-                      <span class="badge bg-danger rounded-pill px-3 shadow-sm"><i class="bi bi-x-circle me-1"></i>Rejected</span>
-                    } @else if (prop.isApproved && prop.isActive) {
-                      <span class="badge bg-success rounded-pill px-3 shadow-sm"><i class="bi bi-check-circle me-1"></i>Active</span>
-                    } @else {
-                      <span class="badge bg-secondary rounded-pill px-3 shadow-sm"><i class="bi bi-pause-circle me-1"></i>Suspended</span>
-                    }
+                      </span>
+                    </td>
                     
-                    @if(prop.isSold) { <span class="badge bg-dark rounded-pill px-2 ms-1 shadow-sm">SOLD</span> }
-                  </td>
-                  <td class="text-end pe-4">
-                    <!-- 🟢 استخدمنا flex-nowrap عشان نمنع الزراير تنزل سطر جديد نهائياً -->
-                    <div class="d-flex align-items-center justify-content-end gap-2 flex-nowrap">
-                      
-                      <!-- زرار العرض -->
-                      <button class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold shadow-sm text-nowrap" 
-                              (click)="viewPropertyDetails(prop)">
-                        <i class="bi bi-search me-1"></i> View
-                      </button>
-
-                      <!-- زرار النسخ -->
-                      <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold shadow-sm text-nowrap" 
-                              (click)="onDuplicateProperty(prop)" title="Make a copy">
-                        <i class="bi bi-files me-1"></i> Duplicate
-                      </button>
-
-                      <!-- زرار الإيقاف والتفعيل -->
-                      @if (prop.isApproved) {
-                        <button class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm text-nowrap" 
-                                [class]="prop.isActive ? 'btn-danger' : 'btn-success'" 
-                                (click)="toggleProperty(prop.id, prop.isActive)"
-                                style="min-width: 95px;">
-                          {{ prop.isActive ? 'Suspend' : 'Activate' }}
-                        </button>
+                    <td class="fw-bold text-dark text-nowrap">EGP {{ prop.price | number:'1.0-0' }}</td>
+                    
+                    <td class="text-center">
+                      @if (!prop.isApproved && !prop.rejectionReason) {
+                        <span class="badge bg-warning text-dark rounded-pill px-3 shadow-sm"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
+                      } @else if (!prop.isApproved && prop.rejectionReason) {
+                        <span class="badge bg-danger rounded-pill px-3 shadow-sm"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                      } @else if (prop.isApproved && prop.isActive) {
+                        <span class="badge bg-success rounded-pill px-3 shadow-sm"><i class="bi bi-check-circle me-1"></i>Active</span>
+                      } @else {
+                        <span class="badge bg-secondary rounded-pill px-3 shadow-sm"><i class="bi bi-pause-circle me-1"></i>Suspended</span>
                       }
-                      
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+                      @if(prop.isSold) { <span class="badge bg-dark rounded-pill px-2 mt-1 d-block shadow-sm">SOLD</span> }
+                    </td>
+
+                    <td class="text-end pe-4 text-nowrap">
+                      <div class="d-flex align-items-center justify-content-end gap-2">
+                        <button class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold shadow-sm" (click)="viewPropertyDetails(prop)"><i class=""></i> View</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold shadow-sm" (click)="onDuplicateProperty(prop)" title="Make a copy"><i class="bi bi-files me-1"></i> Copy</button>
+                        @if (prop.isApproved) {
+                          <button class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm" [class]="prop.isActive ? 'btn-danger' : 'btn-success'" (click)="toggleProperty(prop.id, prop.isActive)" style="min-width: 90px;">
+                            {{ prop.isActive ? 'Suspend' : 'Activate' }}
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                      <i class="bi bi-houses-fill fs-1 d-block mb-3 opacity-25"></i>
+                      <h5 class="fw-bold text-dark">No Properties Found</h5>
+                      <p class="small">Try adjusting your filters.</p>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     }

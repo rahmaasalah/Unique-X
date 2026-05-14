@@ -17,6 +17,7 @@ namespace Unique_X.Data
         public DbSet<AnalyticsRecord> AnalyticsRecords { get; set; }
         public DbSet<PaymentPlan> PaymentPlans { get; set; }
         public DbSet<FinancialFile> FinancialFiles { get; set; }
+        public DbSet<HotDeal> HotDeals { get; set; }
         public DbSet<Lead> Leads { get; set; }
         public DbSet<LeadRequest> LeadRequests { get; set; }
         public DbSet<LeadActivity> LeadActivities { get; set; }

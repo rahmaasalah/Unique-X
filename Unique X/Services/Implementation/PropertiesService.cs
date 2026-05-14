@@ -328,6 +328,10 @@ namespace Unique_X.Services.Implementation
             if (!string.IsNullOrEmpty(dto.PaymentMethod)) property.PaymentMethod = dto.PaymentMethod;
             if (!string.IsNullOrEmpty(dto.ProjectName) && dto.ProjectName != "string") property.ProjectName = dto.ProjectName;
 
+            if (dto.OwnerName != null) property.OwnerName = dto.OwnerName;
+            if (dto.OwnerPhone != null) property.OwnerPhone = dto.OwnerPhone;
+            if (dto.DeveloperName != null) property.DeveloperName = dto.DeveloperName;
+
             // تحديث الأرقام والـ Enums (فقط إذا كان لها قيمة)
             if (dto.Price.HasValue && dto.Price > 0) property.Price = dto.Price.Value;
             if (dto.Area.HasValue && dto.Area > 0) property.Area = dto.Area.Value;
@@ -503,6 +507,7 @@ namespace Unique_X.Services.Implementation
                 Id = property.Id,
                 Title = property.Title,
                 Description = property.Description,
+                IsHotDeal = _context.HotDeals.Any(h => h.PropertyId == property.Id),
                 Price = property.Price,
                 Area = property.Area,
                 Rooms = property.Rooms,
@@ -521,6 +526,9 @@ namespace Unique_X.Services.Implementation
                 DistanceFromLandmark = property.DistanceFromLandmark,
                 View = property.View,
                 ProjectName = property.ProjectName,
+                OwnerName = property.OwnerName,
+                OwnerPhone = property.OwnerPhone,
+                DeveloperName = property.DeveloperName,
 
                 // البيانات الفنية
                 Floor = property.Floor,
@@ -580,6 +588,8 @@ namespace Unique_X.Services.Implementation
                 BrokerTitle = property.Broker?.BrokerTitle,
                 BrokerDescription = property.Broker?.BrokerDescription,
 
+
+
                 PaymentPlans = property.PaymentPlans?.Select(p => new PaymentPlanDto
                 {
                     InstallmentYears = p.InstallmentYears,
@@ -598,6 +608,19 @@ namespace Unique_X.Services.Implementation
             };
 
 
+        }
+
+        public async Task<IEnumerable<PropertyResponseDto>> GetHotDealsAsync()
+        {
+            // جلب الـ IDs الخاصة بالعقارات المميزة
+            var hotDealIds = await _context.HotDeals.Select(h => h.PropertyId).ToListAsync();
+
+            var properties = await _context.Properties
+                .Include(p => p.Photos)
+                .Where(p => hotDealIds.Contains(p.Id))
+                .ToListAsync();
+
+            return properties.Select(p => MapToResponseDto(p));
         }
     }
 }

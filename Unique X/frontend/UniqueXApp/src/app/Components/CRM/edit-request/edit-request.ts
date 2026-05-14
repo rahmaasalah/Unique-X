@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -23,13 +23,35 @@ export class EditRequestComponent implements OnInit {
   campaignsList: any[] =[];
   currentBrokerId: string = '';
 
+  availablePropertyCodes = signal<string[]>([]); 
+
+  sourcesList = [
+    'Facebook', 'Paid Ads', 'MarketPlace Ads', 'Google Ads', 'Property Finder', 
+    'Bayut', 'Akar map', 'Groups', 'WhatsApp', 'Betk page', 'Shaety Page', 
+    'Semsar Misr', 'Linkedin', 'Tiktok', 'Instagram', 'Market place'
+  ];
+
   zones =[{ id: 1, name: 'Cairo' }, { id: 2, name: 'Alexandria' }, { id: 3, name: 'North Coast' }];
 
   dummyBrokers = [
-    { code: 'AR123', name: 'Ahmed Ramadan' },
-    { code: 'MH456', name: 'Mohamed Hassan' },
-    { code: 'SH789', name: 'Shimaa Ali' },
-    { code: 'TR001', name: 'Tarek Refaat' }
+    { code: 'X7', name: 'Abdelrahman Ashraf' },
+    { code: 'X10', name: 'Menna Ameen' },
+    { code: 'X249', name: 'Ashraf Saad' },
+    { code: 'X646', name: 'Nadia Salem' },
+    { code: 'X9', name: 'Hussine Ehab' },
+    { code: 'X652', name: 'Mohamed Ali' },
+    { code: 'X653', name: 'Mohamed Khaled' },
+    { code: 'X656', name: 'Mayar Elkhalil' },
+    { code: 'X659', name: 'Yasmine Mohamed' },
+    { code: 'X660', name: 'Ahmed Ramadan' },
+    {code: 'X661', name: 'Ibrahim Mahmoud'},
+    {code: 'X665', name: 'Belal Elsayed'},
+    {code: 'X666', name: 'Mohmoud Ali'},
+    {code: 'X668', name: 'Mostafa Elsayed'},
+    {code: 'X2', name: 'Hagar Mohamed'},
+    {code: 'X101', name: 'Alaa Ashraf'},
+    {code: 'X8', name: 'Abeer Ashraf'},
+
   ];
   
   regionsMapping: any = {
@@ -67,8 +89,6 @@ export class EditRequestComponent implements OnInit {
   ngOnInit() {
     this.leadId = Number(this.route.snapshot.paramMap.get('id'));
     this.initForm();
-    this.crmService.getCampaigns().subscribe(data => this.campaignsList = data);
-    
     if (this.leadId) {
       this.loadLeadData(this.leadId);
     }
@@ -81,12 +101,15 @@ export class EditRequestComponent implements OnInit {
       phoneNumber: ['', Validators.required],
       email: [''],
       leadStatusId: [1, Validators.required],
-      campaignId: [''],
+      
+      // 👇 التعديلات الجديدة
+      campaignSource: [''],
+      campaignName: [''],
       referredBy: [''],
       
       propertyType: ['', Validators.required],
       purpose: ['', Validators.required],
-      totalAmount: [''], // خليناها نص عشان تقبل الفواصل
+      totalAmount: [''], 
       paymentMethod: ['Cash'],
       zoneId: [''],
       selectedRegions: [[]],
@@ -98,14 +121,13 @@ export class EditRequestComponent implements OnInit {
     });
   }
 
-  loadLeadData(id: number) {
+ loadLeadData(id: number) {
     this.crmService.getLeadDetails(id).subscribe({
       next: (res) => {
         if (res.leadInfo && res.requestDetails) {
           const info = res.leadInfo;
           const req = res.requestDetails;
           
-          // عشان الـ zone متفصلش الداتا وهي بتعمل Load، بنوقف הـ Events مؤقتاً
           this.editRequestForm.get('zoneId')?.setValue(req.zoneId || '', { emitEvent: false });
           this.availableRegions = this.regionsMapping[req.zoneId] ||[];
           this.updateAvailableProjects(req.zoneId);
@@ -113,45 +135,64 @@ export class EditRequestComponent implements OnInit {
           const regionsArr = req.selectedRegions ? req.selectedRegions.split(', ').filter((x:any)=>x) :[];
           const projectsArr = req.selectedProjects ? req.selectedProjects.split(', ').filter((x:any)=>x) :[];
 
-          // وضع البيانات وتنسيق الأرقام بالفواصل
-          this.editRequestForm.patchValue({
-            fullName: info.fullName,
-            phoneNumber: info.phoneNumber,
-            email: info.email,
-            leadStatusId: info.statusId,
-            campaignId: info.campaignId || '',
-            referredBy: info.referredBy || '',
+          // 🟢 جلب أكواد المشاريع الخاصة بالعميل ده عشان الداتا تنزل متعلمة جاهزة
+          this.fetchPropertyCodes(req.purpose, () => {
+            this.editRequestForm.patchValue({
+              fullName: info.fullName,
+              phoneNumber: info.phoneNumber,
+              email: info.email,
+              leadStatusId: info.statusId,
+              
+              // 👇 تفاصيل الكامبين والكود هتنزل متعلمة هنا
+              campaignSource: info.campaignSource || '',
+              campaignName: info.campaignName || '',
+              referredBy: info.referredBy || '',
 
-            propertyType: req.propertyType,
-            purpose: req.purpose,
-            paymentMethod: req.paymentMethod || 'Cash',
-            zoneId: req.zoneId || '',
-            selectedRegions: regionsArr,
-            selectedProjects: projectsArr,
-            
-            totalAmount: req.totalAmount ? Number(req.totalAmount).toLocaleString('en-US') : '',
-            downPayment: req.downPayment ? Number(req.downPayment).toLocaleString('en-US') : '',
-            installmentYears: req.installmentYears ? Number(req.installmentYears).toLocaleString('en-US') : '',
-            
-            preferredLocation: req.preferredLocation,
-            notes: req.notes
-          }, { emitEvent: false });
+              propertyType: req.propertyType,
+              purpose: req.purpose,
+              paymentMethod: req.paymentMethod || 'Cash',
+              zoneId: req.zoneId || '',
+              selectedRegions: regionsArr,
+              selectedProjects: projectsArr,
+              
+              totalAmount: req.totalAmount ? Number(req.totalAmount).toLocaleString('en-US') : '',
+              downPayment: req.downPayment ? Number(req.downPayment).toLocaleString('en-US') : '',
+              installmentYears: req.installmentYears ? Number(req.installmentYears).toLocaleString('en-US') : '',
+              
+              preferredLocation: req.preferredLocation,
+              notes: req.notes
+            }, { emitEvent: false });
+          });
         }
       },
       error: (err) => console.error('Error fetching lead details:', err)
     });
   }
 
-  setupDynamicFields() {
+  fetchPropertyCodes(purpose: string, callback?: () => void) {
+    if (purpose) {
+      this.crmService.getPropertyCodesByPurpose(purpose).subscribe(codes => {
+        this.availablePropertyCodes.set(codes);
+        if (callback) callback();
+      });
+    } else {
+      this.availablePropertyCodes.set([]);
+      if (callback) callback();
+    }
+  }
+
+ setupDynamicFields() {
     this.editRequestForm.get('zoneId')?.valueChanges.subscribe(zoneId => {
       this.editRequestForm.patchValue({ selectedRegions: [], selectedProjects: [] });
       this.availableRegions = this.regionsMapping[zoneId] ||[];
       this.updateAvailableProjects(zoneId); 
     });
 
-    this.editRequestForm.get('purpose')?.valueChanges.subscribe(() => {
-      this.editRequestForm.patchValue({ selectedRegions: [], selectedProjects:[], downPayment: '', installmentYears: '' });
+    this.editRequestForm.get('purpose')?.valueChanges.subscribe(purpose => {
+      this.editRequestForm.patchValue({ selectedRegions: [], selectedProjects:[], downPayment: '', installmentYears: '', campaignName: '' });
+      this.fetchPropertyCodes(purpose); // 👈 تحديث أكواد العقارات لو الغرض اتغير
     });
+    
     this.editRequestForm.get('paymentMethod')?.valueChanges.subscribe(() => {
       this.editRequestForm.patchValue({ downPayment: '', installmentYears: '' });
     });

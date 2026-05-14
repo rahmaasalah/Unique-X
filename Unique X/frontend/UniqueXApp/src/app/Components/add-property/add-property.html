@@ -302,17 +302,21 @@
     </div>
   }
 
-   @if (isPrimary()) {
-                <div class="col-md-4 animate__animated animate__fadeIn">
-                  <label class="form-label fw-bold small text-dark">Developer Name <span class="text-danger">*</span></label>
-                  <select formControlName="developerName" class="form-select shadow-sm">
-                    <option value="">-- Select Developer --</option>
-                    @for (dev of dummyDevelopers; track dev) {
-                      <option [value]="dev">{{ dev }}</option>
-                    }
-                  </select>
-                </div>
-              }
+  @if (isPrimary()) {
+  <div class="col-md-4 animate__animated animate__fadeIn">
+    <label class="form-label fw-bold small text-dark">Developer Name <span class="text-danger">*</span></label>
+    <select formControlName="developerName" class="form-select shadow-sm">
+      <option value="">-- Select Developer --</option>
+      
+      <!-- التعديل هنا: الـ value هي الاسم، والنص الظاهر هو الاسم والكود -->
+      @for (dev of dummyDevelopers; track dev.code) {
+        <option [value]="dev.name">
+          {{ dev.name }} - {{ dev.code }}
+        </option>
+      }
+    </select>
+  </div>
+}
               
             </div>
 

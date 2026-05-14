@@ -28,6 +28,10 @@ namespace Unique_X.Controllers.CRM
             // (هتغيري رقم 5 ده بعدين برقم الحالة الحقيقي عندك في الداتابيز)
             var closedDeals = await _context.Leads.Where(l => l.LeadStatusId == 5).CountAsync();
             var totalRevenue = await _context.Leads.SumAsync(l => l.ExpectedRevenue ?? 0);
+            var totalRequests = await _context.Leads.Where(l => l.LeadStatusId == 4).CountAsync(); // 4 = Calls (request)
+            var totalClosing = await _context.Leads.Where(l => l.LeadStatusId == 18).CountAsync(); // 18 = Follow up for closing
+            var totalVisits = await _context.Visits.CountAsync();
+            var totalActivities = await _context.LeadActivities.CountAsync();
 
             // حساب أداء كل بروكر
             var brokers = await _context.Leads
@@ -46,6 +50,10 @@ namespace Unique_X.Controllers.CRM
                 TotalLeads = totalLeads,
                 TotalClosedDeals = closedDeals,
                 TotalExpectedRevenue = totalRevenue,
+                TotalRequests = totalRequests, // 👈
+                TotalVisits = totalVisits,     // 👈
+                TotalActivities = totalActivities, // 👈
+                TotalClosingLeads = totalClosing,
                 BrokerPerformances = brokers
             };
 
@@ -216,6 +224,43 @@ namespace Unique_X.Controllers.CRM
                 }).ToListAsync();
 
             return Ok(new BrokerProfileDataDto { Leads = leads, Visits = visits, Activities = activities });
+        }
+
+        [HttpGet("admin-calendar")]
+        public async Task<IActionResult> GetAdminCalendarEvents()
+        {
+            var visits = await _context.Visits
+                .Include(v => v.Lead)
+                .Include(v => v.Lead.Broker)
+                .Select(v => new
+                {
+                    Id = v.Id,
+                    Type = "Visit",
+                    Title = v.Location,
+                    Date = v.VisitDate,
+                    Status = v.Status,
+                    Feedback = v.Feedback ?? "",
+                    BrokerName = v.Lead.Broker.FirstName + " " + v.Lead.Broker.LastName,
+                    ClientName = v.Lead.FullName
+                }).ToListAsync();
+
+            var activities = await _context.LeadActivities
+                .Include(a => a.Lead)
+                .Include(a => a.AssignedTo)
+                .Select(a => new
+                {
+                    Id = a.Id,
+                    Type = a.ActivityType,
+                    Title = a.Summary,
+                    Date = a.DueDate,
+                    Status = a.Status,
+                    Feedback = a.Notes ?? "",
+                    BrokerName = a.AssignedTo.FirstName + " " + a.AssignedTo.LastName,
+                    ClientName = a.Lead.FullName
+                }).ToListAsync();
+
+            var allEvents = visits.Concat(activities).OrderBy(e => e.Date).ToList();
+            return Ok(allEvents);
         }
     }
 }

@@ -25,7 +25,7 @@
         </div>
 
         <!-- 2. الحالة والحملة والبروكر -->
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label small fw-bold text-dark">Current Stage *</label>
           <select class="form-select bg-light border-0 rounded-3 text-dark fw-bold" formControlName="leadStatusId">
             <option value="1">New "To Call"</option>
@@ -57,18 +57,25 @@
           </select>
         </div>
         
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label small fw-bold text-dark">Campaign Source</label>
-          <select class="form-select bg-light border-0 rounded-3" formControlName="campaignId">
-            <option value="">-- No Campaign (Website) --</option>
-            <option *ngFor="let c of campaignsList" [value]="c.id">{{ c.name }}</option>
+          <select class="form-select bg-light border-0 rounded-3" formControlName="campaignSource">
+            <option value="">-- Direct / Organic --</option>
+            <option *ngFor="let s of sourcesList" [value]="s">{{ s }}</option>
           </select>
         </div>
 
-        <div class="col-md-4">
-          <label class="form-label small fw-bold text-dark">Broker Code (Referred By)</label>
-          <!-- 🟢 حولناها لـ Select Menu -->
-          <select class="form-select form-select-lg bg-light border-0 rounded-3" formControlName="referredBy">
+        <div class="col-md-3">
+          <label class="form-label small fw-bold text-dark">Campaign Name</label>
+          <select class="form-select bg-light border-0 rounded-3 text-danger fw-bold" formControlName="campaignName">
+            <option value="">-- Select Code --</option>
+            <option *ngFor="let code of availablePropertyCodes()" [value]="code">{{ code }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label small fw-bold text-dark">Referred By</label>
+          <select class="form-select bg-light border-0 rounded-3" formControlName="referredBy">
             <option value="">-- Direct (No Referral) --</option>
             <option *ngFor="let broker of dummyBrokers" [value]="broker.code">
               {{ broker.name }} ({{ broker.code }})

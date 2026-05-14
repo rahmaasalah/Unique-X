@@ -16,10 +16,6 @@
     </div>
     
     <div class="d-flex gap-2">
-
-      <button *ngIf="isAdmin()" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm" routerLink="/crm/campaigns">
-        <i class="bi bi-megaphone-fill me-1"></i> Add Campaign
-      </button>
       <!-- 👈 زرار الذهاب لصفحة إضافة العميل -->
       <button class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" routerLink="/crm/add-lead">
         <i class="bi bi-plus-lg me-1"></i> Add Lead
@@ -173,11 +169,11 @@
         </select>
       </div>
 
-       <div class="col-md-2">
+      <div class="col-md-2" *ngIf="isAdmin()">
         <select class="form-select form-select-sm" [ngModel]="filterReferredBy()" (ngModelChange)="filterReferredBy.set($event); applyFilters(true)">
           <option value="">All Broker Codes</option>
-          @for (code of uniqueBrokerCodes(); track code) { 
-            <option [value]="code">Ref: {{ code }}</option> 
+          @for (broker of dummyBrokers; track broker.code) { 
+            <option [value]="broker.code">{{ broker.name }} ({{ broker.code }})</option> 
           }
         </select>
       </div>

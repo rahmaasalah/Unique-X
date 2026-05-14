@@ -6,7 +6,8 @@
         public string PhoneNumber { get; set; }
         public string? Email { get; set; }
         public int LeadStatusId { get; set; }
-        public int? CampaignId { get; set; }
+        public string? CampaignSource { get; set; }
+        public string? CampaignName { get; set; }
         public string? ReferredBy { get; set; }
 
         // الحقول العقارية القديمة

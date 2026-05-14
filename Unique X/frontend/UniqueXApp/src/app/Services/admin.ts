@@ -122,4 +122,16 @@ reorderBanners(orderedIds: number[]) {
 duplicateProperty(propertyId: number, brokerId: string) {
     return this.http.post(`${this.baseUrl}/duplicate-property/${propertyId}/${brokerId}`, {});
   }
+
+ getHotDeals() {
+    return this.http.get<any[]>(`${this.baseUrl}/hot-deals`);
+  }
+
+  addHotDeal(code: string) {
+    return this.http.post(`${this.baseUrl}/hot-deals`, { code });
+  }
+
+  removeHotDeal(id: number) {
+    return this.http.delete(`${this.baseUrl}/hot-deals/${id}`);
+  }
 }

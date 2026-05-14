@@ -27,6 +27,12 @@
 </span>
     </div>
 
+    @if (property.isHotDeal) {
+      <div class="hot-deal-ribbon">
+        <span>HOT DEAL</span>
+      </div>
+    }
+
     @if (authService.getUserType() === 0) {
   <button class="btn btn-light rounded-circle position-absolute top-0 end-0 m-2 shadow-sm border-0 wishlist-btn"
           (click)="onToggleWishlist($event)" 

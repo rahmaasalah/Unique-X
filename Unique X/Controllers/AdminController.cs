@@ -483,5 +483,45 @@ namespace Unique_X.Controllers
             return Ok(new { Message = "Property rejected" });
         }
 
+        [HttpGet("hot-deals")]
+        public async Task<IActionResult> GetAllHotDeals()
+        {
+            var deals = await _context.HotDeals
+                .Include(h => h.Property)
+                .ThenInclude(p => p.Photos)
+                .OrderByDescending(h => h.AddedAt)
+                .ToListAsync();
+            return Ok(deals);
+        }
+
+        [HttpPost("hot-deals")]
+        public async Task<IActionResult> AddHotDeal([FromBody] HotDealDto dto)
+        {
+            var count = await _context.HotDeals.CountAsync();
+            if (count >= 12) return BadRequest("Maximum 12 Hot Deals allowed.");
+
+            var property = await _context.Properties.FirstOrDefaultAsync(p => p.Code == dto.Code);
+            if (property == null) return NotFound("Property not found with this code.");
+
+            if (await _context.HotDeals.AnyAsync(h => h.PropertyId == property.Id))
+                return BadRequest("Property already exists in Hot Deals.");
+
+            _context.HotDeals.Add(new HotDeal { PropertyId = property.Id });
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Added successfully" });
+        }
+
+        [HttpDelete("hot-deals/{id}")]
+        public async Task<IActionResult> RemoveHotDeal(int id)
+        {
+            var deal = await _context.HotDeals.FindAsync(id);
+            if (deal == null) return NotFound();
+
+            _context.HotDeals.Remove(deal);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Removed successfully" });
+        }
+
+
     }
 }

@@ -182,6 +182,23 @@
                   <small class="text-danger d-block mt-1">Price must be at least {{ isRent() ? '1' : '1,000,000' }} EGP</small>
                 }
               </div>
+
+              <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Owner Name <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                  <input type="text" formControlName="ownerName" class="form-control shadow-sm" placeholder="e.g. Ahmed Ali">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Owner Phone <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white"><i class="bi bi-telephone"></i></span>
+                  <input type="text" formControlName="ownerPhone" class="form-control shadow-sm" placeholder="e.g. 01012345678">
+                </div>
+              </div>
+            </div>
             </div>
 
             <!-- القسم الثاني: مواصفات الوحدة -->
@@ -262,6 +279,22 @@
                   </select>
                 </div>
               }
+
+             @if (isPrimary()) {
+  <div class="col-md-4 animate__animated animate__fadeIn">
+    <label class="form-label fw-bold small text-dark">Developer Name <span class="text-danger">*</span></label>
+    <select formControlName="developerName" class="form-select shadow-sm">
+      <option value="">-- Select Developer --</option>
+      
+      <!-- التعديل هنا: الـ value هي الاسم، والنص الظاهر هو الاسم والكود -->
+      @for (dev of dummyDevelopers; track dev.code) {
+        <option [value]="dev.name">
+          {{ dev.name }} - {{ dev.code }}
+        </option>
+      }
+    </select>
+  </div>
+}
             </div>
 
             <!-- القسم الرابع: تفاصيل المبنى -->

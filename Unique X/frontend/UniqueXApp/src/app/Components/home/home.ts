@@ -30,6 +30,7 @@ export class HomeComponent implements OnInit {
   resaleProjectProps = computed(() => this.properties().filter(p => p.listingType === 'ResaleProject'));
   primaryProps = computed(() => this.properties().filter(p => p.listingType === 'Primary'));
   rentProps = computed(() => this.properties().filter(p => p.listingType === 'Rent'));
+  hotDealsList = signal<any[]>([]);
 
 
   isLoading = signal<boolean>(false);
@@ -88,6 +89,7 @@ ngOnInit(): void {
       
     this.updateProjectsList(params['city']);
     this.loadProperties(params);
+    this.loadHotDeals();
   });
 
   this.adminService.getPublicBanners().subscribe({
@@ -128,6 +130,11 @@ ngOnInit(): void {
   this.authService.getAdminContact().subscribe(res => {
     this.adminPhone.set(res.phoneNumber);
   });
+}
+
+loadHotDeals() {
+  // افترضي وجود هذه الدالة في الـ PropertyService
+  this.propertyService.getHotDeals().subscribe(data => this.hotDealsList.set(data));
 }
 
 updateProjectsList(cityId: any) {

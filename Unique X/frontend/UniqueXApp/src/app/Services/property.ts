@@ -70,4 +70,7 @@ getFinancialHistory(code: string): Observable<any[]> {
    deletePhoto(propertyId: number, photoId: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/${propertyId}/photos/${photoId}`);
   }
+  getHotDeals() {
+  return this.http.get<any[]>(`${this.baseUrl}/hot-deals`);
+}
 }

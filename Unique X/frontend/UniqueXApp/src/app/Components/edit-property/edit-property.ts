@@ -83,6 +83,20 @@ projectsMapping: any = {
   }
 };
 
+// 🟢 قائمة المطورين
+dummyDevelopers =[
+  { code: 'D01', name: 'Sodic' },
+  { code: 'D02', name: 'Palm Hills' },
+  { code: 'D03', name: 'Emaar' },
+  { code: 'D04', name: 'Mountain View' },
+  { code: 'D05', name: 'Tatweer Misr' },
+  { code: 'D06', name: 'La Vista' },
+  { code: 'D07', name: 'City Edge' },
+  { code: 'D08', name: 'Ora' },
+  { code: 'D09', name: 'Hassan Allam' },
+  { code: 'D10', name: 'Madinet Masr' }
+];
+
 filteredProjects: string[] = [];
 
   private fb = inject(FormBuilder);
@@ -105,6 +119,9 @@ filteredProjects: string[] = [];
       address:[''],
       listingType: [0, Validators.required],
       propertyType:[0, Validators.required],
+      ownerName: ['', Validators.required],
+      ownerPhone: ['', Validators.required],
+      developerName: [''],
       areaType: [0],
       villaCategory: [0],
       villaSubType:[null],
@@ -149,20 +166,23 @@ filteredProjects: string[] = [];
       const priceControl = this.editForm.get('price');
       const ppmControl = this.editForm.get('pricePerMeter');
       const securityControl = this.editForm.get('securityDeposit');
+      const devControl = this.editForm.get('developerName'); // 👈 المتغير الجديد
 
-      // 🟢 1. التعامل مع حقل "سعر المتر" (Primary فقط)
+      // 🟢 التعامل مع المطور وسعر المتر (Primary فقط = 2)
       if (typeNum === 2) { 
         ppmControl?.setValidators([Validators.required]);
+        devControl?.setValidators([Validators.required]); // المطور إجباري
       } else {
         ppmControl?.clearValidators();
-        ppmControl?.setValue(''); // تصفير الحقل لو غير النوع
+        ppmControl?.setValue(''); 
+        devControl?.clearValidators(); 
+        devControl?.setValue(''); // تصفير المطور
       }
 
-      // 🟢 2. التعامل مع السعر الإجمالي والتأمين (حسب الإيجار أو البيع)
-      if (typeNum === 1) { // إيجار
+      if (typeNum === 1) { 
         priceControl?.setValidators([Validators.required, minAmountValidator(1)]);
         securityControl?.setValidators([Validators.required, minAmountValidator(0)]);
-      } else { // أي نوع بيع آخر
+      } else { 
         priceControl?.setValidators([Validators.required, minAmountValidator(1000000)]);
         securityControl?.clearValidators();
       }
@@ -170,6 +190,7 @@ filteredProjects: string[] = [];
       priceControl?.updateValueAndValidity();
       ppmControl?.updateValueAndValidity();
       securityControl?.updateValueAndValidity();
+      devControl?.updateValueAndValidity(); // 👈 تحديث حالة المطور
     });
 
     this.editForm.get('price')?.valueChanges.subscribe(val => {
@@ -630,6 +651,10 @@ filteredProjects: string[] = [];
     formData.append('Rooms', cleanNum(f.rooms));
     formData.append('Bathrooms', cleanNum(f.bathrooms));
     formData.append('ReceptionPieces', cleanNum(f.receptionPieces));
+
+    formData.append('OwnerName', f.ownerName || '');
+    formData.append('OwnerPhone', f.ownerPhone || '');
+    formData.append('DeveloperName', f.developerName || '');
     
     formData.append('Floor', cleanNum(f.floor));
     formData.append('TotalFloors', cleanNum(f.totalFloors));

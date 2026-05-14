@@ -36,23 +36,38 @@
       </div>
 
       <div class="table-responsive border rounded-3" style="max-height: 400px; overflow-y: auto;">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
           <thead class="table-light sticky-top">
             <tr>
-              <th>Client Name</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Assign Broker</th>
+              <th class="ps-3">Client Name & Phone</th>
+              <th>Campaign Info</th>
+              <th>Property Request</th>
+              <th style="min-width: 200px;">Assigned Broker</th>
               <th class="text-center">Action</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let lead of importedLeads(); let i = index">
-              <td class="fw-bold">{{ lead.fullName }}</td>
-              <td>{{ lead.phoneNumber }}</td>
-              <td class="small">{{ lead.email }}</td>
+              <td class="ps-3">
+                <div class="fw-bold text-dark">{{ lead.fullName }}</div>
+                <div class="text-muted"><i class="bi bi-telephone me-1"></i>{{ lead.phoneNumber }}</div>
+                <div *ngIf="lead.notes" class="small text-muted mt-1 fst-italic text-truncate" style="max-width: 150px;" [title]="lead.notes">
+                  <i class="bi bi-journal-text me-1"></i>{{ lead.notes }}
+                </div>
+              </td>
               <td>
-                <select class="form-select form-select-sm border-secondary-subtle" [(ngModel)]="lead.brokerId">
+                <div class="badge bg-info-subtle text-info-emphasis border rounded-pill mb-1" *ngIf="lead.campaignName || lead.campaignSource">
+                  {{ lead.campaignSource || 'Direct' }} - {{ lead.campaignName || 'Organic' }}
+                </div>
+                <div class="text-danger small fw-bold" *ngIf="lead.referredBy"><i class="bi bi-person-bounding-box me-1"></i>Ref: {{ lead.referredBy }}</div>
+              </td>
+              <td>
+                <div class="fw-bold text-dark">{{ lead.propertyType }}</div>
+                <div class="badge bg-success-subtle text-success-emphasis border rounded-pill">{{ lead.purpose }}</div>
+                <div class="fw-bold text-success mt-1" *ngIf="lead.totalAmount > 0">{{ lead.totalAmount | currency:'EGP ' }}</div>
+              </td>
+              <td>
+                <select class="form-select form-select-sm border-secondary-subtle fw-bold text-primary" [(ngModel)]="lead.brokerId">
                   <option value="">-- Choose Broker --</option>
                   <option *ngFor="let b of brokersList()" [value]="b.id">{{ b.firstName }} {{ b.lastName }}</option>
                 </select>
@@ -103,7 +118,7 @@
         </div>
 
         <!-- 2. الحالة والحملة والبروكر (في سطر واحد) -->
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label small fw-bold text-dark">Current Stage *</label>
           <select class="form-select bg-light border-0 rounded-3 text-dark fw-bold" formControlName="leadStatusId">
             <option value="1">New "To Call"</option>
@@ -134,19 +149,26 @@
             <option value="26">Recommend to shift</option>
           </select>
         </div>
-        
-        <div class="col-md-4">
+
+        <div class="col-md-3">
           <label class="form-label small fw-bold text-dark">Campaign Source</label>
-          <select class="form-select bg-light border-0 rounded-3" formControlName="campaignId">
-            <option value="">-- No Campaign (Website) --</option>
-            <option *ngFor="let c of campaignsList" [value]="c.id">{{ c.name }}</option>
+          <select class="form-select bg-light border-0 rounded-3 text-dark fw-bold" formControlName="campaignSource">
+            <option value="">-- Direct --</option>
+            <option *ngFor="let s of sourcesList" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+        
+        <div class="col-md-3">
+          <label class="form-label small fw-bold text-dark">Campaign Name</label>
+          <select class="form-select bg-light border-0 rounded-3 text-dark fw-bold" formControlName="campaignName">
+            <option value="">-- Select Property Code --</option>
+            <option *ngFor="let code of availablePropertyCodes()" [value]="code">{{ code }}</option>
           </select>
         </div>
 
-        <div class="col-md-4">
-          <label class="form-label small fw-bold text-dark">Broker Code (Referred By)</label>
-          <!-- 🟢 حولناها لـ Select Menu -->
-          <select class="form-select form-select-lg bg-light border-0 rounded-3" formControlName="referredBy">
+         <div class="col-md-3">
+          <label class="form-label small fw-bold text-dark">Referred By (Broker Code)</label>
+          <select class="form-select bg-light border-0 rounded-3 text-dark fw-bold" formControlName="referredBy">
             <option value="">-- Direct (No Referral) --</option>
             <option *ngFor="let broker of dummyBrokers" [value]="broker.code">
               {{ broker.name }} ({{ broker.code }})
@@ -181,7 +203,7 @@
 
         <div class="col-md-4">
           <label class="form-label small fw-bold text-dark">Zone</label>
-          <select class="form-select bg-light border-0 rounded-3 border-start border-danger border-4 fw-bold" formControlName="zoneId">
+          <select class="form-select bg-light border-0 rounded-3  fw-bold" formControlName="zoneId">
             <option value="">-- Select Zone --</option>
             <option *ngFor="let zone of zones" [value]="zone.id">{{ zone.name }}</option>
           </select>

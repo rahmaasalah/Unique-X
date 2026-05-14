@@ -32,3 +32,31 @@
 .price-text {
     height: 24px; /* تثبيت ارتفاع السعر */
 }
+
+
+.hot-deal-ribbon {
+  position: absolute;
+  top: 0;
+  right: 0; /* تأكدي أنها 0 */
+  width: 100px;
+  height: 100px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.hot-deal-ribbon span {
+  position: absolute;
+  top: 15px;
+  right: -25px; /* هذا يضمن بقاءه في الزاوية اليمنى */
+  width: 150px;
+  background-color: #ffc107;
+  color: #000;
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.7rem;
+  /* للتأكد من اتجاه الميلان الصحيح للجهة اليمنى، نغير الـ rotate */
+  transform: rotate(45deg); 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  padding: 5px 0;
+}

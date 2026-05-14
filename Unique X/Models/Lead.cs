@@ -24,6 +24,9 @@
         public decimal? Probability { get; set; } // 100%
         public DateTime? ExpectedClosingDate { get; set; }
 
+        public string? CampaignSource { get; set; } // Facebook, Google, etc.
+        public string? CampaignName { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public bool IsDuplicate { get; set; } = false; // هل العميل ده متكرر؟

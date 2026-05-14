@@ -36,11 +36,13 @@ export class AdminDashboardComponent implements OnInit {
   userData = signal<any>(null); // بيانات الأدمن الشخصية
   selectedProperty = signal<any>(null); 
   currentFinancialFile = signal<any>(null);
+  hotDeals = signal<any[]>([]);
+
 
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
   homeBanners = signal<any[]>([]);
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead' | 'campaigns'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals'>('users');
 
   detailData = signal<any[]>([]);
 
@@ -54,6 +56,33 @@ export class AdminDashboardComponent implements OnInit {
   propListingFilter = signal('');
   propTypeFilter = signal('');
   isSidebarOpen = false;
+
+  propOwnerFilter = signal('');
+  propDeveloperFilter = signal('');
+
+  dummyDevelopers =[
+  { code: 'D01', name: 'Sodic' },
+  { code: 'D02', name: 'Palm Hills' },
+  { code: 'D03', name: 'Emaar' },
+  { code: 'D04', name: 'Mountain View' },
+  { code: 'D05', name: 'Tatweer Misr' },
+  { code: 'D06', name: 'La Vista' },
+  { code: 'D07', name: 'City Edge' },
+  { code: 'D08', name: 'Ora' },
+  { code: 'D09', name: 'Hassan Allam' },
+  { code: 'D10', name: 'Madinet Masr' }
+];
+
+  uniqueOwners = computed(() => {
+    const owners = this.properties().map(p => p.ownerName).filter(n => n && n.trim() !== '');
+    return [...new Set(owners)].sort();
+  });
+
+  // 🟢 استخراج أسماء المطورين بدون تكرار (للفلتر)
+ uniqueDevelopers = computed(() => {
+  return this.dummyDevelopers.sort((a, b) => a.name.localeCompare(b.name));
+});
+
 
 
   // إحصائيات سريعة
@@ -86,7 +115,12 @@ export class AdminDashboardComponent implements OnInit {
       const matchesTitle = p.title.toLowerCase().includes(search) || (p.code && p.code.toLowerCase().includes(search));
       const matchesListing = this.propListingFilter() === '' || p.listingType === this.propListingFilter();
       const matchesType = this.propTypeFilter() === '' || p.propertyType === this.propTypeFilter();
-      return matchesTitle && matchesListing && matchesType;
+      
+      // 👇 شروط הפلاتر الجديدة
+      const matchesOwner = this.propOwnerFilter() === '' || p.ownerName === this.propOwnerFilter();
+      const matchesDev = this.propDeveloperFilter() === '' || p.developerName === this.propDeveloperFilter();
+
+      return matchesTitle && matchesListing && matchesType && matchesOwner && matchesDev;
     });
   });
 
@@ -166,6 +200,11 @@ export class AdminDashboardComponent implements OnInit {
         this.homeBanners.set(data);
     });
   }
+
+  getDeveloperCode(developerName: string): string | undefined {
+  const dev = this.dummyDevelopers.find(d => d.name === developerName);
+  return dev ? dev.code : undefined;
+}
 
   toggleSidebar() {
   this.isSidebarOpen = !this.isSidebarOpen;
@@ -260,6 +299,9 @@ export class AdminDashboardComponent implements OnInit {
   else if (tab === 'calls') {
     this.adminService.getActivityLogs('CallClick').subscribe(data => this.detailData.set(data));
   }
+  else if (tab === 'hotDeals') {
+  this.adminService.getHotDeals().subscribe(data => this.hotDeals.set(data));
+}
 
   else if (tab === 'suspUsers') {
     this.adminService.getSuspendedUsers().subscribe(data => this.detailData.set(data));
@@ -277,6 +319,35 @@ export class AdminDashboardComponent implements OnInit {
       }
     });
   }
+
+  onAddHotDeal(code: string) {
+  if (!code) return;
+  
+  this.alertService.showLoading('Adding...');
+  this.adminService.addHotDeal(code).subscribe({
+    next: () => {
+      this.alertService.close();
+      this.alertService.success('Added to Hot Deals');
+      this.loadHotDeals(); // تحديث القائمة بعد الإضافة
+    },
+    error: (err) => {
+      this.alertService.close();
+      this.alertService.error(err.error || 'Failed to add.');
+    }
+  });
+}
+
+onRemoveHotDeal(id: number) {
+  this.alertService.confirm('Remove this property from Hot Deals?', () => {
+    this.adminService.removeHotDeal(id).subscribe(() => {
+      this.alertService.success('Removed successfully');
+      this.loadHotDeals(); // تحديث القائمة بعد الحذف
+    });
+  });
+}
+loadHotDeals() {
+  this.adminService.getHotDeals().subscribe(data => this.hotDeals.set(data));
+}
 
   toggleProperty(propId: number, currentStatus: boolean) {
     this.adminService.togglePropertyStatus(propId).subscribe({

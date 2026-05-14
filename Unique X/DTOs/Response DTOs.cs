@@ -36,6 +36,7 @@ namespace Unique_X.DTOs
         public bool HasHotelEntrance { get; set; }        
         public bool HasSecurity { get; set; }             
         public bool IsFirstOwner { get; set; }
+        public bool IsHotDeal { get; set; }
 
         public string? OwnerName { get; set; }
         public string? OwnerPhone { get; set; }
