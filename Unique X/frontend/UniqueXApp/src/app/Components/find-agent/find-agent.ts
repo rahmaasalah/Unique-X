@@ -33,4 +33,8 @@ export class FindAgentComponent implements OnInit {
       }
     });
   }
+
+  generateBrokerSlug(fullName: string): string {
+  return fullName.toLowerCase().replace(/\s+/g, '-');
+}
 }

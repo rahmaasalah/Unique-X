@@ -170,7 +170,19 @@ namespace Unique_X.Controllers.CRM
                        _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 3 ? "North Coast" : "N/A",
                     PaymentMethod = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PaymentMethod ?? "",
                     DownPayment = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).DownPayment,
-                    InstallmentYears = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).InstallmentYears
+                    InstallmentYears = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).InstallmentYears,
+
+                    VisitsCount = _context.Visits.Count(v => v.LeadId == l.Id),
+                    CompletedVisits = _context.Visits.Count(v => v.LeadId == l.Id && v.Status == "Completed"),
+                    PendingVisits = _context.Visits.Count(v => v.LeadId == l.Id && v.Status == "Pending"),
+                    CancelledVisits = _context.Visits.Count(v => v.LeadId == l.Id && v.Status == "Cancelled"),
+                    RescheduledVisits = _context.Visits.Count(v => v.LeadId == l.Id && v.Status == "Rescheduled"),
+
+                    ActivitiesCount = _context.LeadActivities.Count(a => a.LeadId == l.Id),
+                    CompletedActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Completed"),
+                    PendingActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Pending"),
+                    CancelledActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Cancelled"),
+                    RescheduledActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Rescheduled")
                 }).ToListAsync();
 
             var visits = await _context.Visits

@@ -147,3 +147,30 @@ main {
         font-size: 1.5rem;
     }
 }
+
+
+/* تحسين شكل السكرول الأفقي للجداول */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* لتحسين السحب في الآيفون */
+  padding-bottom: 5px; /* مسافة بسيطة تحت السكرول */
+}
+
+/* تجميل شريط التمرير (Scrollbar) */
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #c1c1c1; 
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8; 
+}

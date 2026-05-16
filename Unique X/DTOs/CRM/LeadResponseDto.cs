@@ -31,6 +31,16 @@
         public bool IsApprovedDuplicate { get; set; }
         public int ClosedDealsCount { get; set; }
 
+        public int CompletedVisits { get; set; }
+        public int PendingVisits { get; set; }
+        public int CancelledVisits { get; set; }
+        public int RescheduledVisits { get; set; }
+
+        public int CompletedActivities { get; set; }
+        public int PendingActivities { get; set; }
+        public int CancelledActivities { get; set; }
+        public int RescheduledActivities { get; set; }
+
         public string SelectedRegions { get; set; }
         public string SelectedProjects { get; set; }
         public string Notes { get; set; }

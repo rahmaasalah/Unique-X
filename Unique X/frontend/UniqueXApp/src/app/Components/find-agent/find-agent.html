@@ -43,10 +43,10 @@
               </div>
 
               <!-- زرار عرض عقارات البروكر (هيوجهنا للهوم بفلتر الـ brokerId) -->
-              <button class="btn btn-danger w-100 rounded-pill py-2 fw-bold shadow-sm"
-                      [routerLink]="['/home']" [queryParams]="{ brokerId: agent.id }">
-                View Properties
-              </button>
+             <button class="btn btn-danger w-100 rounded-pill py-2 fw-bold shadow-sm"[routerLink]="['/home']" 
+        [queryParams]="{ broker: generateBrokerSlug(agent.fullName) }">
+  View Properties
+</button>
             </div>
           </div>
         </div>
