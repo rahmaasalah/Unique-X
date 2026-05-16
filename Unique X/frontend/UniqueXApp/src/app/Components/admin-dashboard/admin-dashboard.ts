@@ -61,16 +61,43 @@ export class AdminDashboardComponent implements OnInit {
   propDeveloperFilter = signal('');
 
   dummyDevelopers =[
-  { code: 'D01', name: 'Sodic' },
-  { code: 'D02', name: 'Palm Hills' },
-  { code: 'D03', name: 'Emaar' },
-  { code: 'D04', name: 'Mountain View' },
-  { code: 'D05', name: 'Tatweer Misr' },
-  { code: 'D06', name: 'La Vista' },
-  { code: 'D07', name: 'City Edge' },
-  { code: 'D08', name: 'Ora' },
-  { code: 'D09', name: 'Hassan Allam' },
-  { code: 'D10', name: 'Madinet Masr' }
+  { code: 'PH', name: 'Palm hills' },
+  { code: 'EW', name: 'Elsewhere' },
+  { code: 'OR', name: 'Orouba' },
+  { code: 'ZN', name: 'Zinnia' },
+  { code: 'TD', name: 'Tasheed' },
+  { code: 'TK', name: 'Turkey' },
+  { code: 'AG', name: 'Add Group' },
+  { code: 'CG', name: 'Gamal Elghonimy' },
+  { code: 'KG', name: 'Khames Elghonimy' },
+  { code: 'BY', name: 'Bunyan' },
+  { code: 'TR', name: 'The rise' },
+  { code: 'BN', name: 'Baron' },
+  { code: 'MR', name: 'Mimary' },
+  { code: 'AZ', name: 'Abo Zahra' },
+  { code: 'MA', name: 'Al maram' },
+  { code: 'IV', name: 'Ivory' },
+  { code: 'AF', name: 'Alforat' },
+  { code: 'AZ', name: 'Abo Zahra "Diva"' },
+  { code: 'KG', name: 'Elghonimy "Saluga Elite"' },
+  { code: 'KG', name: 'Elghonimy " Vee Club"' },
+  { code: 'BV', name: 'Boulivard' },
+  { code: 'SWF', name: 'Seif water front' },
+  { code: 'SM', name: 'Saudi Masria' },
+  { code: 'SK', name: 'Solik' },
+  { code: 'FT', name: 'First' },
+  { code: 'TB', name: 'Tabark' },
+  { code: 'SG', name: 'Swag' },
+  { code: 'W', name: 'Waf' },
+  { code: 'SD', name: 'Elsedeky' },
+  { code: 'TG', name: 'Tegan, Eldawlia' },
+  { code: 'JN', name: 'Jeran' },
+  { code: 'AL', name: 'Alexandria development' },
+  { code: 'DK', name: 'Darak' },
+  { code: 'SF', name: 'Saif' },
+  { code: 'CP', name: 'Cleopatra' },
+  { code: 'JW', name: 'Jedar & Jawiria' },
+  { code: 'MS', name: 'Marsoum Development' }
 ];
 
   uniqueOwners = computed(() => {
@@ -412,6 +439,33 @@ loadHotDeals() {
         selectElement.value = prop.brokerId;
       }
     }, 500);
+  }
+
+  checkOwnerDuplicate(phone: string, currentPropId: number) {
+    if (!phone) return null;
+
+    // 1. ندمج كل العقارات (الموافق عليها + المعلقة) في مصفوفة واحدة للبحث الشامل
+    const allSystemProperties = [...this.properties(), ...this.pendingProperties()];
+
+    // 2. نصفي العقارات اللي ليها نفس رقم المالك، ونستبعد العقار اللي الأدمن فاتحه دلوقتي
+    const matches = allSystemProperties.filter(p => 
+      p.ownerPhone === phone && p.id !== currentPropId
+    );
+
+    // لو مفيش أي عقار تاني بنفس الرقم، يبقى المالك ده جديد (نرجع null)
+    if (matches.length === 0) return null;
+
+    // 3. لو لقينا تكرار، هنرتبهم من القديم للجديد (عشان نجيب أول بروكر ضافه)
+    matches.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const firstProperty = matches[0];
+
+    // 4. نرجع بيانات أول إضافة عشان نعرضها للأدمن
+    return {
+      totalProperties: matches.length,
+      firstBrokerName: firstProperty.brokerName,
+      firstDate: firstProperty.createdAt,
+      firstPropertyCode: firstProperty.code
+    };
   }
 
   // ================== 🟢 إدارة ملف الحسابات (Financial) ==================

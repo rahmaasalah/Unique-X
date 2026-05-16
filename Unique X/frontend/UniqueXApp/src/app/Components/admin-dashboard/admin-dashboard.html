@@ -320,21 +320,20 @@
 
         <!-- 🟢 الجدول بعد ضبط المسافات -->
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-          <div class="table-responsive">
-            <!-- ضفنا table-layout: fixed عشان نحكم عرض العواميد -->
-            <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%;">
-              <thead class="table-light">
-                <tr>
-                  <!-- حددنا نسبة لكل عمود عشان نلغي المسافات الفاضية الغريبة -->
-                  <th class="ps-4 py-3" style="width: 32%;">PROPERTY DETAILS</th>
-                  <th style="width: 10%;">CODE</th>
-                  <th style="width: 10%;">TYPE</th>
-                  <th style="width: 13%;">PRICE</th>
-                  <th class="text-center" style="width: 10%;">STATUS</th>
-                  <th class="text-end pe-4" style="width: 25%;">ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
+  <div class="table-responsive">
+    <!-- 🟢 أضفنا min-width: 1100px هنا -->
+    <table class="table table-hover align-middle mb-0" style="min-width: 1100px;">
+      <thead class="table-light text-nowrap"> <!-- أضفنا text-nowrap هنا لمنع كسر الكلام في الهيدر -->
+        <tr>
+          <th class="ps-4 py-3" style="width: 30%;">PROPERTY DETAILS</th>
+          <th style="width: 15%;">CODE</th>
+          <th style="width: 15%;">TYPE</th>
+          <th style="width: 15%;">PRICE</th>
+          <th class="text-center" style="width: 10%;">STATUS</th>
+          <th class="text-end pe-4" style="width: 15%;">ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
                 @for (prop of filteredProperties(); track prop.id) {
                   <tr>
                     <td class="ps-4 py-3">
@@ -924,6 +923,40 @@
 
               <!-- الجزء الأيمن: التقرير الفني والمالي -->
               <div class="col-lg-7 p-4 p-md-5">
+
+                 <div class="inspection-card mb-4 bg-white p-4 rounded-4 shadow-sm border-start border-danger border-5 animate__animated animate__fadeIn">
+    <h6 class="fw-bold text-danger mb-3"><i class="bi bi-person-bounding-box me-2"></i>Owner Verification</h6>
+    <div class="row g-3 small align-items-center">
+      <div class="col-md-6"><b>Owner Name: </b> <span class="text-dark">{{ p.ownerName || 'N/A' }}</span></div>
+      <div class="col-md-6"><b>Phone: </b> <a [href]="'tel:' + p.ownerPhone" class="fw-bold text-dark text-decoration-none" dir="ltr">{{ p.ownerPhone || 'N/A' }}</a></div>
+
+      <!-- نظام الإنذار الذكي -->
+      @if (p.ownerPhone && checkOwnerDuplicate(p.ownerPhone, p.id); as duplicateInfo) {
+        <div class="col-12 mt-2">
+          <div class="alert alert-warning border-warning shadow-sm mb-0 p-3 rounded-3">
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-exclamation-triangle-fill fs-4 text-warning me-2"></i>
+              <strong class="text-dark fs-6">Duplicate Owner Detected!</strong>
+            </div>
+            <p class="mb-2 text-dark small">
+              This owner is already registered in the system with <b>{{ duplicateInfo.totalProperties }}</b> other properties.
+            </p>
+            <div class="bg-white p-2 rounded border border-warning small text-dark">
+              <!-- Added for the first time by: <span class="badge bg-dark">{{ duplicateInfo.firstBrokerName }}</span><br> -->
+              In Property: <b class="text-danger">#{{ duplicateInfo.firstPropertyCode }}</b> on {{ duplicateInfo.firstDate | date:'mediumDate' }}
+            </div>
+          </div>
+        </div>
+      } @else if (p.ownerPhone) {
+        <div class="col-12 mt-2">
+          <div class="alert alert-success border-success shadow-sm mb-0 p-2 rounded-3 small d-flex align-items-center">
+            <i class="bi bi-shield-check fs-5 text-success me-2"></i> 
+            <span class="text-dark"><b>New Owner:</b> No other properties found with this phone number.</span>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
                 
                 <!-- 1. المالية -->
                 <div class="inspection-card mb-4 bg-white p-4 rounded-4 shadow-sm border-start border-success border-5">

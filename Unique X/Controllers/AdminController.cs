@@ -433,6 +433,9 @@ namespace Unique_X.Controllers
                     p.FirstRooms,
                     p.FirstBaths,
                     p.SecondRooms,
+                    p.OwnerName,
+                    p.OwnerPhone,
+                    p.DeveloperName,
                     p.SecondBaths,
                     // Broker info
                     BrokerName = p.Broker.FirstName + " " + p.Broker.LastName,

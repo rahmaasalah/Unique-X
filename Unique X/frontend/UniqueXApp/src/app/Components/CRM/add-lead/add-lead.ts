@@ -289,8 +289,6 @@ export class AddLeadComponent implements OnInit {
   }
 
 
-  // 👇 الدالة السحرية لقراءة الإكسيل والـ CSV (مضادة للتكرار)
-  // 👇 الدالة السحرية لقراءة الإكسيل والـ CSV (معدلة ومحمية)
   onFileSelect(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -304,32 +302,39 @@ export class AddLeadComponent implements OnInit {
       return;
     }
 
+    this.alertService.showLoading('Reading Excel File...');
+
     const reader = new FileReader();
     reader.onload = (e: any) => {
       try {
         const data = new Uint8Array(e.target.result);
-        const workbook = (window as any).XLSX.read(data, { type: 'array' }); 
         
-        const sheetName = workbook.SheetNames[0];
+        // 🟢 قراءة الملف باستخدام مكتبة XLSX
+        const workbook = XLSX.read(data, { type: 'array' }); 
+        
+        const sheetName = workbook.SheetNames[0]; // بناخد أول شيت
         const worksheet = workbook.Sheets[sheetName];
-        const json: any[][] = (window as any).XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        // تحويل الشيت لمصفوفة ثنائية الأبعاد (سطور وعواميد)
+        const json: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
         
         const parsed = [];
-        const phoneSet = new Set<string>(); // لمنع التكرار في نفس الشيت
+        const phoneSet = new Set<string>(); // لمنع التكرار جوه نفس الشيت
 
         // 🟢 نتجاهل أول سطر (الهيدر) ونبدأ من 1
         for (let i = 1; i < json.length; i++) {
           const row = json[i];
           
-          if (row.length > 0 && row[0]) {
+          // نتأكد إن السطر فيه داتا والاسم مش فاضي
+          if (row && row.length > 0 && row[0]) {
             const phone = row[1]?.toString().trim() || '';
 
             if (phone && !phoneSet.has(phone)) {
               phoneSet.add(phone); 
               
-              // 🟢 السحر: البحث عن הـ ID بتاع البروكر بناءً على اسمه في الإكسيل
+              // 🟢 استخراج اسم البروكر من عمود G (رقم 6)
               let matchedBrokerId = '';
-              const excelBrokerName = row[6]?.toString().trim().toLowerCase(); // عمود G (Sales person)
+              const excelBrokerName = row[6]?.toString().trim().toLowerCase(); 
               if (excelBrokerName) {
                 const foundBroker = this.brokersList().find(b => 
                   (b.firstName + ' ' + b.lastName).toLowerCase().includes(excelBrokerName) ||
@@ -338,26 +343,26 @@ export class AddLeadComponent implements OnInit {
                 if (foundBroker) matchedBrokerId = foundBroker.id;
               }
 
-              // تنظيف رقم الميزانية
-              const budgetRaw = row[8]?.toString().replace(/,/g, '').replace(/\D/g, ''); // عمود I (Budget)
+              // 🟢 تنظيف رقم الميزانية من عمود I (رقم 8)
+              const budgetRaw = row[8]?.toString().replace(/,/g, '').replace(/\D/g, ''); 
               const budgetAmount = budgetRaw ? parseInt(budgetRaw, 10) : 0;
 
-              // تسكين الداتا
+              // 🟢 تسكين الداتا في الفورمات اللي الباك إند طالبها بالمللي
               parsed.push({
-                fullName: row[0]?.toString().trim() || '',               // A: Name
-                phoneNumber: phone,                                      // B: Phone
-                email: '',                                               // الإيميل مش في الصورة فخليناه فاضي
-                campaignSource: row[2]?.toString().trim() || '',         // C: Source
-                campaignName: row[3]?.toString().trim() || '',           // D: Campaign
+                fullName: row[0]?.toString().trim() || '',               // A: Client Name
+                phoneNumber: phone,                                      // B: Phone Number
+                campaignSource: row[2]?.toString().trim() || '',         // C: Campaign Source
+                campaignName: row[3]?.toString().trim() || '',           // D: Campaign Name
                 referredBy: row[4]?.toString().trim() || '',             // E: Referred By
                 notes: row[5]?.toString().trim() || '',                  // F: Notes
-                brokerId: matchedBrokerId,                               // G: Sales person (Mapped to ID)
-                purpose: row[7]?.toString().trim() || 'Resale',          // H: Opportunity
-                totalAmount: budgetAmount,                               // I: Budget
-                propertyType: row[9]?.toString().trim() || 'Apartment',  // J: Property Type
+                brokerId: matchedBrokerId,                               // G: Sales person
+                purpose: row[7]?.toString().trim() || 'Resale',          // H: Purpose
+                totalAmount: budgetAmount,                               // I: budget
+                propertyType: row[9]?.toString().trim() || 'Apartment',  // J: Property type
                 
-                // قيم افتراضية إجبارية عشان الـ API ميضربش
-                leadStatusId: 1, // New
+                // قيم افتراضية إجبارية عشان الـ API ميضربش 400
+                email: '',
+                leadStatusId: 1, 
                 paymentMethod: 'Cash',
                 campaignId: null,
                 zoneId: null,
@@ -371,15 +376,18 @@ export class AddLeadComponent implements OnInit {
           }
         }
         
-        this.importedLeads.set(parsed); 
-        event.target.value = ''; 
+        this.importedLeads.set(parsed); // عرض في الجدول
+        event.target.value = ''; // تصفير زرار الرفع
+        this.alertService.close(); // قفل رسالة التحميل
 
       } catch (error) {
-        console.error('Excel Parsing Error:', error);
-        this.alertService.error('Failed to read the file. Ensure it is a valid Excel file.');
+        console.error('Excel Parsing Error Details:', error);
+        this.alertService.close();
+        this.alertService.error('Failed to parse the file! Please open "Console" tab to see the exact error.');
       }
     };
     
+    // قراءة الملف בצيغة (ArrayBuffer) اللي مكتبة XLSX بتفهمها
     reader.readAsArrayBuffer(file);
   }
   // دالة لتطبيق بروكر واحد على كل الجدول بضغطة زرار

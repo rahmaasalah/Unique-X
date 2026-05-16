@@ -32,14 +32,17 @@ isSubmitting = false;
   regionsMapping: any = {
   1: ['Sheikh Zayed', 'Green belt', '6th of October', 'North Expansions', 'October Gardens', 'Eastern Expansions', 'New Cairo'], // Cairo
   2: [
-    'zizinia', 'Janaklis', 'Gliem', 'Fleming', 'San Stefano', 'Shods', 
+    'Zizinia', 'Janaklis', 'Gliem', 'Fleming', 'San Stefano', 'Shods', 
     'Elshalalat', 'Wabur al-miyah', 'Al-Ibrahimiya', 'Al-Manshiyya', 
     'Camp Schésar', 'Muharram Bik', 'Mahattat Misr', 'Cleopatra', 
     'Al-Azariṭa', 'Al-Shatibi', 'Saba Basha', 'Sidi Gaber', 'Roshdy', 
-    'Bolkley', 'Moustafa Kamel', 'Kafr Abdo', 'Stanly', 'Sidi Beshr', 
-    'El-Mandara', 'Al-Suyuf', 'Victoria', 'Al-Aasafirah', 'Al-Maamoura', 
-    'Toson', 'Smouha', 'New Smouha', 'Borj Al-Arab', 'Loran', 
-    'Al-Agamy', 'King Mariout'
+    'Bolkley', 'Moustafa Kamel', 'Kafr Abdo', 'Stanly', 'Sidi Bishr',
+    'El-Mandara-kebly', 'El-Mandara-bahary', 'Al-Suyuf', 'Victoria', 'Al-Aasafirah-kebly', 'Al-Aasafirah-bahary', 'Al-Aasafirah-30', 'Al-Aasafirah-45', 'Al-Maamoura', 
+    'Smouha', 'Borj Al-Arab', 'Loran', 
+    'Al-Agamy', 'King Mariout', 'Abu Qir', 'Al-zawaida', 'Khurshid', 'Al-Maraghi', 'Bahary', 'Bashair al-khayr', 'Al-Baytash', 'Al-Hanovil',
+    'Al-Dakhila', 'Al-Amiriya', 'Bakus', 'Sporting', 'Mahattah al-raml', 'Al-Saraya', 'Al-Hadra', 'Miamy', 'Abo solaiman', 'Falaky',
+    'Al-luban', 'Karmouz', 'Al-Aawaid', 'Hajar al-nawatih', 'Tharwat', 'Mohammed Naguib', 'Green Plaza', 'Al-Montaza', 'Al-Hedaya', 'Wenget',
+    'Abis', 'Al-Hurriya', 'Sultan Hussein', 'Kubri al-namus', 'Al-Mahmoudia'
   ], // Alexandria
   3: ['Al-Dabaa', 'Sidi Abdulrahman', 'Ghazala Bay', 'Al-Alamin', 'Sahel', 'Ras Al Hekma'] // North Coast
 };
@@ -64,11 +67,11 @@ projectsMapping: any = {
   },
   2: { // Alexandria
     'any': [
-      'Palm hills', 'Sawari', 'The One', 'Muruj', 'Alex west', 'Skyline', 'Crystal towers', 
+      'Palm hills Alexandria', 'Sawari', 'The One', 'Muruj', 'Alex west', 'Skyline', 'Crystal towers', 
       'Grand view', 'Twin towers', 'Valore smouha', 'Valore antoniadis', 'East towers', 
-      'Fayroza smouha', 'Saraya gardens', 'Veranda', 'Jackranda', 'Jara', 'Oria city', 
-      'El safwa city', 'Vida', 'Abha hayat', 'Pharma city', 'Jewar', 'Ouruba royals', 
-      'Soly vie', 'San Stefano royals', 'Malaaz'
+      'Saraya gardens', 'Veranda', 'Jackranda', 'Oria city', 'Elite City',
+      'Alsafwa City', 'Vida', 'Abha hayat', 'Jewar', 'Ouruba royals', 
+      'Soly vie', 'San Stefano royals', 'Malaaz', 'Cleopatra plaza','Smoha Gate', 'Antoniades City'
     ]
   },
    3: { // North Coast
@@ -85,18 +88,44 @@ projectsMapping: any = {
 
 // 🟢 قائمة المطورين
 dummyDevelopers =[
-  { code: 'D01', name: 'Sodic' },
-  { code: 'D02', name: 'Palm Hills' },
-  { code: 'D03', name: 'Emaar' },
-  { code: 'D04', name: 'Mountain View' },
-  { code: 'D05', name: 'Tatweer Misr' },
-  { code: 'D06', name: 'La Vista' },
-  { code: 'D07', name: 'City Edge' },
-  { code: 'D08', name: 'Ora' },
-  { code: 'D09', name: 'Hassan Allam' },
-  { code: 'D10', name: 'Madinet Masr' }
+  { code: 'PH', name: 'Palm hills' },
+  { code: 'EW', name: 'Elsewhere' },
+  { code: 'OR', name: 'Orouba' },
+  { code: 'ZN', name: 'Zinnia' },
+  { code: 'TD', name: 'Tasheed' },
+  { code: 'TK', name: 'Turkey' },
+  { code: 'AG', name: 'Add Group' },
+  { code: 'CG', name: 'Gamal Elghonimy' },
+  { code: 'KG', name: 'Khames Elghonimy' },
+  { code: 'BY', name: 'Bunyan' },
+  { code: 'TR', name: 'The rise' },
+  { code: 'BN', name: 'Baron' },
+  { code: 'MR', name: 'Mimary' },
+  { code: 'AZ', name: 'Abo Zahra' },
+  { code: 'MA', name: 'Al maram' },
+  { code: 'IV', name: 'Ivory' },
+  { code: 'AF', name: 'Alforat' },
+  { code: 'AZ', name: 'Abo Zahra "Diva"' },
+  { code: 'KG', name: 'Elghonimy "Saluga Elite"' },
+  { code: 'KG', name: 'Elghonimy " Vee Club"' },
+  { code: 'BV', name: 'Boulivard' },
+  { code: 'SWF', name: 'Seif water front' },
+  { code: 'SM', name: 'Saudi Masria' },
+  { code: 'SK', name: 'Solik' },
+  { code: 'FT', name: 'First' },
+  { code: 'TB', name: 'Tabark' },
+  { code: 'SG', name: 'Swag' },
+  { code: 'W', name: 'Waf' },
+  { code: 'SD', name: 'Elsedeky' },
+  { code: 'TG', name: 'Tegan, Eldawlia' },
+  { code: 'JN', name: 'Jeran' },
+  { code: 'AL', name: 'Alexandria development' },
+  { code: 'DK', name: 'Darak' },
+  { code: 'SF', name: 'Saif' },
+  { code: 'CP', name: 'Cleopatra' },
+  { code: 'JW', name: 'Jedar & Jawiria' },
+  { code: 'MS', name: 'Marsoum Development' }
 ];
-
 filteredProjects: string[] = [];
 
   private fb = inject(FormBuilder);

@@ -32,6 +32,35 @@ export class HomeComponent implements OnInit {
   rentProps = computed(() => this.properties().filter(p => p.listingType === 'Rent'));
   hotDealsList = signal<any[]>([]);
 
+  activeQueryParams = signal<any>({});
+
+  // 🟢 2. التحقق هل المستخدم يبحث من شريط البحث (Search Bar) أم لا
+  hasSearchFilters = computed(() => {
+    const q = this.activeQueryParams();
+    // نعتبره يبحث لو أدخل أي قيمة من خانات البحث (وليس الناف بار)
+    return !!(
+      q['searchTerm'] || q['city'] || q['projectName'] || q['code'] || 
+      q['minPrice'] || q['maxPrice'] || q['area'] || q['minRooms'] || 
+      q['maxRooms'] || q['minBathrooms'] || q['maxBathrooms'] || 
+      q['minFloor'] || q['maxFloor']
+    );
+  });
+
+  // 🟢 3. فلترة الـ Hot Deals بناءً على الناف بار (Listing Type)
+  filteredHotDeals = computed(() => {
+    const params = this.activeQueryParams(); 
+    let deals = this.hotDealsList();
+    
+    const listingType = params['listingType']?.toString() || null;
+    
+    // لو اختار Primary مثلاً، هنعرض الـ Hot Deals اللي نوعها Primary بس
+    if (listingType && listingType !== 'null') {
+      deals = deals.filter(d => d.listingType === listingType);
+    }
+    
+    return deals;
+  });
+
 
   isLoading = signal<boolean>(false);
   private route = inject(ActivatedRoute);
@@ -63,11 +92,11 @@ export class HomeComponent implements OnInit {
   },
   2: { // Alexandria
     'any': [
-      'Palm hills', 'Sawari', 'The One', 'Muruj', 'Alex west', 'Skyline', 'Crystal towers', 
+      'Palm hills Alexandria', 'Sawari', 'The One', 'Muruj', 'Alex west', 'Skyline', 'Crystal towers', 
       'Grand view', 'Twin towers', 'Valore smouha', 'Valore antoniadis', 'East towers', 
-      'Fayroza smouha', 'Saraya gardens', 'Veranda', 'Jackranda', 'Jara', 'Oria city', 
-      'El safwa city', 'Vida', 'Abha hayat', 'Pharma city', 'Jewar', 'Ouruba royals', 
-      'Soly vie', 'San Stefano royals', 'Malaaz'
+      'Saraya gardens', 'Veranda', 'Jackranda', 'Oria city', 'Elite City',
+      'Alsafwa City', 'Vida', 'Abha hayat', 'Jewar', 'Ouruba royals', 
+      'Soly vie', 'San Stefano royals', 'Malaaz', 'Cleopatra plaza','Smoha Gate', 'Antoniades City'
     ]
   },
    3: { // North Coast
@@ -83,55 +112,45 @@ export class HomeComponent implements OnInit {
   };
 
 ngOnInit(): void {
+  // 🟢 1. نقلنا الـ Hot Deals بره عشان تحمل مرة واحدة بس ومتبقاش بطيئة!
+  this.loadHotDeals();
+
   this.route.queryParams.subscribe(params => {
     this.currentListingType = params['listingType']?.toString() || null;
     this.currentProjectName = params['projectName'] || '';
+    this.activeQueryParams.set(params);
       
     this.updateProjectsList(params['city']);
     this.loadProperties(params);
-    this.loadHotDeals();
   });
 
+  // (باقي كود الإعلانات ورقم الأدمن زي ما هو عندك بدون تغيير)
   this.adminService.getPublicBanners().subscribe({
     next: (data: any[]) => {
-      
-      // تحويل البيانات لشكل الكاراسول
       const formattedAds = data.map((b: any) => ({
-        image: b.imageUrl, // تأكدي أن الحرف i صغير
+        image: b.imageUrl, 
         message: `Hello, I am interested in your Ad: ${b.messageTitle}`
       }));
-
-      // تحديث السجنل بالبيانات الجديدة
       this.ads.set(formattedAds);
-
-      // ================== الجزء المطور لحل مشكلة الظهور ==================
-      // ننتظر 100 ملي ثانية لضمان أن @for رسم الصور في الصفحة
       setTimeout(() => {
-        this.cdr.detectChanges(); // إجبار الأنجولار على رؤية الصور الجديدة
-        
-        // تشغيل الكاراسول يدوياً لضمان أنه سيعرض أول صورة ويبدأ الحركة
+        this.cdr.detectChanges(); 
         const bootstrap = (window as any).bootstrap;
         const carouselElement = document.querySelector('#adsCarousel');
         if (carouselElement && bootstrap) {
           const carousel = new bootstrap.Carousel(carouselElement, {
-            interval: 3000,
-            ride: 'carousel',
-            pause: 'hover'
+            interval: 3000, ride: 'carousel', pause: 'hover'
           });
           carousel.cycle();
         }
       }, 100);
-      // =============================================================
     },
     error: (err) => console.error('Banners Error:', err)
   });
 
-  // 3. جلب رقم الأدمن للتواصل
   this.authService.getAdminContact().subscribe(res => {
     this.adminPhone.set(res.phoneNumber);
   });
 }
-
 loadHotDeals() {
   // افترضي وجود هذه الدالة في الـ PropertyService
   this.propertyService.getHotDeals().subscribe(data => this.hotDealsList.set(data));
