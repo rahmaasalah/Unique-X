@@ -442,7 +442,7 @@ loadHotDeals() {
   }
 
   checkOwnerDuplicate(phone: string, currentPropId: number) {
-    if (!phone) return null;
+    if (!phone || phone.trim() === '') return null;
 
     // 1. ندمج كل العقارات (الموافق عليها + المعلقة) في مصفوفة واحدة للبحث الشامل
     const allSystemProperties = [...this.properties(), ...this.pendingProperties()];
@@ -459,10 +459,27 @@ loadHotDeals() {
     matches.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     const firstProperty = matches[0];
 
-    // 4. نرجع بيانات أول إضافة عشان نعرضها للأدمن
+    // 🟢 4. استخراج اسم البروكر بذكاء حسب شكل الداتا الراجعة من الباك إند
+    let brokerFullName = 'Unknown Broker';
+    
+    if (firstProperty.brokerName) {
+      // لو العقار جاي من قائمة Pending
+      brokerFullName = firstProperty.brokerName;
+    } else if (firstProperty.broker) {
+      // لو العقار جاي من الـ Full Listing
+      const fName = firstProperty.broker.firstName || '';
+      const lName = firstProperty.broker.lastName || '';
+      brokerFullName = `${fName} ${lName}`.trim();
+    }
+
+    if (!brokerFullName) {
+      brokerFullName = 'Unknown Broker';
+    }
+
+    // 5. نرجع البيانات عشان المودال يعرضها
     return {
       totalProperties: matches.length,
-      firstBrokerName: firstProperty.brokerName,
+      firstBrokerName: brokerFullName,
       firstDate: firstProperty.createdAt,
       firstPropertyCode: firstProperty.code
     };

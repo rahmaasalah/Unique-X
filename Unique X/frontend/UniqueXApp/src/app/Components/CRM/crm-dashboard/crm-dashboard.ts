@@ -23,7 +23,7 @@ export class CrmDashboardComponent implements OnInit {
   private router = inject(Router);
 
   isAdmin = signal<boolean>(false);
-  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage'>('brokers');
+  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'>('brokers');
 
   dummyBrokers = [
     { code: 'X7', name: 'Abdelrahman Ashraf' },
@@ -50,6 +50,15 @@ export class CrmDashboardComponent implements OnInit {
   // الداتا الأساسية
   allLeads = signal<any[]>([]);
   vipBrokers = signal<any[]>([]);
+
+  allBrokersList = signal<any[]>([]); // كل البروكرز اللي في السيستم
+selectedBrokerToAdd = signal<string>(''); // البروكر اللي الأدمن اختاره من القائمة
+
+// 🟢 فلتر بيجيب البروكرز اللي معندهمش صلاحية بس
+availableBrokersToAdd = computed(() => {
+  const vipIds = this.vipBrokers().map(v => v.id);
+  return this.allBrokersList().filter(b => !vipIds.includes(b.id) && b.isActive);
+});
   
   // إحصائيات عامة للأدمن
   /* systemTotalLeads = computed(() => this.allLeads().length);
@@ -260,8 +269,13 @@ allActivitiesList = computed(() => this.baseFilteredEvents().filter(e => e.type 
       calendar: this.crmService.getAdminCalendarEvents() // ID فاضي يعني هات كل العملاء
     }).subscribe({
       next: ({ users, leads, calendar }) => {
-        // فلترة البروكرز المسموح ليهم يدخلوا الـ CRM
-        const vipUsers = users.filter((u: any) => this.authService.ALLOWED_CRM_BROKERS.includes(u.id));
+        
+        // 🟢 1. بنفلتر كل البروكرز من المستخدمين (UserType === 1) ونحفظهم
+        const brokers = users.filter((u: any) => u.userType === 1);
+        this.allBrokersList.set(brokers);
+
+        // 🟢 2. بنجيب البروكرز اللي معاهم الصلاحية فقط من الداتا بيز
+        const vipUsers = brokers.filter((u: any) => u.hasCrmAccess === true);
         this.vipBrokers.set(vipUsers);
 
         // تظبيط توقيت العملاء
@@ -285,6 +299,34 @@ allActivitiesList = computed(() => this.baseFilteredEvents().filter(e => e.type 
       }
     });
   }
+
+  grantAccess() {
+  const userId = this.selectedBrokerToAdd();
+  if (!userId) return;
+
+  this.alertService.showLoading('Granting access...');
+  this.adminService.grantCrmAccess(userId).subscribe({
+    next: () => {
+      this.alertService.close();
+      this.alertService.success('Broker added to CRM successfully!');
+      this.selectedBrokerToAdd.set('');
+      this.loadAdminData(); // تحديث القوائم فوراً
+    }
+  });
+}
+
+revokeAccess(userId: string) {
+  this.alertService.confirm('Are you sure you want to remove CRM access from this broker?', () => {
+    this.alertService.showLoading('Revoking access...');
+    this.adminService.revokeCrmAccess(userId).subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success('CRM access removed.');
+        this.loadAdminData();
+      }
+    });
+  });
+}
 
   toggleBrokerExpand(brokerIndex: number) {
     // فتح وقفل قائمة العملاء جوا صف البروكر
