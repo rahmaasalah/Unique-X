@@ -390,6 +390,40 @@ export class AddLeadComponent implements OnInit {
     // قراءة الملف בצيغة (ArrayBuffer) اللي مكتبة XLSX بتفهمها
     reader.readAsArrayBuffer(file);
   }
+
+  downloadTemplate() {
+    // 1. تحديد أسماء العواميد بنفس الترتيب اللي السيستم بيقراه في onFileSelect
+    const headers = [
+      "Client Name",                  // A (0)
+      "Phone Number",                 // B (1)
+      "Campaign Source",              // C (2) - e.g. Facebook
+      "Campaign Name",                // D (3) - e.g. Palm Hills Ad
+      "Referred By (Code)",           // E (4) - Broker Code if any
+      "Notes",                        // F (5)
+      "Assigned Broker (Name)",       // G (6)
+      "Purpose (Resale/Primary...)",  // H (7)
+      "Budget (Numbers only)",        // I (8)
+      "Property Type (Apartment...)"  // J (9)
+    ];
+
+    // 2. تحويل المصفوفة لشيت
+    const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+
+    // 3. تظبيط عرض العواميد عشان الشيت يفتح شكله نظيف ومنظم
+    const wscols = [
+      { wch: 25 }, { wch: 15 }, { wch: 18 }, { wch: 20 }, { wch: 20 }, 
+      { wch: 35 }, { wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 25 }
+    ];
+    worksheet['!cols'] = wscols;
+
+    // 4. إنشاء ملف الإكسيل ووضع الشيت بداخله
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Leads_Template");
+
+    // 5. تحميل الملف تلقائياً للأدمن
+    XLSX.writeFile(workbook, "BETK_Leads_Template.xlsx");
+  }
+  
   // دالة لتطبيق بروكر واحد على كل الجدول بضغطة زرار
   applyMasterBroker() {
     const broker = this.masterBrokerId();

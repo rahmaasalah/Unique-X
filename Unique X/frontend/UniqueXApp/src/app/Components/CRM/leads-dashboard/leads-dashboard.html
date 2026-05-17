@@ -49,11 +49,22 @@
             style="min-height: 150px;">
             
             <!-- كارت العميل -->
+            <!-- 🟢 ضفنا cdkDragStartDelay عشان نمنع السحب العشوائي في الموبايل أثناء السكرول -->
             <div class="lead-card bg-white p-3 mb-2 rounded-3 shadow-sm border-start border-4 border-danger" 
                  *ngFor="let lead of col.leads" 
                  [hidden]="!isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate"
-                 cdkDrag>
-              <div class="fw-bold mb-1 text-dark">{{ lead.fullName }}</div>
+                 cdkDrag
+                 [cdkDragStartDelay]="{ touch: 200, mouse: 0 }">
+              
+              <!-- 🟢 التعديل: فصلنا اسم العميل وحطينا جنبه مقبض السحب (Drag Handle) -->
+              <div class="d-flex justify-content-between align-items-start mb-1">
+                <div class="fw-bold text-dark pe-2">{{ lead.fullName }}</div>
+                
+                <!-- 🟢 ده الزرار الوحيد اللي هيحرك الكارت (cdkDragHandle) -->
+                <div cdkDragHandle class="text-muted px-1 rounded bg-light border" style="cursor: grab;" title="Drag to move card">
+                  <i class="bi bi-grip-horizontal"></i>
+                </div>
+              </div>
               
               <div class="text-muted small mb-2"><i class="bi bi-telephone-fill me-1"></i> {{ lead.phoneNumber }}</div>
 
@@ -70,20 +81,17 @@
                 <i class="bi bi-person-badge-fill me-1"></i> Broker: {{ lead.brokerName }}
               </div>
               
-              <!-- 🟢 التعديل: تجميع (الحملة، نوع العقار، الغرض) في بادجات شيك جنب بعض -->
+              <!-- تجميع (الحملة، نوع العقار، الغرض) في بادجات -->
               <div class="d-flex flex-wrap gap-1 mb-2">
-                <!-- مصدر الحملة -->
                 <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill" style="font-size: 0.65rem;">
                   <i class="bi" [ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
                   {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
                 </span>
                 
-                <!-- نوع العقار (Property Type) -->
                 <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle rounded-pill" style="font-size: 0.65rem;">
                   <i class="bi bi-building me-1"></i> {{ lead.propertyType }}
                 </span>
 
-                <!-- الغرض (Listing Type / Purpose) -->
                 <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill" style="font-size: 0.65rem;">
                   <i class="bi bi-tag-fill me-1"></i> {{ lead.purpose }}
                 </span>
@@ -91,9 +99,8 @@
 
               <div class="fw-bold text-success small" *ngIf="lead.totalAmount > 0">
                   <i class="bi bi-wallet2"></i> {{ (lead.totalAmount) | number:'1.1-1' }}M
-                </div>
+              </div>
               
-
               <!-- التاريخ (آخر تحديث) وزرار التفاصيل -->
               <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
                 <span class="text-muted" style="font-size: 0.65rem; font-weight: 600;" [title]="'Created: ' + (lead.createdAt | date:'medium')">
