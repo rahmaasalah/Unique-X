@@ -39,7 +39,8 @@ namespace Unique_X.Controllers
                 u.Email,
                 u.UserType,
                 u.IsActive,
-                u.PhoneNumber
+                u.PhoneNumber,
+                u.HasCrmAccess
             }).ToListAsync();
             return Ok(users);
         }
@@ -523,6 +524,26 @@ namespace Unique_X.Controllers
             _context.HotDeals.Remove(deal);
             await _context.SaveChangesAsync();
             return Ok(new { Message = "Removed successfully" });
+        }
+
+        [HttpPatch("grant-crm/{id}")]
+        public async Task<IActionResult> GrantCrmAccess(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+            user.HasCrmAccess = true;
+            await _userManager.UpdateAsync(user);
+            return Ok(new { Message = "CRM Access Granted" });
+        }
+
+        [HttpPatch("revoke-crm/{id}")]
+        public async Task<IActionResult> RevokeCrmAccess(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+            user.HasCrmAccess = false;
+            await _userManager.UpdateAsync(user);
+            return Ok(new { Message = "CRM Access Revoked" });
         }
 
 

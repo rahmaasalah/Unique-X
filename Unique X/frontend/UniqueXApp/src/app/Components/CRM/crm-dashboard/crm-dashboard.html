@@ -27,6 +27,14 @@
             <i class="bi bi-calendar-month-fill me-3 fs-5"></i> Master Calendar
           </button>
         </li>
+
+        <li class="mb-2">
+  <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
+          [ngClass]="activeTab() === 'add_broker' ? 'btn-success text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+          (click)="activeTab.set('add_broker')">
+    <i class="bi bi-person-plus-fill me-3 fs-5"></i> Manage Access
+  </button>
+</li>
       </ul>
     </nav>
   </aside>
@@ -220,6 +228,64 @@
         </div>
       </section>
     }
+
+    @if (activeTab() === 'add_broker') {
+  <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
+    <h4 class="fw-bold mb-3 flex-shrink-0"><i class="bi bi-person-fill-lock text-success me-2"></i>CRM Access Management</h4>
+
+    <!-- كارت الإضافة -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white flex-shrink-0">
+      <h6 class="fw-bold mb-3 text-dark">Grant CRM Workspace Access</h6>
+      <div class="row g-3 align-items-end">
+        <div class="col-md-8">
+          <label class="small text-muted fw-bold mb-1">Select a broker (Only active brokers without CRM access are shown)</label>
+          <select class="form-select bg-light border-0 shadow-sm" [ngModel]="selectedBrokerToAdd()" (ngModelChange)="selectedBrokerToAdd.set($event)">
+            <option value="">-- Choose a Broker --</option>
+            @for (b of availableBrokersToAdd(); track b.id) {
+              <option [value]="b.id">{{ b.firstName }} {{ b.lastName }} - {{ b.phoneNumber }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-4">
+          <button class="btn btn-success w-100 rounded-pill fw-bold shadow-sm" [disabled]="!selectedBrokerToAdd()" (click)="grantAccess()">
+            <i class="bi bi-shield-check me-1"></i> Grant Access
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- جدول عرض البروكرز الحاليين وإمكانية الحذف -->
+    <h5 class="fw-bold mb-3 mt-2"><i class="bi bi-people-fill text-danger me-2"></i>Current CRM Members ({{ vipBrokers().length }})</h5>
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden flex-grow-1" style="min-height: 0;">
+      <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th class="ps-4">Broker Name</th>
+              <th>Phone Number</th>
+              <th class="text-end pe-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of vipBrokers(); track b.id) {
+              <tr>
+                <td class="ps-4 py-3 fw-bold text-dark"><i class="bi bi-person-circle text-muted me-2"></i>{{ b.firstName }} {{ b.lastName }}</td>
+                <td class="text-muted">{{ b.phoneNumber }}</td>
+                <td class="text-end pe-4">
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-4 fw-bold shadow-sm" (click)="revokeAccess(b.id)">
+                    <i class="bi bi-person-x-fill me-1"></i> Revoke Access
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="3" class="text-center py-5 text-muted">No brokers have CRM access yet.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+}
 
     <!-- ============================================== -->
     <!-- تاب: كل العملاء (All Clients Database)         -->

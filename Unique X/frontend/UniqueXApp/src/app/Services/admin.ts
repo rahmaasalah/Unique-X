@@ -134,4 +134,12 @@ duplicateProperty(propertyId: number, brokerId: string) {
   removeHotDeal(id: number) {
     return this.http.delete(`${this.baseUrl}/hot-deals/${id}`);
   }
+
+  grantCrmAccess(userId: string) {
+  return this.http.patch(`${this.baseUrl}/grant-crm/${userId}`, {});
+}
+
+revokeCrmAccess(userId: string) {
+  return this.http.patch(`${this.baseUrl}/revoke-crm/${userId}`, {});
+}
 }
