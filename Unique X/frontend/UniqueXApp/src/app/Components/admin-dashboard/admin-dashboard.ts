@@ -38,6 +38,19 @@ export class AdminDashboardComponent implements OnInit {
   currentFinancialFile = signal<any>(null);
   hotDeals = signal<any[]>([]);
 
+  hotDealSearchText = signal<string>('');
+  selectedHotDealCode = signal<string>('');
+  isHotDealDropdownOpen = signal<boolean>(false);
+
+  filteredHotDealOptions = computed(() => {
+    const search = this.hotDealSearchText().toLowerCase();
+    return this.properties().filter(p => 
+      (p.code && p.code.toLowerCase().includes(search)) || 
+      (p.title && p.title.toLowerCase().includes(search))
+    ).slice(0, 50); 
+  });
+
+
 
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
@@ -348,21 +361,38 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   onAddHotDeal(code: string) {
-  if (!code) return;
-  
-  this.alertService.showLoading('Adding...');
-  this.adminService.addHotDeal(code).subscribe({
-    next: () => {
-      this.alertService.close();
-      this.alertService.success('Added to Hot Deals');
-      this.loadHotDeals(); // تحديث القائمة بعد الإضافة
-    },
-    error: (err) => {
-      this.alertService.close();
-      this.alertService.error(err.error || 'Failed to add.');
-    }
-  });
-}
+    if (!code) return;
+    
+    this.alertService.showLoading('Adding...');
+    this.adminService.addHotDeal(code).subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success('Added to Hot Deals');
+        this.loadHotDeals(); // تحديث القائمة بعد الإضافة
+        
+        // 🟢 تصفير خانة البحث بعد الإضافة بنجاح
+        this.hotDealSearchText.set('');
+        this.selectedHotDealCode.set('');
+      },
+      error: (err) => {
+        this.alertService.close();
+        this.alertService.error(err.error || 'Failed to add.');
+      }
+    });
+  }
+
+selectHotDeal(code: string, title: string) {
+    this.selectedHotDealCode.set(code);
+    this.hotDealSearchText.set(`${code} - ${title}`); // بيعرض الكود والاسم في الحقل
+    this.isHotDealDropdownOpen.set(false); // بيقفل القائمة
+  }
+
+  // 🟢 دالة لإغلاق القائمة لما يضغط براها
+  closeHotDealDropdown() {
+    setTimeout(() => {
+      this.isHotDealDropdownOpen.set(false);
+    }, 200); // تأخير بسيط عشان يلحق يسجل الكليك على العقار
+  }
 
 onRemoveHotDeal(id: number) {
   this.alertService.confirm('Remove this property from Hot Deals?', () => {

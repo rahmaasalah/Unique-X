@@ -158,21 +158,43 @@
     
     <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
       <div class="row g-3 align-items-end">
-        <div class="col-md-10">
-          <label class="small fw-bold text-muted">Select Property Code</label>
-          <select #dealSelect class="form-select bg-light border-0 shadow-sm">
-            @for (prop of properties(); track prop.id) {
-              <option [value]="prop.code">{{ prop.code }} - {{ prop.title }}</option>
-            }
-          </select>
-        </div>
-        <div class="col-md-2">
-          <button class="btn btn-danger w-100 rounded-pill fw-bold" 
-                  (click)="onAddHotDeal(dealSelect.value)" 
-                  [disabled]="hotDeals().length >= 12">
-            <i class="bi bi-plus-lg me-1"></i> Add
-          </button>
-        </div>
+        <div class="col-md-10 position-relative">
+  <label class="small fw-bold text-muted">Select Property Code</label>
+  
+  <input type="text" class="form-control bg-light border-0 shadow-sm" 
+         placeholder="Type code (e.g. ARP) or property title..."
+         [ngModel]="hotDealSearchText()" 
+         (ngModelChange)="hotDealSearchText.set($event); selectedHotDealCode.set(''); isHotDealDropdownOpen.set(true)"
+         (focus)="isHotDealDropdownOpen.set(true)"
+         (blur)="closeHotDealDropdown()">
+
+  <!-- 🟢 2. شيلنا شرط (hotDealSearchText().length > 0) عشان تفتح دايماً أول ما تدوسي -->
+  <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1" 
+      [class.show]="isHotDealDropdownOpen()"
+      style="max-height: 250px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1050;">
+    
+    @for (prop of filteredHotDealOptions(); track prop.id) {
+      <li>
+        <!-- 🟢 3. ملحوظة: لو القائمة بتقفل قبل ما تختاري العقار، غيري (click) لـ (mousedown) -->
+        <button class="dropdown-item py-2 border-bottom border-light" (mousedown)="selectHotDeal(prop.code, prop.title)">
+          <span class="badge bg-light text-dark border me-2">{{ prop.code }}</span> 
+          <span class="small text-muted">{{ prop.title }}</span>
+        </button>
+      </li>
+    } @empty {
+      <li><span class="dropdown-item text-muted small py-2">No properties found.</span></li>
+    }
+  </ul>
+</div>
+
+<div class="col-md-2">
+  <!-- 🟢 الزرار بياخد قيمته من selectedHotDealCode() بدل dealSelect.value -->
+  <button class="btn btn-danger w-100 rounded-pill fw-bold" 
+          (click)="onAddHotDeal(selectedHotDealCode())" 
+          [disabled]="!selectedHotDealCode() || hotDeals().length >= 12">
+    <i class="bi bi-plus-lg me-1"></i> Add
+  </button>
+</div>
       </div>
     </div>
 
