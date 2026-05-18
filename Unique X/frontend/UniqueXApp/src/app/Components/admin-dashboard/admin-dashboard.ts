@@ -42,6 +42,14 @@ export class AdminDashboardComponent implements OnInit {
   selectedHotDealCode = signal<string>('');
   isHotDealDropdownOpen = signal<boolean>(false);
 
+  propBrokerFilter = signal(''); // فلتر البروكر في Full Listing
+  
+  soldSearchCode = signal(''); // فلتر الكود في Sold
+  soldBrokerFilter = signal(''); // فلتر البروكر في Sold
+  
+  suspSearchCode = signal(''); // فلتر الكود في Suspended
+  suspBrokerFilter = signal(''); // فلتر البروكر في Suspended
+
   filteredHotDealOptions = computed(() => {
     const search = this.hotDealSearchText().toLowerCase();
     return this.properties().filter(p => 
@@ -155,12 +163,36 @@ export class AdminDashboardComponent implements OnInit {
       const matchesTitle = p.title.toLowerCase().includes(search) || (p.code && p.code.toLowerCase().includes(search));
       const matchesListing = this.propListingFilter() === '' || p.listingType === this.propListingFilter();
       const matchesType = this.propTypeFilter() === '' || p.propertyType === this.propTypeFilter();
-      
-      // 👇 شروط הפلاتر الجديدة
       const matchesOwner = this.propOwnerFilter() === '' || p.ownerName === this.propOwnerFilter();
       const matchesDev = this.propDeveloperFilter() === '' || p.developerName === this.propDeveloperFilter();
+      
+      // 🟢 فلتر البروكر الجديد
+      const matchesBroker = this.propBrokerFilter() === '' || p.brokerId === this.propBrokerFilter();
 
-      return matchesTitle && matchesListing && matchesType && matchesOwner && matchesDev;
+      return matchesTitle && matchesListing && matchesType && matchesOwner && matchesDev && matchesBroker;
+    });
+  });
+
+  filteredSoldData = computed(() => {
+    const codeSearch = this.soldSearchCode().toLowerCase().trim();
+    const brokerSearch = this.soldBrokerFilter().toLowerCase().trim();
+
+    return this.detailData().filter(p => {
+      const matchCode = codeSearch === '' || (p.code && p.code.toLowerCase().includes(codeSearch));
+      const matchBroker = brokerSearch === '' || (p.brokerName && p.brokerName.toLowerCase() === brokerSearch);
+      return matchCode && matchBroker;
+    });
+  });
+
+  // 🟢 فلترة جدول الموقوف (Suspended Properties)
+  filteredSuspPropsData = computed(() => {
+    const codeSearch = this.suspSearchCode().toLowerCase().trim();
+    const brokerSearch = this.suspBrokerFilter().toLowerCase().trim();
+
+    return this.detailData().filter(p => {
+      const matchCode = codeSearch === '' || (p.code && p.code.toLowerCase().includes(codeSearch));
+      const matchBroker = brokerSearch === '' || (p.brokerName && p.brokerName.toLowerCase() === brokerSearch);
+      return matchCode && matchBroker;
     });
   });
 

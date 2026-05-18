@@ -291,10 +291,10 @@
         </div>
 
         <!-- 🟢 الفلاتر الجديدة (مرصوصة في سطر واحد بشكل متناسق) -->
-        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+         <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
           <div class="row g-2">
-            <div class="col-md-3">
-              <input type="text" class="form-control bg-light border-0" placeholder="Search by title or code..."
+            <div class="col-md-2">
+              <input type="text" class="form-control bg-light border-0" placeholder="Search title/code..."
                      [ngModel]="propSearchText()" (ngModelChange)="propSearchText.set($event)">
             </div>
             <div class="col-md-2">
@@ -318,20 +318,25 @@
               </select>
             </div>
             <!-- فلتر المطور -->
- <div class="col-md-2">
-  <select class="form-select bg-light border-0" [ngModel]="propDeveloperFilter()" (ngModelChange)="propDeveloperFilter.set($event)">
-    <option value="">All Developers</option>
-    
-    <!-- هنا سنعرض الاسم والكود معاً -->
-    @for (dev of uniqueDevelopers(); track dev.code) { 
-      <option [value]="dev.name">
-        {{ dev.name }} - {{ dev.code }}
-      </option> 
-    }
-  </select>
-</div>
+            <div class="col-md-2">
+              <select class="form-select bg-light border-0" [ngModel]="propDeveloperFilter()" (ngModelChange)="propDeveloperFilter.set($event)">
+                <option value="">All Developers</option>
+                @for (dev of uniqueDevelopers(); track dev.code) { 
+                  <option [value]="dev.name">{{ dev.name }} - {{ dev.code }}</option> 
+                }
+              </select>
+            </div>
+            <!-- 🟢 فلتر البروكر الجديد -->
+            <div class="col-md-2">
+              <select class="form-select bg-light border-0" [ngModel]="propBrokerFilter()" (ngModelChange)="propBrokerFilter.set($event)">
+                <option value="">All Brokers</option>
+                @for (b of brokersList(); track b.id) {
+                  <option [value]="b.id">{{ b.firstName }} {{ b.lastName }}</option>
+                }
+              </select>
+            </div>
             <!-- فلتر المالك -->
-            <div class="col-md-3">
+            <div class="col-md-2">
               <select class="form-select bg-light border-0" [ngModel]="propOwnerFilter()" (ngModelChange)="propOwnerFilter.set($event)">
                 <option value="">All Owners</option>
                 @for (owner of uniqueOwners(); track owner) { <option [value]="owner">{{ owner }}</option> }
@@ -692,26 +697,51 @@
 
 @if (activeTab() === 'sold') {
   <section class="animate__animated animate__fadeIn">
-    <h4 class="fw-bold mb-4">Sold Properties</h4>
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr><th>Property</th><th>Code</th><th>Broker</th></tr>
-        </thead>
-        <tbody>
-          @for (p of detailData(); track p.id) {
-            <tr>
-              <td class="fw-bold">{{ p.title }}</td>
-              <td>{{ p.code }}</td>
-              <td>{{ p.brokerName }}</td>
-            </tr>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold mb-0">Sold Properties</h4>
+      <span class="badge bg-success rounded-pill px-3">{{ filteredSoldData().length }} Sold</span>
+    </div>
+
+    <!-- 🟢 فلاتر المبيعات -->
+    <div class="row g-2 mb-3">
+      <div class="col-md-4">
+        <input type="text" class="form-control border-0 shadow-sm rounded-3" placeholder="Search by Code (e.g. ARP)..." 
+               [ngModel]="soldSearchCode()" (ngModelChange)="soldSearchCode.set($event)">
+      </div>
+      <div class="col-md-4">
+        <select class="form-select border-0 shadow-sm rounded-3" 
+                [ngModel]="soldBrokerFilter()" (ngModelChange)="soldBrokerFilter.set($event)">
+          <option value="">All Brokers</option>
+          @for (b of brokersList(); track b.id) {
+            <option [value]="(b.firstName + ' ' + b.lastName).toLowerCase()">{{ b.firstName }} {{ b.lastName }}</option>
           }
-        </tbody>
-      </table>
+        </select>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden border-top border-success border-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr><th class="ps-4">Property</th><th>Code</th><th>Broker</th></tr>
+          </thead>
+          <tbody>
+            <!-- 🟢 تم تغيير الداتا لـ filteredSoldData -->
+            @for (p of filteredSoldData(); track p.id) {
+              <tr>
+                <td class="ps-4 fw-bold">{{ p.title }}</td>
+                <td><span class="badge bg-light text-dark border">{{ p.code }}</span></td>
+                <td><i class="bi bi-person-badge text-muted me-1"></i>{{ p.brokerName }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="3" class="text-center py-4 text-muted">No sold properties match your search.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 }
-
 @if (activeTab() === 'whatsapp' || activeTab() === 'calls') {
   <section class="animate__animated animate__fadeIn">
     <h4 class="fw-bold mb-4">{{ activeTab() === 'whatsapp' ? 'WhatsApp' : 'Call' }} Interaction Logs</h4>
@@ -786,49 +816,68 @@
   <section class="animate__animated animate__fadeIn">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-house-exclamation-fill text-warning me-2"></i>Suspended Listings Review</h4>
-      <span class="badge bg-warning text-dark rounded-pill px-3">{{ detailData().length }} Properties</span>
+      <span class="badge bg-warning text-dark rounded-pill px-3">{{ filteredSuspPropsData().length }} Properties</span>
+    </div>
+
+    <!-- 🟢 فلاتر الموقوفين -->
+    <div class="row g-2 mb-3">
+      <div class="col-md-4">
+        <input type="text" class="form-control border-0 shadow-sm rounded-3" placeholder="Search by Code (e.g. ARP)..." 
+               [ngModel]="suspSearchCode()" (ngModelChange)="suspSearchCode.set($event)">
+      </div>
+      <div class="col-md-4">
+        <select class="form-select border-0 shadow-sm rounded-3" 
+                [ngModel]="suspBrokerFilter()" (ngModelChange)="suspBrokerFilter.set($event)">
+          <option value="">All Brokers</option>
+          @for (b of brokersList(); track b.id) {
+            <option [value]="(b.firstName + ' ' + b.lastName).toLowerCase()">{{ b.firstName }} {{ b.lastName }}</option>
+          }
+        </select>
+      </div>
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden border-top border-warning border-4">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th class="ps-4 py-3">PROPERTY & OWNER</th>
-            <th>CODE</th>
-            <th>PRICE</th>
-            <th class="text-end pe-4">QUICK ACTION</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (p of detailData(); track p.id) {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
             <tr>
-              <td class="ps-4">
-                <div class="d-flex align-items-center">
-                   <img [src]="p.photos?.[0]?.url" class="rounded-2 me-3 border" style="width: 45px; height: 45px; object-fit: cover;">
-                   <div>
-                      <h6 class="mb-0 fw-bold text-dark small">{{ p.title }}</h6>
-                      <small class="text-danger fw-bold">{{ p.brokerName }}</small>
-                   </div>
-                </div>
-              </td>
-              <td><span class="badge bg-light text-dark border">#{{ p.code }}</span></td>
-              <td class="fw-bold small">EGP {{ p.price | number }}</td>
-              <td class="text-end pe-4">
-                <button class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm" 
-                        (click)="toggleProperty(p.id, false)">
-                  <i class="bi bi-check2-all me-1"></i> Approve & Live
-                </button>
-              </td>
+              <th class="ps-4 py-3">PROPERTY & OWNER</th>
+              <th>CODE</th>
+              <th>PRICE</th>
+              <th class="text-end pe-4">QUICK ACTION</th>
             </tr>
-          } @empty {
-            <tr><td colspan="4" class="text-center py-5 text-muted">No suspended listings to review.</td></tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <!-- 🟢 تم تغيير الداتا لـ filteredSuspPropsData -->
+            @for (p of filteredSuspPropsData(); track p.id) {
+              <tr>
+                <td class="ps-4">
+                  <div class="d-flex align-items-center">
+                     <img [src]="p.photos?.[0]?.url" class="rounded-2 me-3 border" style="width: 45px; height: 45px; object-fit: cover;">
+                     <div>
+                        <h6 class="mb-0 fw-bold text-dark small">{{ p.title }}</h6>
+                        <small class="text-danger fw-bold"><i class="bi bi-person me-1"></i>{{ p.brokerName }}</small>
+                     </div>
+                  </div>
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ p.code }}</span></td>
+                <td class="fw-bold small">EGP {{ p.price | number }}</td>
+                <td class="text-end pe-4">
+                  <button class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm" 
+                          (click)="toggleProperty(p.id, false)">
+                    <i class="bi bi-check2-all me-1"></i> Approve & Live
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="text-center py-5 text-muted">No suspended listings match your search.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 }
-
 @if (activeTab() === 'rejected') {
   <section class="animate__animated animate__fadeIn">
     <div class="d-flex justify-content-between align-items-center mb-4">

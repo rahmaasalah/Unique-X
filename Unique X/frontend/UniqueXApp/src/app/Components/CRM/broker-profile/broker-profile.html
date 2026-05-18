@@ -398,8 +398,7 @@
             <tr>
               <th class="ps-3">Client & Date</th>
               <th>Type & Summary</th>
-              <th>Property Specs</th>
-              <th>Property Details</th>
+              <th>Activity Notes</th>
               <th>Status & Feedback</th>
               <th class="text-end pe-3">Action</th>
             </tr>
@@ -419,31 +418,19 @@
                 <div class="fw-bold text-dark small">{{ task.summary || '-' }}</div>
               </td>
                <td>
-                <div class="d-flex flex-wrap gap-1 mb-1" *ngIf="task.zoneId || task.listingType">
-                  <span class="badge bg-light text-dark border" *ngIf="task.zoneId">{{ task.zoneId === 1 ? 'Cairo' : task.zoneId === 2 ? 'Alexandria' : task.zoneId === 3 ? 'North Coast' : '' }}</span>
-                  <span class="badge bg-light text-dark border" *ngIf="task.listingType">{{ task.listingType }}</span>
-                </div>
-                <div class="small text-muted fw-bold" *ngIf="task.region || task.project">
-                  <div *ngIf="task.region"><i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ task.region }}</div>
-                  <div *ngIf="task.project" [class.mt-1]="task.region"><i class="bi bi-building text-primary me-1"></i>{{ task.project }}</div>
-                </div>
-                <div class="text-muted text-center" *ngIf="!task.zoneId && !task.listingType && !task.region && !task.project">-</div>
-              </td>
-
-              <!-- 4. تفاصيل إضافية والملاحظات -->
-              <td>
-                <div class="small mb-1" *ngIf="task.propertyCode"><span class="text-muted">Code: </span> <span class="fw-bold text-dark">{{ task.propertyCode }}</span></div>
-                <div class="small mb-1" *ngIf="task.propertyName"><span class="text-muted">Name: </span> <span class="fw-bold text-dark">{{ task.propertyName }}</span></div>
-                <div class="small mb-1" *ngIf="task.brokerPhone"><span class="text-muted">Broker Phone: </span> <span class="fw-bold text-dark">{{ task.brokerPhone }}</span></div>
-                
-                <!-- الملاحظات الأصلية للمكالمة -->
                 <div class="small pt-1 text-muted" *ngIf="extractOriginalNotes(task.notes)"[class.mt-1]="task.propertyCode || task.propertyName || task.brokerPhone">
                   Notes: <span class="fw-bold text-dark">{{ extractOriginalNotes(task.notes) }}</span>
                 </div>
                 
                 <!-- لو كله فاضي -->
                 <div class="text-muted text-center" *ngIf="!task.propertyCode && !task.propertyName && !task.brokerPhone && !extractOriginalNotes(task.notes)">-</div>
+                
               </td>
+
+              <!-- 4. تفاصيل إضافية والملاحظات -
+                
+                -- الملاحظات الأصلية للمكالمة -->
+            
               <td style="max-width: 250px;">
                 <span class="badge px-3 py-2 rounded-pill shadow-sm"
                       [ngClass]="{'bg-warning text-dark': task.status === 'Pending', 'bg-success': task.status === 'Completed', 'bg-danger': task.status === 'Cancelled', 'bg-info text-dark': task.status === 'Rescheduled'}">
