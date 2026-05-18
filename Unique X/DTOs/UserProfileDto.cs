@@ -8,6 +8,7 @@
         public string PhoneNumber { get; set; }
         public int UserType { get; set; }
         public string? ProfileImageUrl { get; set; }
+        public bool HasCrmAccess { get; set; }
 
         public string? BrokerTitle { get; set; }
         public string? BrokerDescription { get; set; }

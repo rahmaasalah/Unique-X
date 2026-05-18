@@ -32,7 +32,7 @@
   }
 
   <!-- زرار الـ CRM -->
-  @if (authService.isAllowedToOpenCrm()) {
+  @if (userData()?.hasCrmAccess || userData()?.userType === 2) {
     <a routerLink="/crm/profile" class="btn btn-dark rounded-pill px-4 py-2 fw-bold shadow-sm">
       <i class="bi bi-graph-up-arrow text-danger me-2"></i> Open My CRM
     </a>
