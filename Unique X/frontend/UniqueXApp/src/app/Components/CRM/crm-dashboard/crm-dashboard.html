@@ -1,102 +1,125 @@
-<div class="d-flex bg-light" dir="ltr" *ngIf="isAdmin()" style="height: 100vh; overflow: hidden;">
+<div class="d-flex bg-light min-vh-100" dir="ltr" *ngIf="isAdmin()">
   
-  <aside class="bg-dark text-white shadow-lg d-flex flex-column p-3 flex-shrink-0" style="width: 280px; height: 100vh; overflow-y: auto;">
-    <div class="mb-4 text-center py-3 border-bottom border-secondary flex-shrink-0">
+  <!-- 🟢 زرار الموبايل (يظهر في الشاشات الصغيرة فقط) -->
+  <button class="mobile-toggle-btn" (click)="toggleSidebar()">
+    <i class="bi" [ngClass]="isSidebarOpen() ? 'bi-x-lg' : 'bi-list'"></i>
+  </button>
+
+  <!-- 🟢 الـ Overlay (التظليل الأسود ورا القائمة في الموبايل) -->
+  <div class="sidebar-overlay" [class.sidebar-open]="isSidebarOpen()" (click)="toggleSidebar()"></div>
+  
+  <!-- الـ Sidebar (أضفنا كلاس sidebar-open للتحكم فيه) -->
+  <aside class="bg-dark text-white shadow-lg d-flex flex-column p-3 flex-shrink-0" 
+         [class.sidebar-open]="isSidebarOpen()"
+         style="width: 280px; height: 100vh; overflow-y: auto;">
+    
+    <div class="mb-4 text-center py-3 border-bottom border-secondary flex-shrink-0 mt-4 mt-lg-0">
       <p class="text-muted small text-uppercase mt-1" style="letter-spacing: 1px; font-size: 0.65rem;">Master Control</p>
     </div>
+    
     <nav class="flex-grow-1">
       <ul class="list-unstyled pe-2">
+        <!-- 🟢 لاحظي غيرنا activeTab.set لـ switchTab عشان تقفل القائمة في الموبايل لما تختاري -->
         <li class="mb-2">
           <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
                   [ngClass]="activeTab() === 'brokers' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
-                  (click)="activeTab.set('brokers')">
+                  (click)="switchTab('brokers')">
             <i class="bi bi-person-vcard-fill me-3 fs-5"></i> Brokers Performance
           </button>
         </li>
         <li class="mb-2">
           <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
                   [ngClass]="activeTab() === 'clients' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
-                  (click)="activeTab.set('clients')">
+                  (click)="switchTab('clients')">
             <i class="bi bi-people-fill me-3 fs-5"></i> All Clients Data
           </button>
         </li>
         <li class="mb-2">
           <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
                   [ngClass]="activeTab() === 'calendar' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
-                  (click)="activeTab.set('calendar')">
+                  (click)="switchTab('calendar')">
             <i class="bi bi-calendar-month-fill me-3 fs-5"></i> Master Calendar
           </button>
         </li>
 
-        <li class="mb-2">
-  <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
-          [ngClass]="activeTab() === 'add_broker' ? 'btn-success text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
-          (click)="activeTab.set('add_broker')">
-    <i class="bi bi-person-plus-fill me-3 fs-5"></i> Manage Access
-  </button>
-</li>
+        <!-- 🟢 التاب الخاص بالصلاحيات (Manage Access) رجعناه هنا ومتظبط -->
+        <li class="mb-2 ">
+          <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
+                  [ngClass]="activeTab() === 'add_broker' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+                  (click)="switchTab('add_broker')">
+            <i class="bi bi-person-plus-fill me-3 fs-5"></i> Manage Access
+          </button>
+        </li>
       </ul>
     </nav>
   </aside>
 
-  <main class="flex-grow-1 p-4 p-md-5 d-flex flex-column bg-light" style="height: 100vh; overflow: hidden;">
+  <!-- 🟢 شيلنا overflow: hidden من هنا وضيفنا w-100 -->
+  <main class="flex-grow-1 p-4 p-md-5 d-flex flex-column bg-light w-100">
     
+    <!-- قسم الكروت الإحصائية (بقى متجاوب بشكل ممتاز مع الموبايل) -->
     <div class="row g-3 mb-4 flex-shrink-0 animate__animated animate__fadeInDown">
-      <div class="col-md-4">
+      
+      <div class="col-6 col-md-4 col-xl-3">
         <div class="card p-3 bg-white shadow-sm border-0 border-start border-primary border-5 rounded-4 h-100"
-             style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'"
-             (click)="activeTab.set('clients')">
-          <small class="text-muted fw-bold text-uppercase">Total Leads <i class="bi bi-box-arrow-up-right ms-1"></i></small>
-          <h3 class="fw-bold mb-0 text-dark">{{ systemTotalLeads() }}</h3>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card p-3 bg-white shadow-sm border-0 border-start border-success border-5 rounded-4 h-100"
-             style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'"
-             (click)="activeTab.set('closed_deals')">
-          <small class="text-muted fw-bold text-uppercase">Closed Deals <i class="bi bi-box-arrow-up-right ms-1"></i></small>
-          <h3 class="fw-bold mb-0 text-success">{{ systemClosedDeals() }}</h3>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card p-3 bg-white shadow-sm border-0 border-start border-danger border-5 rounded-4 h-100"
-             style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'"
-             (click)="activeTab.set('revenue')">
-          <small class="text-muted fw-bold text-uppercase">Expected Revenue <i class="bi bi-box-arrow-up-right ms-1"></i></small>
-          <h4 class="fw-bold mb-0 text-danger">{{ systemExpectedRevenue() | currency:'EGP ':'symbol':'1.0-0' }}</h4>
+             style="cursor: pointer; transition: transform 0.2s;" 
+             (click)="switchTab('clients')">
+          <small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Total Leads <i class="bi bi-box-arrow-up-right ms-1"></i></small>
+          <h3 class="fw-bold mb-0 text-dark fs-4 fs-md-3">{{ systemTotalLeads() }}</h3>
         </div>
       </div>
       
-      <div class="col-md-3">
+      <div class="col-6 col-md-4 col-xl-3">
+        <div class="card p-3 bg-white shadow-sm border-0 border-start border-success border-5 rounded-4 h-100"
+             style="cursor: pointer; transition: transform 0.2s;" 
+             (click)="switchTab('closed_deals')">
+          <small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Closed Deals <i class="bi bi-box-arrow-up-right ms-1"></i></small>
+          <h3 class="fw-bold mb-0 text-success fs-4 fs-md-3">{{ systemClosedDeals() }}</h3>
+        </div>
+      </div>
+      
+      <div class="col-12 col-md-4 col-xl-3">
+        <div class="card p-3 bg-white shadow-sm border-0 border-start border-danger border-5 rounded-4 h-100"
+             style="cursor: pointer; transition: transform 0.2s;" 
+             (click)="switchTab('revenue')">
+          <small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Expected Revenue <i class="bi bi-box-arrow-up-right ms-1"></i></small>
+          <h4 class="fw-bold mb-0 text-danger fs-5 fs-md-4">{{ systemExpectedRevenue() | currency:'EGP ':'symbol':'1.0-0' }}</h4>
+        </div>
+      </div>
+      
+      <div class="col-6 col-md-3 col-xl-3">
         <div class="card p-3 bg-white shadow-sm border-0 border-start border-warning border-5 rounded-4 h-100"
-             style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'"
-             (click)="activeTab.set('requests')">
-          <small class="text-muted fw-bold text-uppercase">Requests (Calls) <i class="bi bi-box-arrow-up-right ms-1"></i></small>
-          <h3 class="fw-bold mb-0 text-warning">{{ systemRequests() }}</h3>
+             style="cursor: pointer; transition: transform 0.2s;" 
+             (click)="switchTab('requests')">
+          <small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Requests <i class="bi bi-box-arrow-up-right ms-1"></i></small>
+          <h3 class="fw-bold mb-0 text-warning fs-4 fs-md-3">{{ systemRequests() }}</h3>
         </div>
       </div>
-      <div class="col-md-3">
+      
+      <div class="col-6 col-md-3 col-xl-3">
         <div class="card p-3 bg-white shadow-sm border-0 border-start border-info border-5 rounded-4 h-100"
-             style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'"
-             (click)="activeTab.set('all_visits')">
-          <small class="text-muted fw-bold text-uppercase">Total Visits <i class="bi bi-box-arrow-up-right ms-1"></i></small>
-          <h3 class="fw-bold mb-0 text-info">{{ systemVisits() }}</h3>
+             style="cursor: pointer; transition: transform 0.2s;" 
+             (click)="switchTab('all_visits')">
+          <small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Total Visits <i class="bi bi-box-arrow-up-right ms-1"></i></small>
+          <h3 class="fw-bold mb-0 text-info fs-4 fs-md-3">{{ systemVisits() }}</h3>
         </div>
       </div>
-      <div class="col-md-3">
+      
+      <div class="col-6 col-md-3 col-xl-3">
         <div class="card p-3 bg-white shadow-sm border-0 border-start border-dark border-5 rounded-4 h-100"
-             style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'"
-             (click)="activeTab.set('all_activities')">
-          <small class="text-muted fw-bold text-uppercase">Total Activities <i class="bi bi-box-arrow-up-right ms-1"></i></small>
-          <h3 class="fw-bold mb-0 text-dark">{{ systemActivities() }}</h3>
+             style="cursor: pointer; transition: transform 0.2s;" 
+             (click)="switchTab('all_activities')">
+          <small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Activities <i class="bi bi-box-arrow-up-right ms-1"></i></small>
+          <h3 class="fw-bold mb-0 text-dark fs-4 fs-md-3">{{ systemActivities() }}</h3>
         </div>
       </div>
-      <div class="col-md-3">
+      
+      <div class="col-6 col-md-3 col-xl-3">
         <div class="card p-3 bg-white shadow-sm border-0 border-start border-secondary border-5 rounded-4 h-100"
-             style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'"
-             (click)="activeTab.set('closing_stage')">
-          <small class="text-muted fw-bold text-uppercase">Closing Stage <i class="bi bi-box-arrow-up-right ms-1"></i></small>
-          <h3 class="fw-bold mb-0 text-secondary">{{ systemClosing() }}</h3>
+             style="cursor: pointer; transition: transform 0.2s;" 
+             (click)="switchTab('closing_stage')">
+          <small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Closing Stage <i class="bi bi-box-arrow-up-right ms-1"></i></small>
+          <h3 class="fw-bold mb-0 text-secondary fs-4 fs-md-3">{{ systemClosing() }}</h3>
         </div>
       </div>
     </div>

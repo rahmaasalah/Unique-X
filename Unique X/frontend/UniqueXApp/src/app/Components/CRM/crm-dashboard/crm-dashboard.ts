@@ -300,6 +300,21 @@ allActivitiesList = computed(() => this.baseFilteredEvents().filter(e => e.type 
     });
   }
 
+  isSidebarOpen = signal<boolean>(false);
+
+  toggleSidebar() {
+    this.isSidebarOpen.update(val => !val);
+  }
+
+  // دالة بتقفل القائمة أوتوماتيك لما اليوزر يختار تاب في الموبايل
+  switchTab(tab: any) {
+    this.activeTab.set(tab);
+    if (window.innerWidth <= 991) {
+      this.isSidebarOpen.set(false);
+    }
+  }
+
+
   grantAccess() {
   const userId = this.selectedBrokerToAdd();
   if (!userId) return;
