@@ -65,6 +65,29 @@ export class CrmNavbarComponent implements OnInit {
     }
   }
 
+  goToMainWebsite() {
+    const userString = localStorage.getItem('user');
+    
+    if (userString) {
+      const user = JSON.parse(userString);
+      const roles = user.roles || [];
+      
+      const isAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
+      const isBroker = roles.includes('Broker') || user.userType === 1;
+
+      if (isAdmin) {
+        this.router.navigate(['/admin-dashboard']);
+      } else if (isBroker) {
+        this.router.navigate(['/my-properties']); // مسار لوحة البروكر
+      } else {
+        this.router.navigate(['/home']); // لو عميل عادي يروح الرئيسية
+      }
+    } else {
+      // لو مش عامل لوجن أصلاً يروح الرئيسية
+      this.router.navigate(['/home']);
+    }
+  }
+
   ngOnDestroy() {
     // مسح المؤقت لما البروكر يقفل الشاشة
     if (this.pollingInterval) {

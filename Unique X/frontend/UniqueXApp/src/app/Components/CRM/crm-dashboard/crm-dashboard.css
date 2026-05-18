@@ -1,0 +1,62 @@
+/* زرار القائمة للموبايل */
+.mobile-toggle-btn {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1050;
+  background: #dc3545; /* لون أحمر بيتك */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+/* الشادو الأسود ورا القائمة لما تفتح في الموبايل */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1030;
+}
+
+/* إعدادات الشاشات الصغيرة (موبايل وتابلت) */
+@media (max-width: 991px) {
+  .mobile-toggle-btn {
+    display: block;
+  }
+
+  .sidebar-overlay.sidebar-open {
+    display: block;
+  }
+
+  /* إخفاء القائمة الجانبية وسحبها للشمال */
+  aside.bg-dark {
+    position: fixed;
+    left: -300px;
+    top: 0;
+    height: 100vh;
+    z-index: 1040;
+    transition: left 0.3s ease-in-out;
+  }
+
+  /* إظهار القائمة لما تاخد كلاس Open */
+  aside.bg-dark.sidebar-open {
+    left: 0;
+  }
+
+  /* إبعاد المحتوى عن زرار القائمة من فوق */
+  main {
+    padding-top: 70px !important;
+  }
+}
+
+/* تحسين السكرول داخل الجداول */
+.table-responsive {
+  -webkit-overflow-scrolling: touch;
+}
