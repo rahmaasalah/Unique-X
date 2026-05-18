@@ -74,6 +74,28 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  copyProfileLink() {
+    if (!this.userData()) return;
+
+    const fName = this.userData().firstName || '';
+    const lName = this.userData().lastName || '';
+    
+    // تحويل الاسم لصيغة لينك (مثال: Tarek Test -> tarek-test)
+    const slug = `${fName} ${lName}`.trim().toLowerCase().replace(/\s+/g, '-');
+
+    // تجميع اللينك النهائي
+    const baseUrl = window.location.origin;
+    const link = `${baseUrl}/home?brokerName=${slug}`;
+
+    // نسخ اللينك في الحافظة
+    navigator.clipboard.writeText(link).then(() => {
+      this.alertService.success('Your profile link has been copied!');
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+      this.alertService.error('Failed to copy link.');
+    });
+  }
+
   onSubmit() {
     if (this.profileForm.valid) {
       this.alertService.showLoading('Saving your data...');

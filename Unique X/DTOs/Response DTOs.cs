@@ -114,6 +114,8 @@ namespace Unique_X.DTOs
         public int? PropertyType { get; set; }
         public int? ListingType { get; set; }
         public string? BrokerId { get; set; }
+        public string? BrokerName { get; set; }
+
         public string? Code { get; set; }
         public int? BuildYear { get; set; }
         public int? Area { get; set; }

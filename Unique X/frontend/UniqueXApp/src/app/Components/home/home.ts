@@ -257,7 +257,7 @@ updateProjectsList(cityId: any) {
         this.properties.set(data ||[]);
 
         if (!data || data.length === 0) {
-          if (filters.brokerId) this.message.set("This agent hasn't listed any properties yet.");
+          if (filters.brokerId || filters.brokerName) this.message.set("This agent hasn't listed any properties yet.");
           else this.message.set("No properties match your search criteria.");
         } else {
           this.message.set('');
