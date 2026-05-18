@@ -231,16 +231,36 @@
 
               <!-- الملاحظات ورقم البروكر -->
               <div class="text-muted small mt-2">
-                <div *ngIf="item.brokerPhone" class="mb-1"><span class="text-muted">Broker Phone: </span> <span class="fw-bold text-dark">{{ item.brokerPhone }}</span></div>
-                
-                <div *ngIf="item._type === 'visit' && item.notes">
-                  <span class="text-muted">Notes: </span> <span class="fw-bold text-dark">{{ item.notes }}</span>
-                </div>
-                
-                <div *ngIf="item._type === 'activity' && extractOriginalNotes(item.notes)">
-                  <span class="text-muted">Notes: </span> <span class="fw-bold text-dark">{{ extractOriginalNotes(item.notes) }}</span>
-                </div>
-              </div>
+  
+  <!-- إظهار كود العقار لو موجود -->
+  <div *ngIf="item.propertyCode" class="mb-1">
+    <span class="text-muted">Property Code: </span> 
+    <span class="fw-bold text-danger">{{ item.propertyCode }}</span>
+  </div>
+
+  <!-- إظهار اسم العقار لو موجود -->
+  <div *ngIf="item.propertyName" class="mb-1">
+    <span class="text-muted">Property Name: </span> 
+    <span class="fw-bold text-dark">{{ item.propertyName }}</span>
+  </div>
+
+  <!-- إظهار رقم البروكر لو موجود -->
+  <div *ngIf="item.brokerPhone" class="mb-1">
+    <span class="text-muted">Broker Phone: </span> 
+    <span class="fw-bold text-dark">{{ item.brokerPhone }}</span>
+  </div>
+  
+  <!-- الملاحظات الأصلية -->
+  <div *ngIf="item._type === 'visit' && item.notes" class="mt-1">
+    <span class="text-muted">Notes: </span> 
+    <div class="fw-bold text-dark pe-2 mt-1" style="max-height: 120px; overflow-y: auto; white-space: pre-line;">{{ item.notes }}</div>
+  </div>
+  
+  <div *ngIf="item._type === 'activity' && extractOriginalNotes(item.notes)" class="mt-1">
+    <span class="text-muted">Notes: </span> 
+    <div class="fw-bold text-dark pe-2 mt-1" style="max-height: 120px; overflow-y: auto; white-space: pre-line;">{{ extractOriginalNotes(item.notes) }}</div>
+  </div>
+</div>
 
               <!-- 🟢 إظهار الفيدباك لو موجود -->
               <div *ngIf="(item._type === 'visit' && item.feedback) || (item._type === 'activity' && extractFeedback(item.notes))" 

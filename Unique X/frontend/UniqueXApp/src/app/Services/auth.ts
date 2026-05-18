@@ -110,7 +110,8 @@ forgotPassword(email: string): Observable<any> {
     '1cd68260-56f3-4170-acc2-6006f07a70db', // Menna ameen   done
     '31231037-96e7-405a-ab41-9894c91c5563', // mayar elkhalil   done
     '5a48b6c0-d4ee-4559-a9b1-3791a155b3c4' , // Tarek test   done
-    'e42dd9df-25f3-4830-890a-60586728b290' // abeer ashraf
+    'e42dd9df-25f3-4830-890a-60586728b290', // abeer ashraf
+    '97f3f3db-a14c-414c-b823-7f5fd928a1e0' // nadia second 
   ];
 
   // 👇 2. دالة الفحص (بتسمح للأدمن وللبروكرز اللي في القائمة بس)
