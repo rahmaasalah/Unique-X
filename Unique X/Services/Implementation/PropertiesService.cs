@@ -202,6 +202,16 @@ namespace Unique_X.Services.Implementation
             if (!string.IsNullOrEmpty(filter.BrokerId))
                 query = query.Where(p => p.BrokerId == filter.BrokerId);
 
+            if (!string.IsNullOrEmpty(filter.BrokerName))
+            {
+                // بنرجع الـ (tarek-test) لـ (tarek test) عشان نقارنه بالداتا بيز
+                var searchName = filter.BrokerName.Replace("-", " ").Trim().ToLower();
+
+                query = query.Where(p =>
+                    (p.Broker.FirstName + " " + p.Broker.LastName).ToLower() == searchName
+                );
+            }
+
             if (!string.IsNullOrEmpty(filter.ProjectName))
             {
                 var terms = filter.ProjectName.ToLower().Split('|', StringSplitOptions.RemoveEmptyEntries);

@@ -22,13 +22,22 @@
             {{ userData()?.userType === 1 ? 'Professional Broker' : 'Property Seeker' }}
           </span>
 
-          @if (authService.isAllowedToOpenCrm()) {
-            <div class="mt-3 animate__animated animate__fadeInUp">
-              <a routerLink="/crm/profile" class="btn btn-dark rounded-pill px-4 py-2 fw-bold shadow-sm">
-                <i class="bi bi-graph-up-arrow text-danger me-2"></i> Open My CRM
-              </a>
-            </div>
-          }
+          <div class="mt-3 animate__animated animate__fadeInUp d-flex justify-content-center gap-2 flex-wrap">
+  
+  <!-- 🟢 زرار مشاركة البروفايل (يظهر للبروكر فقط) -->
+  @if (userData()?.userType === 1) {
+    <button class="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold shadow-sm bg-danger" (click)="copyProfileLink()">
+      <i class="bi bi-share-fill text-dark me-2"></i> Share My Profile
+    </button>
+  }
+
+  <!-- زرار الـ CRM -->
+  @if (authService.isAllowedToOpenCrm()) {
+    <a routerLink="/crm/profile" class="btn btn-dark rounded-pill px-4 py-2 fw-bold shadow-sm">
+      <i class="bi bi-graph-up-arrow text-danger me-2"></i> Open My CRM
+    </a>
+  }
+</div>
         </div>
       </div>
     </div>

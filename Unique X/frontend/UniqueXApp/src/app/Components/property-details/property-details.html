@@ -74,7 +74,7 @@
             <span class="badge bg-danger rounded-pill px-3 py-2 fw-bold small shadow-sm">{{ prop.listingType }}</span>
         </div>
 
-        @if (isBroker() && (prop.ownerName || prop.ownerPhone)) {
+        @if (isListingOwnerOrAdmin(prop.brokerId) && (prop.ownerName || prop.ownerPhone)) {
           <div class="d-inline-flex flex-wrap gap-4 mb-3 p-2 px-3 bg-danger-subtle border border-danger-subtle rounded-3 shadow-sm">
             <div>
               <small class="text-danger fw-bold d-block" style="font-size: 0.65rem; letter-spacing: 0.5px;">OWNER NAME</small>

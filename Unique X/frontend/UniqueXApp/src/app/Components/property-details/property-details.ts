@@ -203,6 +203,22 @@ handleContact(event: Event, method: 'call' | 'whatsapp', brokerPhone: string) {
     return false;
   }
 
+  isListingOwnerOrAdmin(propertyBrokerId: string): boolean {
+    const userString = localStorage.getItem('user');
+    if (userString) {
+      const user = JSON.parse(userString);
+      const loggedInUserId = user.id || user.userId;
+
+      // هل هو أدمن؟
+      
+      // هل هو صاحب العقار؟
+      const isOwner = loggedInUserId === propertyBrokerId;
+
+      return  isOwner;
+    }
+    return false;
+  }
+
   getWhatsAppLink(phone: string): string {
   if (!phone) return '#';
 
