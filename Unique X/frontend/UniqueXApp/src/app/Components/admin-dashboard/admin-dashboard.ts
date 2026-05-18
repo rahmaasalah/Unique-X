@@ -175,11 +175,16 @@ export class AdminDashboardComponent implements OnInit {
 
   filteredSoldData = computed(() => {
     const codeSearch = this.soldSearchCode().toLowerCase().trim();
-    const brokerSearch = this.soldBrokerFilter().toLowerCase().trim();
+    // 1. مسحنا كل المسافات من الكلمة اللي الأدمن اختارها
+    const brokerSearch = this.soldBrokerFilter().toLowerCase().replace(/\s+/g, '');
 
     return this.detailData().filter(p => {
       const matchCode = codeSearch === '' || (p.code && p.code.toLowerCase().includes(codeSearch));
-      const matchBroker = brokerSearch === '' || (p.brokerName && p.brokerName.toLowerCase() === brokerSearch);
+      
+      // 2. مسحنا كل المسافات من اسم البروكر اللي راجع من الداتا بيز للمطابقة التامة
+      const matchBroker = brokerSearch === '' || 
+                          (p.brokerName && p.brokerName.toLowerCase().replace(/\s+/g, '') === brokerSearch);
+                          
       return matchCode && matchBroker;
     });
   });
@@ -187,11 +192,13 @@ export class AdminDashboardComponent implements OnInit {
   // 🟢 فلترة جدول الموقوف (Suspended Properties)
   filteredSuspPropsData = computed(() => {
     const codeSearch = this.suspSearchCode().toLowerCase().trim();
-    const brokerSearch = this.suspBrokerFilter().toLowerCase().trim();
+    const brokerSearch = this.suspBrokerFilter().toLowerCase().replace(/\s+/g, '');
 
     return this.detailData().filter(p => {
       const matchCode = codeSearch === '' || (p.code && p.code.toLowerCase().includes(codeSearch));
-      const matchBroker = brokerSearch === '' || (p.brokerName && p.brokerName.toLowerCase() === brokerSearch);
+      const matchBroker = brokerSearch === '' || 
+                          (p.brokerName && p.brokerName.toLowerCase().replace(/\s+/g, '') === brokerSearch);
+                          
       return matchCode && matchBroker;
     });
   });

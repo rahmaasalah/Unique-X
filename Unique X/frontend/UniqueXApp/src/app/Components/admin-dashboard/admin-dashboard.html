@@ -710,12 +710,13 @@
       </div>
       <div class="col-md-4">
         <select class="form-select border-0 shadow-sm rounded-3" 
-                [ngModel]="soldBrokerFilter()" (ngModelChange)="soldBrokerFilter.set($event)">
-          <option value="">All Brokers</option>
-          @for (b of brokersList(); track b.id) {
-            <option [value]="(b.firstName + ' ' + b.lastName).toLowerCase()">{{ b.firstName }} {{ b.lastName }}</option>
-          }
-        </select>
+        [ngModel]="soldBrokerFilter()" (ngModelChange)="soldBrokerFilter.set($event)">
+  <option value="">All Brokers</option>
+  @for (b of brokersList(); track b.id) {
+    <!-- شيلنا الـ toLowerCase من هنا وخليناها طبيعية -->
+    <option [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
+  }
+</select>
       </div>
     </div>
 
@@ -827,12 +828,12 @@
       </div>
       <div class="col-md-4">
         <select class="form-select border-0 shadow-sm rounded-3" 
-                [ngModel]="suspBrokerFilter()" (ngModelChange)="suspBrokerFilter.set($event)">
-          <option value="">All Brokers</option>
-          @for (b of brokersList(); track b.id) {
-            <option [value]="(b.firstName + ' ' + b.lastName).toLowerCase()">{{ b.firstName }} {{ b.lastName }}</option>
-          }
-        </select>
+        [ngModel]="suspBrokerFilter()" (ngModelChange)="suspBrokerFilter.set($event)">
+  <option value="">All Brokers</option>
+  @for (b of brokersList(); track b.id) {
+    <option [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
+  }
+</select>
       </div>
     </div>
 
