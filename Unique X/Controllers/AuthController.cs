@@ -91,6 +91,7 @@ namespace Unique_X.Controllers
                 UserType = user.UserType,
                 ProfileImageUrl = user.ProfileImageUrl,
                 BrokerTitle = user.BrokerTitle,
+                HasCrmAccess = user.HasCrmAccess,
                 BrokerDescription = user.BrokerDescription,
                 TotalProperties = _context.Properties.Count(p => p.BrokerId == userId),
                 TotalWishlist = _context.Wishlists.Count(w => w.UserId == userId),
