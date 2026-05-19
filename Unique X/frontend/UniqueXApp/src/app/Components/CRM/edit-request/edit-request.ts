@@ -111,6 +111,7 @@ export class EditRequestComponent implements OnInit {
       this.loadLeadData(this.leadId);
     }
     this.setupDynamicFields();
+    
   }
 
   initForm() {
