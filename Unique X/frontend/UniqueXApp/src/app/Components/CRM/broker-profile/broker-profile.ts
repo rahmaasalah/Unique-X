@@ -47,6 +47,9 @@ export class BrokerProfileComponent implements OnInit {
   filterMaxBudget = signal<number | null>(null);
   filterReferredBy = signal<string>('');
 
+  hiddenLeads = signal<number[]>([]);
+  showHiddenLeads = signal<boolean>(false);
+
   // 👇 نقلنا تعريف المناطق هنا عشان الـ HTML يقدر يشوفه
   zones =[
     { id: 1, name: 'Cairo' },
@@ -76,21 +79,27 @@ export class BrokerProfileComponent implements OnInit {
   ];
 
   // 🟢 فلترة العملاء لحظياً
-  filteredLeads = computed(() => {
+  
+filteredLeads = computed(() => {
     const data = this.profileData();
-    if (!data || !data.leads) return[];
+    if (!data || !data.leads) return [];
     let leads = data.leads;
 
+    // 1. إخفاء المكرر للبروكر العادي
     if (!this.isAdmin()) {
       leads = leads.filter((l: any) => !(l.isDuplicate && !l.isApprovedDuplicate));
     }
 
+    // 🟢 2. التعديل الجديد: إخفاء العملاء اللي الأدمن خفاهم (إلا لو دايس إظهار المخفي)
+    if (this.isAdmin() && !this.showHiddenLeads()) {
+      leads = leads.filter((l: any) => !this.hiddenLeads().includes(l.id));
+    }
 
     const q = this.searchQuery().toLowerCase();
     const broker = this.filterBroker();
     const camp = this.filterCampaign();
     const stage = this.filterStage();
-    const zone = this.filterZone(); // شيلنا الـ toLowerCase عشان يطابق الاسم بالظبط
+    const zone = this.filterZone(); 
     const cDate = this.filterCreationDate();
     const uDate = this.filterLastUpdate();
     const minB = this.filterMinBudget();
@@ -187,6 +196,11 @@ export class BrokerProfileComponent implements OnInit {
       const roles = user.roles ||[];
       const isUserAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
 
+      const savedHiddenLeads = localStorage.getItem('crm_hidden_leads');
+    if (savedHiddenLeads) {
+      this.hiddenLeads.set(JSON.parse(savedHiddenLeads));
+    }
+
       if (isUserAdmin) {
         this.adminService.getAllUsers().subscribe(users => {
         this.brokersList.set(users.filter((u: any) => u.userType === 1));
@@ -247,6 +261,20 @@ export class BrokerProfileComponent implements OnInit {
         error: (err) => console.error('Error fetching profile data', err)
       });
     }
+  }
+
+  toggleHideLead(leadId: number, event?: Event) {
+    if (event) event.stopPropagation();
+    let current = [...this.hiddenLeads()];
+    
+    if (current.includes(leadId)) {
+      current = current.filter(id => id !== leadId); // لو مخفي، نظهره
+    } else {
+      current.push(leadId); // لو ظاهر، نخفيه
+    }
+    
+    this.hiddenLeads.set(current);
+    localStorage.setItem('crm_hidden_leads', JSON.stringify(current));
   }
 
   // 👇 دالة موافقة الأدمن على العميل المتكرر (زي ما عملناها في البايبلاين)

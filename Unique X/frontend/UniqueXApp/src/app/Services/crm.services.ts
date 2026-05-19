@@ -175,4 +175,9 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
   getPropertyCodesByPurpose(purpose: string): Observable<string[]> {
     return this.http.get<string[]>(`${this.apiUrl}/leads/property-codes?purpose=${purpose}`);
   }
+
+ 
+  bulkTransferLeads(leadIds: number[], newBrokerId: string, adminId: string) {
+    return this.http.put<any>(`${this.apiUrl}/Leads/bulk-transfer?adminId=${adminId}`, { leadIds, newBrokerId });
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal,computed} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -86,6 +86,24 @@ export class EditRequestComponent implements OnInit {
   availableRegions: string[] =[];
   availableProjects: string[] =[];
 
+  searchCampaignCode = signal<string>('');
+  isCampaignDropdownOpen = signal<boolean>(false);
+
+  filteredCampaignCodes = computed(() => {
+    const term = this.searchCampaignCode().toLowerCase();
+    return this.availablePropertyCodes().filter(code => code.toLowerCase().includes(term));
+  });
+
+  selectCampaign(code: string) {
+    this.editRequestForm.patchValue({ campaignName: code });
+    this.searchCampaignCode.set(code);
+    this.isCampaignDropdownOpen.set(false);
+  }
+
+  closeCampaignDropdown() {
+    setTimeout(() => this.isCampaignDropdownOpen.set(false), 200);
+  }
+
   ngOnInit() {
     this.leadId = Number(this.route.snapshot.paramMap.get('id'));
     this.initForm();
@@ -114,8 +132,9 @@ export class EditRequestComponent implements OnInit {
       zoneId: [''],
       selectedRegions: [[]],
       selectedProjects: [[]],
-      downPayment: [''],
-      installmentYears: [''],
+      downPayment: ['', Validators.min(0)],
+      installmentYears: ['', Validators.min(1)],
+      quarterlyInstallment: [0, [Validators.min(0)]],
       preferredLocation: [''],
       notes: ['']
     });
@@ -157,6 +176,7 @@ export class EditRequestComponent implements OnInit {
               
               totalAmount: req.totalAmount ? Number(req.totalAmount).toLocaleString('en-US') : '',
               downPayment: req.downPayment ? Number(req.downPayment).toLocaleString('en-US') : '',
+              quarterlyInstallment: req.quarterlyInstallment ? Number(req.quarterlyInstallment).toLocaleString('en-US') : '',
               installmentYears: req.installmentYears ? Number(req.installmentYears).toLocaleString('en-US') : '',
               
               preferredLocation: req.preferredLocation,
@@ -194,7 +214,7 @@ export class EditRequestComponent implements OnInit {
     });
     
     this.editRequestForm.get('paymentMethod')?.valueChanges.subscribe(() => {
-      this.editRequestForm.patchValue({ downPayment: '', installmentYears: '' });
+      this.editRequestForm.patchValue({ downPayment: '', installmentYears: '', quarterlyInstallment: '' });
     });
   }
 
@@ -270,6 +290,7 @@ export class EditRequestComponent implements OnInit {
       // 🟢 تنظيف الأرقام من الفواصل قبل ما تروح للداتابيز
       submitData.totalAmount = submitData.totalAmount ? parseInt(String(submitData.totalAmount).replace(/,/g, ''), 10) : 0;
       submitData.downPayment = submitData.downPayment ? parseInt(String(submitData.downPayment).replace(/,/g, ''), 10) : 0;
+      submitData.quarterlyInstallment = submitData.quarterlyInstallment ? parseInt(String(submitData.quarterlyInstallment).replace(/,/g, ''), 10) : 0;
       submitData.installmentYears = submitData.installmentYears ? parseInt(String(submitData.installmentYears).replace(/,/g, ''), 10) : 0;
 
       if (submitData.campaignId === '') submitData.campaignId = null;

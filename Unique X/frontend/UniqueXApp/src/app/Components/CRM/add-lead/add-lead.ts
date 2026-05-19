@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CrmService } from '../../../Services/crm.services';
@@ -101,6 +101,24 @@ export class AddLeadComponent implements OnInit {
   availableRegions: string[] =[];
   availableProjects: string[] =[];
 
+  searchCampaignCode = signal<string>('');
+  isCampaignDropdownOpen = signal<boolean>(false);
+
+  filteredCampaignCodes = computed(() => {
+    const term = this.searchCampaignCode().toLowerCase();
+    return this.availablePropertyCodes().filter(code => code.toLowerCase().includes(term));
+  });
+
+  selectCampaign(code: string) {
+    this.leadForm.patchValue({ campaignName: code });
+    this.searchCampaignCode.set(code);
+    this.isCampaignDropdownOpen.set(false);
+  }
+
+  closeCampaignDropdown() {
+    setTimeout(() => this.isCampaignDropdownOpen.set(false), 200);
+  }
+
   ngOnInit() {
     const userString = localStorage.getItem('user');
     if (userString) {
@@ -141,6 +159,7 @@ export class AddLeadComponent implements OnInit {
       selectedProjects: [[]], 
       downPayment: [0, [Validators.min(0)]],
       installmentYears: [0, [Validators.min(0)]],
+      quarterlyInstallment: [0, [Validators.min(0)]],
       preferredLocation: [''],
       notes: ['']
     });
@@ -256,6 +275,7 @@ export class AddLeadComponent implements OnInit {
       submitData.totalAmount = submitData.totalAmount ? parseInt(String(submitData.totalAmount).replace(/,/g, ''), 10) : 0;
       submitData.downPayment = submitData.downPayment ? parseInt(String(submitData.downPayment).replace(/,/g, ''), 10) : 0;
       submitData.installmentYears = submitData.installmentYears ? parseInt(String(submitData.installmentYears).replace(/,/g, ''), 10) : 0;
+      submitData.quarterlyInstallment = submitData.quarterlyInstallment ? parseInt(String(submitData.quarterlyInstallment).replace(/,/g, ''), 10) : 0;
 
       if (submitData.campaignId === '') submitData.campaignId = null;
       if (submitData.zoneId === '') submitData.zoneId = null;

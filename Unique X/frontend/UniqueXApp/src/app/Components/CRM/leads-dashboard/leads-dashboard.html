@@ -20,6 +20,13 @@
       <button class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" routerLink="/crm/add-lead">
         <i class="bi bi-plus-lg me-1"></i> Add Lead
       </button>
+
+      <button *ngIf="isAdmin()" class="btn rounded-pill px-4 fw-bold shadow-sm"
+              [ngClass]="showHiddenLeads() ? 'btn-dark' : 'btn-outline-dark'"
+              (click)="showHiddenLeads.set(!showHiddenLeads()); applyFilters(false)">
+        <i class="bi" [ngClass]="showHiddenLeads() ? 'bi-eye' : 'bi-eye-slash'"></i> 
+        {{ showHiddenLeads() ? 'Hide All' : 'Show Hidden' }}
+      </button>
     </div>
   </div>
 
@@ -57,14 +64,19 @@
                  [cdkDragStartDelay]="{ touch: 200, mouse: 0 }">
               
               <!-- 🟢 التعديل: فصلنا اسم العميل وحطينا جنبه مقبض السحب (Drag Handle) -->
-              <div class="d-flex justify-content-between align-items-start mb-1">
-                <div class="fw-bold text-dark pe-2">{{ lead.fullName }}</div>
-                
-                <!-- 🟢 ده الزرار الوحيد اللي هيحرك الكارت (cdkDragHandle) -->
-                <div cdkDragHandle class="text-muted px-1 rounded bg-light border" style="cursor: grab;" title="Drag to move card">
-                  <i class="bi bi-grip-horizontal"></i>
-                </div>
-              </div>
+              <div class="d-flex justify-content-between align-items-start mb-1" [class.opacity-50]="hiddenLeads().includes(lead.id)">
+  <div class="fw-bold text-dark pe-2">{{ lead.fullName }}</div>
+  
+  <div class="d-flex gap-1">
+    <!-- 🟢 زرار الإخفاء -->
+    <button *ngIf="isAdmin()" class="btn btn-sm p-0 text-muted" (click)="toggleHideLead(lead.id, $event)" title="Toggle Hide">
+      <i class="bi fs-5" [ngClass]="hiddenLeads().includes(lead.id) ? 'bi-eye-fill text-success' : 'bi-eye-slash'"></i>
+    </button>
+    <div cdkDragHandle class="text-muted px-1 rounded bg-light border" style="cursor: grab;" title="Drag to move">
+      <i class="bi bi-grip-horizontal"></i>
+    </div>
+  </div>
+</div>
               
               <div class="text-muted small mb-2"><i class="bi bi-telephone-fill me-1"></i> {{ lead.phoneNumber }}</div>
 
@@ -286,6 +298,12 @@
                 
                 <td class="fw-bold text-success text-nowrap">
                   {{ lead.totalAmount > 0 ? 'EGP ' + (lead.totalAmount | number:'1.0-0') : 'N/A' }}
+
+                  <div *ngIf="lead.paymentMethod === 'Installment'" class="mt-1 text-muted" style="font-size: 0.65rem; font-weight: 600;">
+  DP: <span class="text-dark">{{ lead.downPayment | currency:'EGP ':'symbol':'1.0-0' }}</span><br>
+  Q. Inst: <span class="text-primary">{{ lead.quarterlyInstallment | currency:'EGP ':'symbol':'1.0-0' }}</span><br>
+  Years: <span class="text-danger">{{ lead.installmentYears }}</span>
+</div>
                 </td>
 
                 <td class="text-nowrap">
@@ -302,6 +320,12 @@
                   <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" [routerLink]="['/crm/leads', lead.id]">
                     Details &rarr;
                   </button>
+
+                  <button *ngIf="isAdmin()" class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm me-2" 
+          [ngClass]="hiddenLeads().includes(lead.id) ? 'btn-success' : 'btn-outline-secondary'"
+          (click)="toggleHideLead(lead.id)">
+    <i class="bi" [ngClass]="hiddenLeads().includes(lead.id) ? 'bi-eye-fill' : 'bi-eye-slash'"></i>
+  </button>
                   <button *ngIf="isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate" 
                           class="btn btn-sm btn-success rounded-pill px-3 fw-bold me-2 shadow-sm" 
                           (click)="approveDuplicate(lead.id)">
