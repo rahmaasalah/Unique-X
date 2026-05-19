@@ -9,6 +9,7 @@
         public string? CampaignSource { get; set; }
         public string? CampaignName { get; set; }
         public string? ReferredBy { get; set; }
+        public decimal? QuarterlyInstallment { get; set; }
 
         // الحقول العقارية القديمة
         public string PropertyType { get; set; }

@@ -65,13 +65,27 @@
           </select>
         </div>
 
-        <div class="col-md-3">
-          <label class="form-label small fw-bold text-dark">Campaign Name</label>
-          <select class="form-select bg-light border-0 rounded-3 text-danger fw-bold" formControlName="campaignName">
-            <option value="">-- Select Code --</option>
-            <option *ngFor="let code of availablePropertyCodes()" [value]="code">{{ code }}</option>
-          </select>
-        </div>
+        <div class="col-md-3 position-relative">
+  <label class="form-label small fw-bold text-dark">Campaign Name</label>
+  <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
+         placeholder="Type to search code..."
+         [ngModel]="searchCampaignCode()" 
+         (ngModelChange)="searchCampaignCode.set($event); editRequestForm.patchValue({campaignName: ''}); isCampaignDropdownOpen.set(true)"
+         [ngModelOptions]="{standalone: true}"
+         (focus)="isCampaignDropdownOpen.set(true)"
+         (blur)="closeCampaignDropdown()">
+
+  <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1" [class.show]="isCampaignDropdownOpen()" style="max-height: 200px; overflow-y: auto; position: absolute; z-index: 1050;">
+    @for (code of filteredCampaignCodes(); track code) {
+      <li>
+        <button type="button" class="dropdown-item py-2 fw-bold" (mousedown)="selectCampaign(code)">{{ code }}</button>
+      </li>
+    } @empty {
+      <li><span class="dropdown-item text-muted small">No codes found</span></li>
+    }
+  </ul>
+</div>
+
 
         <div class="col-md-3">
           <label class="form-label small fw-bold text-dark">Referred By</label>
@@ -154,15 +168,29 @@
         </div>
 
         <ng-container *ngIf="showFinancialDetails">
-          <div class="col-md-6 animate__animated animate__fadeIn">
+          <div class="col-md-4 animate__animated animate__fadeIn">
             <label class="form-label small fw-bold text-dark">Down Payment</label>
+            <!-- 🟢 استخدمنا [value] مع بايب number عشان نعرض الرقم القديم بفواصل -->
             <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
-                   placeholder="e.g. 1,000,000" formControlName="downPayment" (input)="formatCurrency($event, 'downPayment')">
+                   placeholder="e.g. 1,000,000" 
+                   [value]="editRequestForm.get('downPayment')?.value | number:'1.0-0'"
+                   (input)="formatCurrency($event, 'downPayment')">
           </div>
-          <div class="col-md-6 animate__animated animate__fadeIn">
+          
+          <!-- 🟢 حقل القسط الربع سنوي الجديد -->
+          <div class="col-md-4 animate__animated animate__fadeIn">
+    <label class="form-label small fw-bold text-dark">Quarterly Installment</label>
+    <!-- 🟢 شيلنا formControlName من هنا عشان متعملش تعارض مع دالة الفواصل -->
+    <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
+           placeholder="e.g. 250,000" (input)="formatCurrency($event, 'quarterlyInstallment')">
+  </div>
+          
+          <div class="col-md-4 animate__animated animate__fadeIn">
             <label class="form-label small fw-bold text-dark">Installment Years</label>
             <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
-                   placeholder="e.g. 5" formControlName="installmentYears" (input)="formatCurrency($event, 'installmentYears')">
+                   placeholder="e.g. 5" 
+                   [value]="editRequestForm.get('installmentYears')?.value"
+                   (input)="formatCurrency($event, 'installmentYears')">
           </div>
         </ng-container>
 

@@ -14,6 +14,8 @@
         public string PreferredLocation { get; set; } // المنطقة المفضلة
         public string Notes { get; set; } // أي تفاصيل إضافية       
         public decimal? TotalAmount { get; set; }
+        public decimal? QuarterlyInstallment { get; set; }
+
         public int? ZoneId { get; set; }
         public string? SelectedRegions { get; set; } // هيتخزن كنص مفصول بفاصلة
         public string? SelectedProjects { get; set; } // هيتخزن كنص مفصول بفاصلة

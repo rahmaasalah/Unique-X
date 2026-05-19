@@ -29,6 +29,8 @@ export class LeadsDashboardComponent implements OnInit {
   brokersList = signal<any[]>([]);
   filterBroker = signal<string>('');
   filterReferredBy = signal<string>('');
+  hiddenLeads = signal<number[]>([]);
+  showHiddenLeads = signal<boolean>(false);
 
   viewMode = signal<'kanban' | 'list'>('kanban'); 
   filteredLeadsForList = signal<any[]>([]);
@@ -87,6 +89,8 @@ export class LeadsDashboardComponent implements OnInit {
       // 🟢 فحص ذكي وشامل عشان نلقط الأدمن (بكل الطرق اللي بيرجع بيها من الباك إند)
       const roles = user.roles ||[];
       const isUserAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
+      const savedHiddenLeads = localStorage.getItem('crm_hidden_leads');
+    if (savedHiddenLeads) this.hiddenLeads.set(JSON.parse(savedHiddenLeads));
       
       if (isUserAdmin) {
 
@@ -146,6 +150,19 @@ export class LeadsDashboardComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
+  toggleHideLead(leadId: number, event?: Event) {
+    if (event) event.stopPropagation();
+    let current = [...this.hiddenLeads()];
+    if (current.includes(leadId)) {
+      current = current.filter(id => id !== leadId); // لو مخفي، نظهره
+    } else {
+      current.push(leadId); // لو ظاهر، نخفيه
+    }
+    this.hiddenLeads.set(current);
+    localStorage.setItem('crm_hidden_leads', JSON.stringify(current));
+    this.applyFilters(false); // تحديث الجدول
+  }
+
   applyFilters(isUserAction: boolean = false) {
     const search = this.searchText().toLowerCase();
     const campaign = this.filterCampaign();
@@ -176,7 +193,9 @@ export class LeadsDashboardComponent implements OnInit {
       const matchMinB = minB === null || lead.totalAmount >= minB;
       const matchMaxB = maxB === null || lead.totalAmount <= maxB;
 
-      return matchSearch && matchCamp && matchStatus && matchZone && matchBroker && matchCDate && matchUDate && matchMinB && matchMaxB && matchRefBy;
+      const matchHidden = this.showHiddenLeads() || !this.hiddenLeads().includes(lead.id);
+
+      return matchSearch && matchCamp && matchStatus && matchZone && matchBroker && matchCDate && matchUDate && matchMinB && matchMaxB && matchRefBy && matchHidden;
 
       
     });

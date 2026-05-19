@@ -23,7 +23,7 @@ export class CrmDashboardComponent implements OnInit {
   private router = inject(Router);
 
   isAdmin = signal<boolean>(false);
-  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'>('brokers');
+  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads'>('brokers');
 
   dummyBrokers = [
     { code: 'X7', name: 'Abdelrahman Ashraf' },
@@ -59,19 +59,6 @@ availableBrokersToAdd = computed(() => {
   const vipIds = this.vipBrokers().map(v => v.id);
   return this.allBrokersList().filter(b => !vipIds.includes(b.id) && b.isActive);
 });
-  
-  // إحصائيات عامة للأدمن
-  /* systemTotalLeads = computed(() => this.allLeads().length);
-  systemClosedDeals = computed(() => this.allLeads().filter(l => l.statusId === 19).length);
-  systemExpectedRevenue = computed(() => {
-    return this.allLeads().reduce((sum, lead) => sum + (lead.totalAmount || 0), 0);
-  });
-
-  systemRequests = computed(() => this.allLeads().filter(l => l.statusId === 4).length); // 4 = Calls (request)
-  systemClosing = computed(() => this.allLeads().filter(l => l.statusId === 18).length); // 18 = Follow up for closing
-  systemVisits = computed(() => this.allLeads().reduce((sum, l) => sum + (l.visitsCount || 0), 0));
-  systemActivities = computed(() => this.allLeads().reduce((sum, l) => sum + (l.activitiesCount || 0), 0)); */
-
 
 systemTotalLeads = computed(() => this.baseFilteredLeads().length);
 systemClosedDeals = computed(() => this.baseFilteredLeads().filter(l => l.statusId === 19).length);
@@ -83,9 +70,11 @@ systemActivities = computed(() => this.baseFilteredLeads().reduce((sum, l) => su
 
   // 🟢 1. فلاتر ولوجيك تاب البروكرز
   searchBroker = signal<string>('');
-  //filterSalesPerson = signal<string>('');
 
   globalBrokerFilter = signal<string>(''); 
+
+  selectedLeadsForTransfer = signal<number[]>([]);
+  targetBrokerForTransfer = signal<string>('');
 
   baseFilteredLeads = computed(() => {
   const broker = this.globalBrokerFilter();
@@ -144,11 +133,14 @@ baseFilteredEvents = computed(() => {
     });
 
     const q = this.searchBroker().toLowerCase();
-    //const sPerson = this.filterSalesPerson();
     const sPerson = this.globalBrokerFilter();
 
     if (q) stats = stats.filter(b => b.fullName.toLowerCase().includes(q) || (b.phoneNumber && b.phoneNumber.includes(q)));
     if (sPerson) stats = stats.filter(b => b.fullName === sPerson);
+
+    if (this.isAdmin() && !this.showHiddenItems()) {
+      stats = stats.filter(b => !this.hiddenBrokers().includes(b.id));
+    }
 
     return stats;
   });
@@ -156,18 +148,19 @@ baseFilteredEvents = computed(() => {
   // 🟢 2. فلاتر ولوجيك تاب العملاء
   searchClient = signal<string>('');
   filterClientStage = signal<string>('');
-  //filterClientBroker = signal<string>('');
   
   filteredClients = computed(() => {
     let leads = this.allLeads();
     const q = this.searchClient().toLowerCase();
     const stage = this.filterClientStage();
-    //const broker = this.filterClientBroker();
     const broker = this.globalBrokerFilter();
 
     if (q) leads = leads.filter(l => l.fullName.toLowerCase().includes(q) || l.phoneNumber.includes(q));
     if (stage) leads = leads.filter(l => l.statusId.toString() === stage);
     if (broker) leads = leads.filter(l => l.brokerName === broker);
+    if (!this.showHiddenItems()) {
+      leads = leads.filter(l => !this.hiddenLeads().includes(l.id));
+    }
 
     return leads;
   });
@@ -215,32 +208,33 @@ baseFilteredEvents = computed(() => {
     return days;
   });
 
-  /* closedDealsList = computed(() => this.allLeads().filter(l => l.statusId === 19));
-  
-  // 2. الطلبات (Calls request = 4)
-  requestsList = computed(() => this.allLeads().filter(l => l.statusId === 4));
-  
-  // 3. مرحلة الإغلاق (Follow up for closing = 18)
-  closingStageList = computed(() => this.allLeads().filter(l => l.statusId === 18));
-  
-  // 4. تفاصيل الأرباح المتوقعة (כל العملاء اللي ليهم ميزانية) مرتبين من الأغلى للأرخص
-  revenueList = computed(() => this.allLeads().filter(l => l.totalAmount > 0).sort((a, b) => b.totalAmount - a.totalAmount));
-
-  // 5. كل الزيارات (من نتيجة الكاليندر)
-  allVisitsList = computed(() => this.calendarEvents().filter(e => e.type === 'Visit').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-  
-  // 6. كل المكالمات والمهام (من نتيجة الكاليندر)
-  allActivitiesList = computed(() => this.calendarEvents().filter(e => e.type !== 'Visit').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
- */
-
 
   closedDealsList = computed(() => this.baseFilteredLeads().filter(l => l.statusId === 19));
 requestsList = computed(() => this.baseFilteredLeads().filter(l => l.statusId === 4));
 closingStageList = computed(() => this.baseFilteredLeads().filter(l => l.statusId === 18));
 revenueList = computed(() => this.baseFilteredLeads().filter(l => l.totalAmount > 0).sort((a, b) => b.totalAmount - a.totalAmount));
 
-allVisitsList = computed(() => this.baseFilteredEvents().filter(e => e.type === 'Visit').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-allActivitiesList = computed(() => this.baseFilteredEvents().filter(e => e.type !== 'Visit').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+//allVisitsList = computed(() => this.baseFilteredEvents().filter(e => e.type === 'Visit').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+allVisitsList = computed(() => {
+  let visits = this.baseFilteredEvents().filter(e => e.type === 'Visit');
+  if (!this.showHiddenItems()) visits = visits.filter(v => !this.hiddenTasks().includes('Visit_' + v.id));
+  return visits.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+});
+//allActivitiesList = computed(() => this.baseFilteredEvents().filter(e => e.type !== 'Visit').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+
+allActivitiesList = computed(() => {
+  let activities = this.baseFilteredEvents().filter(e => e.type !== 'Visit');
+  if (!this.showHiddenItems()) activities = activities.filter(a => !this.hiddenTasks().includes(a.type + '_' + a.id));
+  return activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+});
+
+
+hiddenLeads = signal<number[]>([]);
+  hiddenTasks = signal<string[]>([]); // صيغته: 'visit_1' أو 'activity_2'
+  showHiddenItems = signal<boolean>(false);
+  hiddenBrokers = signal<string[]>([]);
+
+
   ngOnInit() {
     // 1. حماية الصفحة: لو مش أدمن، اطرده
     const userString = localStorage.getItem('user');
@@ -249,6 +243,15 @@ allActivitiesList = computed(() => this.baseFilteredEvents().filter(e => e.type 
     const user = JSON.parse(userString);
     const roles = user.roles ||[];
     const isUserAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
+
+    const sLeads = localStorage.getItem('crm_hidden_leads');
+    if (sLeads) this.hiddenLeads.set(JSON.parse(sLeads));
+
+    const sBrokers = localStorage.getItem('crm_hidden_brokers');
+    if (sBrokers) this.hiddenBrokers.set(JSON.parse(sBrokers));
+    
+    const sTasks = localStorage.getItem('crm_hidden_tasks');
+    if (sTasks) this.hiddenTasks.set(JSON.parse(sTasks));
     
     if (!isUserAdmin) {
       this.router.navigate(['/home']);
@@ -304,6 +307,28 @@ allActivitiesList = computed(() => this.baseFilteredEvents().filter(e => e.type 
 
   toggleSidebar() {
     this.isSidebarOpen.update(val => !val);
+  }
+
+  toggleHideBroker(brokerId: string) {
+    let current = [...this.hiddenBrokers()];
+    current.includes(brokerId) ? current = current.filter(x => x !== brokerId) : current.push(brokerId);
+    this.hiddenBrokers.set(current);
+    localStorage.setItem('crm_hidden_brokers', JSON.stringify(current));
+  }
+
+  toggleHideLead(id: number) {
+    let current = [...this.hiddenLeads()];
+    current.includes(id) ? current = current.filter(x => x !== id) : current.push(id);
+    this.hiddenLeads.set(current);
+    localStorage.setItem('crm_hidden_leads', JSON.stringify(current));
+  }
+
+  toggleHideTask(id: number, type: string) {
+    const key = `${type}_${id}`;
+    let current = [...this.hiddenTasks()];
+    current.includes(key) ? current = current.filter(x => x !== key) : current.push(key);
+    this.hiddenTasks.set(current);
+    localStorage.setItem('crm_hidden_tasks', JSON.stringify(current));
   }
 
   // دالة بتقفل القائمة أوتوماتيك لما اليوزر يختار تاب في الموبايل
@@ -378,5 +403,54 @@ revokeAccess(userId: string) {
     this.selectedEvent.set(evt);
     const bootstrap = (window as any).bootstrap;
     new bootstrap.Modal(document.getElementById('eventModal')).show();
+  }
+
+  toggleLeadSelection(leadId: number) {
+    let current = [...this.selectedLeadsForTransfer()];
+    if (current.includes(leadId)) {
+      current = current.filter(id => id !== leadId);
+    } else {
+      current.push(leadId);
+    }
+    this.selectedLeadsForTransfer.set(current);
+  }
+
+  // تحديد/إلغاء تحديد الكل (بناءً على الفلتر الحالي)
+  toggleSelectAll(event: any) {
+    if (event.target.checked) {
+      const allFilteredIds = this.filteredClients().map(l => l.id);
+      this.selectedLeadsForTransfer.set(allFilteredIds);
+    } else {
+      this.selectedLeadsForTransfer.set([]);
+    }
+  }
+
+  // تنفيذ النقل المجمع
+  executeBulkTransfer() {
+    const leadIds = this.selectedLeadsForTransfer();
+    const newBroker = this.targetBrokerForTransfer();
+    
+    if (leadIds.length === 0 || !newBroker) return;
+
+    this.alertService.confirm(`Are you sure you want to transfer ${leadIds.length} leads to the selected broker?`, () => {
+      this.alertService.showLoading('Transferring leads...');
+      
+      const adminString = localStorage.getItem('user');
+      const adminId = adminString ? JSON.parse(adminString).id : '';
+
+      this.crmService.bulkTransferLeads(leadIds, newBroker, adminId).subscribe({
+        next: (res) => {
+          this.alertService.close();
+          this.alertService.success(res.message);
+          this.selectedLeadsForTransfer.set([]); // تفريغ التحديد
+          this.targetBrokerForTransfer.set(''); // تفريغ البروكر
+          this.loadAdminData(); // تحديث الداتا كلها
+        },
+        error: () => {
+          this.alertService.close();
+          this.alertService.error('Failed to transfer leads.');
+        }
+      });
+    });
   }
 }

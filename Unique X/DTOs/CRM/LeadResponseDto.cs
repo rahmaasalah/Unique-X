@@ -11,6 +11,8 @@
         public string ZoneName { get; set; }
         public int StatusId { get; set; }
         public decimal TotalAmount { get; set; }
+        public decimal? QuarterlyInstallment { get; set; }
+
         public string PropertyType { get; set; }
         public string PreferredLocation { get; set; }
         public string GeneralFeedback { get; set; }

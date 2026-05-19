@@ -61,7 +61,8 @@ namespace Unique_X.Controllers.CRM
                 SelectedRegions = dto.SelectedRegions ?? "",
                 SelectedProjects = dto.SelectedProjects ?? "",
                 DownPayment = dto.DownPayment,
-                InstallmentYears = dto.InstallmentYears
+                InstallmentYears = dto.InstallmentYears,
+                QuarterlyInstallment = dto.QuarterlyInstallment
             };
 
             _context.LeadRequests.Add(newLeadRequest);
@@ -115,6 +116,7 @@ namespace Unique_X.Controllers.CRM
                 // بيحسب كام عميل مسجل بنفس الرقم ده وحالته 19 (Deal Closed)
                 ClosedDealsCount = _context.Leads.Count(c => c.PhoneNumber == l.PhoneNumber && c.LeadStatusId == 19),
                 CreatedAt = l.CreatedAt,
+                QuarterlyInstallment = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).QuarterlyInstallment,
 
                 // 👇 ده السطر اللي بيجيب تاريخ آخر تعديل، ولو مفيش بيجيب تاريخ الإنشاء
                 UpdatedAt = _context.LeadStatusHistories.Where(h => h.LeadId == l.Id).Max(h => (DateTime?)h.ChangedAt) ?? l.CreatedAt,
@@ -317,6 +319,7 @@ namespace Unique_X.Controllers.CRM
                     request?.PaymentMethod,
                     request?.DownPayment,
                     request?.InstallmentYears,
+                    request?.QuarterlyInstallment,
                     ZoneId = request?.ZoneId,
                     ZoneName = request?.ZoneId == 1 ? "Cairo" : request?.ZoneId == 2 ? "Alexandria" : request?.ZoneId == 3 ? "North Coast" : "",
                     request?.SelectedRegions,
@@ -407,6 +410,7 @@ namespace Unique_X.Controllers.CRM
                 request.SelectedProjects = dto.SelectedProjects ?? "";
                 request.DownPayment = dto.DownPayment;
                 request.InstallmentYears = dto.InstallmentYears;
+                request.QuarterlyInstallment = dto.QuarterlyInstallment;
                 request.PreferredLocation = dto.PreferredLocation ?? "";
                 request.Notes = dto.Notes ?? "";
 
@@ -706,6 +710,44 @@ namespace Unique_X.Controllers.CRM
 
             var codes = await query.Select(p => p.Code).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToListAsync();
             return Ok(codes);
+        }
+
+        [HttpPut("bulk-transfer")]
+        public async Task<IActionResult> BulkTransferLeads([FromBody] BulkTransferDto dto, [FromQuery] string adminId)
+        {
+            if (dto.LeadIds == null || !dto.LeadIds.Any() || string.IsNullOrEmpty(dto.NewBrokerId))
+                return BadRequest("Invalid data provided.");
+
+            var leads = await _context.Leads.Where(l => dto.LeadIds.Contains(l.Id)).ToListAsync();
+
+            foreach (var lead in leads)
+            {
+                lead.BrokerId = dto.NewBrokerId;
+
+                // نقل المهام المعلقة
+                var pendingActivities = await _context.LeadActivities.Where(a => a.LeadId == lead.Id && a.Status == "Pending").ToListAsync();
+                foreach (var activity in pendingActivities) { activity.AssignedToId = dto.NewBrokerId; }
+
+                // نقل الزيارات المعلقة
+                var pendingVisits = await _context.Visits.Where(v => v.LeadId == lead.Id && v.Status == "Pending").ToListAsync();
+                foreach (var visit in pendingVisits) { visit.BrokerId = dto.NewBrokerId; }
+
+                // تسجيل الهيستوري
+                _context.LeadStatusHistories.Add(new LeadStatusHistory
+                {
+                    LeadId = lead.Id,
+                    OldStatusId = lead.LeadStatusId,
+                    NewStatusId = lead.LeadStatusId,
+                    ChangedById = adminId,
+                    Notes = "Admin bulk-transferred this lead to a new broker.",
+                    ChangedAt = DateTime.UtcNow
+                });
+            }
+
+            _context.Leads.UpdateRange(leads);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"{leads.Count} leads transferred successfully!" });
         }
     }
 }
