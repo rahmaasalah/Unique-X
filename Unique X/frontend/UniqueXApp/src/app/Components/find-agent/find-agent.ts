@@ -20,9 +20,13 @@ export class FindAgentComponent implements OnInit {
 
   // فلترة البروكرز بالاسم لحظياً
   filteredBrokers = computed(() => {
-    return this.brokers().filter(b => 
+    // 1. فلترة بالاسم
+    const filtered = this.brokers().filter(b => 
       b.fullName.toLowerCase().includes(this.searchTerm().toLowerCase())
     );
+
+    // 2. ترتيب تنازلي (من الأكبر للأصغر) بناءً على خصائص العقارات
+    return filtered.sort((a, b) => (b.propertiesCount || 0) - (a.propertiesCount || 0));
   });
 
   ngOnInit(): void {

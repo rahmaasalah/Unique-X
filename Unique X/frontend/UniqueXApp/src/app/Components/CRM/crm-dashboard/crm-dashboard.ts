@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed , effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -53,6 +53,9 @@ export class CrmDashboardComponent implements OnInit {
 
   allBrokersList = signal<any[]>([]); // كل البروكرز اللي في السيستم
 selectedBrokerToAdd = signal<string>(''); // البروكر اللي الأدمن اختاره من القائمة
+
+  selectedDayEvents = signal<any>(null);
+
 
 // 🟢 فلتر بيجيب البروكرز اللي معندهمش صلاحية بس
 availableBrokersToAdd = computed(() => {
@@ -234,8 +237,31 @@ hiddenLeads = signal<number[]>([]);
   showHiddenItems = signal<boolean>(false);
   hiddenBrokers = signal<string[]>([]);
 
+  constructor() {
+    // 🟢 سحر الـ Signals: الدالة دي بتشتغل لوحدها في الخلفية
+    // وأي تغيير هتعمليه في التاب أو الفلتر، هتحفظه فوراً في المتصفح
+    effect(() => {
+      const dashboardState = {
+        tab: this.activeTab(),
+        broker: this.globalBrokerFilter(),
+        search: this.searchClient(),
+        stage: this.filterClientStage()
+      };
+      sessionStorage.setItem('crm_dashboard_state', JSON.stringify(dashboardState));
+    });
+  }
+
 
   ngOnInit() {
+
+    const savedState = sessionStorage.getItem('crm_dashboard_state');
+    if (savedState) {
+      const parsed = JSON.parse(savedState);
+      this.activeTab.set(parsed.tab || 'brokers');
+      this.globalBrokerFilter.set(parsed.broker || '');
+      this.searchClient.set(parsed.search || '');
+      this.filterClientStage.set(parsed.stage || '');
+    }
     // 1. حماية الصفحة: لو مش أدمن، اطرده
     const userString = localStorage.getItem('user');
     if (!userString) { this.router.navigate(['/home']); return; }
@@ -399,9 +425,25 @@ revokeAccess(userId: string) {
     this.currentMonth.set(new Date(current.getFullYear(), current.getMonth() + offset, 1));
   }
 
+  openDayModal(day: any) {
+    if (!day.date || day.events.length === 0) return; // لو يوم فاضي متفتحش حاجة
+    this.selectedDayEvents.set(day);
+    const bootstrap = (window as any).bootstrap;
+    new bootstrap.Modal(document.getElementById('dayEventsModal')).show();
+  }
+
   openEventDetails(evt: any) {
     this.selectedEvent.set(evt);
     const bootstrap = (window as any).bootstrap;
+    
+    // 🟢 نقفل مودال اليوم (لو كان مفتوح) الأول
+    const dayModalEl = document.getElementById('dayEventsModal');
+    if (dayModalEl) {
+      const dayModal = bootstrap.Modal.getInstance(dayModalEl);
+      if (dayModal) dayModal.hide();
+    }
+
+    // نفتح مودال التفاصيل
     new bootstrap.Modal(document.getElementById('eventModal')).show();
   }
 

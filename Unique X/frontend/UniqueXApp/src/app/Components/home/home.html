@@ -203,7 +203,7 @@
           <div class="row g-4">
             @for (prop of resaleProps(); track prop.id) {
               <div class="col-md-6 col-lg-4">
-                <app-property-card [property]="prop"></app-property-card>
+                <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
               </div>
             }
           </div>
@@ -219,7 +219,7 @@
           <div class="row g-4">
             @for (prop of resaleProjectProps(); track prop.id) {
               <div class="col-md-6 col-lg-4">
-                <app-property-card [property]="prop"></app-property-card>
+                <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
               </div>
             }
           </div>
@@ -235,7 +235,7 @@
           <div class="row g-4">
             @for (prop of primaryProps(); track prop.id) {
               <div class="col-md-6 col-lg-4">
-                <app-property-card [property]="prop"></app-property-card>
+                <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
               </div>
             }
           </div>
@@ -251,7 +251,7 @@
           <div class="row g-4">
             @for (prop of rentProps(); track prop.id) {
               <div class="col-md-6 col-lg-4">
-                <app-property-card [property]="prop"></app-property-card>
+                <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
               </div>
             }
           </div>
@@ -280,9 +280,9 @@
       </div>
     }
 
-    @if (hasSearchFilters()) {
+    <!-- @if (hasSearchFilters()) {
       <ng-container *ngTemplateOutlet="hotDealsSection"></ng-container>
-    }
+    } -->
   </div>
 </div>
 

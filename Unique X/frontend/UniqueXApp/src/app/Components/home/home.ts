@@ -35,14 +35,15 @@ export class HomeComponent implements OnInit {
   activeQueryParams = signal<any>({});
 
   // 🟢 2. التحقق هل المستخدم يبحث من شريط البحث (Search Bar) أم لا
-  hasSearchFilters = computed(() => {
+   hasSearchFilters = computed(() => {
     const q = this.activeQueryParams();
-    // نعتبره يبحث لو أدخل أي قيمة من خانات البحث (وليس الناف بار)
     return !!(
       q['searchTerm'] || q['city'] || q['projectName'] || q['code'] || 
       q['minPrice'] || q['maxPrice'] || q['area'] || q['minRooms'] || 
       q['maxRooms'] || q['minBathrooms'] || q['maxBathrooms'] || 
-      q['minFloor'] || q['maxFloor']
+      q['minFloor'] || q['maxFloor'] || 
+      q['brokerId'] || q['brokerName'] || q['broker'] || // 👈 ضفنا فحص البروكر
+      q['listingType'] // 👈 ضفنا فحص الناف بار (Resale, Rent...)
     );
   });
 
