@@ -688,19 +688,34 @@
 
           <!-- أيام الشهر (Scrolling) -->
           <div class="d-flex flex-wrap flex-grow-1 overflow-auto align-content-start">
-            <div *ngFor="let day of calendarDays()" class="border-end border-bottom p-2 d-flex flex-column" 
-                 style="flex-basis: 14.28%; min-height: 140px; height: 140px;" [ngClass]="{'bg-light opacity-50': !day.date}">
+            <div *ngFor="let day of calendarDays()" class="border-end border-bottom p-2 d-flex flex-column transition-all" 
+                 style="flex-basis: 14.28%; min-height: 140px; height: 140px;" 
+                 [ngClass]="{'bg-light opacity-50': !day.date, 'cursor-pointer': day.events?.length > 0}"
+                 (click)="openDayModal(day)"
+                 onmouseover="if(this.classList.contains('cursor-pointer')) this.style.backgroundColor='#f8f9fa'" 
+                 onmouseout="this.style.backgroundColor=''">
               
-              <div class="fw-bold text-end text-muted small mb-1" *ngIf="day.date">{{ day.date }}</div>
+              <!-- هيدر اليوم (التاريخ + عدد المهام) -->
+              <div class="d-flex justify-content-between align-items-center mb-1" *ngIf="day.date">
+                <span class="badge bg-danger rounded-pill shadow-sm" *ngIf="day.events.length > 0">{{ day.events.length }}</span>
+                <span *ngIf="day.events.length === 0"></span>
+                <div class="fw-bold text-muted small">{{ day.date }}</div>
+              </div>
               
-              <div class="d-flex flex-column gap-1 overflow-auto" *ngIf="day.date" style="flex-grow: 1;">
-                <div *ngFor="let evt of day.events" 
-                     class="badge text-start text-truncate shadow-sm p-2 w-100" style="cursor: pointer; font-size: 0.65rem;"
-                     [ngClass]="{'bg-danger': evt.type === 'Visit', 'bg-dark': evt.type !== 'Visit'}"
-                     (click)="openEventDetails(evt)">
-                  {{ evt.date | date:'shortTime' }} | {{ evt.brokerName.split(' ')[0] }}
+              <!-- 🟢 عرض أول 3 مهام فقط كمعاينة (تم استخدام $any لمنع الخطأ) -->
+              <div class="d-flex flex-column gap-1 overflow-hidden" *ngIf="day.date" style="flex-grow: 1;">
+                <div *ngFor="let evt of day.events | slice:0:3" 
+                     class="badge text-start text-truncate shadow-sm p-1 w-100" style="font-size: 0.65rem;"
+                     [ngClass]="{'bg-danger': $any(evt).type === 'Visit', 'bg-dark': $any(evt).type !== 'Visit'}">
+                  {{ $any(evt).date | date:'shortTime' }} | {{ $any(evt).clientName.split(' ')[0] }}
+                </div>
+                
+                <!-- لو فيه مهام أكتر من 3 بنكتبله رسالة -->
+                <div *ngIf="day.events.length > 3" class="text-center text-muted fw-bold" style="font-size: 0.65rem;">
+                  +{{ day.events.length - 3 }} more...
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -836,6 +851,61 @@
       </div>
       <div class="modal-footer border-0 p-3 bg-white rounded-bottom-4">
         <button type="button" class="btn btn-secondary rounded-pill px-5 fw-bold w-100 shadow" data-bs-dismiss="modal">Close Details</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="dayEventsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg rounded-4" *ngIf="selectedDayEvents() as dayData">
+      
+      <div class="modal-header border-0 bg-secondary text-white rounded-top-4 p-4">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-calendar-day me-2"></i> Schedule for {{ dayData.fullDate | date:'fullDate' }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      
+      <div class="modal-body p-4 bg-light">
+        <div class="table-responsive bg-white rounded-4 shadow-sm border">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-4">Time</th>
+                <th>Type</th>
+                <th>Client</th>
+                <th>Assigned Broker</th>
+                <th class="text-end pe-4">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let evt of dayData.events">
+                <td class="ps-4 fw-bold text-danger text-nowrap">
+                  <i class="bi bi-clock me-1"></i> {{ evt.date | date:'shortTime' }}
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="evt.type === 'Visit' ? 'bg-danger' : 'bg-dark'">
+                    <i class="bi" [ngClass]="evt.type === 'Visit' ? 'bi-geo-alt-fill' : 'bi-telephone-fill'"></i> {{ evt.type }}
+                  </span>
+                </td>
+                <td class="fw-bold text-dark">{{ evt.clientName }}</td>
+                <td><span class="badge bg-light text-dark border"><i class="bi bi-person-fill me-1"></i>{{ evt.brokerName }}</span></td>
+                <td class="text-end pe-4">
+                  <!-- 🟢 زرار الـ View اللي هيفتح المودال الأصلي -->
+                  <button class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold shadow-sm" (click)="openEventDetails(evt)">
+                    <i class="bi bi-eye-fill me-1"></i> View Details
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="modal-footer border-0 p-3 bg-white rounded-bottom-4">
+        <button type="button" class="btn btn-dark rounded-pill px-5 fw-bold w-100 shadow-sm" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

@@ -490,6 +490,30 @@ namespace Unique_X.Controllers.CRM
             if (!string.IsNullOrEmpty(request.PaymentMethod))
             {
                 query = query.Where(p => p.PaymentMethod == request.PaymentMethod);
+
+                // 🟢 التعديل الجديد: الفلتر المالي الدقيق (المقدم والقسط) في حالة التقسيط
+                if (request.PaymentMethod == "Installment")
+                {
+                    // 1. فلتر المقدم (Down Payment): أكبر أو أقل بـ 400,000
+                    if (request.DownPayment.HasValue && request.DownPayment.Value > 0)
+                    {
+                        decimal minDp = Math.Max(0, request.DownPayment.Value - 400000m); // Math.Max عشان الرقم مينزلش تحت الصفر
+                        decimal maxDp = request.DownPayment.Value + 400000m;
+
+                        // بنبحث جوه خطط الدفع بتاعت العقار
+                        query = query.Where(p => p.PaymentPlans.Any(plan => plan.DownPayment >= minDp && plan.DownPayment <= maxDp));
+                    }
+
+                    // 2. فلتر القسط الربع سنوي (Quarterly Installment): أكبر أو أقل بـ 70,000
+                    if (request.QuarterlyInstallment.HasValue && request.QuarterlyInstallment.Value > 0)
+                    {
+                        decimal minQi = Math.Max(0, request.QuarterlyInstallment.Value - 70000m);
+                        decimal maxQi = request.QuarterlyInstallment.Value + 70000m;
+
+                        // بنبحث جوه خطط الدفع بتاعت العقار
+                        query = query.Where(p => p.PaymentPlans.Any(plan => plan.QuarterInstallment >= minQi && plan.QuarterInstallment <= maxQi));
+                    }
+                }
             }
 
             // -- ج) فلتر الغرض / نوع العرض (Primary, Resale, Rent)
