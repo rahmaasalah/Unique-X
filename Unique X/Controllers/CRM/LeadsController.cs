@@ -108,8 +108,8 @@ namespace Unique_X.Controllers.CRM
                 StatusId = l.LeadStatusId,
                 GeneralFeedback = l.GeneralFeedback ?? "",
                 StatusName = l.Status.Name,
-                CampaignName = l.Campaign != null ? l.Campaign.Name : "No Campaign",
-                CampaignSource = l.Campaign != null ? l.Campaign.Source : "", // 👈 السطر ده جديد
+                CampaignName = string.IsNullOrEmpty(l.CampaignName) ? "No Campaign" : l.CampaignName,
+                CampaignSource = l.CampaignSource ?? "",
                 ReferredBy = l.ReferredBy ?? "", // 👈 السطر ده جديد
                 IsDuplicate = l.IsDuplicate,
                 IsApprovedDuplicate = l.IsApprovedDuplicate,
@@ -304,8 +304,8 @@ namespace Unique_X.Controllers.CRM
                     StatusId = lead.LeadStatusId,
                     StatusName = lead.Status.Name,
                     CampaignId = lead.CampaignId,
-                    CampaignName = lead.Campaign != null ? lead.Campaign.Name : "No Campaign",
-                    CampaignSource = lead.Campaign != null ? lead.Campaign.Source : "",
+                    CampaignName = string.IsNullOrEmpty(lead.CampaignName) ? "No Campaign" : lead.CampaignName,
+                    CampaignSource = lead.CampaignSource ?? "",
                     ReferredBy = lead.ReferredBy ?? "",
                     GeneralFeedback = lead.GeneralFeedback ?? "",
                     lead.CreatedAt,
