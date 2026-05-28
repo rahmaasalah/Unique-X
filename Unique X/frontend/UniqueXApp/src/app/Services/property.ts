@@ -73,4 +73,8 @@ getFinancialHistory(code: string): Observable<any[]> {
   getHotDeals() {
   return this.http.get<any[]>(`${this.baseUrl}/hot-deals`);
 }
+
+getNextCode(prefix: string) {
+    return this.http.get<any>(`${this.baseUrl}/next-code?prefix=${prefix}`);
+  }
 }

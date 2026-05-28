@@ -19,5 +19,7 @@ namespace Unique_X.Services.Interface
         Task<bool> DeletePhotoAsync(int propertyId, int photoId, string brokerId);
 
         Task<IEnumerable<PropertyResponseDto>> GetHotDealsAsync();
+
+        Task<string> GetNextCodeAsync(string prefix);
     }
 }

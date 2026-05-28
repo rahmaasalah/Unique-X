@@ -241,5 +241,13 @@ namespace Unique_X.Controllers
             var result = await _propertiesService.GetHotDealsAsync();
             return Ok(result);
         }
+
+        [HttpGet("next-code")]
+        public async Task<IActionResult> GetNextCode([FromQuery] string prefix)
+        {
+            if (string.IsNullOrEmpty(prefix)) return BadRequest("Prefix is required");
+            var code = await _propertiesService.GetNextCodeAsync(prefix);
+            return Ok(new { code = code });
+        }
     }
 }

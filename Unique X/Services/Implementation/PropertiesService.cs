@@ -1,5 +1,6 @@
 ﻿using CloudinaryDotNet;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Principal;
 using Unique_X.Data;
 using Unique_X.DTOs;
 using Unique_X.Models;
@@ -13,11 +14,120 @@ namespace Unique_X.Services.Implementation
         private readonly AppDbContext _context;
         private readonly IPhotoService _photoService;
 
+        private readonly Dictionary<string, string> PrimaryAndDeveloperCodes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            // 🏢 المطورين (Developers)
+            {"Palm hills", "PH"}, {"Elsewhere", "EW"}, {"Orouba", "OR"}, {"Zinnia", "ZN"},
+            {"Tasheed", "TD"}, {"Turkey", "TK"}, {"Add Group", "AG"}, {"Gamal Elghonimy", "CG"},
+            {"Khames Elghonimy", "KG"}, {"Bunyan", "BY"}, {"The rise", "TR"}, {"Baron", "BN"},
+            {"Mimary", "MR"}, {"Abo Zahra", "AZ"}, {"Al maram", "MA"}, {"Ivory", "IV"},
+            {"Alforat", "AF"}, {"Abo Zahra \"Diva\"", "AZ"}, {"Elghonimy \"Saluga Elite\"", "KG"},
+            {"Elghonimy \" Vee Club\"", "KG"}, {"Boulivard", "BV"}, {"Seif water front", "SWF"},
+            {"Saudi Masria", "SM"}, {"Solik", "SK"}, {"First", "FT"}, {"Tabark", "TB"},
+            {"Swag", "SG"}, {"Waf", "W"}, {"Elsedeky", "SD"}, {"Tegan, Eldawlia", "TG"},
+            {"Jeran", "JN"}, {"Alexandria development", "AL"}, {"Darak", "DK"}, {"Saif", "SF"},
+            {"Cleopatra", "CP"}, {"Jedar & Jawiria", "JW"}, {"Marsoum Development", "MS"},
+            {"Marakez", "MAR"}, {"Madar", "MAD"}, {"Naia", "NAI"}, {"M Squared", "MS"},
+            {"Tatweer Misr", "TM"}, {"Mezyan", "MZ"}, {"Hyde Park", "HP"}, {"Sodic", "SOD"},
+            {"G Development", "GD"}, {"La Vista Ras", "LVR"}, {"Mabany Edris", "MBE"},
+            {"Metso", "MET"}, {"Gates", "GAT"}, {"Mountain View", "MV"}, {"Misr Italia", "MI"},
+            {"Hassan Allam", "HA"}, {"People", "PEO"}, {"Ahly Sabbour", "AS"}, {"Ara Bella", "AB"},
+            {"Maven", "MAV"}, {"Marasem", "MAR1"}, {"Inertia", "INE"}, {"Idar", "IDA"},
+            {"Il Cazar", "IC"}, {"Rreedy", "RRE"}, {"He", "HE"}, {"Starlight Development", "SD"},
+            {"Emaar", "EMA"}, {"Akam El Rajhi", "AER"}, {"The Water Way", "TWW"}, {"Alqamzi", "ALQ"},
+            {"Lavista", "LAV"}, {"La Sirena", "LAS"}, {"Tmg", "TMG"}, {"Roua", "ROU"},
+            {"Q Development", "QD"}, {"Developer X", "DX"}, {"Serac", "SER"}, {"Egy Gab", "EG"},
+            {"Location", "LOC"}, {"Memar Elmorshedy", "ME"}, {"LMD", "LMD"}, {"Ghazala Bay", "GB"},
+            {"Modon", "MOD"}, {"New Generation", "NG"}, {"City Edge", "CE"}, {"Aldiwan", "ALD"},
+            {"Hdp", "HDP"}, {"Code", "COD"}, {"Master", "MAS"}, {"J D", "JD"}, {"Mena Group", "MG"},
+            {"Arabia", "ARA"}, {"Toledo", "TOL"}, {"Tharaa", "THA"},
+
+            // 🏢 المشاريع الأساسية (القاهرة والإسكندرية)
+            {"Palm hills Alexandria", "PHA"}, {"The One", "TO"}, {"Skyline", "SL"}, {"East towers", "ET"},
+            {"Alex west", "AW"}, {"Valore Smouha", "VS"}, {"Valore Antoniadis", "VA"}, {"Muruj", "MJ"},
+            {"Sawari", "SW"}, {"Jackranda", "JK"}, {"Vida", "VD"}, {"Alsafwa", "AS"}, {"Abha hayat", "AH"},
+            {"Grand view", "GV"}, {"Crystal towers", "CT"}, {"Twin towers", "TT"}, {"Veranda", "VR"},
+            {"Jewar", "JR"}, {"Soly vie", "SV"}, {"San Stefano royals", "SSR"}, {"Cleopatra plaza", "CP"},
+            {"Malaaz", "MZ"}, {"Smoha Gate", "SMG"}, {"Amwaj", "AM"}, {"Antoniades City", "AC"},
+            {"Oria City", "OC"}, {"Elite City", "EC"}, {"Ouruba Royals", "OR"}, {"Saraya Gardens", "SG"},
+            {"Alsafwa City", "AS"}, {"The Island", "TI"}, {"Telal", "TE"},
+
+            // 🏖️ مشاريع الساحل الشمالي
+            {"Ramla", "RA"}, {"Azha", "AZ"}, {"Naia Bay", "NA"}, {"El Masyaf", "EL"}, {"Fouka Bay", "FO"},
+            {"Remal", "RE"}, {"Hacienda West", "HA"}, {"Seashore", "SE"}, {"Ogami", "OG"}, {"Seashell Playa", "SEA"},
+            {"La Vista Ras El Hikma", "LA"}, {"Caesar", "CA"}, {"Koun", "KO"}, {"Caesar Bay", "CAE"}, {"Lyv", "LY"},
+            {"Mountain View Ras El Hikma", "MO"}, {"Solare", "SO"}, {"Swan Lake", "SW"}, {"Seashell Ras El Hikma", "SA"},
+            {"The Med", "TH"}, {"Gaia", "GA"}, {"June", "JU"}, {"Direction White", "DI"}, {"Cali Coast", "CAL"},
+            {"Hacienda Waters", "HAC"}, {"Mar Bay", "MA"}, {"Jefaira", "JE"}, {"Sea View", "SV"}, {"Safia", "SAF"},
+            {"Salt", "SAL"}, {"Azzar Islands", "AZZ"}, {"Saada North Coast", "SAA"}, {"Katamya Coast", "KA"},
+            {"Soul", "SOU"}, {"Lvls", "LV"}, {"Dose", "DO"}, {"Seazen", "SZ"}, {"La Vista Bay", "LAV"},
+            {"La Vista Bay East", "LI"}, {"Hacienda Blue", "HC"}, {"D bay", "DB"}, {"South Med", "SU"},
+            {"Hacienda Red", "HI"}, {"Hacienda White", "HE"}, {"Q North", "QN"}, {"SeaShell", "SS"},
+            {"Bianchi Ilios", "BI"}, {"Shamasi", "SH"}, {"Masaya", "MAS"}, {"Stella Heights", "ST"},
+            {"Alura", "AL"}, {"La vista Cascada", "LS"}, {"Maraasi", "MAR"}, {"Stella", "STE"},
+            {"Diplo 3", "DIP"}, {"Haceinda Bay", "HN"}, {"Playa Ghazala", "PL"}, {"Zoya", "ZO"},
+            {"Zahra", "ZA"}, {"Crysta", "CR"}, {"Plage", "PLA"}, {"Lagoons", "LAG"}, {"Alma", "ALM"},
+            {"IL Latini", "IL"}, {"Downtown", "DOW"}, {"Plam Hills North Coast", "PA"}, {"Mazarine", "MAZ"},
+            {"Golf Porto Marina", "GO"}, {"Marina 1", "MR"}, {"Marina 2", "MI"}, {"Marina 3", "MN"},
+            {"Marina 4", "AR"}, {"Marina 5", "AI"}, {"Marina 6", "AN"}, {"Marina 7", "AA"}, {"Marina 8", "RI"},
+            {"Viller", "VI"}, {"North Code", "NO"}, {"Wanas Master", "WA"}, {"London", "LON"},
+            {"Eko Mena", "EK"}, {"Bungalows", "BU"}, {"Layana", "LAY"}, {"Glee", "GL"}
+        };
+
+        private readonly Dictionary<string, string> ResaleProjectIds = new(StringComparer.OrdinalIgnoreCase)
+        {
+            {"Sawari", "1"}, {"Muruj", "2"}, {"Palm hills", "3"}, {"The one", "4"}, {"Alex west", "5"},
+            {"Skyline", "6"}, {"Grand view", "7"}, {"Antoniades City", "8"}, {"Valory Antoniades", "9"},
+            {"Valory Smoha", "10"}, {"Jewar", "11"}, {"Crystal Towers", "12"}, {"Twin Towers", "13"},
+            {"East Towers", "14"}, {"Saraya Gardens", "15"}, {"Veranda", "16"}, {"Jackranda", "17"},
+            {"Oria City", "18"}, {"Elite City", "19"}, {"Vida", "20"}, {"Abha Hayat", "21"},
+            {"Ouruba Royals", "22"}, {"Soly Vie", "23"}, {"San Stefano Royals", "24"}, {"Malaaz", "25"},
+            {"Smouha Gate", "26"}
+        };
+
+        private readonly Dictionary<string, string> ResaleZoneIds = new(StringComparer.OrdinalIgnoreCase)
+        {
+            {"Abu Qir", "1"}, {"Al-Maamoura", "2"}, {"Al-zawaida", "4"}, {"Khurshid", "5"}, {"Al-Maraghi", "6"},
+            {"Bahary", "7"}, {"El-Mandara-kebly", "8"}, {"Al-Manshiyya", "9"}, {"Bashair al-khayr", "11"},
+            {"Al-Agamy", "13"}, {"Al-Baytash", "14"}, {"Al-Hanovil", "15"}, {"Al-Dakhila", "16"}, {"October", "17"},
+            {"Al-Amiriya", "20"}, {"Borj Al-Arab", "21"}, {"Sidi Bishr", "23"}, {"Al-Aasafirah-45", "24"},
+            {"Al-Aasafirah-bahary", "25"}, {"Al-Aasafirah-30", "26"}, {"Janaklis", "32"}, {"San Stefano", "33"},
+            {"Fleming", "34"}, {"Shods", "35"}, {"Al-Suyuf", "39"}, {"Bakus", "40"}, {"Bolkley", "41"},
+            {"Roshdy", "42"}, {"Zizinia", "43"}, {"Kafr Abdo", "45"}, {"Cleopatra", "46"}, {"Sporting", "47"},
+            {"Sidi Gaber", "48"}, {"Camp Schésar", "49"}, {"Al-Shatibi", "50"}, {"Al-Azariṭa", "51"},
+            {"Mahattah al-raml", "52"}, {"Al-Saraya", "53"}, {"Muharram Bik", "56"}, {"Al-Hadra", "57"},
+            {"Miamy", "59"}, {"Abo solaiman", "60"}, {"Falaky", "61"}, {"Al-Aasafirah-kebly", "62"},
+            {"Smouha", "63"}, {"scot", "64"}, {"Mahattat Misr", "66"}, {"Al-Ibrahimiya", "67"},
+            {"Moustafa Kamel", "68"}, {"Loran", "69"}, {"Al-luban", "70"}, {"Victoria", "71"},
+            {"Gliem", "72"}, {"Wabur al-miyah", "73"}, {"Karmouz", "74"}, {"Stanly", "76"},
+            {"Al-Aawaid", "77"}, {"salah Salem", "78"}, {"Hajar al-nawatih", "79"}, {"Al-Montaza", "80"},
+            {"Al-Hedaya", "81"}, {"Wenget", "82"}, {"Road", "83"}, {"Abis", "84"}, {"Al-Hurriya", "85"},
+            {"Sultan Hussein", "86"}, {"Kubri al-namus", "87"}, {"Mohammed Naguib", "88"},
+            {"Al-Mahmoudia", "90"}, {"Saba Basha", "91"}, {"El-Mandara-bahary", "92"}, {"Marina", "93"},
+            {"Tharwat", "94"}, {"Elshalalat", "95"}, {"Green Plaza", "96"}, {"King Mariout", "97"}
+        };
+
+        private readonly Dictionary<string, int> LegacySequenceStarters = new(StringComparer.OrdinalIgnoreCase)
+        {
+            {"NR93-", 51}, {"NPR93-", 85},
+            {"ARP1-", 22}, {"ARP2-", 38}, {"ARP3-", 43}, {"ARP6-", 13}, {"ARP5-", 7},
+            {"ARP4-", 15}, {"ARP9-", 3}, {"ARP8-", 2}, {"ARP7-", 18}, {"ARP11-", 2},
+            {"ARP12-", 1}, {"AR69-", 120}, {"AR72-", 59}, {"AR43-", 28}, {"AR34-", 18},
+            {"AR41-", 28}, {"AR42-", 27}, {"AR91-", 26}, {"AR33-", 15}, {"AR32-", 26},
+            {"AR68-", 18}, {"AR45-", 55}, {"AR61-", 35}, {"AR71-", 16}, {"AR67-", 37},
+            {"AR50-", 7}, {"AR47-", 43}, {"AR46-", 26}, {"AR48-", 38}, {"AR49-", 52},
+            {"AR51-", 4}, {"AR52-", 3}, {"AR56-", 54}, {"AR63-", 327}, {"AR59-", 109},
+            {"AR23-", 127}, {"AR2-", 11}, {"AR92-", 35}, {"AR97-", 15}
+        };
+
+
         public PropertiesService(AppDbContext context, IPhotoService photoService)
         {
             _context = context;
             _photoService = photoService;
         }
+
+
 
         // 1. إضافة عقار جديد
         public async Task<PropertyResponseDto> AddPropertyAsync(PropertyFormDto dto, string brokerId)
@@ -133,6 +243,8 @@ namespace Unique_X.Services.Implementation
                     });
                 }
             }
+
+            property.Code = await GenerateSmartCodeAsync(property);
 
 
             await _context.Properties.AddAsync(property);
@@ -322,7 +434,15 @@ namespace Unique_X.Services.Implementation
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
                 .FirstOrDefaultAsync(p => p.Id == id && p.BrokerId == brokerId);
-           
+
+
+            var oldCity = property.City;
+            var oldListingType = property.ListingType;
+            var oldPropertyType = property.PropertyType;
+            var oldProjectName = property.ProjectName ?? "";
+            var oldDeveloperName = property.DeveloperName ?? "";
+            var oldRegion = property.Region ?? "";
+
 
             if (property == null || property.BrokerId != brokerId)
                 return null;
@@ -330,7 +450,7 @@ namespace Unique_X.Services.Implementation
 
             if (!string.IsNullOrEmpty(dto.Title) && dto.Title != "string") property.Title = dto.Title;
             if (!string.IsNullOrEmpty(dto.Description) && dto.Description != "string") property.Description = dto.Description;
-            if (!string.IsNullOrEmpty(dto.Code) && dto.Code != "string") property.Code = dto.Code;
+            //if (!string.IsNullOrEmpty(dto.Code) && dto.Code != "string") property.Code = dto.Code;
             if (!string.IsNullOrEmpty(dto.Region) && dto.Region != "string") property.Region = dto.Region;
             if (!string.IsNullOrEmpty(dto.Address) && dto.Address != "string") property.Address = dto.Address;
             if (!string.IsNullOrEmpty(dto.View) && dto.View != "string") property.View = dto.View;
@@ -434,6 +554,20 @@ namespace Unique_X.Services.Implementation
                         QuarterInstallment = plan.QuarterInstallment
                     });
                 }
+            }
+
+            bool codeTriggersChanged =
+                oldCity != property.City ||
+                oldListingType != property.ListingType ||
+                oldPropertyType != property.PropertyType ||
+                oldProjectName != (property.ProjectName ?? "") ||
+                oldDeveloperName != (property.DeveloperName ?? "") ||
+                oldRegion != (property.Region ?? "");
+
+            // 🟢 لو اتغيرت، نولد كود جديد ونحطه، لو ماتغيرتش نسيب الكود القديم زي ما هو
+            if (codeTriggersChanged || string.IsNullOrEmpty(property.Code))
+            {
+                property.Code = await GenerateSmartCodeAsync(property);
             }
 
             property.IsApproved = false;
@@ -631,6 +765,122 @@ namespace Unique_X.Services.Implementation
                 .ToListAsync();
 
             return properties.Select(p => MapToResponseDto(p));
+        }
+
+        private async Task<string> GenerateSmartCodeAsync(Property property)
+        {
+            string prefix = "";
+
+            // 1. كود المدينة
+            string city = property.City == City.Cairo ? "C" :
+                          property.City == City.Alexandria ? "A" : "N";
+
+            // 2. كود نوع العرض (لاحظي الساحل بياخد PR في مشاريع الريسيل)
+            string list = (property.ListingType == ListingType.Resale || property.ListingType == ListingType.Rent) ? "R" :
+                          property.ListingType == ListingType.Primary ? "P" :
+                          (property.City == City.NorthCoast ? "PR" : "RP");
+
+            // 3. كود نوع العقار
+            string type = property.PropertyType == PropertyType.Apartment ? "A" :
+                          property.PropertyType == PropertyType.Villa ? "V" :
+                          property.PropertyType == PropertyType.Shop ? "S" :
+                          property.PropertyType == PropertyType.Office ? "O" :
+                          property.PropertyType == PropertyType.Chalet ? "CH" :
+                          property.PropertyType == PropertyType.FullFloor ? "F" : "";
+
+            // 4. بناء الـ Prefix حسب الشروط الخاصة بكل قسم
+            if (property.ListingType == ListingType.Primary)
+            {
+                // مثال الساحل: NPCH-AM-
+                // مثال إسكندرية: APA-MJMA-
+                string projCode = !string.IsNullOrEmpty(property.ProjectName) && PrimaryAndDeveloperCodes.TryGetValue(property.ProjectName, out var pc) ? pc : "";
+                string devCode = !string.IsNullOrEmpty(property.DeveloperName) && PrimaryAndDeveloperCodes.TryGetValue(property.DeveloperName, out var dc) ? dc :
+                                 (!string.IsNullOrEmpty(property.DeveloperName) && property.DeveloperName.Length >= 2 ? property.DeveloperName.Substring(0, 2).ToUpper() : "");
+
+                prefix = $"{city}{list}{type}-{projCode}{devCode}-";
+            }
+            else if (property.ListingType == ListingType.ResaleProject)
+            {
+                if (property.City == City.NorthCoast)
+                {
+                    prefix = "NPR93-"; // ثابت للساحل
+                }
+                else
+                {
+                    // مثال إسكندرية: ARP1-
+                    string projId = !string.IsNullOrEmpty(property.ProjectName) && ResaleProjectIds.TryGetValue(property.ProjectName, out var pi) ? pi : "0";
+                    prefix = $"{city}{list}{projId}-";
+                }
+            }
+            else // Resale or Rent
+            {
+                if (property.City == City.NorthCoast)
+                {
+                    prefix = "NR93-"; // ثابت للساحل
+                }
+                else
+                {
+                    // مثال إسكندرية: AR56-
+                    string zoneId = !string.IsNullOrEmpty(property.Region) && ResaleZoneIds.TryGetValue(property.Region, out var zi) ? zi : "0";
+                    prefix = $"{city}{list}{zoneId}-";
+                }
+            }
+
+            // 5. استخراج الرقم التسلسلي التلقائي من الداتا بيز
+            var existingCodes = await _context.Properties
+                .Where(p => p.Code != null && p.Code.StartsWith(prefix))
+                .Select(p => p.Code)
+                .ToListAsync();
+
+            int maxSeq = 0;
+            foreach (var code in existingCodes)
+            {
+                var parts = code.Split('-');
+                if (parts.Length > 0 && int.TryParse(parts.Last(), out int seq))
+                {
+                    if (seq > maxSeq) maxSeq = seq;
+                }
+            }
+
+            // 6. لو مفيش في الداتا بيز، نبص على قاموس الأرقام القديمة كبداية
+            if (maxSeq == 0)
+            {
+                if (LegacySequenceStarters.TryGetValue(prefix, out int legacyMax))
+                {
+                    maxSeq = legacyMax;
+                }
+            }
+
+            // بناء الكود النهائي بدون "01" (مثال: APA-MJMA-1 أو NPR93-86)
+            return $"{prefix}{maxSeq + 1}";
+        }
+
+        public async Task<string> GetNextCodeAsync(string prefix)
+        {
+            if (string.IsNullOrEmpty(prefix)) return "";
+
+            var existingCodes = await _context.Properties
+                .Where(p => p.Code != null && p.Code.StartsWith(prefix))
+                .Select(p => p.Code)
+                .ToListAsync();
+
+            int maxSeq = 0;
+            foreach (var code in existingCodes)
+            {
+                var parts = code.Split('-');
+                if (parts.Length > 0 && int.TryParse(parts.Last(), out int seq))
+                {
+                    if (seq > maxSeq) maxSeq = seq;
+                }
+            }
+
+            // لو مفيش في الداتا بيز، نبص في القاموس القديم
+            if (maxSeq == 0 && LegacySequenceStarters.TryGetValue(prefix, out int legacyMax))
+            {
+                maxSeq = legacyMax;
+            }
+
+            return $"{prefix}{maxSeq + 1}";
         }
     }
 }

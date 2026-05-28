@@ -24,12 +24,12 @@
                 }
               </div>
               <div class="col-md-2">
-                <label class="form-label fw-bold small">Code <span class="text-danger">*</span></label>
-                <input type="text" formControlName="code" class="form-control shadow-sm">
-                @if (editForm.get('code')?.touched && editForm.get('code')?.errors?.['required']) {
-                  <small class="text-danger d-block mt-1">Code is required</small>
-                }
-              </div>
+  <label class="form-label fw-bold small text-muted">Property Code</label>
+  <div class="input-group shadow-sm rounded-3 overflow-hidden">
+    <span class="input-group-text bg-light text-muted border-0 pe-1"><i class="bi bi-lock-fill"></i></span>
+    <input type="text" formControlName="code" class="form-control bg-light border-0 text-danger fw-bold" readonly style="cursor: not-allowed;">
+  </div>
+</div>
               <div class="col-md-3">
                 <label class="form-label fw-bold small">Listing Type <span class="text-danger">*</span></label>
                 <select formControlName="listingType" class="form-select shadow-sm">

@@ -33,6 +33,9 @@ mainPhotoIndex: number = 0;
 isSubmitting = false;
 currentYear = new Date().getFullYear(); 
 
+currentPrefix: string = '';
+
+
 
 regionsMapping: any = {
   1: ['Sheikh Zayed', 'Green belt', '6th of October', 'North Expansions', 'October Gardens', 'Eastern Expansions', 'New Cairo'], // Cairo
@@ -128,8 +131,148 @@ dummyDevelopers =[
   { code: 'SF', name: 'Saif' },
   { code: 'CP', name: 'Cleopatra' },
   { code: 'JW', name: 'Jedar & Jawiria' },
-  { code: 'MS', name: 'Marsoum Development' }
+  { code: 'MS', name: 'Marsoum Development' },
+  {code: 'MAR', name: 'Marakez' },
+  {code: 'MAD', name: 'Madar' },
+  {code: 'NAI', name: 'Naia' },
+  {code: 'MS', name: 'M Squared' },
+  {code: 'TM', name: 'Tatweer Misr' },
+  {code: 'MZ', name: 'Mezyan' },
+  {code: 'HP', name: 'Hyde Park' },
+  {code: 'SOD', name: 'Sodic' },
+  {code: 'GD', name: 'G Development' },
+  {code: 'LVR', name: 'La Vista Ras' },
+  {code: 'MBE', name: 'Mabany Edris' },
+  {code: 'MET', name: 'Metso' },
+  {code: 'GAT', name: 'Gates' },
+  {code: 'MV', name: 'Mountain View' },
+  {code: 'MI', name: 'Misr Italia' },
+  {code: 'HA', name: 'Hassan Allam' },
+  {code: 'PEO', name: 'People' },
+  {code: 'AS', name: 'Ahly Sabbour' },
+  {code: 'AB', name: 'Ara Bella' },
+  {code: 'MAV', name: 'Maven' },
+  {code: 'MAR1', name: 'Marasem' },
+  {code: 'INE', name: 'Inertia' },
+  {code: 'IDA', name: 'Idar' },
+  {code: 'IC', name: 'Il Cazar' },
+  {code: 'RRE', name: 'Rreedy' },
+  {code: 'HE', name: 'He' },
+  {code: 'SD', name: 'Starlight Development' },
+  {code: 'EMA', name: 'Emaar' },
+  {code: 'AER', name: 'Akam El Rajhi' },
+  {code: 'TWW', name: 'The Water Way' },
+  {code: 'ALQ', name: 'Alqamzi' },
+  {code: 'LAV', name: 'Lavista' },
+  {code: 'LS', name: 'La Sirena' },
+  {code: 'TMG', name: 'Tmg' },
+  {code: 'ROU', name: 'Roua' },
+  {code: 'QD', name: 'Q Development' },
+  {code: 'DX', name: 'Developer X' },
+  {code: 'SER', name: 'Serac' },
+  {code: 'EG', name: 'Egy Gab' },
+  {code: 'LOC', name: 'Location' },
+  {code: 'ME', name: 'Memar Elmorshedy' },
+  {code: 'LMD', name: 'LMD' },
+  {code: 'GB', name: 'Ghazala Bay' },
+  {code: 'MOD', name: 'Modon' },
+  {code: 'NG', name: 'New Generation' },
+  {code: 'CE', name: 'City Edge' },
+  {code: 'ALD', name: 'Aldiwan' },
+  {code: 'HDP', name: 'Hdp' },
+  {code: 'COD', name: 'Code' },
+  {code: 'MAS', name: 'Master' },
+  {code: 'JD', name: 'J D' },
+  {code: 'MG', name: 'Mena Group' },
+  {code: 'ARA', name: 'Arabia' },
+  {code: 'TOL', name: 'Toledo' },
+  {code: 'THA', name: 'Tharaa' },
 ];
+
+primaryProjectCodes: any = {
+    "Palm hills Alexandria": "PHA", "The One": "TO", "Skyline": "SL", "East towers": "ET",
+    "Alex west": "AW", "Valore Smouha": "VS", "Valore Antoniadis": "VA", "Muruj": "MJ",
+    "Sawari": "SW", "Jackranda": "JK", "Vida": "VD", "Alsafwa": "AS", "Abha hayat": "AH",
+    "Grand view": "GV", "Crystal towers": "CT", "Twin towers": "TT", "Veranda": "VR",
+    "Jewar": "JR", "Soly vie": "SV", "San Stefano royals": "SSR", "Cleopatra plaza": "CP",
+    "Malaaz": "MZ", "Smoha Gate": "SMG", "Amwaj": "AM", "Antoniades City": "AC", 'Oria City': 'OC', 'Elite City': 'EC', 'Ouruba Royals': 'OR'
+    , 'Saraya Gardens': 'SG', 'Alsafwa City': 'AS', 'The Island': 'TI', 'Telal': 'TE', 
+    "Ramla": "RA", "Azha": "AZ", "Naia Bay": "NA", "El Masyaf": "EL", "Fouka Bay": "FO",
+    "Remal": "RE", "Hacienda West": "HA", "Seashore": "SE", "Ogami": "OG", "Seashell Playa": "SEA",
+    "La Vista Ras El Hikma": "LA", "Caesar": "CA", "Koun": "KO", "Caesar Bay": "CAE", "Lyv": "LY",
+    "Mountain View Ras El Hikma": "MO", "Solare": "SO", "Swan Lake": "SW", "Seashell Ras El Hikma": "SA",
+    "The Med": "TH", "Gaia": "GA", "June": "JU", "Direction White": "DI", "Cali Coast": "CAL",
+    "Hacienda Waters": "HAC", "Mar Bay": "MA", "Jefaira": "JE", "Sea View": "SV", "Safia": "SAF",
+    "Salt": "SAL", "Azzar Islands": "AZZ", "Saada North Coast": "SAA", "Katamya Coast": "KA",
+    "Soul": "SOU", "Lvls": "LV",
+
+    // 🏖️ الساحل الشمالي (Al-Dabaa)
+    "Dose": "DO", "The Water Way": "THE", "Seazen": "SZ", "La Vista Bay": "LAV", 
+    "La Vista Bay East": "LI", "Hacienda Blue": "HC", "La Sirena": "LAS", "D bay": "DB", 
+    "South Med": "SU",
+
+    // 🏖️ الساحل الشمالي (Sidi Abdulrahman)
+    "Hacienda Red": "HI", "Hacienda White": "HE", "Q North": "QN", "SeaShell": "SS", 
+    "Bianchi Ilios": "BI", "Shamasi": "SH", "Masaya": "MAS", "Location": "LO", 
+    "Stella Heights": "ST", "Alura": "AL", "La vista Cascada": "LS", "Maraasi": "MAR", 
+    "Stella": "STE", "Diplo 3": "DIP", "Haceinda Bay": "HN",
+
+    // 🏖️ الساحل الشمالي (Ghazala Bay)
+    "Playa Ghazala": "PL", "Ghazala Bay": "GH", "Zoya": "ZO",
+
+    // 🏖️ الساحل الشمالي (Al-Alamin)
+    "Zahra": "ZA", "Crysta": "CR", "Plage": "PLA", "Lagoons": "LAG", "Alma": "ALM",
+    "IL Latini": "IL", "Downtown": "DOW", "Plam Hills North Coast": "PA", "Mazarine": "MAZ",
+    "Golf Porto Marina": "GO", "Marina 1": "MR", "Marina 2": "MI", "Marina 3": "MN",
+    "Marina 4": "AR", "Marina 5": "AI", "Marina 6": "AN", "Marina 7": "AA", "Marina 8": "RI",
+
+    // 🏖️ الساحل الشمالي (Sahel)
+    "Viller": "VI", "North Code": "NO", "Wanas Master": "WA", "London": "LON", 
+    "Eko Mena": "EK", "Bungalows": "BU", "Layana": "LAY", "Glee": "GL"
+  };
+
+  resaleProjectIds: any = {
+    "Sawari": "1", "Muruj": "2", "Palm hills": "3", "The one": "4", "Alex west": "5",
+    "Skyline": "6", "Grand view": "7", "Antoniades City": "8", "Valory Antoniades": "9",
+    "Valory Smoha": "10", "Jewar": "11", "Crystal Towers": "12", "Twin Towers": "13",
+    "East Towers": "14", "Saraya Gardens": "15", "Veranda": "16", "Jackranda": "17",
+    "Oria City": "18", "Elite City": "19", "Vida": "20", "Abha Hayat": "21",
+    "Ouruba Royals": "22", "Soly Vie": "23", "San Stefano Royals": "24", "Malaaz": "25",
+    "Smouha Gate": "26"
+  };
+
+  legacySequenceStarters: any = {
+    "NR93-": 51, "NPR93-": 85, 
+    "ARP1-": 22, "ARP2-": 38, "ARP3-": 43, "ARP6-": 13, "ARP5-": 7,
+    "ARP4-": 15, "ARP9-": 3, "ARP8-": 2, "ARP7-": 18, "ARP11-": 2,
+    "ARP12-": 1, "AR69-": 120, "AR72-": 59, "AR43-": 28, "AR34-": 18,
+    "AR41-": 28, "AR42-": 27, "AR91-": 26, "AR33-": 15, "AR32-": 26,
+    "AR68-": 18, "AR45-": 55, "AR61-": 35, "AR71-": 16, "AR67-": 37,
+    "AR50-": 7, "AR47-": 43, "AR46-": 26, "AR48-": 38, "AR49-": 52,
+    "AR51-": 4, "AR52-": 3, "AR56-": 54, "AR63-": 327, "AR59-": 109,
+    "AR23-": 127, "AR2-": 11, "AR92-": 35, "AR97-": 15
+  };
+
+  resaleZoneIds: any = {
+    "Abu Qir": "1", "Al-Maamoura": "2", "Al-zawaida": "4", "Khurshid": "5", "Al-Maraghi": "6",
+    "Bahary": "7", "El-Mandara-kebly": "8", "Al-Manshiyya": "9", "Bashair al-khayr": "11",
+    "Al-Agamy": "13", "Al-Baytash": "14", "Al-Hanovil": "15", "Al-Dakhila": "16", "October": "17",
+    "Al-Amiriya": "20", "Borj Al-Arab": "21", "Sidi Bishr": "23", "Al-Aasafirah-45": "24",
+    "Al-Aasafirah-bahary": "25", "Al-Aasafirah-30": "26", "Janaklis": "32", "San Stefano": "33",
+    "Fleming": "34", "Shods": "35", "Al-Suyuf": "39", "Bakus": "40", "Bolkley": "41",
+    "Roshdy": "42", "Zizinia": "43", "Kafr Abdo": "45", "Cleopatra": "46", "Sporting": "47",
+    "Sidi Gaber": "48", "Camp Schésar": "49", "Al-Shatibi": "50", "Al-Azariṭa": "51",
+    "Mahattah al-raml": "52", "Al-Saraya": "53", "Muharram Bik": "56", "Al-Hadra": "57",
+    "Miamy": "59", "Abo solaiman": "60", "Falaky": "61", "Al-Aasafirah-kebly": "62",
+    "Smouha": "63", "scot": "64", "Mahattat Misr": "66", "Al-Ibrahimiya": "67",
+    "Moustafa Kamel": "68", "Loran": "69", "Al-luban": "70", "Victoria": "71",
+    "Gliem": "72", "Wabur al-miyah": "73", "Karmouz": "74", "Stanly": "76",
+    "Al-Aawaid": "77", "salah Salem": "78", "Hajar al-nawatih": "79", "Al-Montaza": "80",
+    "Al-Hedaya": "81", "Wenget": "82", "Road": "83", "Abis": "84", "Al-Hurriya": "85",
+    "Sultan Hussein": "86", "Kubri al-namus": "87", "Mohammed Naguib": "88",
+    "Al-Mahmoudia": "90", "Saba Basha": "91", "El-Mandara-bahary": "92", "Marina": "93",
+    "Tharwat": "94", "Elshalalat": "95", "Green Plaza": "96", "King Mariout": "97"
+  };
 filteredProjects: string[] = [];
 
   private fb = inject(FormBuilder);
@@ -189,7 +332,7 @@ filteredProjects: string[] = [];
       paymentPlans: this.fb.array([this.createPaymentPlan()]),
       securityDeposit: [0, [minAmountValidator(0)]],
       monthlyRent: [0, [minAmountValidator(0)]],
-      code:['', Validators.required],
+      code: ['Auto-Generated'],
       finishing: [2],
       projectName: ['']
     });
@@ -262,7 +405,91 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
         });
       }
     });
+
+     this.propertyForm.valueChanges.subscribe(() => {
+      this.updateLiveCodePreview();
+    });
   }
+
+  updateLiveCodePreview() {
+    const f = this.propertyForm.getRawValue();
+    
+    if (!f.city || f.listingType === null || f.listingType === '') {
+      this.propertyForm.get('code')?.setValue('Auto-Generated', { emitEvent: false });
+      return;
+    }
+
+    let city = f.city == 1 ? "C" : f.city == 2 ? "A" : f.city == 3 ? "N" : "";
+    let list = (f.listingType == 0 || f.listingType == 1) ? "R" : f.listingType == 2 ? "P" : (f.city == 3 ? "PR" : "RP"); 
+
+    let type = f.propertyType == 0 ? "A" : f.propertyType == 1 ? "V" : 
+               f.propertyType == 2 ? "S" : f.propertyType == 3 ? "O" : 
+               f.propertyType == 4 ? "CH" : f.propertyType == 5 ? "F" : "";
+
+    let prefix = "";
+
+    const getProjCodePrimary = (name: string) => {
+      if(!name) return '';
+      const key = Object.keys(this.primaryProjectCodes).find(k => k.toLowerCase() === name.toLowerCase());
+      return key ? this.primaryProjectCodes[key] : '';
+    };
+
+    const getDevCode = (name: string) => {
+      if(!name) return '';
+      const found = this.dummyDevelopers.find(d => d.name.toLowerCase() === name.toLowerCase());
+      return found ? found.code : name.substring(0, 2).toUpperCase();
+    };
+
+    const getResaleProjectId = (name: string) => {
+      if(!name) return '';
+      const key = Object.keys(this.resaleProjectIds).find(k => k.toLowerCase() === name.toLowerCase());
+      return key ? this.resaleProjectIds[key] : '(ProjId)';
+    };
+
+    const getZoneId = (name: string) => {
+      if(!name) return '';
+      const key = Object.keys(this.resaleZoneIds).find(k => k.toLowerCase() === name.toLowerCase());
+      return key ? this.resaleZoneIds[key] : '0'; 
+    };
+
+    if (f.listingType == 2) { 
+      const pCode = getProjCodePrimary(f.projectName);
+      const dCode = getDevCode(f.developerName);
+      prefix = `${city}${list}${type}-${pCode}${dCode}-`; 
+    } 
+    else if (f.listingType == 3) { 
+      if (f.city == 3) prefix = `NPR93-`;
+      else {
+        const pId = getResaleProjectId(f.projectName);
+        prefix = `${city}${list}${pId}-`;
+      }
+    } 
+    else { 
+      if (f.city == 3) prefix = `NR93-`; 
+      else {
+        const zId = getZoneId(f.region);
+        prefix = `${city}${list}${zId}-`;
+      }
+    }
+
+    // 🟢 السحر هنا: لو الـ Prefix مبني صح واتغير، هنكلم الباك إند يجيب الرقم اللي عليه الدور!
+    if (prefix && this.currentPrefix !== prefix && !prefix.includes('(ProjId)') && !prefix.includes('(Zone)')) {
+      this.currentPrefix = prefix; 
+      this.propertyForm.get('code')?.setValue(`${prefix}Loading...`, { emitEvent: false }); 
+
+      this.propertyService.getNextCode(prefix).subscribe({
+        next: (res) => {
+          this.propertyForm.get('code')?.setValue(res.code, { emitEvent: false });
+        },
+        error: () => {
+          this.propertyForm.get('code')?.setValue(`${prefix}1`, { emitEvent: false });
+        }
+      });
+    } else if (prefix.includes('(ProjId)') || prefix.includes('(Zone)')) {
+      this.propertyForm.get('code')?.setValue(`${prefix}***`, { emitEvent: false });
+    }
+  }
+
 
   isSecurityExceeded(): boolean {
     const totalPrice = this.getPureNumber('price');
