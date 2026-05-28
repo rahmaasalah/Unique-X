@@ -71,7 +71,7 @@ namespace Unique_X.Services.Implementation
             {"Golf Porto Marina", "GO"}, {"Marina 1", "MR"}, {"Marina 2", "MI"}, {"Marina 3", "MN"},
             {"Marina 4", "AR"}, {"Marina 5", "AI"}, {"Marina 6", "AN"}, {"Marina 7", "AA"}, {"Marina 8", "RI"},
             {"Viller", "VI"}, {"North Code", "NO"}, {"Wanas Master", "WA"}, {"London", "LON"},
-            {"Eko Mena", "EK"}, {"Bungalows", "BU"}, {"Layana", "LAY"}, {"Glee", "GL"}
+            {"Eko Mena", "EK"}, {"Bungalows", "BU"}, {"Layana", "LAY"}, {"Glee", "GL"}, {"Ras Al-Hekma", "RAH"},{"Hacienda Ras Al-Hekma", "HRA"}
         };
 
         private readonly Dictionary<string, string> ResaleProjectIds = new(StringComparer.OrdinalIgnoreCase)
