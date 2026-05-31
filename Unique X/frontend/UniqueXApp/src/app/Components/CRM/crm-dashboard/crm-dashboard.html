@@ -36,8 +36,16 @@
         </li>
 
         <li class="mb-2">
+          <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
+                  [ngClass]="activeTab() === 'favorites' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+                  (click)="switchTab('favorites')">
+            <i class="bi bi-star-fill text-warning me-3 fs-5"></i> My Favorites
+          </button>
+        </li>
+
+        <li class="mb-2">
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
-          [ngClass]="activeTab() === 'transfer_leads' ? 'btn-danger text-dark shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+          [ngClass]="activeTab() === 'transfer_leads' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
           (click)="switchTab('transfer_leads'); selectedLeadsForTransfer.set([])">
     <i class="bi bi-arrow-left-right me-3 fs-5"></i> Transfer Leads
   </button>
@@ -285,7 +293,7 @@
           <div class="row align-items-center g-3">
             <div class="col-md-5">
               <h6 class="fw-bold text-dark mb-1">Select Target Broker</h6>
-              <select class="form-select bg-light border-0 shadow-sm fw-bold text-primary" [ngModel]="targetBrokerForTransfer()" (ngModelChange)="targetBrokerForTransfer.set($event)">
+              <select class="form-select bg-light border-0 shadow-sm fw-bold text-dark" [ngModel]="targetBrokerForTransfer()" (ngModelChange)="targetBrokerForTransfer.set($event)">
                 <option value="">-- Choose New Broker --</option>
                 <option *ngFor="let b of vipBrokers()" [value]="b.id">{{ b.firstName }} {{ b.lastName }}</option>
               </select>
@@ -492,6 +500,12 @@
                     </div>
                   </td>
                   <td class="text-end pe-4 text-nowrap">
+
+                    <button class="btn btn-sm rounded-pill px-3 shadow-sm me-2 border" 
+                            [ngClass]="favoriteLeads().includes(lead.id) ? 'btn-light border-warning' : 'btn-light'"
+                            (click)="toggleFavorite(lead.id, $event)" title="Add/Remove Favorite">
+                      <i class="bi fs-6" [ngClass]="favoriteLeads().includes(lead.id) ? 'bi-star-fill text-warning' : 'bi-star text-muted'"></i>
+                    </button>
                     <!-- 🟢 زرار إخفاء العميل -->
                     <button *ngIf="isAdmin()" class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm me-2" 
                             [ngClass]="hiddenLeads().includes(lead.id) ? 'btn-success' : 'btn-outline-secondary'"
@@ -505,6 +519,106 @@
                     <button class="btn btn-sm btn-danger rounded-pill px-4 fw-bold shadow-sm" [routerLink]="['/crm/leads', lead.id]">
                       Profile &rarr;
                     </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    }
+
+     <!-- 🟢 تاب: العملاء المفضلين (Favorites)           -->
+    <!-- ============================================== -->
+    @if (activeTab() === 'favorites') {
+      <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
+        
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
+          <h4 class="fw-bold mb-0"><i class="bi bi-star-fill text-warning me-2"></i>My Favorite Leads</h4>
+          
+          <button *ngIf="isAdmin()" class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm border"
+                  [ngClass]="showHiddenItems() ? 'btn-dark' : 'bg-white text-dark'"
+                  (click)="showHiddenItems.set(!showHiddenItems())">
+            <i class="bi" [ngClass]="showHiddenItems() ? 'bi-eye' : 'bi-eye-slash text-muted'"></i> 
+            {{ showHiddenItems() ? 'Hide All' : 'Show Hidden' }}
+          </button>
+        </div>
+        
+        <!-- الفلاتر (نفسها بالظبط عشان تفلتر جوه المفضلين) -->
+        <div class="row g-2 mb-3 p-3 bg-white rounded-4 border shadow-sm flex-shrink-0 ">
+          <div class="col-md-3">
+            <input type="text" class="form-control bg-light border-0" placeholder="Search Client Name/Phone..." [ngModel]="searchClient()" (ngModelChange)="searchClient.set($event)">
+          </div>
+          <div class="col-md-3">
+            <select class="form-select bg-light border-0" [ngModel]="filterClientStage()" (ngModelChange)="filterClientStage.set($event)">
+              <option value="">All Stages</option>
+              <option *ngFor="let stage of stages" [value]="stage.id">{{ stage.name }}</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select bg-light border-0" [ngModel]="globalBrokerFilter()" (ngModelChange)="globalBrokerFilter.set($event)">
+              <option value="">All Brokers</option>
+              <option *ngFor="let b of vipBrokers()" [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
+            </select>
+          </div>
+          <div class="col-md-3 text-end">
+            <button class="btn btn-outline-danger fw-bold w-100 rounded-3" (click)="clearClientFilters()">Clear Filters</button>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 d-flex flex-column flex-grow-1" style="min-height: 0;">
+          <div class="table-responsive flex-grow-1" style="font-size: 0.85rem; overflow-y: auto;">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-nowrap sticky-top" style="z-index: 2;">
+                <tr>
+                  <th class="ps-4">Client</th>
+                  <th>Assigned Broker</th>
+                  <th>Stage</th>
+                  <th>Last Update</th>
+                  <th class="text-end pe-4">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 🟢 التعديل هنا: الداتا بتقرأ من filteredFavoritesList -->
+                <tr *ngFor="let lead of filteredFavoritesList()">
+                  <td class="ps-4 py-3">
+                    <div class="fw-bold text-dark fs-6">{{ lead.fullName }}</div>
+                    <div class="text-muted mt-1"><i class="bi bi-telephone-fill me-1"></i> {{ lead.phoneNumber }}</div>
+                  </td>
+                  <td><span class="fw-bold text-primary"><i class="bi bi-person-badge-fill me-1"></i>{{ lead.brokerName }}</span></td>
+                  <td><span class="badge bg-dark px-3 py-2 rounded-pill">{{ lead.statusName }}</span></td>
+                  <td>
+                    <div class="fw-bold text-danger bg-danger-subtle px-2 py-1 rounded d-inline-block">
+                      <i class="bi bi-clock-history me-1"></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
+                    </div>
+                  </td>
+                  <td class="text-end pe-4 text-nowrap">
+                    
+                    <!-- 🟢 زرار المفضلة -->
+                    <button class="btn btn-sm rounded-pill px-3 shadow-sm me-2 border" 
+                            [ngClass]="favoriteLeads().includes(lead.id) ? 'btn-light border-warning' : 'btn-light'"
+                            (click)="toggleFavorite(lead.id, $event)" title="Remove from Favorites">
+                      <i class="bi fs-6" [ngClass]="favoriteLeads().includes(lead.id) ? 'bi-star-fill text-warning' : 'bi-star text-muted'"></i>
+                    </button>
+
+                    <button *ngIf="isAdmin()" class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm me-2" 
+                            [ngClass]="hiddenLeads().includes(lead.id) ? 'btn-success' : 'btn-outline-secondary'"
+                            (click)="toggleHideLead(lead.id)" title="Hide/Unhide Lead">
+                      <i class="bi" [ngClass]="hiddenLeads().includes(lead.id) ? 'bi-eye-fill' : 'bi-eye-slash'"></i>
+                    </button>
+
+                    <button class="btn btn-sm btn-light border rounded-pill px-4 text-danger fw-bold shadow-sm me-2" (click)="openRequestModal(lead)">
+                      <i class="bi bi-card-list me-1"></i> Request
+                    </button>
+                    <button class="btn btn-sm btn-danger rounded-pill px-4 fw-bold shadow-sm" [routerLink]="['/crm/leads', lead.id]">
+                      Profile &rarr;
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredFavoritesList().length === 0">
+                  <td colspan="5" class="text-center py-5 text-muted">
+                    <i class="bi bi-star text-muted fs-1 opacity-25 d-block mb-3"></i>
+                    No favorite leads found. Click the star icon next to any lead to add it here!
                   </td>
                 </tr>
               </tbody>

@@ -23,7 +23,7 @@ export class CrmDashboardComponent implements OnInit {
   private router = inject(Router);
 
   isAdmin = signal<boolean>(false);
-  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads'>('brokers');
+  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites'>('brokers');
 
   dummyBrokers = [
     { code: 'X7', name: 'Abdelrahman Ashraf' },
@@ -50,6 +50,7 @@ export class CrmDashboardComponent implements OnInit {
   // الداتا الأساسية
   allLeads = signal<any[]>([]);
   vipBrokers = signal<any[]>([]);
+  favoriteLeads = signal<number[]>([]);
 
   allBrokersList = signal<any[]>([]); // كل البروكرز اللي في السيستم
 selectedBrokerToAdd = signal<string>(''); // البروكر اللي الأدمن اختاره من القائمة
@@ -78,6 +79,7 @@ systemActivities = computed(() => this.baseFilteredLeads().reduce((sum, l) => su
 
   selectedLeadsForTransfer = signal<number[]>([]);
   targetBrokerForTransfer = signal<string>('');
+  currentBrokerId: string = '';
 
   baseFilteredLeads = computed(() => {
   const broker = this.globalBrokerFilter();
@@ -168,6 +170,10 @@ baseFilteredEvents = computed(() => {
     return leads;
   });
 
+  filteredFavoritesList = computed(() => {
+    return this.filteredClients().filter(l => this.favoriteLeads().includes(l.id));
+  });
+
   // المودال
   selectedRequest = signal<any>(null);
 
@@ -253,7 +259,6 @@ hiddenLeads = signal<number[]>([]);
 
 
   ngOnInit() {
-
     const savedState = sessionStorage.getItem('crm_dashboard_state');
     if (savedState) {
       const parsed = JSON.parse(savedState);
@@ -267,9 +272,15 @@ hiddenLeads = signal<number[]>([]);
     if (!userString) { this.router.navigate(['/home']); return; }
     
     const user = JSON.parse(userString);
+
+    this.currentBrokerId = user.id || user.userId || '';
+
     const roles = user.roles ||[];
     const isUserAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
 
+    const sFavs = localStorage.getItem(`crm_fav_leads_${this.currentBrokerId}`);
+    if (sFavs) this.favoriteLeads.set(JSON.parse(sFavs));
+    
     const sLeads = localStorage.getItem('crm_hidden_leads');
     if (sLeads) this.hiddenLeads.set(JSON.parse(sLeads));
 
@@ -283,6 +294,8 @@ hiddenLeads = signal<number[]>([]);
       this.router.navigate(['/home']);
       return;
     }
+
+    
 
     this.isAdmin.set(true);
     this.loadAdminData();
@@ -333,6 +346,21 @@ hiddenLeads = signal<number[]>([]);
 
   toggleSidebar() {
     this.isSidebarOpen.update(val => !val);
+  }
+
+  toggleFavorite(leadId: number, event?: Event) {
+    if (event) event.stopPropagation();
+    let current = [...this.favoriteLeads()];
+    
+    if (current.includes(leadId)) {
+      current = current.filter(id => id !== leadId); // لو موجود، نشيله
+    } else {
+      current.push(leadId); // لو مش موجود، نضيفه
+    }
+    
+    this.favoriteLeads.set(current);
+    // بنحفظها باسم اليوزر عشان كل يوزر ليه مفضلته
+    localStorage.setItem(`crm_fav_leads_${this.currentBrokerId}`, JSON.stringify(current));
   }
 
   toggleHideBroker(brokerId: string) {
