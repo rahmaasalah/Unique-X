@@ -40,7 +40,8 @@ namespace Unique_X.Services.Implementation
             {"Location", "LOC"}, {"Memar Elmorshedy", "ME"}, {"LMD", "LMD"}, {"Ghazala Bay", "GB"},
             {"Modon", "MOD"}, {"New Generation", "NG"}, {"City Edge", "CE"}, {"Aldiwan", "ALD"},
             {"Hdp", "HDP"}, {"Code", "COD"}, {"Master", "MAS"}, {"J D", "JD"}, {"Mena Group", "MG"},
-            {"Arabia", "ARA"}, {"Toledo", "TOL"}, {"Tharaa", "THA"},
+            {"Arabia", "ARA"}, {"Toledo", "TOL"}, {"Tharaa", "THA"},{"Farag Amer", "FAG"},{"Housing and Development bank", "HBD"},
+            {"Saudi Egyptian Development", "SED"},
 
             // 🏢 المشاريع الأساسية (القاهرة والإسكندرية)
             {"Palm hills Alexandria", "PHA"}, {"The One", "TO"}, {"Skyline", "SL"}, {"East towers", "ET"},
@@ -68,10 +69,10 @@ namespace Unique_X.Services.Implementation
             {"Diplo 3", "DIP"}, {"Haceinda Bay", "HN"}, {"Playa Ghazala", "PL"}, {"Zoya", "ZO"},
             {"Zahra", "ZA"}, {"Crysta", "CR"}, {"Plage", "PLA"}, {"Lagoons", "LAG"}, {"Alma", "ALM"},
             {"IL Latini", "IL"}, {"Downtown", "DOW"}, {"Plam Hills North Coast", "PA"}, {"Mazarine", "MAZ"},
-            {"Golf Porto Marina", "GO"}, {"Marina 1", "MR"}, {"Marina 2", "MI"}, {"Marina 3", "MN"},
-            {"Marina 4", "AR"}, {"Marina 5", "AI"}, {"Marina 6", "AN"}, {"Marina 7", "AA"}, {"Marina 8", "RI"},
+            {"Golf Porto Marina", "GPM"}, {"Marina 1", "MR1"}, {"Marina 2", "MR2"}, {"Marina 3", "MR3"},
+            {"Marina 4", "MR4"}, {"Marina 5", "MR5"}, {"Marina 6", "MR6"}, {"Marina 7", "MR7"}, {"Marina 8", "MR8"},
             {"Viller", "VI"}, {"North Code", "NO"}, {"Wanas Master", "WA"}, {"London", "LON"},
-            {"Eko Mena", "EK"}, {"Bungalows", "BU"}, {"Layana", "LAY"}, {"Glee", "GL"}, {"Ras Al-Hekma", "RAH"},{"Hacienda Ras Al-Hekma", "HRA"}
+            {"Eko Mena", "EK"}, {"Bungalows", "BU"}, {"Layana", "LAY"}, {"Glee", "GL"}, {"Ras Al-Hekma", "RAH"},{"Hacienda Ras Al-Hekma", "HRA"}, {"Dayz", "DZ"}
         };
 
         private readonly Dictionary<string, string> ResaleProjectIds = new(StringComparer.OrdinalIgnoreCase)

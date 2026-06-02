@@ -187,6 +187,10 @@ dummyDevelopers =[
   {code: 'ARA', name: 'Arabia' },
   {code: 'TOL', name: 'Toledo' },
   {code: 'THA', name: 'Tharaa' },
+  {code: 'FAG', name: 'Farag Amer' },
+  {code: 'SED', name: 'Saudi Egyptian Development' },
+  {code: 'HBD', name: 'Housing and Development bank' },
+  {code: 'MRC', name: 'Mercon' }
 ];
 
 primaryProjectCodes: any = {
@@ -223,12 +227,12 @@ primaryProjectCodes: any = {
     // 🏖️ الساحل الشمالي (Al-Alamin)
     "Zahra": "ZA", "Crysta": "CR", "Plage": "PLA", "Lagoons": "LAG", "Alma": "ALM",
     "IL Latini": "IL", "Downtown": "DOW", "Plam Hills North Coast": "PA", "Mazarine": "MAZ",
-    "Golf Porto Marina": "GO", "Marina 1": "MR", "Marina 2": "MI", "Marina 3": "MN",
-    "Marina 4": "AR", "Marina 5": "AI", "Marina 6": "AN", "Marina 7": "AA", "Marina 8": "RI",
+    "Golf Porto Marina": "GPM", "Marina 1": "MR1", "Marina 2": "MR2", "Marina 3": "MR3",
+    "Marina 4": "MR4", "Marina 5": "MR5", "Marina 6": "MR6", "Marina 7": "MR7", "Marina 8": "MR8",
 
     // 🏖️ الساحل الشمالي (Sahel)
     "Viller": "VI", "North Code": "NO", "Wanas Master": "WA", "London": "LON", 
-    "Eko Mena": "EK", "Bungalows": "BU", "Layana": "LAY", "Glee": "GL"
+    "Eko Mena": "EK", "Bungalows": "BU", "Layana": "LAY", "Glee": "GL", "Dayz": "DZ"
   };
 
   resaleProjectIds: any = {

@@ -182,6 +182,10 @@ dummyDevelopers =[
   {code: 'ARA', name: 'Arabia' },
   {code: 'TOL', name: 'Toledo' },
   {code: 'THA', name: 'Tharaa' },
+  {code: 'FAG', name: 'Farag Amer' },
+  {code: 'SED', name: 'Saudi Egyptian Development' },
+  {code: 'HBD', name: 'Housing and Development bank' },
+  {code: 'MRC', name: 'Mercon' }
 ];
 
 primaryProjectCodes: any = {
@@ -190,9 +194,8 @@ primaryProjectCodes: any = {
     "Sawari": "SW", "Jackranda": "JK", "Vida": "VD", "Alsafwa": "AS", "Abha hayat": "AH",
     "Grand view": "GV", "Crystal towers": "CT", "Twin towers": "TT", "Veranda": "VR",
     "Jewar": "JR", "Soly vie": "SV", "San Stefano royals": "SSR", "Cleopatra plaza": "CP",
-    "Malaaz": "MZ", "Smoha Gate": "SMG", "Amwaj": "AM", "Antoniades City": "AC", 
-    "Oria City": "OC", "Elite City": "EC", "Ouruba Royals": "OR", "Saraya Gardens": "SG", 
-    "Alsafwa City": "AS", "The Island": "TI", "Telal": "TE",
+    "Malaaz": "MZ", "Smoha Gate": "SMG", "Amwaj": "AM", "Antoniades City": "AC", 'Oria City': 'OC', 'Elite City': 'EC', 'Ouruba Royals': 'OR'
+    , 'Saraya Gardens': 'SG', 'Alsafwa City': 'AS', 'The Island': 'TI', 'Telal': 'TE', 
     "Ramla": "RA", "Azha": "AZ", "Naia Bay": "NA", "El Masyaf": "EL", "Fouka Bay": "FO",
     "Remal": "RE", "Hacienda West": "HA", "Seashore": "SE", "Ogami": "OG", "Seashell Playa": "SEA",
     "La Vista Ras El Hikma": "LA", "Caesar": "CA", "Koun": "KO", "Caesar Bay": "CAE", "Lyv": "LY",
@@ -200,18 +203,31 @@ primaryProjectCodes: any = {
     "The Med": "TH", "Gaia": "GA", "June": "JU", "Direction White": "DI", "Cali Coast": "CAL",
     "Hacienda Waters": "HAC", "Mar Bay": "MA", "Jefaira": "JE", "Sea View": "SV", "Safia": "SAF",
     "Salt": "SAL", "Azzar Islands": "AZZ", "Saada North Coast": "SAA", "Katamya Coast": "KA",
-    "Soul": "SOU", "Lvls": "LV", "Dose": "DO", "The Water Way": "THE", "Seazen": "SZ", "La Vista Bay": "LAV", 
-    "La Vista Bay East": "LI", "Hacienda Blue": "HC", "D bay": "DB", "South Med": "SU", 
+    "Soul": "SOU", "Lvls": "LV", "Ras Al-Hekma": "RAH", "Hacienda Ras Al-Hekma": "HRA",
+
+    // 🏖️ الساحل الشمالي (Al-Dabaa)
+    "Dose": "DO", "The Water Way": "THE", "Seazen": "SZ", "La Vista Bay": "LAV", 
+    "La Vista Bay East": "LI", "Hacienda Blue": "HC", "La Sirena": "LAS", "D bay": "DB", 
+    "South Med": "SU",
+
+    // 🏖️ الساحل الشمالي (Sidi Abdulrahman)
     "Hacienda Red": "HI", "Hacienda White": "HE", "Q North": "QN", "SeaShell": "SS", 
-    "Bianchi Ilios": "BI", "Shamasi": "SH", "Masaya": "MAS", "Stella Heights": "ST", 
-    "Alura": "AL", "La vista Cascada": "LS", "Maraasi": "MAR", "Stella": "STE", 
-    "Diplo 3": "DIP", "Haceinda Bay": "HN", "Playa Ghazala": "PL", "Zoya": "ZO", 
-    "Zahra": "ZA", "Crysta": "CR", "Plage": "PLA", "Lagoons": "LAG", "Alma": "ALM", 
+    "Bianchi Ilios": "BI", "Shamasi": "SH", "Masaya": "MAS", "Location": "LO", 
+    "Stella Heights": "ST", "Alura": "AL", "La vista Cascada": "LS", "Maraasi": "MAR", 
+    "Stella": "STE", "Diplo 3": "DIP", "Haceinda Bay": "HN",
+
+    // 🏖️ الساحل الشمالي (Ghazala Bay)
+    "Playa Ghazala": "PL", "Ghazala Bay": "GH", "Zoya": "ZO",
+
+    // 🏖️ الساحل الشمالي (Al-Alamin)
+    "Zahra": "ZA", "Crysta": "CR", "Plage": "PLA", "Lagoons": "LAG", "Alma": "ALM",
     "IL Latini": "IL", "Downtown": "DOW", "Plam Hills North Coast": "PA", "Mazarine": "MAZ",
-    "Golf Porto Marina": "GO", "Marina 1": "MR", "Marina 2": "MI", "Marina 3": "MN",
-    "Marina 4": "AR", "Marina 5": "AI", "Marina 6": "AN", "Marina 7": "AA", "Marina 8": "RI",
+    "Golf Porto Marina": "GPM", "Marina 1": "MR1", "Marina 2": "MR2", "Marina 3": "MR3",
+    "Marina 4": "MR4", "Marina 5": "MR5", "Marina 6": "MR6", "Marina 7": "MR7", "Marina 8": "MR8",
+
+    // 🏖️ الساحل الشمالي (Sahel)
     "Viller": "VI", "North Code": "NO", "Wanas Master": "WA", "London": "LON", 
-    "Eko Mena": "EK", "Bungalows": "BU", "Layana": "LAY", "Glee": "GL", "Ras Al-Hekma": "RAH", "Hacienda Ras Al-Hekma": "HRA"
+    "Eko Mena": "EK", "Bungalows": "BU", "Layana": "LAY", "Glee": "GL", "Dayz": "DZ"
   };
 
   resaleProjectIds: any = {
