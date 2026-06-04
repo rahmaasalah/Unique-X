@@ -254,8 +254,16 @@ export class LeadDetailsComponent implements OnInit {
       regionCtrl?.clearValidators();
       projectCtrl?.clearValidators();
 
-      if (['Resale', 'Rent'].includes(type)) regionCtrl?.setValidators(Validators.required);
-      if (['Primary', 'Resale Project', 'Rent'].includes(type)) projectCtrl?.setValidators(Validators.required);
+      // 🟢 التعديل هنا:
+      if (type === 'Resale') {
+        // لو ريسيل -> المنطقة إجباري
+        regionCtrl?.setValidators(Validators.required);
+      } 
+      else if (type === 'Primary' || type === 'Resale Project') {
+        // لو برايماري أو ريسيل بروجيكت -> المشروع إجباري
+        projectCtrl?.setValidators(Validators.required);
+      }
+      // 🟢 لو Rent -> مش هنحط أي Validators (هيبقوا اختياريين)
 
       regionCtrl?.updateValueAndValidity();
       projectCtrl?.updateValueAndValidity();
