@@ -203,7 +203,7 @@ primaryProjectCodes: any = {
     "The Med": "TH", "Gaia": "GA", "June": "JU", "Direction White": "DI", "Cali Coast": "CAL",
     "Hacienda Waters": "HAC", "Mar Bay": "MA", "Jefaira": "JE", "Sea View": "SV", "Safia": "SAF",
     "Salt": "SAL", "Azzar Islands": "AZZ", "Saada North Coast": "SAA", "Katamya Coast": "KA",
-    "Soul": "SOU", "Lvls": "LV", "Ras Al-Hekma": "RAH", "Hacienda Ras Al-Hekma": "HRA",
+    "Soul": "SOU", "Lvls": "LV", "Ras Al-Hekma": "RH", "Hacienda Ras Al-Hekma": "HCR",
 
     // 🏖️ الساحل الشمالي (Al-Dabaa)
     "Dose": "DO", "The Water Way": "THE", "Seazen": "SZ", "La Vista Bay": "LAV", 
@@ -231,7 +231,7 @@ primaryProjectCodes: any = {
   };
 
   resaleProjectIds: any = {
-    "Sawari": "1", "Muruj": "2", "Palm hills": "3", "The one": "4", "Alex west": "5",
+    "Sawari": "1", "Muruj": "2", "Palm hills Alexandria": "3", "The one": "4", "Alex west": "5",
     "Skyline": "6", "Grand view": "7", "Antoniades City": "8", "Valory Antoniades": "9",
     "Valory Smoha": "10", "Jewar": "11", "Crystal Towers": "12", "Twin Towers": "13",
     "East Towers": "14", "Saraya Gardens": "15", "Veranda": "16", "Jackranda": "17",

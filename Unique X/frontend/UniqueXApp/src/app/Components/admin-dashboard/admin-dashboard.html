@@ -292,8 +292,9 @@
 
         <!-- 🟢 الفلاتر الجديدة (مرصوصة في سطر واحد بشكل متناسق) -->
          <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
-          <div class="row g-2">
-            <div class="col-md-2">
+          <!-- السطر الأول -->
+          <div class="row g-2 mb-2">
+            <div class="col-md-3">
               <input type="text" class="form-control bg-light border-0" placeholder="Search title/code..."
                      [ngModel]="propSearchText()" (ngModelChange)="propSearchText.set($event)">
             </div>
@@ -317,7 +318,6 @@
                 <option value="FullFloor">Full Floor</option>
               </select>
             </div>
-            <!-- فلتر المطور -->
             <div class="col-md-2">
               <select class="form-select bg-light border-0" [ngModel]="propDeveloperFilter()" (ngModelChange)="propDeveloperFilter.set($event)">
                 <option value="">All Developers</option>
@@ -326,8 +326,18 @@
                 }
               </select>
             </div>
-            <!-- 🟢 فلتر البروكر الجديد -->
-            <div class="col-md-2">
+            <!-- 🟢 فلتر المشاريع -->
+            <div class="col-md-3">
+              <select class="form-select bg-light border-0" [ngModel]="propProjectFilter()" (ngModelChange)="propProjectFilter.set($event)">
+                <option value="">All Projects</option>
+                @for (proj of uniqueProjects(); track proj) { <option [value]="proj">{{ proj }}</option> }
+              </select>
+            </div>
+          </div>
+
+          <!-- السطر الثاني -->
+          <div class="row g-2">
+            <div class="col-md-3">
               <select class="form-select bg-light border-0" [ngModel]="propBrokerFilter()" (ngModelChange)="propBrokerFilter.set($event)">
                 <option value="">All Brokers</option>
                 @for (b of brokersList(); track b.id) {
@@ -335,41 +345,58 @@
                 }
               </select>
             </div>
-            <!-- فلتر المالك -->
-            <div class="col-md-2">
+            <div class="col-md-3">
               <select class="form-select bg-light border-0" [ngModel]="propOwnerFilter()" (ngModelChange)="propOwnerFilter.set($event)">
                 <option value="">All Owners</option>
                 @for (owner of uniqueOwners(); track owner) { <option [value]="owner">{{ owner }}</option> }
               </select>
             </div>
+            <!-- 🟢 فلتر الحالة -->
+            <div class="col-md-3">
+              <select class="form-select bg-light border-0" [ngModel]="propStatusFilter()" (ngModelChange)="propStatusFilter.set($event)">
+                <option value="">Statues</option>
+                <option value="Active">Active</option>
+                <option value="Pending">Pending Review</option>
+                <option value="Suspended">Suspended</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Sold">Sold</option>
+              </select>
+            </div>
+            <!-- 🟢 فلتر التاريخ -->
+            <div class="col-md-3">
+              <input type="date" class="form-control bg-light border-0 text-muted" 
+                     [ngModel]="propDateFilter()" (ngModelChange)="propDateFilter.set($event)" title="Filter by creation date">
+            </div>
           </div>
         </div>
 
+
         <!-- 🟢 الجدول بعد ضبط المسافات -->
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-  <div class="table-responsive">
-    <!-- 🟢 أضفنا min-width: 1100px هنا -->
-    <table class="table table-hover align-middle mb-0" style="min-width: 1100px;">
-      <thead class="table-light text-nowrap"> <!-- أضفنا text-nowrap هنا لمنع كسر الكلام في الهيدر -->
-        <tr>
-          <th class="ps-4 py-3" style="width: 30%;">PROPERTY DETAILS</th>
-          <th style="width: 15%;">CODE</th>
-          <th style="width: 15%;">TYPE</th>
-          <th style="width: 15%;">PRICE</th>
-          <th class="text-center" style="width: 10%;">STATUS</th>
-          <th class="text-end pe-4" style="width: 15%;">ACTION</th>
-        </tr>
-      </thead>
-      <tbody>
+          <div class="table-responsive">
+            <!-- كبرنا min-width عشان عمود التاريخ الجديد -->
+            <table class="table table-hover align-middle mb-0" style="min-width: 1250px;">
+              <thead class="table-light text-nowrap">
+                <tr>
+                  <th class="ps-4 py-3" style="width: 25%;">PROPERTY DETAILS</th>
+                  <th style="width: 10%;">CODE</th>
+                  <th style="width: 10%;">TYPE</th>
+                  <th style="width: 13%;">PRICE</th>
+                  <!-- 🟢 عمود التاريخ -->
+                  <th class="text-center" style="width: 10%;">DATE</th>
+                  <th class="text-center" style="width: 10%;">STATUS</th>
+                  <th class="text-end pe-4" style="width: 22%;">ACTION</th>
+                </tr>
+              </thead>
+              <tbody>
                 @for (prop of filteredProperties(); track prop.id) {
                   <tr>
                     <td class="ps-4 py-3">
                       <div class="d-flex align-items-start">
                          <img [src]="prop.photos[0]?.url" class="rounded-3 me-3 border shadow-sm mt-1" style="width: 60px; height: 60px; object-fit: cover;">
                          <div>
-                            <h6 class="mb-1 fw-bold text-dark text-truncate" style="max-width: 250px;" [title]="prop.title">{{ prop.title }}</h6>
+                            <h6 class="mb-1 fw-bold text-dark text-truncate" style="max-width: 220px;" [title]="prop.title">{{ prop.title }}</h6>
                             
-                            <!-- 🟢 بيانات المالك والمطور (تظهر كـ Badges شيك لو موجودة) -->
                             <div class="d-flex flex-wrap gap-1 mb-2">
                               <span class="badge bg-light text-dark border fw-medium" *ngIf="prop.ownerName">
                                 <i class="bi bi-person-fill text-secondary me-1"></i>{{ prop.ownerName }}
@@ -378,14 +405,12 @@
                                 <i class="bi bi-telephone-fill me-1"></i>{{ prop.ownerPhone }}
                               </a>
                              <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle fw-bold" *ngIf="prop.developerName">
-  <i class="bi bi-building-check me-1"></i>
-  {{ prop.developerName }} 
-  <!-- البحث عن الكود باستخدام الاسم -->
-  {{ getDeveloperCode(prop.developerName) ? '- ' + getDeveloperCode(prop.developerName) : '' }}
-</span>
+                                <i class="bi bi-building-check me-1"></i>
+                                {{ prop.developerName }} 
+                                {{ getDeveloperCode(prop.developerName) ? '- ' + getDeveloperCode(prop.developerName) : '' }}
+                              </span>
                             </div>
 
-                            <!-- قائمة نقل ملكية العقار -->
                             <div class="input-group input-group-sm border border-secondary-subtle rounded-pill overflow-hidden shadow-sm bg-white mt-1" style="max-width: 200px;">
                               <span class="input-group-text bg-transparent border-0 text-danger ps-3 pe-1"><i class="bi bi-person-fill-gear"></i></span>
                               <select class="form-select border-0 bg-transparent fw-bold text-dark shadow-none" style="font-size: 0.75rem; cursor: pointer; outline: none;" (change)="onReassignBroker(prop, $event)">
@@ -398,7 +423,6 @@
                       </div>
                     </td>
 
-                    <!-- الكود والنوع -->
                     <td><span class="badge bg-light text-dark border px-2 py-1">{{ prop.code }}</span></td>
                     <td>
                       <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small">
@@ -408,6 +432,12 @@
                     
                     <td class="fw-bold text-dark text-nowrap">EGP {{ prop.price | number:'1.0-0' }}</td>
                     
+                    <!-- 🟢 عرض التاريخ بالصيغة المطلوبة -->
+                    <td class="text-center text-nowrap">
+                      <div class="fw-bold text-dark" style="font-size: 0.85rem;">{{ prop.createdAt | date:'d/M/yyyy' }}</div>
+                      <div class="text-muted small fw-medium mt-1"><i class="bi bi-clock me-1"></i>{{ prop.createdAt | date:'shortTime' }}</div>
+                    </td>
+
                     <td class="text-center">
                       @if (!prop.isApproved && !prop.rejectionReason) {
                         <span class="badge bg-warning text-dark rounded-pill px-3 shadow-sm"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
@@ -435,7 +465,7 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="6" class="text-center py-5 text-muted">
+                    <td colspan="7" class="text-center py-5 text-muted">
                       <i class="bi bi-houses-fill fs-1 d-block mb-3 opacity-25"></i>
                       <h5 class="fw-bold text-dark">No Properties Found</h5>
                       <p class="small">Try adjusting your filters.</p>
