@@ -43,6 +43,9 @@ export class AdminDashboardComponent implements OnInit {
   isHotDealDropdownOpen = signal<boolean>(false);
 
   propBrokerFilter = signal(''); // فلتر البروكر في Full Listing
+  propProjectFilter = signal('');
+  propStatusFilter = signal('');
+  propDateFilter = signal('');
   
   soldSearchCode = signal(''); // فلتر الكود في Sold
   soldBrokerFilter = signal(''); // فلتر البروكر في Sold
@@ -184,6 +187,11 @@ export class AdminDashboardComponent implements OnInit {
     return [...new Set(owners)].sort();
   });
 
+  uniqueProjects = computed(() => {
+    const projects = this.properties().map(p => p.projectName).filter(n => n && n.trim() !== '');
+    return [...new Set(projects)].sort();
+  });
+
   // 🟢 استخراج أسماء المطورين بدون تكرار (للفلتر)
  uniqueDevelopers = computed(() => {
   return this.dummyDevelopers.sort((a, b) => a.name.localeCompare(b.name));
@@ -216,19 +224,41 @@ export class AdminDashboardComponent implements OnInit {
 
   // فلترة العقارات لحظياً
   filteredProperties = computed(() => {
-    return this.properties().filter(p => {
+    let result = this.properties().filter(p => {
       const search = this.propSearchText().toLowerCase();
       const matchesTitle = p.title.toLowerCase().includes(search) || (p.code && p.code.toLowerCase().includes(search));
       const matchesListing = this.propListingFilter() === '' || p.listingType === this.propListingFilter();
       const matchesType = this.propTypeFilter() === '' || p.propertyType === this.propTypeFilter();
       const matchesOwner = this.propOwnerFilter() === '' || p.ownerName === this.propOwnerFilter();
       const matchesDev = this.propDeveloperFilter() === '' || p.developerName === this.propDeveloperFilter();
-      
-      // 🟢 فلتر البروكر الجديد
       const matchesBroker = this.propBrokerFilter() === '' || p.brokerId === this.propBrokerFilter();
 
-      return matchesTitle && matchesListing && matchesType && matchesOwner && matchesDev && matchesBroker;
+      // 🟢 فلتر المشروع
+      const matchesProject = this.propProjectFilter() === '' || p.projectName === this.propProjectFilter();
+
+      // 🟢 فلتر الحالة (Status)
+      let matchesStatus = true;
+      if (this.propStatusFilter() !== '') {
+        const s = this.propStatusFilter();
+        if (s === 'Sold') matchesStatus = p.isSold;
+        else if (s === 'Active') matchesStatus = p.isApproved && p.isActive && !p.isSold;
+        else if (s === 'Suspended') matchesStatus = p.isApproved && !p.isActive && !p.isSold;
+        else if (s === 'Rejected') matchesStatus = !p.isApproved && p.rejectionReason != null;
+        else if (s === 'Pending') matchesStatus = !p.isApproved && !p.rejectionReason;
+      }
+
+      // 🟢 فلتر التاريخ (مقارنة بـ YYYY-MM-DD)
+      let matchesDate = true;
+      if (this.propDateFilter() !== '') {
+        const propDate = new Date(p.createdAt).toISOString().split('T')[0];
+        matchesDate = propDate === this.propDateFilter();
+      }
+
+      return matchesTitle && matchesListing && matchesType && matchesOwner && matchesDev && matchesBroker && matchesProject && matchesStatus && matchesDate;
     });
+
+    // 🟢 الترتيب: من الأحدث للأقدم
+    return result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   });
 
   filteredSoldData = computed(() => {
@@ -318,7 +348,12 @@ export class AdminDashboardComponent implements OnInit {
   });
 
   this.adminService.getDetailedProperties().subscribe({
-    next: (data: any[]) => {
+   next: (data: any[]) => {
+      // 🟢 تظبيط فرق التوقيت (بنعرف الإنجولار إن ده توقيت عالمي عشان يحوله لمصر)
+      data.forEach(p => {
+        if (p.createdAt && !p.createdAt.endsWith('Z')) p.createdAt += 'Z';
+      });
+      
       this.properties.set(data);
       this.isLoading.set(false); // وقف التحميل هنا
     },

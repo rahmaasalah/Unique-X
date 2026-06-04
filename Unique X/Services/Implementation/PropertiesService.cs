@@ -72,7 +72,7 @@ namespace Unique_X.Services.Implementation
             {"Golf Porto Marina", "GPM"}, {"Marina 1", "MR1"}, {"Marina 2", "MR2"}, {"Marina 3", "MR3"},
             {"Marina 4", "MR4"}, {"Marina 5", "MR5"}, {"Marina 6", "MR6"}, {"Marina 7", "MR7"}, {"Marina 8", "MR8"},
             {"Viller", "VI"}, {"North Code", "NO"}, {"Wanas Master", "WA"}, {"London", "LON"},
-            {"Eko Mena", "EK"}, {"Bungalows", "BU"}, {"Layana", "LAY"}, {"Glee", "GL"}, {"Ras Al-Hekma", "RAH"},{"Hacienda Ras Al-Hekma", "HRA"}, {"Dayz", "DZ"}
+            {"Eko Mena", "EK"}, {"Bungalows", "BU"}, {"Layana", "LAY"}, {"Glee", "GL"}, {"Ras Al-Hekma", "RH"},{"Hacienda Ras Al-Hekma", "HCR"}, {"Dayz", "DZ"}
         };
 
         private readonly Dictionary<string, string> ResaleProjectIds = new(StringComparer.OrdinalIgnoreCase)
@@ -390,7 +390,36 @@ namespace Unique_X.Services.Implementation
 
             if (property == null) return false;
 
-            property.IsSold = !property.IsSold;
+            // 1. تحديد الحالة الجديدة (لو متباعة هنرجعها متاحة، والعكس)
+            bool newSoldStatus = !property.IsSold;
+
+            // 2. استخراج "الكود الأصل/الجذر" للوحدة
+            // لو الكود APA-MJMA-1-COPY-COPY هنقصه وناخد APA-MJMA-1 بس
+            string baseCode = property.Code;
+            if (!string.IsNullOrEmpty(baseCode) && baseCode.Contains("-COPY"))
+            {
+                baseCode = baseCode.Split("-COPY")[0];
+            }
+
+            // لو العقار لسبب ما ملوش كود، نحدثه هو بس
+            if (string.IsNullOrEmpty(baseCode))
+            {
+                property.IsSold = newSoldStatus;
+            }
+            else
+            {
+                // 3. 🟢 البحث الدقيق: هنجيب الوحدة الأصلية وكل النسخ بتاعتها
+                // (استخدمنا == أو StartsWith(baseCode + "-COPY") عشان لو الكود AR1-2 ميجيبش معاه AR1-22 بالغلط)
+                var relatedProperties = await _context.Properties
+                    .Where(p => p.Code == baseCode || p.Code.StartsWith(baseCode + "-COPY"))
+                    .ToListAsync();
+
+                // 4. تحديث كل النسخ والأصل لنفس الحالة الجديدة
+                foreach (var prop in relatedProperties)
+                {
+                    prop.IsSold = newSoldStatus;
+                }
+            }
 
             return await _context.SaveChangesAsync() > 0;
         }
@@ -762,7 +791,8 @@ namespace Unique_X.Services.Implementation
 
             var properties = await _context.Properties
                 .Include(p => p.Photos)
-                .Where(p => hotDealIds.Contains(p.Id))
+                // 🟢 التعديل هنا: ضفنا الشروط الصارمة (نشط + موافق عليه + مش مباع)
+                .Where(p => hotDealIds.Contains(p.Id) && p.IsActive && p.IsApproved && !p.IsSold)
                 .ToListAsync();
 
             return properties.Select(p => MapToResponseDto(p));
