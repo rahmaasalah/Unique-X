@@ -11,17 +11,16 @@
         public decimal MinBudget { get; set; }
         public decimal MaxBudget { get; set; }
         public string PaymentMethod { get; set; } // Cash, Installments
-        public string PreferredLocation { get; set; } // المنطقة المفضلة
-        public string Notes { get; set; } // أي تفاصيل إضافية       
+        public string PreferredLocation { get; set; } 
+        public string Notes { get; set; }  
         public decimal? TotalAmount { get; set; }
         public decimal? QuarterlyInstallment { get; set; }
 
         public int? ZoneId { get; set; }
-        public string? SelectedRegions { get; set; } // هيتخزن كنص مفصول بفاصلة
-        public string? SelectedProjects { get; set; } // هيتخزن كنص مفصول بفاصلة
+        public string? SelectedRegions { get; set; } 
+        public string? SelectedProjects { get; set; } 
         public decimal? DownPayment { get; set; }
         public int? InstallmentYears { get; set; }
-        // الحقل ده هيخزن أرقام العقارات اللي البروكر اقترحها (داس عليها) مفصولة بفاصلة
         public string? ProposedPropertyIds { get; set; }
     }
 }

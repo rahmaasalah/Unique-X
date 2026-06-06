@@ -16,7 +16,6 @@ namespace Unique_X.Services.Implementation
 
         private readonly Dictionary<string, string> PrimaryAndDeveloperCodes = new(StringComparer.OrdinalIgnoreCase)
         {
-            // 🏢 المطورين (Developers)
             {"Palm hills", "PH"}, {"Elsewhere", "EW"}, {"Orouba", "OR"}, {"Zinnia", "ZN"},
             {"Tasheed", "TD"}, {"Turkey", "TK"}, {"Add Group", "AG"}, {"Gamal Elghonimy", "CG"},
             {"Khames Elghonimy", "KG"}, {"Bunyan", "BY"}, {"The rise", "TR"}, {"Baron", "BN"},
@@ -43,7 +42,6 @@ namespace Unique_X.Services.Implementation
             {"Arabia", "ARA"}, {"Toledo", "TOL"}, {"Tharaa", "THA"},{"Farag Amer", "FAG"},{"Housing and Development bank", "HBD"},
             {"Saudi Egyptian Development", "SED"},
 
-            // 🏢 المشاريع الأساسية (القاهرة والإسكندرية)
             {"Palm hills Alexandria", "PHA"}, {"The One", "TO"}, {"Skyline", "SL"}, {"East towers", "ET"},
             {"Alex west", "AW"}, {"Valore Smouha", "VS"}, {"Valore Antoniadis", "VA"}, {"Muruj", "MJ"},
             {"Sawari", "SW"}, {"Jackranda", "JK"}, {"Vida", "VD"}, {"Alsafwa", "AS"}, {"Abha hayat", "AH"},
@@ -53,7 +51,6 @@ namespace Unique_X.Services.Implementation
             {"Oria City", "OC"}, {"Elite City", "EC"}, {"Ouruba Royals", "OR"}, {"Saraya Gardens", "SG"},
             {"Alsafwa City", "AS"}, {"The Island", "TI"}, {"Telal", "TE"},
 
-            // 🏖️ مشاريع الساحل الشمالي
             {"Ramla", "RA"}, {"Azha", "AZ"}, {"Naia Bay", "NA"}, {"El Masyaf", "EL"}, {"Fouka Bay", "FO"},
             {"Remal", "RE"}, {"Hacienda West", "HA"}, {"Seashore", "SE"}, {"Ogami", "OG"}, {"Seashell Playa", "SEA"},
             {"La Vista Ras El Hikma", "LA"}, {"Caesar", "CA"}, {"Koun", "KO"}, {"Caesar Bay", "CAE"}, {"Lyv", "LY"},
@@ -188,7 +185,7 @@ namespace Unique_X.Services.Implementation
                 PaymentMethod = dto.PaymentMethod ?? "Cash",
                 MonthlyRent = dto.MonthlyRent,
                 SecurityDeposit = dto.SecurityDeposit,
-                CommissionPercentage = 2.5m, // قيمة ثابتة أو يمكن أخذها من dto.CommissionPercentage
+                CommissionPercentage = 2.5m, 
 
                 // الحالات والخدمات (Booleans)
                 HasMasterRoom = dto.HasMasterRoom ?? false,
@@ -288,27 +285,21 @@ namespace Unique_X.Services.Implementation
                 query = query.Where(p => p.PropertyType == (PropertyType)filter.PropertyType.Value);
             
 
-            // فلترة الكود (Exact match)
             if (!string.IsNullOrEmpty(filter.Code))
                 query = query.Where(p => p.Code == filter.Code);
 
-            // فلترة سنة البناء (اكبر من او يساوي)
             if (filter.BuildYear.HasValue)
                 query = query.Where(p => p.BuildYear >= filter.BuildYear.Value);
 
-            // فلترة المساحة (اكبر من او يساوي)
             if (filter.Area.HasValue)
                 query = query.Where(p => p.Area >= filter.Area.Value);
 
-            // فلترة الغرف (Range)
             if (filter.MinRooms.HasValue) query = query.Where(p => p.Rooms >= filter.MinRooms.Value);
             if (filter.MaxRooms.HasValue) query = query.Where(p => p.Rooms <= filter.MaxRooms.Value);
 
-            // فلترة الحمامات (Range)
             if (filter.MinBathrooms.HasValue) query = query.Where(p => p.Bathrooms >= filter.MinBathrooms.Value);
             if (filter.MaxBathrooms.HasValue) query = query.Where(p => p.Bathrooms <= filter.MaxBathrooms.Value);
 
-            // فلترة الدور (Range)
             if (filter.MinFloor.HasValue) query = query.Where(p => p.Floor >= filter.MinFloor.Value);
             if (filter.MaxFloor.HasValue) query = query.Where(p => p.Floor <= filter.MaxFloor.Value);
 
@@ -317,7 +308,6 @@ namespace Unique_X.Services.Implementation
 
             if (!string.IsNullOrEmpty(filter.BrokerName))
             {
-                // بنرجع الـ (tarek-test) لـ (tarek test) عشان نقارنه بالداتا بيز
                 var searchName = filter.BrokerName.Replace("-", " ").Trim().ToLower();
 
                 query = query.Where(p =>
@@ -344,11 +334,9 @@ namespace Unique_X.Services.Implementation
 
             if (filter.ListingType.HasValue)
             {
-                // سيبحث عن النوع المختار بدقة (0 أو 1 أو 2 أو 3)
                 query = query.Where(p => p.ListingType == (ListingType)filter.ListingType.Value);
             }
-            query = query.Where(p => !p.IsSold && p.IsActive && p.IsApproved); // شرط إضافي
-
+            query = query.Where(p => !p.IsSold && p.IsActive && p.IsApproved); 
 
             if (!string.IsNullOrEmpty(filter.SearchTerm))
             {
@@ -390,31 +378,25 @@ namespace Unique_X.Services.Implementation
 
             if (property == null) return false;
 
-            // 1. تحديد الحالة الجديدة (لو متباعة هنرجعها متاحة، والعكس)
             bool newSoldStatus = !property.IsSold;
 
-            // 2. استخراج "الكود الأصل/الجذر" للوحدة
-            // لو الكود APA-MJMA-1-COPY-COPY هنقصه وناخد APA-MJMA-1 بس
             string baseCode = property.Code;
             if (!string.IsNullOrEmpty(baseCode) && baseCode.Contains("-COPY"))
             {
                 baseCode = baseCode.Split("-COPY")[0];
             }
 
-            // لو العقار لسبب ما ملوش كود، نحدثه هو بس
             if (string.IsNullOrEmpty(baseCode))
             {
                 property.IsSold = newSoldStatus;
             }
             else
             {
-                // 3. 🟢 البحث الدقيق: هنجيب الوحدة الأصلية وكل النسخ بتاعتها
-                // (استخدمنا == أو StartsWith(baseCode + "-COPY") عشان لو الكود AR1-2 ميجيبش معاه AR1-22 بالغلط)
+               
                 var relatedProperties = await _context.Properties
                     .Where(p => p.Code == baseCode || p.Code.StartsWith(baseCode + "-COPY"))
                     .ToListAsync();
 
-                // 4. تحديث كل النسخ والأصل لنفس الحالة الجديدة
                 foreach (var prop in relatedProperties)
                 {
                     prop.IsSold = newSoldStatus;
@@ -492,7 +474,6 @@ namespace Unique_X.Services.Implementation
             if (dto.OwnerPhone != null) property.OwnerPhone = dto.OwnerPhone;
             if (dto.DeveloperName != null) property.DeveloperName = dto.DeveloperName;
 
-            // تحديث الأرقام والـ Enums (فقط إذا كان لها قيمة)
             if (dto.Price.HasValue && dto.Price > 0) property.Price = dto.Price.Value;
             if (dto.Area.HasValue && dto.Area > 0) property.Area = dto.Area.Value;
             if (dto.Rooms.HasValue) property.Rooms = dto.Rooms.Value;
@@ -528,7 +509,6 @@ namespace Unique_X.Services.Implementation
             if (dto.HasPool.HasValue) property.HasPool = dto.HasPool.Value;
             if (dto.HasGarden.HasValue) property.HasGarden = dto.HasGarden.Value;
 
-            // تحديث البيانات المالية (Nullable Decimals)
             if (dto.MonthlyRent.HasValue) property.MonthlyRent = dto.MonthlyRent.Value;
             
             if (dto.SecurityDeposit.HasValue) property.SecurityDeposit = dto.SecurityDeposit.Value;
@@ -594,7 +574,6 @@ namespace Unique_X.Services.Implementation
                 oldDeveloperName != (property.DeveloperName ?? "") ||
                 oldRegion != (property.Region ?? "");
 
-            // 🟢 لو اتغيرت، نولد كود جديد ونحطه، لو ماتغيرتش نسيب الكود القديم زي ما هو
             if (codeTriggersChanged || string.IsNullOrEmpty(property.Code))
             {
                 property.Code = await GenerateSmartCodeAsync(property);
@@ -617,10 +596,8 @@ namespace Unique_X.Services.Implementation
 
             if (property == null) return false;
 
-            // 1. جعل كل الصور "ليست رئيسية"
             foreach (var p in property.Photos) p.IsMain = false;
 
-            // 2. تحديد الصورة المختارة كـ رئيسية
             var photo = property.Photos.FirstOrDefault(p => p.Id == photoId);
             if (photo != null) photo.IsMain = true;
 
@@ -646,30 +623,24 @@ namespace Unique_X.Services.Implementation
         }
 
 
-        // دالة مسح صورة محددة من العقار
         public async Task<bool> DeletePhotoAsync(int propertyId, int photoId, string brokerId)
         {
-            // 1. نجيب العقار ونتأكد إن البروكر ده هو صاحبه
             var property = await _context.Properties
                 .Include(p => p.Photos)
                 .FirstOrDefaultAsync(p => p.Id == propertyId && p.BrokerId == brokerId);
 
             if (property == null) return false;
 
-            // 2. نجيب الصورة المطلوبة
             var photo = property.Photos.FirstOrDefault(p => p.Id == photoId);
             if (photo == null) return false;
 
-            // 3. نمنع مسح الصورة الرئيسية (عشان العقار ميبقاش من غير صورة)
             if (photo.IsMain) return false;
 
-            // 4. نمسح الصورة من Cloudinary (لو ليها PublicId)
             if (!string.IsNullOrEmpty(photo.PublicId))
             {
                 await _photoService.DeletePhotoAsync(photo.PublicId);
             }
 
-            // 5. نمسحها من الداتابيز
             property.Photos.Remove(photo);
             return await _context.SaveChangesAsync() > 0;
         }
@@ -688,7 +659,6 @@ namespace Unique_X.Services.Implementation
                 Bathrooms = property.Bathrooms,
                 Code = property.Code,
 
-                // تحويل الـ Enums لنصوص مفهومة للـ UI
                 City = property.City.ToString(),
                 ListingType = property.ListingType.ToString(),
                 PropertyType = property.PropertyType.ToString(),
@@ -786,12 +756,10 @@ namespace Unique_X.Services.Implementation
 
         public async Task<IEnumerable<PropertyResponseDto>> GetHotDealsAsync()
         {
-            // جلب الـ IDs الخاصة بالعقارات المميزة
             var hotDealIds = await _context.HotDeals.Select(h => h.PropertyId).ToListAsync();
 
             var properties = await _context.Properties
                 .Include(p => p.Photos)
-                // 🟢 التعديل هنا: ضفنا الشروط الصارمة (نشط + موافق عليه + مش مباع)
                 .Where(p => hotDealIds.Contains(p.Id) && p.IsActive && p.IsApproved && !p.IsSold)
                 .ToListAsync();
 
@@ -806,7 +774,6 @@ namespace Unique_X.Services.Implementation
             string city = property.City == City.Cairo ? "C" :
                           property.City == City.Alexandria ? "A" : "N";
 
-            // 2. كود نوع العرض (لاحظي الساحل بياخد PR في مشاريع الريسيل)
             string list = (property.ListingType == ListingType.Resale || property.ListingType == ListingType.Rent) ? "R" :
                           property.ListingType == ListingType.Primary ? "P" :
                           (property.City == City.NorthCoast ? "PR" : "RP");
@@ -819,11 +786,8 @@ namespace Unique_X.Services.Implementation
                           property.PropertyType == PropertyType.Chalet ? "CH" :
                           property.PropertyType == PropertyType.FullFloor ? "F" : "";
 
-            // 4. بناء الـ Prefix حسب الشروط الخاصة بكل قسم
             if (property.ListingType == ListingType.Primary)
             {
-                // مثال الساحل: NPCH-AM-
-                // مثال إسكندرية: APA-MJMA-
                 string projCode = !string.IsNullOrEmpty(property.ProjectName) && PrimaryAndDeveloperCodes.TryGetValue(property.ProjectName, out var pc) ? pc : "";
                 string devCode = !string.IsNullOrEmpty(property.DeveloperName) && PrimaryAndDeveloperCodes.TryGetValue(property.DeveloperName, out var dc) ? dc :
                                  (!string.IsNullOrEmpty(property.DeveloperName) && property.DeveloperName.Length >= 2 ? property.DeveloperName.Substring(0, 2).ToUpper() : "");
@@ -834,30 +798,27 @@ namespace Unique_X.Services.Implementation
             {
                 if (property.City == City.NorthCoast)
                 {
-                    prefix = "NPR93-"; // ثابت للساحل
+                    prefix = "NPR93-";
                 }
                 else
                 {
-                    // مثال إسكندرية: ARP1-
                     string projId = !string.IsNullOrEmpty(property.ProjectName) && ResaleProjectIds.TryGetValue(property.ProjectName, out var pi) ? pi : "0";
                     prefix = $"{city}{list}{projId}-";
                 }
             }
-            else // Resale or Rent
+            else
             {
                 if (property.City == City.NorthCoast)
                 {
-                    prefix = "NR93-"; // ثابت للساحل
+                    prefix = "NR93-"; 
                 }
                 else
                 {
-                    // مثال إسكندرية: AR56-
                     string zoneId = !string.IsNullOrEmpty(property.Region) && ResaleZoneIds.TryGetValue(property.Region, out var zi) ? zi : "0";
                     prefix = $"{city}{list}{zoneId}-";
                 }
             }
 
-            // 5. استخراج الرقم التسلسلي التلقائي من الداتا بيز
             var existingCodes = await _context.Properties
                 .Where(p => p.Code != null && p.Code.StartsWith(prefix))
                 .Select(p => p.Code)
@@ -873,7 +834,6 @@ namespace Unique_X.Services.Implementation
                 }
             }
 
-            // 6. لو مفيش في الداتا بيز، نبص على قاموس الأرقام القديمة كبداية
             if (maxSeq == 0)
             {
                 if (LegacySequenceStarters.TryGetValue(prefix, out int legacyMax))
@@ -882,7 +842,6 @@ namespace Unique_X.Services.Implementation
                 }
             }
 
-            // بناء الكود النهائي بدون "01" (مثال: APA-MJMA-1 أو NPR93-86)
             return $"{prefix}{maxSeq + 1}";
         }
 
@@ -905,7 +864,6 @@ namespace Unique_X.Services.Implementation
                 }
             }
 
-            // لو مفيش في الداتا بيز، نبص في القاموس القديم
             if (maxSeq == 0 && LegacySequenceStarters.TryGetValue(prefix, out int legacyMax))
             {
                 maxSeq = legacyMax;
