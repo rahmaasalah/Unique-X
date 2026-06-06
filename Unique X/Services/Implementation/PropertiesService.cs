@@ -77,7 +77,7 @@ namespace Unique_X.Services.Implementation
 
         private readonly Dictionary<string, string> ResaleProjectIds = new(StringComparer.OrdinalIgnoreCase)
         {
-            {"Sawari", "1"}, {"Muruj", "2"}, {"Palm hills", "3"}, {"The one", "4"}, {"Alex west", "5"},
+            {"Sawari", "1"}, {"Muruj", "2"}, {"Palm hills Alexandria", "3"}, {"The one", "4"}, {"Alex west", "5"},
             {"Skyline", "6"}, {"Grand view", "7"}, {"Antoniades City", "8"}, {"Valory Antoniades", "9"},
             {"Valory Smoha", "10"}, {"Jewar", "11"}, {"Crystal Towers", "12"}, {"Twin Towers", "13"},
             {"East Towers", "14"}, {"Saraya Gardens", "15"}, {"Veranda", "16"}, {"Jackranda", "17"},
