@@ -163,7 +163,12 @@ namespace Unique_X.Controllers
                     ProfileImageUrl = u.ProfileImageUrl,
                     BrokerTitle = u.BrokerTitle,
                     BrokerDescription = u.BrokerDescription,
-                    PropertiesCount = _context.Properties.Count(p => p.BrokerId == u.Id && !p.IsSold)
+                    PropertiesCount = _context.Properties.Count(p =>
+                p.BrokerId == u.Id &&
+                !p.IsSold &&
+                p.IsActive &&
+                p.IsApproved
+            )
                 }).ToListAsync();
 
             return Ok(brokers);

@@ -470,6 +470,32 @@ namespace Unique_X.Controllers
             return Ok(new { Message = "Property approved and published successfully" });
         }
 
+        [HttpPatch("leads/{leadId}/approve-duplicate")]
+        public async Task<IActionResult> ApproveDuplicate(int leadId)
+        {
+            var lead = await _context.Leads.FindAsync(leadId);
+            if (lead == null) return NotFound();
+
+            lead.IsApprovedDuplicate = true;
+            lead.IsRejectedDuplicate = false;
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Duplicate lead approved" });
+        }
+
+        [HttpPatch("leads/{leadId}/reject-duplicate")]
+        public async Task<IActionResult> RejectDuplicate(int leadId)
+        {
+            var lead = await _context.Leads.FindAsync(leadId);
+            if (lead == null) return NotFound();
+
+            lead.IsApprovedDuplicate = false;
+            lead.IsRejectedDuplicate = true; // تأكدي أن هذا الحقل موجود في الـ Lead Model
+
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Duplicate lead rejected" });
+        }
+
+
         [HttpPatch("reject-property/{id}")]
         public async Task<IActionResult> RejectProperty(int id, [FromBody] RejectDto dto)
         {

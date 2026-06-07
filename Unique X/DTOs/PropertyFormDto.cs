@@ -88,6 +88,9 @@ namespace Unique_X.DTOs
         public string? Address { get; set; }
         public int? ListingType { get; set; }
 
+        public decimal? BuiltUpArea { get; set; }
+        public decimal? LandArea { get; set; }
+
 
         public int? PropertyType { get; set; }
         public int MainPhotoIndex { get; set; } = 0;

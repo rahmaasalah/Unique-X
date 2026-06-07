@@ -59,6 +59,9 @@ namespace Unique_X.Models
         //public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
         public decimal? SecurityDeposit { get; set; }    // مبلغ التأمين (للإيجار)
         public decimal? MonthlyRent { get; set; }
+
+        public decimal? BuiltUpArea { get; set; }
+        public decimal? LandArea { get; set; }
         public string? Code { get; set; } // AR#123
         public FinishingType Finishing { get; set; }
         public string? ProjectName { get; set; }

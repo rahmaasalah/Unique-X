@@ -23,7 +23,7 @@ export class CrmDashboardComponent implements OnInit {
   private router = inject(Router);
 
   isAdmin = signal<boolean>(false);
-  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites'>('brokers');
+  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'pending_duplicates' | 'rejected_duplicates'>('brokers');
 
   dummyBrokers = [
     { code: 'X7', name: 'Abdelrahman Ashraf' },
@@ -56,6 +56,19 @@ export class CrmDashboardComponent implements OnInit {
 selectedBrokerToAdd = signal<string>(''); // البروكر اللي الأدمن اختاره من القائمة
 
   selectedDayEvents = signal<any>(null);
+
+  searchDuplicate = signal<string>('');
+filterBroker = signal<string>('');
+
+filteredPendingDuplicates = computed(() => {
+  let list = this.pendingDuplicates();
+  const q = this.searchDuplicate().toLowerCase();
+  const broker = this.filterBroker();
+
+  if (q) list = list.filter(l => l.fullName.toLowerCase().includes(q) || (l.code && l.code.toLowerCase().includes(q)));
+  if (broker) list = list.filter(l => l.brokerName === broker);
+  return list;
+});
 
 
 // 🟢 فلتر بيجيب البروكرز اللي معندهمش صلاحية بس
@@ -93,6 +106,30 @@ baseFilteredEvents = computed(() => {
   if (!broker) return this.calendarEvents();
   return this.calendarEvents().filter(e => e.brokerName === broker);
 });
+
+pendingDuplicates = computed(() => 
+  this.allLeads().filter(l => l.isDuplicate && !l.isApprovedDuplicate && !l.isRejectedDuplicate)
+);
+
+rejectedDuplicates = computed(() => 
+  this.allLeads().filter(l => l.isDuplicate && l.isRejectedDuplicate)
+);
+
+filteredRejectedDuplicates = computed(() => {
+  let list = this.rejectedDuplicates();
+  const q = this.searchDuplicate().toLowerCase();
+  const broker = this.filterBroker();
+
+  if (q) list = list.filter(l => l.fullName.toLowerCase().includes(q));
+  if (broker) list = list.filter(l => l.brokerName === broker);
+  return list;
+});
+
+// 2. دالة تصفير الفلاتر
+clearDuplicateFilters() {
+  this.searchDuplicate.set('');
+  this.filterBroker.set('');
+}
   
   brokersStats = computed(() => {
     let stats = this.vipBrokers().map(broker => {
@@ -348,6 +385,23 @@ hiddenLeads = signal<number[]>([]);
     this.isSidebarOpen.update(val => !val);
   }
 
+  rejectDuplicate(leadId: number) {
+  this.alertService.showLoading('Rejecting...');
+  this.crmService.rejectDuplicateLead(leadId).subscribe({
+    next: (res) => {
+      this.alertService.close();
+      this.alertService.success('Lead Rejected!');
+      // 🟢 أهم خطوة: استدعاء دالة تحديث الداتا
+      this.loadAdminData(); 
+    },
+    error: (err) => {
+      this.alertService.close();
+      console.error('Error details:', err); // 🟢 لرؤية الخطأ في الـ Console
+      this.alertService.error('Failed to reject lead.');
+    }
+  });
+}
+
   toggleFavorite(leadId: number, event?: Event) {
     if (event) event.stopPropagation();
     let current = [...this.favoriteLeads()];
@@ -393,6 +447,21 @@ hiddenLeads = signal<number[]>([]);
     }
   }
 
+  approveDuplicate(leadId: number) {
+  this.alertService.showLoading('Approving...');
+  this.crmService.approveDuplicateLead(leadId).subscribe({
+    next: () => {
+      this.alertService.close();
+      this.alertService.success('Lead Approved!');
+      this.loadAdminData(); // 🟢 ضروري جداً لتحديث القوائم (نقل العميل من Rejected إلى القائمة الأساسية)
+    },
+    error: (err) => {
+      this.alertService.close();
+      console.error(err);
+      this.alertService.error('Failed to approve lead.');
+    }
+  });
+}
 
   grantAccess() {
   const userId = this.selectedBrokerToAdd();

@@ -31,6 +31,7 @@
 
         public bool IsDuplicate { get; set; }
         public bool IsApprovedDuplicate { get; set; }
+        public bool IsRejectedDuplicate { get; set; }
         public int ClosedDealsCount { get; set; }
 
         public int CompletedVisits { get; set; }

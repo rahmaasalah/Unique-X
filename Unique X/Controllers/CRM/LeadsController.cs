@@ -121,6 +121,9 @@ namespace Unique_X.Controllers.CRM
                 // 👇 ده السطر اللي بيجيب تاريخ آخر تعديل، ولو مفيش بيجيب تاريخ الإنشاء
                 UpdatedAt = _context.LeadStatusHistories.Where(h => h.LeadId == l.Id).Max(h => (DateTime?)h.ChangedAt) ?? l.CreatedAt,
 
+                
+                IsRejectedDuplicate = l.IsRejectedDuplicate,
+
                 PropertyType = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PropertyType ?? "",
                 Purpose = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).Purpose ?? "",
                 TotalAmount = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).TotalAmount ?? 0,

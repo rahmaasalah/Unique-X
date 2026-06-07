@@ -24,6 +24,7 @@ export class MyPropertiesComponent implements OnInit {
   cityFilter = '';
   listingFilter = '';
   typeFilter = '';
+   statusFilter = '';
 
   private propertyService = inject(PropertyService);
   private alertService = inject(AlertService);
@@ -57,7 +58,14 @@ export class MyPropertiesComponent implements OnInit {
       const matchesListing = this.listingFilter === '' || p.listingType === this.listingFilter;
       const matchesType = this.typeFilter === '' || p.propertyType === this.typeFilter;
 
-      return matchesSearch && matchesCity && matchesListing && matchesType;
+      let matchesStatus = true;
+      if (this.statusFilter === 'Approved') matchesStatus = p.isApproved && p.isActive;
+      else if (this.statusFilter === 'Pending') matchesStatus = !p.isApproved && !p.rejectionReason;
+      else if (this.statusFilter === 'Rejected') matchesStatus = !p.isApproved && !!p.rejectionReason;
+      else if (this.statusFilter === 'Suspended') matchesStatus = p.isApproved && !p.isActive;
+      else if (this.statusFilter === 'Sold') matchesStatus = p.isSold;
+
+      return matchesSearch && matchesCity && matchesListing && matchesType && matchesStatus;
     });
 
     this.displayedProperties.set(results);
@@ -74,6 +82,7 @@ export class MyPropertiesComponent implements OnInit {
     this.cityFilter = '';
     this.listingFilter = '';
     this.typeFilter = '';
+    this.statusFilter = '';
     this.displayedProperties.set(this.myProperties());
   }
 
