@@ -246,20 +246,33 @@ updateProjectsList(cityId: any) {
   loadProperties(filters: any = {}) {
     this.isLoading.set(true);
     
-    // 🟢 تطبيق القاموس على الكلمات قبل إرسالها للباك إند
-    const apiFilters = { ...filters };
-    if (apiFilters.searchTerm) apiFilters.searchTerm = this.getSmartSearchTerm(apiFilters.searchTerm);
-    if (apiFilters.projectName) apiFilters.projectName = this.getSmartSearchTerm(apiFilters.projectName);
+    // تنظيف الفلاتر من القيم الفارغة أو null قبل الإرسال
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => v != null && v !== "" && v !== "null")
+    );
 
+    // تطبيق القاموس
+     const apiFilters: any = { ...cleanFilters };
+
+    if (apiFilters['searchTerm']) {
+      apiFilters['searchTerm'] = this.getSmartSearchTerm(apiFilters['searchTerm'] as string);
+    }
+    
+    if (apiFilters['projectName']) {
+      apiFilters['projectName'] = this.getSmartSearchTerm(apiFilters['projectName'] as string);
+    }
     this.propertyService.getProperties(apiFilters).subscribe({
       next: (response: any) => {
         this.isLoading.set(false);
         const data = response.message ? response.data : response;
-        this.properties.set(data ||[]);
+        this.properties.set(data || []);
 
+        // تحديث الرسالة
         if (!data || data.length === 0) {
-          if (filters.brokerId || filters.brokerName) this.message.set("This agent hasn't listed any properties yet.");
-          else this.message.set("No properties match your search criteria.");
+          if (filters.brokerId || filters.brokerName) 
+            this.message.set("This agent hasn't listed any properties yet.");
+          else 
+            this.message.set("No properties match your search criteria.");
         } else {
           this.message.set('');
         }
@@ -269,7 +282,7 @@ updateProjectsList(cityId: any) {
         console.error(err);
       }
     });
-  }
+}
 
 getSmartSearchTerm(term: string): string {
     if (!term) return '';

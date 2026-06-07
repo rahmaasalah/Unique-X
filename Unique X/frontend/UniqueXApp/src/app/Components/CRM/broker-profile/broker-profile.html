@@ -252,11 +252,7 @@
                 </button>
 
                 <!-- زرار الموافقة للأدمن (موجود عندك) -->
-                <button *ngIf="isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate" 
-                        class="btn btn-sm btn-success rounded-pill px-3 fw-bold me-2 shadow-sm" 
-                        (click)="approveDuplicate(lead.id)">
-                  Approve
-                </button>
+               
 
                 <!-- زرار دخول بروفايل العميل (موجود عندك) -->
                 <button class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm fw-bold" [routerLink]="['/crm/leads', lead.id]">

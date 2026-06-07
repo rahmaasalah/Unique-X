@@ -313,6 +313,8 @@ filteredProjects: string[] = [];
       isFirstOwner: [false],
       isLegalReconciled: [false],
       hasParking:[false], 
+      builtUpArea: [0, [Validators.min(0)]],
+landArea: [0, [Validators.min(0)]],
       propertyType: [0, Validators.required],
       areaType: [0],
       villaCategory: [0],
@@ -931,6 +933,9 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
     formData.append('Rooms', cleanNum(f.rooms));
     formData.append('Bathrooms', cleanNum(f.bathrooms));
     formData.append('ReceptionPieces', cleanNum(f.receptionPieces));
+
+    formData.append('BuiltUpArea', cleanNum(f.builtUpArea));
+formData.append('LandArea', cleanNum(f.landArea));
     
     formData.append('Floor', cleanNum(f.floor));
     formData.append('TotalFloors', cleanNum(f.totalFloors));

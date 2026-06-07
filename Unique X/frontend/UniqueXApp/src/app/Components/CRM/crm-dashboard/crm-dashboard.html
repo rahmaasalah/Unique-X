@@ -66,6 +66,21 @@
             <i class="bi bi-person-plus-fill me-3 fs-5"></i> Manage Access
           </button>
         </li>
+
+        <li class="mb-2">
+  <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
+          [ngClass]="activeTab() === 'pending_duplicates' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" 
+          (click)="switchTab('pending_duplicates')">
+    <i class="bi bi-person-exclamation me-3 fs-5"></i> Approve Duplicates
+  </button>
+</li>
+<li class="mb-2">
+  <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
+          [ngClass]="activeTab() === 'rejected_duplicates' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" 
+          (click)="switchTab('rejected_duplicates')">
+    <i class="bi bi-person-x me-3 fs-5"></i> Rejected Duplicates
+  </button>
+</li>
       </ul>
     </nav>
   </aside>
@@ -283,6 +298,121 @@
         </div>
       </section>
     }
+
+    @if (activeTab() === 'pending_duplicates') {
+  <section class="animate__animated animate__fadeIn">
+    <!-- شريط الفلاتر -->
+    <div class="row g-2 mb-3 p-3 bg-white rounded-4 border shadow-sm">
+      <div class="col-md-5">
+        <input type="text" class="form-control bg-light border-0" placeholder="Search by name or code..." 
+               [(ngModel)]="searchDuplicate">
+      </div>
+      <div class="col-md-4">
+        <select class="form-select bg-light border-0" [(ngModel)]="filterBroker">
+          <option value="">All Brokers</option>
+          <option *ngFor="let b of vipBrokers()" [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-outline-danger w-100 fw-bold rounded-pill" (click)="clearDuplicateFilters()">
+          <i class="bi bi-x-circle me-1"></i> Clear Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- الجدول -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mt-3">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-4 py-3 text-muted small text-uppercase">Client Name</th>
+          <th class="py-3 text-muted small text-uppercase">Original Broker</th>
+          <th class="text-end pe-4 py-3 text-muted small text-uppercase">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let lead of filteredPendingDuplicates()" class="border-bottom">
+          <td class="ps-4 py-3">
+            <div class="fw-bold text-dark fs-6">{{ lead.fullName }}</div>
+            <small class="text-muted">{{ lead.phoneNumber }}</small>
+          </td>
+          <td class="py-3">
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+              <i class="bi bi-person-fill me-1"></i> {{ lead.brokerName }}
+            </span>
+          </td>
+          <td class="text-end pe-4 py-3">
+            <div class="d-flex justify-content-end gap-2">
+              <button class="btn btn-sm btn-success rounded-pill px-4 fw-bold shadow-sm" (click)="approveDuplicate(lead.id)">
+                <i class="bi bi-check-lg me-1"></i> Accept
+              </button>
+              <button class="btn btn-sm btn-outline-danger rounded-pill px-4 fw-bold shadow-sm" (click)="rejectDuplicate(lead.id)">
+                <i class="bi bi-x-lg me-1"></i> Reject
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+  </section>
+}
+
+@if (activeTab() === 'rejected_duplicates') {
+  <section class="animate__animated animate__fadeIn">
+    <!-- شريط الفلاتر متناسق -->
+    <div class="row g-2 mb-3 p-3 bg-white rounded-4 border shadow-sm align-items-center">
+      <div class="col-md-5">
+        <input type="text" class="form-control bg-light border-0" placeholder="Search by name..." 
+               [(ngModel)]="searchDuplicate">
+      </div>
+      <div class="col-md-4">
+        <select class="form-select bg-light border-0" [(ngModel)]="filterBroker">
+          <option value="">All Brokers</option>
+          <option *ngFor="let b of vipBrokers()" [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-outline-danger w-100 fw-bold rounded-pill" (click)="clearDuplicateFilters()">
+          <i class="bi bi-x-circle me-1"></i> Clear Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- جدول المرفوضين -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4 py-3 text-muted small text-uppercase">Client Name</th>
+            <th class="py-3 text-muted small text-uppercase">Original Broker</th>
+            <th class="text-end pe-4 py-3 text-muted small text-uppercase">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let lead of filteredRejectedDuplicates()" class="border-bottom">
+            <td class="ps-4 py-3 fw-bold text-dark">{{ lead.fullName }}</td>
+            <td class="py-3">
+              <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+                <i class="bi bi-person-fill me-1"></i> {{ lead.brokerName }}
+              </span>
+            </td>
+            <td class="text-end pe-4 py-3">
+              <button class="btn btn-sm btn-success rounded-pill px-4 fw-bold shadow-sm" (click)="approveDuplicate(lead.id)">
+                <i class="bi bi-check-lg me-1"></i> Accept Again
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredRejectedDuplicates().length === 0">
+            <td colspan="3" class="text-center py-5 text-muted">No rejected duplicates found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
 
     @if (activeTab() === 'transfer_leads') {
       <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">

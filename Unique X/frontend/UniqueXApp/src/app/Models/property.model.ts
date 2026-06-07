@@ -15,6 +15,8 @@ export interface Property {
   ownerPhone: string;
   developerName: string;
   isHotDeal: boolean;
+  builtUpArea?: number;
+  landArea?: number;
   region: string;
   address: string;
   listingType: string;

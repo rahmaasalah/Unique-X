@@ -144,6 +144,9 @@ namespace Unique_X.Services.Implementation
                 OwnerPhone = dto.OwnerPhone ?? string.Empty,
                 DeveloperName = dto.DeveloperName,
 
+                BuiltUpArea = dto.BuiltUpArea,
+                LandArea = dto.LandArea,
+
                 // التصنيفات (Enums)
                 City = (City)(dto.City ?? 1),
                 ListingType = (ListingType)(dto.ListingType ?? 0),
@@ -304,16 +307,25 @@ namespace Unique_X.Services.Implementation
             if (filter.MaxFloor.HasValue) query = query.Where(p => p.Floor <= filter.MaxFloor.Value);
 
             if (!string.IsNullOrEmpty(filter.BrokerId))
-                query = query.Where(p => p.BrokerId == filter.BrokerId);
-
-            if (!string.IsNullOrEmpty(filter.BrokerName))
             {
-                var searchName = filter.BrokerName.Replace("-", " ").Trim().ToLower();
-
-                query = query.Where(p =>
-                    (p.Broker.FirstName + " " + p.Broker.LastName).ToLower() == searchName
-                );
+                // لو فيه ID، فلتر بالـ ID فوراً وتجاهل أي شيء آخر
+                query = query.Where(p => p.BrokerId == filter.BrokerId);
             }
+            else if (!string.IsNullOrEmpty(filter.BrokerName))
+            {
+                // البحث بالاسم فقط إذا لم يوجد ID
+                var searchName = filter.BrokerName.Replace("-", " ").Trim().ToLower();
+                query = query.Where(p => (p.Broker.FirstName + " " + p.Broker.LastName).ToLower() == searchName);
+            }
+
+            //if (!string.IsNullOrEmpty(filter.BrokerName))
+            //{
+            //    var searchName = filter.BrokerName.Replace("-", " ").Trim().ToLower();
+
+            //    query = query.Where(p =>
+            //        (p.Broker.FirstName + " " + p.Broker.LastName).ToLower() == searchName
+            //    );
+            //}
 
             if (!string.IsNullOrEmpty(filter.ProjectName))
             {
@@ -708,6 +720,9 @@ namespace Unique_X.Services.Implementation
                 AreaType = property.AreaType,
                 VillaCategory = property.VillaCategory,
                 VillaSubType = property.VillaSubType,
+
+                BuiltUpArea = property.BuiltUpArea,
+                LandArea = property.LandArea,
 
                 HasGarden = property.HasGarden,
                 HasPool = property.HasPool,

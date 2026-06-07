@@ -165,8 +165,9 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
   }
 
   approveDuplicateLead(leadId: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}/leads/${leadId}/approve-duplicate`, {});
-  }
+  // تأكدي أن المسار يبدأ بـ admin/
+  return this.http.patch(`${environment.apiUrl}/admin/leads/${leadId}/approve-duplicate`, {});
+}
 
   getAdminCalendarEvents(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/dashboard/admin-calendar`);
@@ -180,4 +181,11 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
   bulkTransferLeads(leadIds: number[], newBrokerId: string, adminId: string) {
     return this.http.put<any>(`${this.apiUrl}/Leads/bulk-transfer?adminId=${adminId}`, { leadIds, newBrokerId });
   }
+
+
+rejectDuplicateLead(leadId: number): Observable<any> {
+  // بدلاً من `${this.apiUrl}/...` 
+  // استخدمي الرابط المباشر للـ admin
+  return this.http.patch(`${environment.apiUrl}/admin/leads/${leadId}/reject-duplicate`, {});
+}
 }

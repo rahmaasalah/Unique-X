@@ -60,3 +60,24 @@
 .table-responsive {
   -webkit-overflow-scrolling: touch;
 }
+
+
+.table th, .table td {
+    padding: 1rem !important;
+}
+
+/* تأثير عند المرور بالماوس على الصف */
+.table-hover tbody tr:hover {
+    background-color: #fcfcfc;
+}
+
+/* تحسين شكل الأزرار */
+.btn-sm {
+    font-size: 0.85rem;
+}
+
+/* تحسين شكل البادج (اسم البروكر) */
+.badge.bg-primary-subtle {
+    background-color: #e7f1ff;
+    border: 1px solid #cce5ff;
+}

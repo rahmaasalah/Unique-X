@@ -90,12 +90,15 @@
   }
 
   <!-- المساحة دائماً تظهر لأنها أساسية لكل أنواع العقارات -->
-   <div>
+  <div>
   <i class="bi bi-aspect-ratio fs-4 d-block text-danger"></i> 
   <span class="fw-bold">{{ prop.area }} m² </span> 
-  <small class="text-muted d-block small">
-     @if(prop.listingType == 'villa') { <span class="text-danger fw-bold ms-1">{{ prop.areaType }}</span> }
-  </small>
+  
+  @if(prop.propertyType === 'Villa' && prop.builtUpArea > 0) { 
+    <small class="text-danger fw-bold d-block" style="font-size: 0.7rem;">
+       Built-up: {{ prop.builtUpArea }} m²
+    </small> 
+  }
 </div>
   
   <div><i class="bi bi-building fs-4 d-block text-danger"></i> <span class="fw-bold text-truncate" style="max-width: 80px;">{{ prop.propertyType }}</span> <small class="text-muted d-block">Type</small></div>

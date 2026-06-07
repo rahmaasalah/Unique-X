@@ -30,7 +30,10 @@ namespace Unique_X.DTOs
         public string? View { get; set; }                 
         public int Floor { get; set; }                   
         public int TotalFloors { get; set; }              
-        public int ApartmentsPerFloor { get; set; }        
+        public int ApartmentsPerFloor { get; set; }
+
+        public decimal? BuiltUpArea { get; set; }
+        public decimal? LandArea { get; set; }
         public int ElevatorsCount { get; set; }            
         public int BuildYear { get; set; }                 
         public bool HasHotelEntrance { get; set; }        
