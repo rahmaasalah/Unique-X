@@ -16,6 +16,7 @@ namespace Unique_X.DTOs
         public string Title { get; set; }
         public string Description { get; set; }
         public decimal Price { get; set; }
+        public decimal PricePerMeter { get; set; }
         public int Area { get; set; }
         public int Rooms { get; set; }
         public bool IsFavorite { get; set; }
@@ -26,7 +27,7 @@ namespace Unique_X.DTOs
         public bool IsSold { get; set; } = false;
         public string? DistanceFromLandmark { get; set; } 
         public bool HasMasterRoom { get; set; }           
-        public int ReceptionPieces { get; set; }          
+        public int ReceptionPieces { get; set; }
         public string? View { get; set; }                 
         public int Floor { get; set; }                   
         public int TotalFloors { get; set; }              

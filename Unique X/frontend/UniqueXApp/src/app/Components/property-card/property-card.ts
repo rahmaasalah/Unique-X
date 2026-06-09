@@ -134,4 +134,11 @@ onToggleWishlist(event: Event) {
       this.router.navigate(['/property-details', this.property.id]);
     }
   }
+
+  get pricePerMeter(): number {
+  if (this.property.area > 0 && this.property.price > 0) {
+    return Math.round(this.property.price / this.property.area);
+  }
+  return 0;
+}
 }

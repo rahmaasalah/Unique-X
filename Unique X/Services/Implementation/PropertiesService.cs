@@ -143,6 +143,7 @@ namespace Unique_X.Services.Implementation
                 OwnerName = dto.OwnerName ?? string.Empty,
                 OwnerPhone = dto.OwnerPhone ?? string.Empty,
                 DeveloperName = dto.DeveloperName,
+                PricePerMeter = dto.PricePerMeter ?? 0,
 
                 BuiltUpArea = dto.BuiltUpArea,
                 LandArea = dto.LandArea,
@@ -487,6 +488,8 @@ namespace Unique_X.Services.Implementation
             if (dto.DeveloperName != null) property.DeveloperName = dto.DeveloperName;
 
             if (dto.Price.HasValue && dto.Price > 0) property.Price = dto.Price.Value;
+            if (dto.PricePerMeter.HasValue && dto.PricePerMeter > 0) property.PricePerMeter = dto.PricePerMeter.Value; // 🟢 أضيفي هذا السطر
+
             if (dto.Area.HasValue && dto.Area > 0) property.Area = dto.Area.Value;
             if (dto.Rooms.HasValue) property.Rooms = dto.Rooms.Value;
             if (dto.Bathrooms.HasValue) property.Bathrooms = dto.Bathrooms.Value;
@@ -670,6 +673,7 @@ namespace Unique_X.Services.Implementation
                 Rooms = property.Rooms,
                 Bathrooms = property.Bathrooms,
                 Code = property.Code,
+                PricePerMeter = property.PricePerMeter,
 
                 City = property.City.ToString(),
                 ListingType = property.ListingType.ToString(),
@@ -685,7 +689,7 @@ namespace Unique_X.Services.Implementation
                 OwnerName = property.OwnerName,
                 OwnerPhone = property.OwnerPhone,
                 DeveloperName = property.DeveloperName,
-
+                
                 // البيانات الفنية
                 Floor = property.Floor,
                 TotalFloors = property.TotalFloors,

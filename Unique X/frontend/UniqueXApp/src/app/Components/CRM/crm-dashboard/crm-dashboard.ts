@@ -47,6 +47,34 @@ export class CrmDashboardComponent implements OnInit {
 
   ];
 
+  visitSearch = signal<string>('');
+visitStatus = signal<string>('');
+activitySearch = signal<string>('');
+activityStatus = signal<string>('');
+
+// ثم تأكدي أن الدالة filteredVisits تستخدم هذه السجنالز للفلترة
+filteredVisits = computed(() => {
+  let visits = this.allVisitsList();
+  const q = this.visitSearch().toLowerCase();
+  const status = this.visitStatus();
+
+  if (q) visits = visits.filter(v => v.clientName.toLowerCase().includes(q));
+  if (status) visits = visits.filter(v => v.status === status);
+  
+  return visits;
+});
+
+filteredActivities = computed(() => {
+  let activities = this.allActivitiesList();
+  const q = this.activitySearch().toLowerCase();
+  const status = this.activityStatus();
+
+  if (q) activities = activities.filter(a => a.clientName.toLowerCase().includes(q));
+  if (status) activities = activities.filter(a => a.status === status);
+
+  return activities;
+});
+
   // الداتا الأساسية
   allLeads = signal<any[]>([]);
   vipBrokers = signal<any[]>([]);

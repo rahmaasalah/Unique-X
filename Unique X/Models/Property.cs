@@ -17,6 +17,7 @@ namespace Unique_X.Models
 
         [Column(TypeName = "decimal(18,2)")] 
         public decimal Price { get; set; }
+        public decimal PricePerMeter { get; set; }
 
         public int Area { get; set; } // المساحة بالمتر
         public int Rooms { get; set; }

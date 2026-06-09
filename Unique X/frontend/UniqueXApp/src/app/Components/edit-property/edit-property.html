@@ -543,9 +543,11 @@
 
             <!-- أزرار الحفظ والإلغاء -->
             <div class="d-grid gap-2 pt-3">
-              <button type="submit" [disabled]="editForm.invalid" class="btn btn-danger btn-lg rounded-pill fw-bold py-3 shadow">
-                <i class="bi bi-check-circle me-2"></i> Save Property Changes
-              </button>
+              <button type="submit" 
+        [disabled]="isSubmitting" 
+        class="btn btn-danger btn-lg rounded-pill fw-bold py-3 shadow">
+  <i class="bi bi-check-circle me-2"></i> Save Property Changes
+</button>
               <a routerLink="/my-properties" class="btn btn-dark btn-lg rounded-pill fw-bold py-3 shadow text-decoration-none text-center">
                 Discard Changes
               </a>
