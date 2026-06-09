@@ -896,10 +896,19 @@ filteredProjects: string[] = [];
     if (this.isSubmitting) return;
 
     if (this.editForm.invalid) {
-        this.editForm.markAllAsTouched(); 
-        this.alertService.error("Please fill all required fields correctly.");
-        return;
+    this.editForm.markAllAsTouched(); // إظهار الأخطاء باللون الأحمر في الفورم
+    
+    // إضافة هذا الكود لرؤية الأخطاء في الـ Console
+    const controls = this.editForm.controls;
+    for (const name in controls) {
+      if (controls[name].invalid) {
+        console.log(`Field with error: ${name}`, controls[name].errors);
+      }
     }
+    
+    this.alertService.error("Please fill all required fields correctly.");
+    return;
+  }
 
     this.isSubmitting = true;
     this.alertService.showLoading('Saving changes...');

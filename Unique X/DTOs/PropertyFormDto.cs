@@ -90,6 +90,7 @@ namespace Unique_X.DTOs
 
         public decimal? BuiltUpArea { get; set; }
         public decimal? LandArea { get; set; }
+        public decimal? PricePerMeter { get; set; }
 
 
         public int? PropertyType { get; set; }
