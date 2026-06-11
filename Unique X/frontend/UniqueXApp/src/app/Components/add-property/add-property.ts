@@ -565,13 +565,15 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
   }
 
   createPaymentPlan(years = 1, dp = '', dpPercent = '', quarter = ''): FormGroup {
-    return this.fb.group({
-      installmentYears: [years, [Validators.min(1)]],
-      downPaymentPercentage: [dpPercent],
-      downPayment: [dp],
-      quarterInstallment: [quarter]
-    });
-  }
+  return this.fb.group({
+    installmentYears: [years, [Validators.min(1)]],
+    downPaymentPercentage: [dpPercent],
+    downPayment: [dp],
+    frequency: ['Quarterly'],      // ✅ القيمة الافتراضية
+    quarterInstallment: [quarter],
+    installmentAmount: ['']        // ✅ أضيفي السطر ده
+  });
+}
 
   addPaymentPlan() {
     this.paymentPlans.push(this.createPaymentPlan());
@@ -687,22 +689,35 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
     }
   }
 
-  calculateInstallments(index: number) {
-    const total = this.getPureNumber('price');
-    const plan = this.paymentPlans.at(index);
-    const dpAmount = Number(plan.get('downPayment')?.value.toString().replace(/,/g, '') || 0);
-    const years = Number(plan.get('installmentYears')?.value.toString().replace(/[^0-9]/g, '') || 0);
+ calculateInstallments(index: number) {
+  const total = this.getPureNumber('price');
+  const plan = this.paymentPlans.at(index);
+  
+  const dpAmount = this.getPureNumberFromPlan(plan, 'downPayment');
+  const years = Number(plan.get('installmentYears')?.value || 0);
+  const frequency = plan.get('frequency')?.value || 'Quarterly';
 
-    if (total > 0 && years > 0) {
-      const remaining = total - dpAmount;
-      if (remaining > 0) {
-        const quarter = this.roundAmount((remaining / years) / 4);
-        plan.get('quarterInstallment')?.setValue(quarter.toLocaleString('en-US'), { emitEvent: false });
-      } else {
-        plan.get('quarterInstallment')?.setValue('0', { emitEvent: false });
-      }
+  if (total > 0 && years > 0) {
+    const remaining = total - dpAmount;
+    let result = 0;
+
+    if (remaining > 0) {
+      if (frequency === 'Quarterly') result = (remaining / years) / 4;
+      else if (frequency === 'Semi-Annual') result = (remaining / years) / 2;
+      else if (frequency === 'Annual') result = remaining / years;
+      
+      // 🟢 هنا نضع القيمة في 'installmentAmount'
+      plan.get('installmentAmount')?.setValue(this.roundAmount(result).toLocaleString('en-US'), { emitEvent: false });
     }
   }
+}
+
+// دالة مساعدة لجلب الأرقام من داخل الـ FormArray
+getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
+  const val = plan.get(controlName)?.value;
+  if (!val) return 0;
+  return Number(val.toString().replace(/,/g, ''));
+}
 
   updateProjectsList(cId?: number, rName?: string) {
     const id = cId || Number(this.propertyForm.get('city')?.value);
@@ -985,6 +1000,9 @@ formData.append('LandArea', cleanNum(f.landArea));
         formData.append(`PaymentPlans[${index}].InstallmentYears`, y);
         formData.append(`PaymentPlans[${index}].DownPayment`, dp);
         formData.append(`PaymentPlans[${index}].QuarterInstallment`, q);
+
+        formData.append(`PaymentPlans[${index}].InstallmentAmount`, cleanNum(plan.get('installmentAmount')?.value));
+    formData.append(`PaymentPlans[${index}].Frequency`, plan.get('frequency')?.value);
       });
     }
     

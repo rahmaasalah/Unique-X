@@ -24,7 +24,8 @@ export class MyPropertiesComponent implements OnInit {
   cityFilter = '';
   listingFilter = '';
   typeFilter = '';
-   statusFilter = '';
+  statusFilter = '';
+  saleFilter = '';
 
   private propertyService = inject(PropertyService);
   private alertService = inject(AlertService);
@@ -57,23 +58,30 @@ export class MyPropertiesComponent implements OnInit {
       const matchesCity = this.cityFilter === '' || p.city === this.cityFilter;
       const matchesListing = this.listingFilter === '' || p.listingType === this.listingFilter;
       const matchesType = this.typeFilter === '' || p.propertyType === this.typeFilter;
+      const matchesStatus = this.statusFilter === '' || this.checkStatus(p, this.statusFilter);
+      
+      // 🟢 منطق فلترة البيع (Sold / Not Sold)
+      let matchesSale = true;
+      if (this.saleFilter === 'Sold') matchesSale = p.isSold === true;
+      else if (this.saleFilter === 'NotSold') matchesSale = p.isSold === false;
 
-      let matchesStatus = true;
-      if (this.statusFilter === 'Approved') matchesStatus = p.isApproved && p.isActive;
-      else if (this.statusFilter === 'Pending') matchesStatus = !p.isApproved && !p.rejectionReason;
-      else if (this.statusFilter === 'Rejected') matchesStatus = !p.isApproved && !!p.rejectionReason;
-      else if (this.statusFilter === 'Suspended') matchesStatus = p.isApproved && !p.isActive;
-      else if (this.statusFilter === 'Sold') matchesStatus = p.isSold;
-
-      return matchesSearch && matchesCity && matchesListing && matchesType && matchesStatus;
+      return matchesSearch && matchesCity && matchesListing && matchesType && matchesStatus && matchesSale;
     });
 
     this.displayedProperties.set(results);
-    
+
     if (results.length === 0) {
       // اختياري: تنبيه لو مفيش نتايج
       console.log('No results found for this search');
     }
+  }
+
+  checkStatus(p: any, status: string): boolean {
+    if (status === 'Approved') return p.isApproved && p.isActive;
+    if (status === 'Pending') return !p.isApproved && !p.rejectionReason;
+    if (status === 'Rejected') return !p.isApproved && !!p.rejectionReason;
+    if (status === 'Suspended') return p.isApproved && !p.isActive;
+    return true;
   }
 
   // دالة لتصفير البحث
@@ -83,6 +91,7 @@ export class MyPropertiesComponent implements OnInit {
     this.listingFilter = '';
     this.typeFilter = '';
     this.statusFilter = '';
+    this.saleFilter = '';
     this.displayedProperties.set(this.myProperties());
   }
 

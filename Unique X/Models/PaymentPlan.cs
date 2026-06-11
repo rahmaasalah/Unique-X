@@ -7,6 +7,7 @@
 
         public decimal DownPayment { get; set; }
         public decimal QuarterInstallment { get; set; }
+        public string Frequency { get; set; }
 
         // العلاقة مع العقار (Foreign Key)
         public int PropertyId { get; set; }

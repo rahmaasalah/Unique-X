@@ -241,7 +241,8 @@ namespace Unique_X.Services.Implementation
                     {
                         InstallmentYears = plan.InstallmentYears,
                         DownPayment = plan.DownPayment,
-                        QuarterInstallment = plan.QuarterInstallment
+                        QuarterInstallment = plan.InstallmentAmount,
+                        Frequency = plan.Frequency
                     });
                 }
             }
@@ -576,7 +577,7 @@ namespace Unique_X.Services.Implementation
                     {
                         InstallmentYears = plan.InstallmentYears,
                         DownPayment = plan.DownPayment,
-                        QuarterInstallment = plan.QuarterInstallment
+                        QuarterInstallment = plan.InstallmentAmount
                     });
                 }
             }
@@ -757,7 +758,8 @@ namespace Unique_X.Services.Implementation
                 {
                     InstallmentYears = p.InstallmentYears,
                     DownPayment = p.DownPayment,
-                    QuarterInstallment = p.QuarterInstallment
+                    InstallmentAmount = p.QuarterInstallment,
+                    Frequency = p.Frequency ?? "Quarterly"
                 }).ToList() ?? new List<PaymentPlanDto>(),
 
                 Photos = property.Photos?
