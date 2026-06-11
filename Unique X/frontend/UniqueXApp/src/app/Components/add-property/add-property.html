@@ -538,6 +538,13 @@
                 <i class="bi bi-x fs-5"></i>
               </button>
             }
+
+            <select formControlName="frequency" class="form-select"
+        (change)="calculateInstallments(i)">
+  <option value="Annual">Annual</option>
+  <option value="Semi-Annual">Semi-Annual</option>
+  <option value="Quarterly">Quarterly</option>
+</select>
             
             <div class="col-md-3">
               <label class="small fw-bold text-dark">Installment Years</label>
@@ -560,13 +567,21 @@
               </div>
             </div>
 
-            <div class="col-md-3">
-              <label class="small fw-bold text-dark">Quarterly Installment</label>
-              <div class="input-group">
-                <span class="input-group-text bg-white text-dark">EGP</span>
-                <input type="text" (input)="formatFinancialArray($event, 'quarterInstallment', i)" formControlName="quarterInstallment" class="form-control shadow-sm ">
-              </div>
-            </div>
+           <div class="col-12 col-md-4">
+  <label class="form-label fw-semibold">Installment Amount</label>
+  <div class="input-group">
+    <span class="input-group-text">EGP</span>
+    <input type="text" class="form-control bg-light"
+           formControlName="installmentAmount"
+           placeholder="Auto-calculated"
+           readonly>
+  </div>
+  <small class="text-muted">
+    @if (plan.get('frequency')?.value === 'Quarterly') { Quarterly installment }
+    @else if (plan.get('frequency')?.value === 'Semi-Annual') { Semi-annual installment }
+    @else { Annual installment }
+  </small>
+</div>
             
           </div>
         }

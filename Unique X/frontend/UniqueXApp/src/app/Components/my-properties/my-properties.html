@@ -15,10 +15,10 @@
     <!-- قللنا حجم الأعمدة لتناسب سطر واحد -->
     <div class="col-md-2">
       <input type="text" class="form-control border-0 shadow-sm" placeholder="Title, Code..." 
-             [(ngModel)]="searchText">
+             [(ngModel)]="searchText" (change)="onSearch()">
     </div>
     <div class="col-md-2">
-      <select class="form-select border-0 shadow-sm" [(ngModel)]="cityFilter">
+      <select class="form-select border-0 shadow-sm" [(ngModel)]="cityFilter" (change)="onSearch()">
         <option value="">All Cities</option>
         <option value="Cairo">Cairo</option>
         <option value="Alexandria">Alexandria</option>
@@ -26,7 +26,7 @@
       </select>
     </div>
     <div class="col-md-2">
-      <select class="form-select border-0 shadow-sm" [(ngModel)]="listingFilter">
+      <select class="form-select border-0 shadow-sm" [(ngModel)]="listingFilter" (change)="onSearch()">
         <option value="">All Categories</option>
         <option value="Resale">Resale</option>
         <option value="Rent">Rent</option>
@@ -35,7 +35,7 @@
       </select>
     </div>
     <div class="col-md-2">
-      <select class="form-select border-0 shadow-sm" [(ngModel)]="typeFilter">
+      <select class="form-select border-0 shadow-sm" [(ngModel)]="typeFilter" (change)="onSearch()">
         <option value="">All Types</option>
         <option value="Apartment">Apartment</option>
         <option value="Villa">Villa</option>
@@ -46,7 +46,7 @@
     </div>
     <!-- الـ Status Filter الجديد -->
     <div class="col-md-2">
-      <select class="form-select border-0 shadow-sm" [(ngModel)]="statusFilter">
+      <select class="form-select border-0 shadow-sm" [(ngModel)]="statusFilter" (change)="onSearch()">
         <option value="">All Statuses</option>
         <option value="Approved">Approved</option>
         <option value="Pending">Pending</option>
@@ -56,12 +56,26 @@
       </select>
     </div>
 
-    <!-- زر البحث -->
     <div class="col-md-2">
+    <select class="form-select border-0 shadow-sm" [(ngModel)]="saleFilter" (change)="onSearch()">
+      <option value="">All Sale Status</option>
+      <option value="Sold">Sold</option>
+      <option value="NotSold">Not Sold</option>
+    </select>
+  </div>
+
+    <!-- زر البحث -->
+    <!-- <div class="col-md-2">
       <button class="btn btn-danger w-100 fw-bold shadow-sm" (click)="onSearch()">
         <i class="bi bi-search"></i> Search
       </button>
-    </div>
+    </div> -->
+
+    <div class="col-md-2">
+     <button class="btn btn-danger w-100 fw-bold shadow-sm" (click)="resetFilters()">
+       <i class="bi bi-x-lg"></i> Clear Filter
+     </button>
+  </div>
     
   </div>
 </div>

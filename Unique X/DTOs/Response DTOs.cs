@@ -139,6 +139,7 @@ namespace Unique_X.DTOs
     {
         public int InstallmentYears { get; set; }
         public decimal DownPayment { get; set; }
-        public decimal QuarterInstallment { get; set; }
+        public decimal InstallmentAmount { get; set; }
+        public string Frequency { get; set; }
     }
 }
