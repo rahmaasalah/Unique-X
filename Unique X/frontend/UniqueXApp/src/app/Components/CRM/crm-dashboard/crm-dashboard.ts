@@ -48,32 +48,41 @@ export class CrmDashboardComponent implements OnInit {
   ];
 
   visitSearch = signal<string>('');
-visitStatus = signal<string>('');
+visitStatusFilter = signal<string>('');
 activitySearch = signal<string>('');
-activityStatus = signal<string>('');
+activityStatusFilter = signal<string>('');
 
-// ثم تأكدي أن الدالة filteredVisits تستخدم هذه السجنالز للفلترة
+// دالة فلترة الزيارات
 filteredVisits = computed(() => {
-  let visits = this.allVisitsList();
+  let list = this.allVisitsList();
   const q = this.visitSearch().toLowerCase();
-  const status = this.visitStatus();
+  const status = this.visitStatusFilter();
 
-  if (q) visits = visits.filter(v => v.clientName.toLowerCase().includes(q));
-  if (status) visits = visits.filter(v => v.status === status);
-  
-  return visits;
+  if (q) list = list.filter(v => v.clientName.toLowerCase().includes(q));
+  if (status) list = list.filter(v => v.status === status);
+  return list;
 });
 
+// دالة فلترة الأنشطة
 filteredActivities = computed(() => {
-  let activities = this.allActivitiesList();
+  let list = this.allActivitiesList();
   const q = this.activitySearch().toLowerCase();
-  const status = this.activityStatus();
+  const status = this.activityStatusFilter();
 
-  if (q) activities = activities.filter(a => a.clientName.toLowerCase().includes(q));
-  if (status) activities = activities.filter(a => a.status === status);
-
-  return activities;
+  if (q) list = list.filter(a => a.clientName.toLowerCase().includes(q));
+  if (status) list = list.filter(a => a.status === status);
+  return list;
 });
+
+clearFilters(type: 'visit' | 'activity') {
+  if (type === 'visit') {
+    this.visitSearch.set('');
+    this.visitStatusFilter.set('');
+  } else {
+    this.activitySearch.set('');
+    this.activityStatusFilter.set('');
+  }
+}
 
   // الداتا الأساسية
   allLeads = signal<any[]>([]);

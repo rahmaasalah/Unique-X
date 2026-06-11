@@ -249,5 +249,13 @@ namespace Unique_X.Controllers
             var code = await _propertiesService.GetNextCodeAsync(prefix);
             return Ok(new { code = code });
         }
+
+        [HttpGet("by-code/{code}")]
+        public async Task<IActionResult> GetByCode(string code)
+        {
+            var decodedCode = Uri.UnescapeDataString(code);
+            var result = await _propertiesService.GetPropertyByCodeAsync(decodedCode);
+            return result != null ? Ok(result) : NotFound("Property not found");
+        }
     }
 }

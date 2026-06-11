@@ -77,4 +77,9 @@ getFinancialHistory(code: string): Observable<any[]> {
 getNextCode(prefix: string) {
     return this.http.get<any>(`${this.baseUrl}/next-code?prefix=${prefix}`);
   }
+
+  getPropertyByCode(code: string): Observable<Property> {
+  // استخدام encodeURIComponent للتعامل مع الرموز مثل #
+  return this.http.get<Property>(`${this.baseUrl}/by-code/${encodeURIComponent(code)}`);
+}
 }

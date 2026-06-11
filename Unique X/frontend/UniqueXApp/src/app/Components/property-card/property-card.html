@@ -68,11 +68,6 @@
     <!-- السعر (بالخط العريض - Signature Style) -->
     <h6 class=" text-dark mb-1">EGP {{ property.price | number }}</h6>
 
-    @if (pricePerMeter > 0) {
-  <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
-    EGP {{ pricePerMeter | number }} / m²
-  </small>
-}
     @if (property.listingType === 'Primary' && property.downPayment > 0) {
       <h6 class=" text-dark mb-1">Down Payment {{ property.downPayment | number }}</h6>
     }

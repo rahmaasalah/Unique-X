@@ -21,5 +21,7 @@ namespace Unique_X.Services.Interface
         Task<IEnumerable<PropertyResponseDto>> GetHotDealsAsync();
 
         Task<string> GetNextCodeAsync(string prefix);
+
+        Task<PropertyResponseDto> GetPropertyByCodeAsync(string code);
     }
 }

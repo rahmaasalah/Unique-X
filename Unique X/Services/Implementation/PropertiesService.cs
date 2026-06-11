@@ -68,7 +68,7 @@ namespace Unique_X.Services.Implementation
             {"IL Latini", "IL"}, {"Downtown", "DOW"}, {"Plam Hills North Coast", "PA"}, {"Mazarine", "MAZ"},
             {"Golf Porto Marina", "GPM"}, {"Marina 1", "MR1"}, {"Marina 2", "MR2"}, {"Marina 3", "MR3"},
             {"Marina 4", "MR4"}, {"Marina 5", "MR5"}, {"Marina 6", "MR6"}, {"Marina 7", "MR7"}, {"Marina 8", "MR8"},
-            {"Viller", "VI"}, {"North Code", "NO"}, {"Wanas Master", "WA"}, {"London", "LON"},
+            {"Viller", "VI"}, {"North Code", "NO"}, {"Wanas Master", "WA"}, {"London", "LON"}, {"Agaza", "AGZ"},{"Youd", "YD"},
             {"Eko Mena", "EK"}, {"Bungalows", "BU"}, {"Layana", "LAY"}, {"Glee", "GL"}, {"Ras Al-Hekma", "RH"},{"Hacienda Ras Al-Hekma", "HCR"}, {"Dayz", "DZ"}
         };
 
@@ -889,6 +889,17 @@ namespace Unique_X.Services.Implementation
             }
 
             return $"{prefix}{maxSeq + 1}";
+        }
+
+        public async Task<PropertyResponseDto> GetPropertyByCodeAsync(string code)
+        {
+            var property = await _context.Properties
+                .Include(p => p.Photos)
+                .Include(p => p.PaymentPlans)
+                .FirstOrDefaultAsync(p => p.Code == code);
+
+            if (property == null) return null;
+            return MapToResponseDto(property);
         }
     }
 }

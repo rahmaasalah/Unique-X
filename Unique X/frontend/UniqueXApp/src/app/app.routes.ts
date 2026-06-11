@@ -42,7 +42,8 @@ export const routes: Routes = [
   { path: 'edit-property/:id', component: EditPropertyComponent, canActivate: [authGuard] },
   { path: 'wishlist', component: WishlistComponent, canActivate: [authGuard] },
   { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
-  { path: 'compare/:id1/:id2', component: ComparePropertiesComponent },
+  { path: 'compare/:ids', component: ComparePropertiesComponent },
+
   { 
     path: 'crm/leads', 
     component: LeadsDashboardComponent 
