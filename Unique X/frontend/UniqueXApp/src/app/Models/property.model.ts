@@ -4,6 +4,8 @@ export interface Property {
   description: string;
   price: number;
   pricePerMeter: number;
+  pendingDeletion?: boolean;
+  deletionRejectionReason?: string;
   brokerImage?: string;
   brokerTitle?: string;
   brokerDescription?: string;

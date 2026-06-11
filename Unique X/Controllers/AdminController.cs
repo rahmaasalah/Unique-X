@@ -572,6 +572,72 @@ namespace Unique_X.Controllers
             return Ok(new { Message = "CRM Access Revoked" });
         }
 
+        [HttpGet("pending-deletions")]
+        public async Task<IActionResult> GetPendingDeletions()
+        {
+            var props = await _context.Properties
+                .Include(p => p.Broker)
+                .Include(p => p.Photos)
+                .Where(p => p.PendingDeletion)
+                .OrderByDescending(p => p.DeletionRequestedAt)
+                .Select(p => new {
+                    p.Id,
+                    p.Title,
+                    p.Code,
+                    p.Price,
+                    p.City,
+                    p.ListingType,
+                    p.PropertyType,
+                    p.DeletionRequestedAt,
+                    BrokerName = p.Broker.FirstName + " " + p.Broker.LastName,
+                    BrokerPhone = p.Broker.PhoneNumber,
+                    MainPhoto = p.Photos.Where(ph => ph.IsMain).Select(ph => ph.Url).FirstOrDefault()
+                             ?? p.Photos.Select(ph => ph.Url).FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return Ok(props);
+        }
+
+        [HttpPost("approve-deletion/{id}")]
+        public async Task<IActionResult> ApproveDeletion(int id)
+        {
+            var property = await _context.Properties
+                .Include(p => p.Photos)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (property == null) return NotFound();
+
+            // حذف الصور من Cloudinary
+            if (property.Photos != null)
+            {
+                foreach (var photo in property.Photos)
+                {
+                    if (!string.IsNullOrEmpty(photo.PublicId) && !photo.PublicId.StartsWith("COPY_"))
+                        await _photoService.DeletePhotoAsync(photo.PublicId);
+                }
+            }
+
+            _context.Properties.Remove(property);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Property permanently deleted." });
+        }
+
+        [HttpPost("reject-deletion/{id}")]
+        public async Task<IActionResult> RejectDeletion(int id, [FromBody] RejectDeletionDto dto)
+        {
+            var property = await _context.Properties.FindAsync(id);
+            if (property == null) return NotFound();
+
+            property.PendingDeletion = false;
+            property.IsActive = true; // نرجعها تظهر
+            property.DeletionRejectionReason = dto.Reason;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Deletion rejected. Property restored." });
+        }
+
 
     }
 }

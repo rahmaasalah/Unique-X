@@ -100,7 +100,7 @@ export class MyPropertiesComponent implements OnInit {
     this.alertService.confirm('Are you sure?', () => {
       this.propertyService.deleteProperty(id).subscribe({
         next: () => {
-          this.alertService.success('Deleted');
+          this.alertService.warning('waiting for admin approval', 'Deletion Requested');
           this.loadMyProperties();
         }
       });

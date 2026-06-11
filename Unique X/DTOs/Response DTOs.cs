@@ -106,6 +106,9 @@ namespace Unique_X.DTOs
         public bool IsApproved { get; set; }
         public bool IsActive { get; set; }
         public string? RejectionReason { get; set; }
+
+        public bool PendingDeletion { get; set; } = false;
+        public string? DeletionRejectionReason { get; set; }
     }
 
     public class PropertyFilterDto

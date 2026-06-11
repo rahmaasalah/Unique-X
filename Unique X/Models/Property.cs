@@ -103,6 +103,10 @@ namespace Unique_X.Models
         public string OwnerPhone { get; set; } = string.Empty;
         public string? DeveloperName { get; set; }
 
+        public bool PendingDeletion { get; set; } = false;
+        public string? DeletionRejectionReason { get; set; }
+        public DateTime? DeletionRequestedAt { get; set; }
+
         // العلاقة مع الصور
         public ICollection<Photo> Photos { get; set; }
 

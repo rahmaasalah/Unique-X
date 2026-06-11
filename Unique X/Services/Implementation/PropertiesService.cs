@@ -623,18 +623,15 @@ namespace Unique_X.Services.Implementation
         public async Task<bool> DeletePropertyAsync(int id, string brokerId)
         {
             var property = await _context.Properties
-                .Include(p => p.Photos)
-                .FirstOrDefaultAsync(p => p.Id == id);
+                .FirstOrDefaultAsync(p => p.Id == id && p.BrokerId == brokerId);
 
-            if (property == null || property.BrokerId != brokerId)
+            if (property == null)
                 return false;
 
-            foreach (var photo in property.Photos)
-            {
-                await _photoService.DeletePhotoAsync(photo.PublicId);
-            }
+            property.PendingDeletion = true;
+            property.DeletionRequestedAt = DateTime.UtcNow;
+            property.DeletionRejectionReason = null;
 
-            _context.Properties.Remove(property);
             return await _context.SaveChangesAsync() > 0;
         }
 
@@ -746,6 +743,8 @@ namespace Unique_X.Services.Implementation
                 IsApproved = property.IsApproved,
                 IsActive = property.IsActive,
                 RejectionReason = property.RejectionReason,
+                PendingDeletion = property.PendingDeletion,          
+                DeletionRejectionReason = property.DeletionRejectionReason,
                 BrokerName = property.Broker != null ? $"{property.Broker.FirstName} {property.Broker.LastName}" : "System Agent",
                 BrokerPhone = property.Broker?.PhoneNumber ?? "N/A",
                 BrokerImage = property.Broker?.ProfileImageUrl,
