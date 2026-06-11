@@ -149,9 +149,13 @@
                     </button>
 
                     <!-- زرار الحذف (ضفنا أيقونة السلة) -->
-                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm fw-bold" (click)="onDelete(prop.id)" title="Delete Property">
-                      <i class="bi bi-trash3 me-1"></i> Delete
-                    </button>
+                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm fw-bold"
+        (click)="onDelete(prop.id)"
+        [disabled]="prop.pendingDeletion"
+        [title]="prop.pendingDeletion ? 'Deletion already requested' : 'Delete Property'">
+  <i class="bi bi-trash3 me-1"></i>
+  {{ prop.pendingDeletion ? 'Pending...' : 'Delete' }}
+</button>
 
                   </div>
                 </td>
@@ -176,11 +180,11 @@
                   } 
                   
                   <!-- 3. Suspended (لو الأدمن وافق بس وقفها بعدين) -->
-                  @else if (prop.isApproved && !prop.isActive) {
-                    <span class="badge bg-secondary rounded-pill px-3 mb-1 d-block" title="Suspended by Admin">
-                      <i class="bi bi-pause-circle me-1"></i>Suspended
-                    </span>
-                  } 
+                  @else if (prop.isApproved && !prop.isActive && !prop.pendingDeletion && !prop.deletionRejectionReason) {
+  <span class="badge bg-secondary rounded-pill px-3 mb-1 d-block" title="Suspended by Admin">
+    <i class="bi bi-pause-circle me-1"></i>Suspended
+  </span>
+}
                   
                   <!-- 4. Approved / Active (لو متوافق عليها وشغالة في الهوم) -->
                   @else if (prop.isApproved && prop.isActive) {
@@ -188,6 +192,24 @@
                       <i class="bi bi-check-circle me-1"></i>Approved
                     </span>
                   }
+
+                  @if (prop.pendingDeletion && !prop.deletionRejectionReason) {
+  <span class="badge bg-warning text-dark rounded-pill px-3 mb-1 d-block">
+    <i class="bi bi-hourglass-split me-1"></i>Pending Deletion
+  </span>
+}
+
+<!-- Deletion Rejected -->
+@if (prop.deletionRejectionReason) {
+  <div>
+    <span class="badge bg-danger rounded-pill px-3 mb-1 d-block">
+      <i class="bi bi-x-circle me-1"></i>Can't be deleted
+    </span>
+    <small class="text-danger fw-bold d-block mt-1" style="font-size:0.75rem;line-height:1.3;">
+      <i class="bi bi-info-circle me-1"></i>{{ prop.deletionRejectionReason }}
+    </small>
+  </div>
+}
                   
                 </td>
                 <td>

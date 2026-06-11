@@ -97,16 +97,23 @@ namespace Unique_X.Controllers
 
         [HttpDelete("{id}")]
         [Authorize]
-        public async Task<IActionResult> DeleteProperty(int id)
+        public async Task<IActionResult> DeleteProperty(int id, [FromServices] AppDbContext context)
         {
             var brokerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var deleted = await _propertiesService.DeletePropertyAsync(id, brokerId);
+            var property = await context.Properties
+                .FirstOrDefaultAsync(p => p.Id == id && p.BrokerId == brokerId);
 
-            if (!deleted)
-                return BadRequest("Failed to delete property");
+            if (property == null)
+                return NotFound("Property not found or unauthorized.");
 
-            return Ok("Deleted Successfully");
+            // بدل الحذف الفعلي، نعمل flag
+            property.PendingDeletion = true;
+            property.DeletionRequestedAt = DateTime.UtcNow;
+            property.DeletionRejectionReason = null; // نمسح أي rejection قديم
+
+            await context.SaveChangesAsync();
+            return Ok("Deletion request submitted. Awaiting admin approval.");
         }
 
         [HttpGet("{id}")]
@@ -257,5 +264,7 @@ namespace Unique_X.Controllers
             var result = await _propertiesService.GetPropertyByCodeAsync(decodedCode);
             return result != null ? Ok(result) : NotFound("Property not found");
         }
+
+
     }
 }

@@ -66,11 +66,12 @@ export class AdminDashboardComponent implements OnInit {
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
   homeBanners = signal<any[]>([]);
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'deletions'>('users');
 
   detailData = signal<any[]>([]);
 
   adminForm!: FormGroup;
+  pendingDeletions = signal<any[]>([]);
 
   userSearchText = signal('');
   userTypeFilter = signal(''); 
@@ -327,7 +328,57 @@ export class AdminDashboardComponent implements OnInit {
     this.loadAllData();
     this.loadAdminProfile();
     this.loadPendingProperties();
+    this.loadPendingDeletions();
   }
+
+  loadPendingDeletions() {
+  this.adminService.getPendingDeletions().subscribe(data =>
+    this.pendingDeletions.set(data)
+  );
+}
+
+onApproveDeletion(id: number) {
+  this.alertService.confirm('Permanently delete this property? This cannot be undone.', () => {
+    this.alertService.showLoading('Deleting...');
+    this.adminService.approveDeletion(id).subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success('Property permanently deleted.');
+        this.loadPendingDeletions();
+        this.loadAllData();
+      }
+    });
+  });
+}
+
+onRejectDeletion(id: number) {
+  const swal = (window as any).Swal;
+  swal.fire({
+    title: 'Reject Deletion Request',
+    input: 'textarea',
+    inputLabel: 'Reason (will be shown to broker)',
+    inputPlaceholder: 'Enter reason...',
+    showCancelButton: true,
+    confirmButtonColor: '#ef3341',
+    confirmButtonText: 'Reject Deletion',
+    inputValidator: (value: string) => {
+      if (!value) return 'Please enter a reason!';
+      return undefined;
+    }
+  }).then((result: any) => {
+    if (result.isConfirmed) {
+      this.alertService.showLoading('Rejecting...');
+      this.adminService.rejectDeletion(id, result.value).subscribe({
+        next: () => {
+          this.alertService.close();
+          this.alertService.success('Deletion rejected. Property restored.');
+          this.loadPendingDeletions();
+          this.loadAllData();
+        }
+      });
+    }
+  });
+}
 
   loadCampaigns() {
     this.crmService.getCampaigns().subscribe(data => this.campaignsList.set(data));

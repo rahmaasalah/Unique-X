@@ -142,4 +142,16 @@ duplicateProperty(propertyId: number, brokerId: string) {
 revokeCrmAccess(userId: string) {
   return this.http.patch(`${this.baseUrl}/revoke-crm/${userId}`, {});
 }
+
+getPendingDeletions(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/pending-deletions`);
+}
+
+approveDeletion(id: number): Observable<any> {
+  return this.http.post(`${this.baseUrl}/approve-deletion/${id}`, {});
+}
+
+rejectDeletion(id: number, reason: string): Observable<any> {
+  return this.http.post(`${this.baseUrl}/reject-deletion/${id}`, { reason });
+}
 }

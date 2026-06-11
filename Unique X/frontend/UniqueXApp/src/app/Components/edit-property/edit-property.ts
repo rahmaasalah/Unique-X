@@ -430,17 +430,28 @@ filteredProjects: string[] = [];
         if (data.paymentPlans && data.paymentPlans.length > 0) {
           const price = Number(data.price) || 0;
           data.paymentPlans.forEach((plan: any) => {
-            let dpPercent = '';
-            if (price > 0 && plan.downPayment > 0) {
-              dpPercent = ((plan.downPayment / price) * 100).toFixed(2);
-            }
-            this.paymentPlans.push(this.createPaymentPlan(
-              plan.installmentYears,
-              plan.downPayment > 0 ? plan.downPayment.toLocaleString('en-US') : '',
-              dpPercent,
-              plan.quarterInstallment > 0 ? plan.quarterInstallment.toLocaleString('en-US') : ''
-            ));
-          });
+  let dpPercent = '';
+  if (price > 0 && plan.downPayment > 0) {
+    dpPercent = ((plan.downPayment / price) * 100).toFixed(2);
+  }
+
+  const frequency = plan.frequency || 'Quarterly';
+
+  this.paymentPlans.push(this.createPaymentPlan(
+    plan.installmentYears,
+    plan.downPayment > 0 ? plan.downPayment.toLocaleString('en-US') : '',
+    dpPercent,
+    plan.quarterInstallment > 0 ? plan.quarterInstallment.toLocaleString('en-US') : '',
+    frequency
+  ));
+});
+
+// ✅ بعد ما الخطط اتحملت، احسب الـ installmentAmount لكل خطة
+setTimeout(() => {
+  for (let i = 0; i < this.paymentPlans.length; i++) {
+    this.calculateInstallments(i);
+  }
+}, 0);
         } else {
           this.addPaymentPlan(); // لو مفيش، يفتحله خطة واحدة بيضاء
         }
@@ -627,14 +638,16 @@ filteredProjects: string[] = [];
     return this.editForm.get('paymentPlans') as FormArray;
   }
 
-  createPaymentPlan(years = 1, dp = '', dpPercent = '', quarter = ''): FormGroup {
-    return this.fb.group({
-      installmentYears: [years, [Validators.min(1)]],
-      downPaymentPercentage: [dpPercent],
-      downPayment: [dp],
-      quarterInstallment: [quarter]
-    });
-  }
+  createPaymentPlan(years = 1, dp = '', dpPercent = '', quarter = '', frequency = 'Quarterly'): FormGroup {
+  return this.fb.group({
+    installmentYears: [years, [Validators.min(1)]],
+    downPaymentPercentage: [dpPercent],
+    downPayment: [dp],
+    frequency: [frequency],
+    quarterInstallment: [quarter],
+    installmentAmount: ['']
+  });
+}
 
   addPaymentPlan() {
     this.paymentPlans.push(this.createPaymentPlan());
@@ -720,21 +733,28 @@ filteredProjects: string[] = [];
   }
 
   calculateInstallments(index: number) {
-    const total = this.getPureNumber('price');
-    const plan = this.paymentPlans.at(index);
-    const dpAmount = Number(plan.get('downPayment')?.value.toString().replace(/,/g, '') || 0);
-    const years = Number(plan.get('installmentYears')?.value.toString().replace(/[^0-9]/g, '') || 0);
+  const total = this.getPureNumber('price');
+  const plan = this.paymentPlans.at(index);
+  const dpAmount = Number(plan.get('downPayment')?.value?.toString().replace(/,/g, '') || 0);
+  const years = Number(plan.get('installmentYears')?.value?.toString().replace(/[^0-9]/g, '') || 0);
+  const frequency = plan.get('frequency')?.value || 'Quarterly';
 
-    if (total > 0 && years > 0) {
-      const remaining = total - dpAmount;
-      if (remaining > 0) {
-        const quarter = this.roundAmount((remaining / years) / 4);
-        plan.get('quarterInstallment')?.setValue(quarter.toLocaleString('en-US'), { emitEvent: false });
-      } else {
-        plan.get('quarterInstallment')?.setValue('0', { emitEvent: false });
-      }
+  if (total > 0 && years > 0) {
+    const remaining = total - dpAmount;
+    if (remaining > 0) {
+      let result = 0;
+      if (frequency === 'Quarterly')    result = (remaining / years) / 4;
+      else if (frequency === 'Semi-Annual') result = (remaining / years) / 2;
+      else if (frequency === 'Annual')      result = remaining / years;
+
+      plan.get('installmentAmount')?.setValue(
+        this.roundAmount(result).toLocaleString('en-US'), { emitEvent: false }
+      );
+    } else {
+      plan.get('installmentAmount')?.setValue('0', { emitEvent: false });
     }
   }
+}
 
   isInstallmentSelected(): boolean { return this.editForm.get('paymentMethod')?.value === 'Installment'; }
 
