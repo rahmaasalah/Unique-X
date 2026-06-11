@@ -851,12 +851,32 @@
     }
 
     <!-- 5. All Visits / All Activities -->
-    @if (activeTab() === 'all_visits' || activeTab() === 'all_activities') {
+    @if (activeTab() === 'all_visits') {
       <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
         <h4 class="fw-bold mb-3 flex-shrink-0">
           <i class="bi" [ngClass]="activeTab() === 'all_visits' ? 'bi-geo-alt-fill text-info' : 'bi-telephone-fill text-dark'"></i> 
           {{ activeTab() === 'all_visits' ? 'All Scheduled Visits' : 'All Calls & Activities' }}
         </h4>
+
+        <div class="row g-2 mb-3 p-3 bg-white rounded-4 border shadow-sm align-items-center">
+  <div class="col-md-4">
+    <input type="text" class="form-control bg-light border-0" placeholder="Search Client..." [(ngModel)]="visitSearch">
+  </div>
+  <div class="col-md-3">
+    <select class="form-select bg-light border-0" [(ngModel)]="visitStatusFilter">
+      <option value="">All Statuses</option>
+      <option value="Pending">Pending</option>
+      <option value="Completed">Completed</option>
+      <option value="Cancelled">Cancelled</option>
+    </select>
+  </div>
+  <div class="col-md-2 text-end fw-bold"><span class="badge bg-danger p-2 px-3">Count: {{ filteredVisits().length }}</span></div>
+  <div class="col-md-3">
+    <button class="btn btn-outline-danger w-100 fw-bold rounded-pill" (click)="clearFilters('visit')">
+      <i class="bi bi-x-circle me-1"></i> Clear
+    </button>
+  </div>
+</div>
 
         
         <div class="card border-0 shadow-sm rounded-4 d-flex flex-column flex-grow-1" style="min-height: 0;">
@@ -873,7 +893,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let evt of (activeTab() === 'all_visits' ? allVisitsList() : allActivitiesList())">
+                <tr *ngFor="let evt of (activeTab() === 'all_visits' ? filteredVisits() : filteredActivities())">
                   <td class="ps-4 py-3">
                     <div class="fw-bold text-danger"><i class="bi bi-clock-history me-1"></i>{{ evt.date | date:'mediumDate' }}</div>
                     <small class="text-muted fw-bold">{{ evt.date | date:'shortTime' }}</small>
@@ -896,7 +916,81 @@
                     <button class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold shadow-sm" (click)="openEventDetails(evt)">View Details</button>
                   </td>
                 </tr>
-                <tr *ngIf="(activeTab() === 'all_visits' ? allVisitsList() : allActivitiesList()).length === 0">
+                <tr *ngIf="(activeTab() === 'all_visits' ? filteredVisits() : filteredActivities()).length === 0">
+                  <td colspan="6" class="text-center py-5 text-muted">No records found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    }
+
+    @if (activeTab() === 'all_activities') {
+      <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
+        <h4 class="fw-bold mb-3 flex-shrink-0">
+          <i class="bi" [ngClass]="activeTab() === 'all_visits' ? 'bi-geo-alt-fill text-info' : 'bi-telephone-fill text-dark'"></i> 
+          {{ activeTab() === 'all_visits' ? 'All Scheduled Visits' : 'All Calls & Activities' }}
+        </h4>
+
+        <div class="row g-2 mb-3 p-3 bg-white rounded-4 border shadow-sm align-items-center">
+  <div class="col-md-4">
+    <input type="text" class="form-control bg-light border-0" placeholder="Search Summary..." [(ngModel)]="activitySearch">
+  </div>
+  <div class="col-md-3">
+    <select class="form-select bg-light border-0" [(ngModel)]="activityStatusFilter">
+      <option value="">All Statuses</option>
+      <option value="Pending">Pending</option>
+      <option value="Completed">Completed</option>
+      <option value="Cancelled">Cancelled</option>
+    </select>
+  </div>
+  <div class="col-md-2 text-end fw-bold"><span class="badge bg-danger p-2 px-3">Count: {{ filteredActivities().length }}</span></div>
+  <div class="col-md-3">
+    <button class="btn btn-outline-danger w-100 fw-bold rounded-pill" (click)="clearFilters('activity')">
+      <i class="bi bi-x-circle me-1"></i> Clear
+    </button>
+  </div>
+</div>
+        
+        <div class="card border-0 shadow-sm rounded-4 d-flex flex-column flex-grow-1" style="min-height: 0;">
+          <div class="table-responsive flex-grow-1" style="font-size: 0.85rem; overflow-y: auto;">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-nowrap sticky-top" style="z-index: 2;">
+                <tr>
+                  <th class="ps-4">Due Date</th>
+                  <th>Status</th>
+                  <th>Client</th>
+                  <th>Assigned Broker</th>
+                  <th>Details & Feedback</th>
+                  <th class="text-end pe-4">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let evt of (activeTab() === 'all_visits' ? filteredVisits() : filteredActivities())">
+                  <td class="ps-4 py-3">
+                    <div class="fw-bold text-danger"><i class="bi bi-clock-history me-1"></i>{{ evt.date | date:'mediumDate' }}</div>
+                    <small class="text-muted fw-bold">{{ evt.date | date:'shortTime' }}</small>
+                  </td>
+                  <td>
+                    <span class="badge px-3 py-2 rounded-pill shadow-sm"
+                          [ngClass]="{'bg-warning text-dark': evt.status === 'Pending', 'bg-success': evt.status === 'Completed', 'bg-danger': evt.status === 'Cancelled', 'bg-info text-dark': evt.status === 'Rescheduled'}">
+                      {{ evt.status || 'Pending' }}
+                    </span>
+                  </td>
+                  <td><div class="fw-bold text-dark">{{ evt.clientName }}</div></td>
+                  <td><span class="fw-bold text-primary"><i class="bi bi-person-badge-fill me-1"></i>{{ evt.brokerName }}</span></td>
+                  <td style="max-width: 300px;">
+                    <div class="fw-bold text-dark">{{ evt.title }}</div>
+                    <div *ngIf="evt.feedback" class="mt-1 p-2 bg-light border rounded-3 small text-muted text-wrap text-break lh-sm" style="white-space: pre-line;">
+                      <i class="bi bi-chat-quote-fill text-secondary me-1"></i> {{ evt.feedback }}
+                    </div>
+                  </td>
+                  <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold shadow-sm" (click)="openEventDetails(evt)">View Details</button>
+                  </td>
+                </tr>
+                <tr *ngIf="(activeTab() === 'all_visits' ? filteredVisits() : filteredActivities()).length === 0">
                   <td colspan="6" class="text-center py-5 text-muted">No records found.</td>
                 </tr>
               </tbody>

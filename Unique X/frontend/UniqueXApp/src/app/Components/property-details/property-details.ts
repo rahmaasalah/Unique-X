@@ -263,16 +263,14 @@ openGallery(index: number) {
 }
 
 startCompare() {
-    const prop = this.property();
-    if (prop) {
-      // 🟢 حفظ الـ ID في ذاكرة المتصفح عشان مننساهوش
-      localStorage.setItem('compare_prop_1', prop.id.toString());
-      this.alertService.success('Please select the second property from the home page to compare.');
-      // 🟢 توجيه لصفحة الهوم
-      this.router.navigate(['/home']);
-    }
+  const prop = this.property();
+  if (prop) {
+    localStorage.setItem('compare_prop_1', prop.id.toString());
+    localStorage.setItem('compare_mode', 'active'); // ✅ أضيفي السطر ده
+    this.alertService.success('Please select the second property from the home page to compare.');
+    this.router.navigate(['/home']);
   }
-
+}
   // 🟢 دالة رسم المنحنى البياني
   renderChart(history: any[], listingType: string) {
     const ctx = document.getElementById('financialChart') as HTMLCanvasElement;

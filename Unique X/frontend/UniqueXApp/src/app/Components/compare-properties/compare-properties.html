@@ -1,7 +1,10 @@
 <div class="container py-5">
+
+  <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold text-dark mb-0"><i class="bi bi-arrow-left-right text-danger me-2"></i> Property Comparison</h2>
-    <button class="btn btn-outline-dark rounded-pill px-4 fw-bold" routerLink="/home">Back to Home</button>
+    <button class="btn btn-dark rounded-pill px-4" (click)="goToHome()">
+      <i class="bi bi-arrow-left me-1"></i> Back to Home
+    </button>
   </div>
 
   @if (isLoading()) {
@@ -9,275 +12,314 @@
       <div class="spinner-border text-danger" style="width: 3rem; height: 3rem;"></div>
     </div>
   } @else {
-    <div class="table-responsive bg-white rounded-4 shadow-sm border p-3">
-      <table class="table table-hover table-bordered align-middle mb-0">
-        <thead class="table-light text-center">
-          <tr>
-            <th style="width: 20%;" class="text-start ps-4 text-muted">Features</th>
-            <th style="width: 40%;">Property 1</th>
-            <th style="width: 40%;">Property 2</th>
-          </tr>
-        </thead>
-        <tbody class="text-center">
-          <!-- الصور -->
-          <tr>
-            <td class="text-start ps-4 fw-bold text-muted">Preview</td>
-            <td>
-              <img [src]="prop1()?.photos?.[0]?.url" class="rounded-3 object-fit-cover shadow-sm" style="width: 100%; height: 200px;">
-            </td>
-            <td>
-              <img [src]="prop2()?.photos?.[0]?.url" class="rounded-3 object-fit-cover shadow-sm" style="width: 100%; height: 200px;">
-            </td>
-          </tr>
-          
-          <!-- العنوان -->
-          <tr>
-            <td class="text-start ps-4 fw-bold text-muted">Title</td>
-            <td class="fw-bold text-dark">{{ prop1()?.title }}</td>
-            <td class="fw-bold text-dark">{{ prop2()?.title }}</td>
-          </tr>
 
-          <!-- السعر -->
-          <tr>
-            <td class="text-start ps-4 fw-bold text-muted">Price</td>
-            <td class="text-danger fw-bold fs-5">EGP {{ prop1()?.price | number }}</td>
-            <td class="text-danger fw-bold fs-5">EGP {{ prop2()?.price | number }}</td>
-          </tr>
+    <!-- Properties Row -->
+    <div class="row g-4">
 
-          <!-- الموقع -->
-          <tr>
-            <td class="text-start ps-4 fw-bold text-muted">Location</td>
-            <td>{{ prop1()?.region }}, {{ prop1()?.city }}</td>
-            <td>{{ prop2()?.region }}, {{ prop2()?.city }}</td>
-          </tr>
+      <!-- ===== Loop على الوحدات ===== -->
+      @for (prop of properties(); track prop.id) {
+        <div class="col-lg-3">
+          <div class="card shadow-sm rounded-4 h-100 border-0">
 
-          <!-- نوع العرض (Listing Type) -->
-          <tr>
-            <td class="text-start ps-4 fw-bold text-muted">Listing Type</td>
-            <td><span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">{{ prop1()?.listingType }}</span></td>
-            <td><span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">{{ prop2()?.listingType }}</span></td>
-          </tr>
-
-          <!-- نوع العقار (Property Type) -->
-          <tr>
-            <td class="text-start ps-4 fw-bold text-muted">Property Type</td>
-            <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">{{ prop1()?.propertyType }}</span></td>
-            <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">{{ prop2()?.propertyType }}</span></td>
-          </tr>
-
-          <!-- المساحة والغرف -->
-         <tr>
-            <td class="text-start ps-4 fw-bold text-muted align-middle">Specs & Details</td>
-            
-            <!-- مواصفات العقار الأول -->
-            <td class="text-start ps-md-4">
-              <ul class="list-unstyled mb-0 small text-muted lh-lg">
-                <li><i class="bi bi-aspect-ratio text-danger me-2"></i> <strong>Area:</strong> {{ prop1()?.area }} m²</li>
-                <li><i class="bi bi-door-open text-danger me-2"></i> <strong>Rooms:</strong> {{ prop1()?.rooms }}</li>
-                <li><i class="bi bi-droplet text-danger me-2"></i> <strong>Baths:</strong> {{ prop1()?.bathrooms }}</li>
-                
-                @if (prop1()?.receptionPieces > 0) { <li><i class="bi bi-grid-3x3-gap text-danger me-2"></i> <strong>Reception:</strong> {{ prop1()?.receptionPieces }} Pieces</li> }
-                
-                @if (prop1()?.floor > 0) { <li><i class="bi bi-layers text-danger me-2"></i> <strong>Floor:</strong> {{ prop1()?.floor }} @if(prop1()?.totalFloors > 0) { of {{ prop1()?.totalFloors }} }</li> }
-                
-                @if (prop1()?.apartmentsPerFloor > 1 && prop1()?.propertyType !== 'Villa') { <li><i class="bi bi-people text-danger me-2"></i> <strong>Units/Floor:</strong> {{ prop1()?.apartmentsPerFloor }}</li> }
-                
-                @if (prop1()?.elevatorsCount > 0) { <li><i class="bi bi-arrow-up-circle text-danger me-2"></i> <strong>Elevators:</strong> {{ prop1()?.elevatorsCount }}</li> }
-                
-                @if (prop1()?.buildYear > 0) { <li><i class="bi bi-calendar-check text-danger me-2"></i> <strong>Built in:</strong> {{ prop1()?.buildYear }}</li> }
-                
-                @if (prop1()?.view && prop1()?.view !== 'string') { <li><i class="bi bi-eye text-danger me-2"></i> <strong>View:</strong> {{ prop1()?.view }}</li> }
-                
-                @if (prop1()?.distanceFromLandmark) { <li><i class="bi bi-geo text-danger me-2"></i> <strong>Landmark:</strong> {{ prop1()?.distanceFromLandmark }}</li> }
-              </ul>
-
-            @if (prop1()?.propertyType === 'Villa') {
-                <hr class="my-2 border-secondary-subtle">
-                <div class="fw-bold text-danger mb-2 small"><i class="bi bi-layers-half me-1"></i> Villa Layout</div>
-                <ul class="list-unstyled mb-0 small text-muted lh-lg">
-                  @if(prop1()?.areaType) { <li><strong>Area Type:</strong> {{ prop1()?.areaType }}</li> }
-                  @if(prop1()?.villaCategory) { <li><strong>Category:</strong> {{ prop1()?.villaCategory }}</li> }
-                  @if(prop1()?.villaSubType) { <li><strong>Sub-Type:</strong> {{ prop1()?.villaSubType }}</li> }
-                  @if(prop1()?.groundRooms > 0 || prop1()?.groundBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>Ground:</strong> {{ prop1()?.groundRooms }} Rooms | {{ prop1()?.groundBaths }} Baths</li> }
-                  @if(prop1()?.firstRooms > 0 || prop1()?.firstBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>First:</strong> {{ prop1()?.firstRooms }} Rooms | {{ prop1()?.firstBaths }} Baths</li> }
-                  @if(prop1()?.secondRooms > 0 || prop1()?.secondBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>Second:</strong> {{ prop1()?.secondRooms }} Rooms | {{ prop1()?.secondBaths }} Baths</li> }
-                </ul>
-              }
-            </td>
-
-            <!-- مواصفات العقار الثاني -->
-            <td class="text-start ps-md-4">
-              <ul class="list-unstyled mb-0 small text-muted lh-lg">
-                <li><i class="bi bi-aspect-ratio text-danger me-2"></i> <strong>Area:</strong> {{ prop2()?.area }} m²</li>
-                <li><i class="bi bi-door-open text-danger me-2"></i> <strong>Rooms:</strong> {{ prop2()?.rooms }}</li>
-                <li><i class="bi bi-droplet text-danger me-2"></i> <strong>Baths:</strong> {{ prop2()?.bathrooms }}</li>
-                
-                @if (prop2()?.receptionPieces > 0) { <li><i class="bi bi-grid-3x3-gap text-danger me-2"></i> <strong>Reception:</strong> {{ prop2()?.receptionPieces }} Pieces</li> }
-                
-                @if (prop2()?.floor > 0) { <li><i class="bi bi-layers text-danger me-2"></i> <strong>Floor:</strong> {{ prop2()?.floor }} @if(prop2()?.totalFloors > 0) { of {{ prop2()?.totalFloors }} }</li> }
-                
-                @if (prop2()?.apartmentsPerFloor > 1 && prop2()?.propertyType !== 'Villa') { <li><i class="bi bi-people text-danger me-2"></i> <strong>Units/Floor:</strong> {{ prop2()?.apartmentsPerFloor }}</li> }
-                
-                @if (prop2()?.elevatorsCount > 0) { <li><i class="bi bi-arrow-up-circle text-danger me-2"></i> <strong>Elevators:</strong> {{ prop2()?.elevatorsCount }}</li> }
-                
-                @if (prop2()?.buildYear > 0) { <li><i class="bi bi-calendar-check text-danger me-2"></i> <strong>Built in:</strong> {{ prop2()?.buildYear }}</li> }
-                
-                @if (prop2()?.view && prop2()?.view !== 'string') { <li><i class="bi bi-eye text-danger me-2"></i> <strong>View:</strong> {{ prop2()?.view }}</li> }
-                
-                @if (prop2()?.distanceFromLandmark) { <li><i class="bi bi-geo text-danger me-2"></i> <strong>Landmark:</strong> {{ prop2()?.distanceFromLandmark }}</li> }
-              </ul>
-
-
-              @if (prop2()?.propertyType === 'Villa') {
-                <hr class="my-2 border-secondary-subtle">
-                <div class="fw-bold text-danger mb-2 small"><i class="bi bi-layers-half me-1"></i> Villa Layout</div>
-                <ul class="list-unstyled mb-0 small text-muted lh-lg">
-                  @if(prop2()?.areaType) { <li><strong>Area Type:</strong> {{ prop2()?.areaType }}</li> }
-                  @if(prop2()?.villaCategory) { <li><strong>Category:</strong> {{ prop2()?.villaCategory }}</li> }
-                  @if(prop2()?.villaSubType) { <li><strong>Sub-Type:</strong> {{ prop2()?.villaSubType }}</li> }
-                  @if(prop2()?.groundRooms > 0 || prop2()?.groundBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>Ground:</strong> {{ prop2()?.groundRooms }} Rooms | {{ prop2()?.groundBaths }} Baths</li> }
-                  @if(prop2()?.firstRooms > 0 || prop2()?.firstBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>First:</strong> {{ prop2()?.firstRooms }} Rooms | {{ prop2()?.firstBaths }} Baths</li> }
-                  @if(prop2()?.secondRooms > 0 || prop2()?.secondBaths > 0) { <li><i class="bi bi-arrow-return-right text-danger me-2"></i> <strong>Second:</strong> {{ prop2()?.secondRooms }} Rooms | {{ prop2()?.secondBaths }} Baths</li> }
-                </ul>
-              }
-            
-            </td>
-          </tr>
-
-          <!-- التشطيب -->
-          <tr>
-            <td class="text-start ps-4 fw-bold text-muted">Finishing</td>
-            <td><span class="badge bg-light text-dark border">{{ prop1()?.finishing }}</span></td>
-            <td><span class="badge bg-light text-dark border">{{ prop2()?.finishing }}</span></td>
-          </tr>
-
-          <tr>
-            <td class="text-start ps-4 fw-bold text-muted">Key Features</td>
-            
-            <!-- مميزات العقار الأول -->
-            <td>
-              <div class="d-flex flex-wrap gap-1 justify-content-center">
-                @if(prop1()?.hasMasterRoom) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Master Bedroom</span> }
-                @if(prop1()?.hasHotelEntrance) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Hotel Entrance</span> }
-                @if(prop1()?.hasSecurity) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> 24/7 Security</span> }
-                @if(prop1()?.hasParking) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Parking</span> }
-                @if(prop1()?.hasPool) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Pool</span> }
-                @if(prop1()?.hasBalcony) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Balcony</span> }
-                @if(prop1()?.isFirstOwner) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> First Owner</span> }
-                @if(prop1()?.hasLandShare) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Land Share</span> }
-                @if(prop1()?.isLegalReconciled) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Reconciled</span> }
-                @if(prop1()?.isLicensed) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Licensed</span> }
-                @if(prop1()?.hasGarden) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Garden</span> }
+            <!-- ===== Image Gallery ===== -->
+            <div id="carousel-{{prop.id}}" class="carousel slide rounded-top-4 overflow-hidden" data-bs-ride="false">
+              <div class="carousel-inner">
+                @for (photo of prop.photos; track photo.id; let i = $index) {
+                  <div class="carousel-item" [class.active]="i === 0">
+                    <img [src]="photo.url" class="d-block w-100"
+                         style="height: 160px; object-fit: cover;">
+                  </div>
+                }
               </div>
-            </td>
-            
-            <!-- مميزات العقار الثاني -->
-            <td>
-              <div class="d-flex flex-wrap gap-1 justify-content-center">
-                @if(prop2()?.hasMasterRoom) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Master Bedroom</span> }
-                @if(prop2()?.hasHotelEntrance) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Hotel Entrance</span> }
-                @if(prop2()?.hasSecurity) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> 24/7 Security</span> }
-                @if(prop2()?.hasParking) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Parking</span> }
-                @if(prop2()?.hasPool) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Pool</span> }
-                @if(prop2()?.hasBalcony) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Balcony</span> }
-                @if(prop2()?.isFirstOwner) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> First Owner</span> }
-                @if(prop2()?.hasLandShare) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Land Share</span> }
-                @if(prop2()?.isLegalReconciled) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Reconciled</span> }
-                @if(prop2()?.isLicensed) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Licensed</span> }
-                @if(prop2()?.hasGarden) { <span class="badge bg-light text-dark border border-danger-subtle"><i class="bi bi-check2 text-danger"></i> Garden</span> }
-              </div>
-            </td>
-          </tr>
-
-          <!-- العدادات والمرافق (Utilities) -->
-          <tr>
-            <td class="text-start ps-4 fw-bold text-muted">Utilities</td>
-            
-            <!-- عدادات العقار الأول -->
-            <td>
-              <div class="d-flex flex-wrap gap-2 justify-content-center">
-                @if(prop1()?.hasElectricityMeter) { <span class="badge bg-light text-dark border shadow-sm"><i class="bi bi-lightning-charge text-warning me-1"></i> Electricity</span> }
-                @if(prop1()?.hasWaterMeter) { <span class="badge bg-light text-dark border shadow-sm"><i class="bi bi-droplet text-primary me-1"></i> Water</span> }
-                @if(prop1()?.hasGasMeter) { <span class="badge bg-light text-dark border shadow-sm"><i class="bi bi-fire text-danger me-1"></i> Gas</span> }
-              </div>
-            </td>
-            
-            <!-- عدادات العقار الثاني -->
-            <td>
-              <div class="d-flex flex-wrap gap-2 justify-content-center">
-                @if(prop2()?.hasElectricityMeter) { <span class="badge bg-light text-dark border shadow-sm"><i class="bi bi-lightning-charge text-warning me-1"></i> Electricity</span> }
-                @if(prop2()?.hasWaterMeter) { <span class="badge bg-light text-dark border shadow-sm"><i class="bi bi-droplet text-primary me-1"></i> Water</span> }
-                @if(prop2()?.hasGasMeter) { <span class="badge bg-light text-dark border shadow-sm"><i class="bi bi-fire text-danger me-1"></i> Gas</span> }
-              </div>
-            </td>
-          </tr>
-
-          <!-- طريقة الدفع -->
-          <!-- 🟢 طريقة الدفع وخطط التقسيط -->
-          <tr>
-            <td class="text-start ps-4 fw-bold text-muted">Payment</td>
-            
-            <!-- دفع العقار الأول -->
-            <td>
-              <div class="fw-bold text-dark mb-2">{{ prop1()?.paymentMethod }}</div>
-              
-              @if(prop1()?.paymentMethod === 'Installment' && prop1()?.paymentPlans?.length > 0) {
-                <div class="d-flex flex-column gap-2 align-items-center">
-                  @for(plan of prop1()?.paymentPlans; track $index) {
-                    <div class="border rounded-3 p-2 bg-light text-start small w-100 shadow-sm" style="max-width: 260px;">
-                      <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted fw-bold" style="font-size: 0.65rem;">DOWN PAYMENT</span>
-                        <span class="text-dark fw-bold">EGP {{ plan.downPayment | number }}</span>
-                      </div>
-                      <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted fw-bold" style="font-size: 0.65rem;">DURATION</span>
-                        <span class="text-dark fw-bold">{{ plan.installmentYears }} Years</span>
-                      </div>
-                      <div class="d-flex justify-content-between border-top pt-1 mt-1">
-                        <span class="text-success fw-bold" style="font-size: 0.65rem;">QUARTERLY</span>
-                        <span class="text-success fw-bold">EGP {{ plan.quarterInstallment | number }}</span>
-                      </div>
-                    </div>
+              <!-- Arrows -->
+              @if (prop.photos?.length > 1) {
+                <button class="carousel-control-prev" type="button"
+                        [attr.data-bs-target]="'#carousel-' + prop.id" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button"
+                        [attr.data-bs-target]="'#carousel-' + prop.id" data-bs-slide="next">
+                  <span class="carousel-control-next-icon"></span>
+                </button>
+                <!-- Thumbnail dots -->
+                <div class="position-absolute bottom-0 start-0 end-0 d-flex justify-content-center gap-1 pb-1">
+                  @for (photo of prop.photos; track photo.id; let i = $index) {
+                    <img [src]="photo.url"
+                         class="rounded-1 border border-white"
+                         style="width: 28px; height: 20px; object-fit: cover; cursor: pointer; opacity: 0.8;"
+                         [attr.data-bs-target]="'#carousel-' + prop.id"
+                         [attr.data-bs-slide-to]="i">
                   }
                 </div>
               }
-            </td>
-            
-            <!-- دفع العقار الثاني -->
-            <td>
-              <div class="fw-bold text-dark mb-2">{{ prop2()?.paymentMethod }}</div>
-              
-              @if(prop2()?.paymentMethod === 'Installment' && prop2()?.paymentPlans?.length > 0) {
-                <div class="d-flex flex-column gap-2 align-items-center">
-                  @for(plan of prop2()?.paymentPlans; track $index) {
-                    <div class="border rounded-3 p-2 bg-light text-start small w-100 shadow-sm" style="max-width: 260px;">
-                      <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted fw-bold" style="font-size: 0.65rem;">DOWN PAYMENT</span>
-                        <span class="text-dark fw-bold">EGP {{ plan.downPayment | number }}</span>
-                      </div>
-                      <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted fw-bold" style="font-size: 0.65rem;">DURATION</span>
-                        <span class="text-dark fw-bold">{{ plan.installmentYears }} Years</span>
-                      </div>
-                      <div class="d-flex justify-content-between border-top pt-1 mt-1">
-                        <span class="text-success fw-bold" style="font-size: 0.65rem;">QUARTERLY</span>
-                        <span class="text-success fw-bold">EGP {{ plan.quarterInstallment | number }}</span>
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-            </td>
-          </tr>
+            </div>
+            <!-- end gallery -->
 
-          <!-- الأكشن -->
-          <tr>
-            <td class="text-start ps-4"></td>
-            <td><button class="btn btn-danger rounded-pill px-4 w-75" [routerLink]="['/property-details', prop1()?.id]">View Details</button></td>
-            <td><button class="btn btn-danger rounded-pill px-4 w-75" [routerLink]="['/property-details', prop2()?.id]">View Details</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            <div class="card-body px-3 pt-3 pb-2">
+
+              <!-- Title + Code -->
+              <h6 class="fw-bold text-dark mb-0">{{ prop.title }}</h6>
+              @if (prop.code) {
+                <span class="badge bg-secondary-subtle text-secondary border rounded-pill px-2 mb-2" style="font-size: 0.7rem;">
+                  <i class="bi bi-upc me-1"></i>{{ prop.code }}
+                </span>
+              }
+
+              <!-- Price -->
+              <p class="text-danger fw-bold fs-6 mb-2">EGP {{ prop.price | number }}</p>
+
+              <hr class="my-2">
+
+              <!-- Core Details -->
+              <ul class="list-unstyled small text-muted mb-2 lh-lg">
+
+                <li><i class="bi bi-geo-alt text-danger me-1"></i>
+                  <strong>Location:</strong> {{ prop.region }}, {{ prop.city }}
+                </li>
+
+                <li><i class="bi bi-tag text-danger me-1"></i>
+                  <strong>Listing:</strong>
+                  <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 ms-1">{{ prop.listingType }}</span>
+                </li>
+
+                <li><i class="bi bi-building text-danger me-1"></i>
+                  <strong>Type:</strong>
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 ms-1">{{ prop.propertyType }}</span>
+                </li>
+
+                <li><i class="bi bi-aspect-ratio text-danger me-1"></i>
+                  <strong>Area:</strong> {{ prop.area }} m²
+                </li>
+
+                @if (prop.pricePerMeter > 0) {
+                  <li><i class="bi bi-calculator text-danger me-1"></i>
+                    <strong>Price/m²:</strong> EGP {{ prop.pricePerMeter | number }}
+                  </li>
+                }
+
+                <!-- Rooms - للفيلا مجموع الأدوار، لغيرها العدد العادي -->
+                @if (prop.propertyType === 'Villa') {
+                  <li><i class="bi bi-door-open text-danger me-1"></i>
+                    <strong>Rooms:</strong>
+                    {{ (prop.groundRooms || 0) + (prop.firstRooms || 0) + (prop.secondRooms || 0) }}
+                  </li>
+                  <li><i class="bi bi-droplet text-danger me-1"></i>
+                    <strong>Baths:</strong>
+                    {{ (prop.groundBaths || 0) + (prop.firstBaths || 0) + (prop.secondBaths || 0) }}
+                  </li>
+                } @else {
+                  <li><i class="bi bi-door-open text-danger me-1"></i>
+                    <strong>Rooms:</strong> {{ prop.rooms }}
+                  </li>
+                  <li><i class="bi bi-droplet text-danger me-1"></i>
+                    <strong>Baths:</strong> {{ prop.bathrooms }}
+                  </li>
+                }
+
+                @if (prop.receptionPieces > 0) {
+                  <li><i class="bi bi-grid-3x3-gap text-danger me-1"></i>
+                    <strong>Reception:</strong> {{ prop.receptionPieces }} Pieces
+                  </li>
+                }
+
+                @if (prop.propertyType !== 'Villa') {
+                  @if (prop.floor > 0) {
+                    <li><i class="bi bi-layers text-danger me-1"></i>
+                      <strong>Floor:</strong> {{ prop.floor }}
+                      @if (prop.totalFloors > 0) { of {{ prop.totalFloors }} }
+                    </li>
+                  }
+                  @if (prop.totalFloors > 0) {
+                    <li><i class="bi bi-building-up text-danger me-1"></i>
+                      <strong>Total Floors:</strong> {{ prop.totalFloors }}
+                    </li>
+                  }
+                  @if (prop.apartmentsPerFloor > 1) {
+                    <li><i class="bi bi-people text-danger me-1"></i>
+                      <strong>Units/Floor:</strong> {{ prop.apartmentsPerFloor }}
+                    </li>
+                  }
+                  @if (prop.elevatorsCount > 0) {
+                    <li><i class="bi bi-arrow-up-circle text-danger me-1"></i>
+                      <strong>Elevators:</strong> {{ prop.elevatorsCount }}
+                    </li>
+                  }
+                }
+
+                @if (prop.buildYear > 0) {
+                  <li><i class="bi bi-calendar-check text-danger me-1"></i>
+                    <strong>Built:</strong> {{ prop.buildYear }}
+                  </li>
+                }
+
+                @if (prop.finishing) {
+                  <li><i class="bi bi-paint-bucket text-danger me-1"></i>
+                    <strong>Finishing:</strong> {{ prop.finishing }}
+                  </li>
+                }
+
+                @if (prop.view && prop.view !== 'string') {
+                  <li><i class="bi bi-eye text-danger me-1"></i>
+                    <strong>View:</strong> {{ prop.view }}
+                  </li>
+                }
+
+                @if (prop.distanceFromLandmark) {
+                  <li><i class="bi bi-geo text-danger me-1"></i>
+                    <strong>Landmark:</strong> {{ prop.distanceFromLandmark }}
+                  </li>
+                }
+
+              </ul>
+
+              <!-- ===== Villa Layout ===== -->
+              @if (prop.propertyType === 'Villa') {
+                <hr class="my-2">
+                <div class="fw-bold text-danger small mb-1">
+                  <i class="bi bi-layers-half me-1"></i> Villa Layout
+                </div>
+                <ul class="list-unstyled small text-muted lh-lg mb-2">
+                  @if (prop.areaType) { <li><strong>Area Type:</strong> {{ prop.areaType }}</li> }
+                  @if (prop.villaCategory) { <li><strong>Category:</strong> {{ prop.villaCategory }}</li> }
+                  @if (prop.villaSubType) { <li><strong>Sub-Type:</strong> {{ prop.villaSubType }}</li> }
+                  @if (prop.groundRooms > 0 || prop.groundBaths > 0) {
+                    <li><i class="bi bi-arrow-return-right text-danger me-1"></i>
+                      <strong>Ground:</strong> {{ prop.groundRooms }} Rooms | {{ prop.groundBaths }} Baths
+                    </li>
+                  }
+                  @if (prop.firstRooms > 0 || prop.firstBaths > 0) {
+                    <li><i class="bi bi-arrow-return-right text-danger me-1"></i>
+                      <strong>First:</strong> {{ prop.firstRooms }} Rooms | {{ prop.firstBaths }} Baths
+                    </li>
+                  }
+                  @if (prop.secondRooms > 0 || prop.secondBaths > 0) {
+                    <li><i class="bi bi-arrow-return-right text-danger me-1"></i>
+                      <strong>Second:</strong> {{ prop.secondRooms }} Rooms | {{ prop.secondBaths }} Baths
+                    </li>
+                  }
+                </ul>
+              }
+
+              <!-- ===== Key Features ===== -->
+              <hr class="my-2">
+              <div class="d-flex flex-wrap gap-1 mb-2">
+                @if (prop.hasMasterRoom) { <span class="badge bg-light text-dark border border-danger-subtle" style="font-size:0.65rem;"><i class="bi bi-check2 text-danger"></i> Master</span> }
+                @if (prop.hasHotelEntrance) { <span class="badge bg-light text-dark border border-danger-subtle" style="font-size:0.65rem;"><i class="bi bi-check2 text-danger"></i> Hotel Entrance</span> }
+                @if (prop.hasSecurity) { <span class="badge bg-light text-dark border border-danger-subtle" style="font-size:0.65rem;"><i class="bi bi-check2 text-danger"></i> Security</span> }
+                @if (prop.hasParking) { <span class="badge bg-light text-dark border border-danger-subtle" style="font-size:0.65rem;"><i class="bi bi-check2 text-danger"></i> Parking</span> }
+                @if (prop.hasPool) { <span class="badge bg-light text-dark border border-danger-subtle" style="font-size:0.65rem;"><i class="bi bi-check2 text-danger"></i> Pool</span> }
+                @if (prop.hasBalcony) { <span class="badge bg-light text-dark border border-danger-subtle" style="font-size:0.65rem;"><i class="bi bi-check2 text-danger"></i> Balcony</span> }
+                @if (prop.hasGarden) { <span class="badge bg-light text-dark border border-danger-subtle" style="font-size:0.65rem;"><i class="bi bi-check2 text-danger"></i> Garden</span> }
+                @if (prop.isFirstOwner) { <span class="badge bg-light text-dark border border-danger-subtle" style="font-size:0.65rem;"><i class="bi bi-check2 text-danger"></i> First Owner</span> }
+                @if (prop.hasLandShare) { <span class="badge bg-light text-dark border border-danger-subtle" style="font-size:0.65rem;"><i class="bi bi-check2 text-danger"></i> Land Share</span> }
+                @if (prop.isLegalReconciled) { <span class="badge bg-light text-dark border border-danger-subtle" style="font-size:0.65rem;"><i class="bi bi-check2 text-danger"></i> Reconciled</span> }
+                @if (prop.isLicensed) { <span class="badge bg-light text-dark border border-danger-subtle" style="font-size:0.65rem;"><i class="bi bi-check2 text-danger"></i> Licensed</span> }
+              </div>
+
+              <!-- ===== Utilities ===== -->
+              <div class="d-flex flex-wrap gap-1 mb-2">
+                @if (prop.hasElectricityMeter) { <span class="badge bg-light text-dark border shadow-sm" style="font-size:0.65rem;"><i class="bi bi-lightning-charge text-warning me-1"></i>Electricity</span> }
+                @if (prop.hasWaterMeter) { <span class="badge bg-light text-dark border shadow-sm" style="font-size:0.65rem;"><i class="bi bi-droplet text-primary me-1"></i>Water</span> }
+                @if (prop.hasGasMeter) { <span class="badge bg-light text-dark border shadow-sm" style="font-size:0.65rem;"><i class="bi bi-fire text-danger me-1"></i>Gas</span> }
+              </div>
+
+              <!-- ===== Payment ===== -->
+              @if (prop.paymentMethod) {
+                <hr class="my-2">
+                <div class="small fw-bold text-muted mb-1">
+                  <i class="bi bi-credit-card text-danger me-1"></i> {{ prop.paymentMethod }}
+                </div>
+                @if (prop.paymentMethod === 'Installment' && prop.paymentPlans?.length > 0) {
+                  <div class="d-flex flex-column gap-1">
+                    @for (plan of prop.paymentPlans; track $index) {
+                      <div class="border rounded-3 p-2 bg-light small shadow-sm">
+                        <div class="d-flex justify-content-between">
+                          <span class="text-muted" style="font-size:0.65rem;">DOWN</span>
+                          <span class="fw-bold text-dark">EGP {{ plan.downPayment | number }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                          <span class="text-muted" style="font-size:0.65rem;">YEARS</span>
+                          <span class="fw-bold text-dark">{{ plan.installmentYears }} yrs</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-1 mt-1">
+                          <span class="text-success" style="font-size:0.65rem;">QUARTERLY</span>
+                          <span class="fw-bold text-success">EGP {{ plan.quarterInstallment | number }}</span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+
+            </div><!-- end card-body -->
+
+            <div class="card-footer bg-transparent border-0 pb-3 px-3">
+              <button class="btn btn-danger w-100 rounded-pill"
+                      [routerLink]="['/property-details', prop.id]">
+                View Details
+              </button>
+            </div>
+
+          </div><!-- end card -->
+        </div>
+      }
+      <!-- end @for -->
+
+      <!-- ===== Add Property Card ===== -->
+      <div class="col-lg-3">
+        <div class="card border-0 d-flex flex-column align-items-center justify-content-center h-100 rounded-4 p-3"
+             style="min-height: 300px; border: 2px dashed #ccc !important; border-style: dashed !important;">
+
+          <button class="btn btn-outline-danger rounded-circle p-4"
+                  (click)="goToHomeForCompare()"
+                  title="Browse and pick a property">
+            <i class="bi bi-plus fs-1"></i>
+          </button>
+          <p class="mt-2 text-muted fw-bold">Add Property</p>
+
+          <div class="text-muted small my-2">— or —</div>
+
+          <button class="btn btn-outline-secondary rounded-pill px-4"
+                  (click)="openAddCodeModal()">
+            <i class="bi bi-upc-scan me-1"></i> Add by Code
+          </button>
+
+        </div>
+      </div>
+
+    </div><!-- end row -->
   }
-</div>
+
+</div><!-- end container -->
+
+
+<!-- ===== Add by Code Modal ===== -->
+@if (showModal) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">Add Property by Code</h5>
+          <button type="button" class="btn-close" (click)="closeModal()"></button>
+        </div>
+
+        <div class="modal-body py-3">
+          <input
+            type="text"
+            class="form-control rounded-pill px-4"
+            placeholder="Enter property code (e.g. AR123)"
+            [(ngModel)]="newCode"
+            (keyup.enter)="addByCode()"
+          >
+        </div>
+
+        <div class="modal-footer border-0 pt-0">
+          <button class="btn btn-light rounded-pill px-4" (click)="closeModal()">Cancel</button>
+          <button class="btn btn-danger rounded-pill px-4" (click)="addByCode()">Add</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+}

@@ -121,24 +121,29 @@ onToggleWishlist(event: Event) {
   }
 
   onCardClick() {
+  const compareMode = localStorage.getItem('compare_mode');
+
+  if (compareMode === 'active') {
     const compareId = localStorage.getItem('compare_prop_1');
-
-    if (compareId) {
-      if (Number(compareId) === this.property.id) {
-        this.alertService.error('Please select a DIFFERENT property to compare.');
-        return;
-      }
-
-      this.router.navigate(['/compare', compareId, this.property.id]);
-    } else {
-      this.router.navigate(['/property-details', this.property.id]);
+    if (Number(compareId) === this.property.id) {
+      this.alertService.error('Please select a DIFFERENT property to compare.');
+      return;
     }
-  }
+    localStorage.removeItem('compare_mode');
+    localStorage.removeItem('compare_prop_1');
+    this.router.navigate(['/compare', `${compareId},${this.property.id}`]);
 
-  get pricePerMeter(): number {
-  if (this.property.area > 0 && this.property.price > 0) {
-    return Math.round(this.property.price / this.property.area);
+  } else if (compareMode === 'add_to_existing') {
+    const existingIds = localStorage.getItem('compare_existing_ids');
+    localStorage.removeItem('compare_mode');
+    localStorage.removeItem('compare_existing_ids');
+    const newIds = existingIds 
+      ? `${existingIds},${this.property.id}` 
+      : `${this.property.id}`;
+    this.router.navigate(['/compare', newIds]);
+
+  } else {
+    this.router.navigate(['/property-details', this.property.id]);
   }
-  return 0;
 }
 }

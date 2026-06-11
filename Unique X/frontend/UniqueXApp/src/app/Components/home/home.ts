@@ -402,4 +402,21 @@ handleAdminContact(event: Event, type: 'whatsapp' | 'call') {
     window.open(this.getAdminWhatsApp(), '_blank');
   }
 }
+
+addToCompare(propertyId: number) {
+  // 1. نجيب الـ IDs القديمة من الـ URL أو الـ LocalStorage
+  // الأسهل: نمرر الـ IDs في الـ URL
+  const currentUrl = this.router.url;
+  // لو المستخدم في صفحة المقارنة بالفعل، نضيف الـ ID الجديد
+  if (currentUrl.includes('/compare/')) {
+    const ids = currentUrl.split('/').pop()?.split(',') || [];
+    if (!ids.includes(propertyId.toString())) {
+       ids.push(propertyId.toString());
+       this.router.navigate(['/compare', ids.join(',')]);
+    }
+  } else {
+    // لو من الهوم، نبدأ مقارنة جديدة
+    this.router.navigate(['/compare', propertyId]);
+  }
+}
 }
