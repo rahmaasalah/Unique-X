@@ -185,12 +185,23 @@ namespace Unique_X.Controllers.CRM
                     RescheduledActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Rescheduled")
                 }).ToListAsync();
 
+            var brokerLeadIds = await _context.Leads
+    .Where(l => l.BrokerId == brokerId)
+    .Select(l => l.Id)
+    .ToListAsync();
+
+            //var visits = await _context.Visits
+            //    .Include(v => v.Lead)
+            //    .Where(v => v.BrokerId == brokerId)
+            //    .OrderByDescending(v => v.VisitDate)
+            //    .Select(v => new VisitResponseDto
+
             var visits = await _context.Visits
-                .Include(v => v.Lead)
-                .Where(v => v.BrokerId == brokerId)
-                .OrderByDescending(v => v.VisitDate)
-                .Select(v => new VisitResponseDto
-                {
+    .Include(v => v.Lead)
+    .Where(v => brokerLeadIds.Contains(v.LeadId))
+    .OrderByDescending(v => v.VisitDate)
+    .Select(v => new VisitResponseDto
+    {
                     Id = v.Id,
                     LeadName = v.Lead.FullName,
                     LeadPhone = v.Lead.PhoneNumber,
@@ -209,12 +220,18 @@ namespace Unique_X.Controllers.CRM
                     Status = v.Status
                 }).ToListAsync();
 
+            //var activities = await _context.LeadActivities
+            //    .Include(a => a.Lead)
+            //    .Where(a => a.AssignedToId == brokerId)
+            //    .OrderByDescending(a => a.DueDate)
+            //    .Select(a => new BrokerTaskDto
+
             var activities = await _context.LeadActivities
-                .Include(a => a.Lead)
-                .Where(a => a.AssignedToId == brokerId)
-                .OrderByDescending(a => a.DueDate)
-                .Select(a => new BrokerTaskDto
-                {
+    .Include(a => a.Lead)
+    .Where(a => brokerLeadIds.Contains(a.LeadId))
+    .OrderByDescending(a => a.DueDate)
+    .Select(a => new BrokerTaskDto
+    {
                     Id = a.Id,
                     LeadId = a.LeadId,
                     LeadName = a.Lead.FullName,

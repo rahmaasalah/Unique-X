@@ -49,12 +49,49 @@ namespace Unique_X.Controllers.CRM
         }
 
         // 2. جلب كل الزيارات الخاصة ببروكر معين[
+        //[HttpGet("broker/{brokerId}")]
+        //public async Task<IActionResult> GetBrokerVisits(string brokerId)
+        //{
+        //    var visits = await _context.Visits
+        //        .Include(v => v.Lead)
+        //        .Where(v => v.BrokerId == brokerId)
+        //        .OrderBy(v => v.VisitDate)
+        //        .Select(v => new VisitResponseDto
+        //        {
+        //            Id = v.Id,
+        //            LeadId = v.LeadId,
+        //            LeadName = v.Lead.FullName,
+        //            LeadPhone = v.Lead.PhoneNumber,
+        //            PropertyCode = v.PropertyCode,
+        //            PropertyName = v.PropertyName,
+        //            BrokerPhone = v.BrokerPhone,
+        //            ZoneId = v.ZoneId,
+        //            ListingType = v.ListingType,
+        //            Region = v.Region,
+        //            Project = v.Project,
+        //            VisitDate = v.VisitDate,
+        //            Notes = v.Notes,
+        //            Location = v.Location,
+        //            Feedback = v.Feedback,
+        //            VisitType = v.VisitType,
+        //            IsCompleted = v.IsCompleted
+        //        }).ToListAsync();
+
+        //    return Ok(visits);
+        //}
+
         [HttpGet("broker/{brokerId}")]
         public async Task<IActionResult> GetBrokerVisits(string brokerId)
         {
+            // أولاً: نجيب IDs عملاء البروكر ده
+            var brokerLeadIds = await _context.Leads
+                .Where(l => l.BrokerId == brokerId)
+                .Select(l => l.Id)
+                .ToListAsync();
+
             var visits = await _context.Visits
                 .Include(v => v.Lead)
-                .Where(v => v.BrokerId == brokerId)
+                .Where(v => brokerLeadIds.Contains(v.LeadId))  // ✅ كل visits عملاء البروكر
                 .OrderBy(v => v.VisitDate)
                 .Select(v => new VisitResponseDto
                 {

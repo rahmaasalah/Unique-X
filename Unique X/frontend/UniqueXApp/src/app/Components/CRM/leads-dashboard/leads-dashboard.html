@@ -80,14 +80,7 @@
               
               <div class="text-muted small mb-2"><i class="bi bi-telephone-fill me-1"></i> {{ lead.phoneNumber }}</div>
 
-              <div *ngIf="lead.isDuplicate && !lead.isApprovedDuplicate" class="mb-2">
-                <span class="badge bg-danger rounded-pill px-2 py-1 shadow-sm w-100 text-center mb-1" style="font-size: 0.65rem;">
-                  <i class="bi bi-exclamation-triangle-fill me-1"></i> Pending Duplicate
-                </span>
-                <button *ngIf="isAdmin()" class="btn btn-sm btn-success rounded-pill w-100 fw-bold" style="font-size: 0.7rem;" (click)="approveDuplicate(lead.id)">
-                  Approve Lead
-                </button>
-              </div>
+              
 
               <div class="text-primary small fw-bold mb-2 pb-2 border-bottom" *ngIf="isAdmin()">
                 <i class="bi bi-person-badge-fill me-1"></i> Broker: {{ lead.brokerName }}
@@ -247,10 +240,7 @@
                 <td class="ps-4">
                   <div class="fw-bold text-dark">{{ lead.fullName }}</div>
                   <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ lead.phoneNumber }}</small>
-                  <!-- رسالة التكرار -->
-                  <div *ngIf="lead.isDuplicate && !lead.isApprovedDuplicate" class="text-danger small fw-bold mt-1">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Pending Duplicate
-                  </div>
+                  
                 </td>
 
                  <td *ngIf="isAdmin()">
@@ -326,11 +316,7 @@
           (click)="toggleHideLead(lead.id)">
     <i class="bi" [ngClass]="hiddenLeads().includes(lead.id) ? 'bi-eye-fill' : 'bi-eye-slash'"></i>
   </button>
-                  <button *ngIf="isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate" 
-                          class="btn btn-sm btn-success rounded-pill px-3 fw-bold me-2 shadow-sm" 
-                          (click)="approveDuplicate(lead.id)">
-                    Approve
-                  </button>
+                  
                 </td>
               </tr>
             } @empty {
