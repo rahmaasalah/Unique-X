@@ -68,7 +68,7 @@ namespace Unique_X.Services.Implementation
             {"IL Latini", "IL"}, {"Downtown", "DOW"}, {"Plam Hills North Coast", "PA"}, {"Mazarine", "MAZ"},
             {"Golf Porto Marina", "GPM"}, {"Marina 1", "MR1"}, {"Marina 2", "MR2"}, {"Marina 3", "MR3"},
             {"Marina 4", "MR4"}, {"Marina 5", "MR5"}, {"Marina 6", "MR6"}, {"Marina 7", "MR7"}, {"Marina 8", "MR8"},
-            {"Viller", "VI"}, {"North Code", "NO"}, {"Wanas Master", "WA"}, {"London", "LON"}, {"Agaza", "AGZ"},{"Youd", "YD"},
+            {"Viller", "VI"}, {"North Code", "NO"}, {"Wanas Master", "WA"}, {"London", "LON"}, {"Ajaza", "AGZ"},{"Youd", "YD"},
             {"Eko Mena", "EK"}, {"Bungalows", "BU"}, {"Layana", "LAY"}, {"Glee", "GL"}, {"Ras Al-Hekma", "RH"},{"Hacienda Ras Al-Hekma", "HCR"}, {"Dayz", "DZ"}
         };
 
@@ -242,7 +242,8 @@ namespace Unique_X.Services.Implementation
                         InstallmentYears = plan.InstallmentYears,
                         DownPayment = plan.DownPayment,
                         QuarterInstallment = plan.InstallmentAmount,
-                        Frequency = plan.Frequency
+                        Frequency = string.IsNullOrEmpty(plan.Frequency) ? "Quarterly" : plan.Frequency
+
                     });
                 }
             }
@@ -461,6 +462,9 @@ namespace Unique_X.Services.Implementation
                 .Include(p => p.PaymentPlans)
                 .FirstOrDefaultAsync(p => p.Id == id && p.BrokerId == brokerId);
 
+            if (property == null)
+                return null;
+
 
             var oldCity = property.City;
             var oldListingType = property.ListingType;
@@ -468,10 +472,6 @@ namespace Unique_X.Services.Implementation
             var oldProjectName = property.ProjectName ?? "";
             var oldDeveloperName = property.DeveloperName ?? "";
             var oldRegion = property.Region ?? "";
-
-
-            if (property == null || property.BrokerId != brokerId)
-                return null;
 
 
             if (!string.IsNullOrEmpty(dto.Title) && dto.Title != "string") property.Title = dto.Title;
@@ -577,7 +577,8 @@ namespace Unique_X.Services.Implementation
                     {
                         InstallmentYears = plan.InstallmentYears,
                         DownPayment = plan.DownPayment,
-                        QuarterInstallment = plan.InstallmentAmount
+                        QuarterInstallment = plan.InstallmentAmount,
+                        Frequency = string.IsNullOrEmpty(plan.Frequency) ? "Quarterly" : plan.Frequency
                     });
                 }
             }

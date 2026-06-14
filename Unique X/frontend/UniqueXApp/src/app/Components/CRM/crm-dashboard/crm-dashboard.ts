@@ -89,12 +89,12 @@ clearFilters(type: 'visit' | 'activity') {
   vipBrokers = signal<any[]>([]);
   favoriteLeads = signal<number[]>([]);
 
-  allBrokersList = signal<any[]>([]); // كل البروكرز اللي في السيستم
+allBrokersList = signal<any[]>([]); // كل البروكرز اللي في السيستم
 selectedBrokerToAdd = signal<string>(''); // البروكر اللي الأدمن اختاره من القائمة
 
-  selectedDayEvents = signal<any>(null);
+selectedDayEvents = signal<any>(null);
 
-  searchDuplicate = signal<string>('');
+searchDuplicate = signal<string>('');
 filterBroker = signal<string>('');
 
 filteredPendingDuplicates = computed(() => {
@@ -225,25 +225,41 @@ clearDuplicateFilters() {
   });
 
   // 🟢 2. فلاتر ولوجيك تاب العملاء
-  searchClient = signal<string>('');
-  filterClientStage = signal<string>('');
+searchClient = signal<string>('');
+filterClientStage = signal<string>('');
+filterCampaign = signal<string>('');
+filterZone = signal<string>('');
+filterCreationDate = signal<string>('');
+filterLastUpdate = signal<string>('');
+filterMinBudget = signal<number | null>(null);
+filterMaxBudget = signal<number | null>(null);
+campaignsList = signal<any[]>([]);
   
   filteredClients = computed(() => {
-    let leads = this.allLeads();
-    const q = this.searchClient().toLowerCase();
-    const stage = this.filterClientStage();
-    const broker = this.globalBrokerFilter();
+  let leads = this.allLeads();
+  const q = this.searchClient().toLowerCase();
+  const stage = this.filterClientStage();
+  const broker = this.globalBrokerFilter();
+  const campaign = this.filterCampaign();
+  const zone = this.filterZone();
+  const cDate = this.filterCreationDate();
+  const uDate = this.filterLastUpdate();
+  const minB = this.filterMinBudget();
+  const maxB = this.filterMaxBudget();
 
-    if (q) leads = leads.filter(l => l.fullName.toLowerCase().includes(q) || l.phoneNumber.includes(q));
-    if (stage) leads = leads.filter(l => l.statusId.toString() === stage);
-    if (broker) leads = leads.filter(l => l.brokerName === broker);
-    if (!this.showHiddenItems()) {
-      leads = leads.filter(l => !this.hiddenLeads().includes(l.id));
-    }
+  if (q) leads = leads.filter(l => l.fullName.toLowerCase().includes(q) || l.phoneNumber.includes(q));
+  if (stage) leads = leads.filter(l => l.statusId.toString() === stage);
+  if (broker) leads = leads.filter(l => l.brokerName === broker);
+  if (campaign) leads = leads.filter(l => l.campaignName === campaign);
+  if (zone) leads = leads.filter(l => l.zoneName === zone);
+  if (cDate) leads = leads.filter(l => this.formatDateForFilter(l.createdAt) === cDate);
+  if (uDate) leads = leads.filter(l => this.formatDateForFilter(l.updatedAt || l.createdAt) === uDate);
+  if (minB !== null) leads = leads.filter(l => l.totalAmount >= minB);
+  if (maxB !== null) leads = leads.filter(l => l.totalAmount <= maxB);
+  if (!this.showHiddenItems()) leads = leads.filter(l => !this.hiddenLeads().includes(l.id));
 
-    return leads;
-  });
-
+  return leads;
+});
   filteredFavoritesList = computed(() => {
     return this.filteredClients().filter(l => this.favoriteLeads().includes(l.id));
   });
@@ -262,6 +278,7 @@ clearDuplicateFilters() {
     { id: 22, name: 'Lost Not interested' }, { id: 23, name: 'Low Budget' }, { id: 24, name: 'Number Issue' },
     { id: 25, name: 'Broker' }, { id: 26, name: 'Recommend to shift' }
   ];
+  
 
 
   // ================= 🟢 متغيرات الكاليندر (النتيجة) =================
@@ -382,9 +399,11 @@ hiddenLeads = signal<number[]>([]);
     forkJoin({
       users: this.adminService.getAllUsers(),
       leads: this.crmService.getLeads(''),
+      campaigns: this.crmService.getCampaigns(),
       calendar: this.crmService.getAdminCalendarEvents() // ID فاضي يعني هات كل العملاء
     }).subscribe({
-      next: ({ users, leads, calendar }) => {
+      next: ({ users, leads, campaigns, calendar }) => {
+        this.campaignsList.set(campaigns);
         
         // 🟢 1. بنفلتر كل البروكرز من المستخدمين (UserType === 1) ونحفظهم
         const brokers = users.filter((u: any) => u.userType === 1);
@@ -421,6 +440,12 @@ hiddenLeads = signal<number[]>([]);
   toggleSidebar() {
     this.isSidebarOpen.update(val => !val);
   }
+
+  formatDateForFilter(dateString: string): string {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 
   rejectDuplicate(leadId: number) {
   this.alertService.showLoading('Rejecting...');
@@ -548,11 +573,16 @@ revokeAccess(userId: string) {
   }
 
   clearClientFilters() {
-    this.searchClient.set('');
-    this.filterClientStage.set('');
-    //this.filterClientBroker.set('');
-    this.globalBrokerFilter.set('');
-  }
+  this.searchClient.set('');
+  this.filterClientStage.set('');
+  this.globalBrokerFilter.set('');
+  this.filterCampaign.set('');
+  this.filterZone.set('');
+  this.filterCreationDate.set('');
+  this.filterLastUpdate.set('');
+  this.filterMinBudget.set(null);
+  this.filterMaxBudget.set(null);
+}
 
   changeMonth(offset: number) {
     const current = this.currentMonth();

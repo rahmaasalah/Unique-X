@@ -233,7 +233,7 @@ filteredLeads = computed(() => {
 
 
   loadProfileData(brokerId: string) {
-    if (this.isAdmin()) {
+    /* if (this.isAdmin()) {
       this.crmService.getLeads('').subscribe({
         next: (data) => {
           if (data) {
@@ -246,7 +246,24 @@ filteredLeads = computed(() => {
         },
         error: (err) => console.error('Error fetching admin data', err)
       });
-    } 
+    }  */
+   if (this.isAdmin()) {
+    this.crmService.getLeads('').subscribe({
+      next: (data) => {
+        if (data) {
+          data.forEach((lead: any) => {
+            if (lead.createdAt && !lead.createdAt.endsWith('Z')) lead.createdAt += 'Z';
+            if (lead.updatedAt && !lead.updatedAt.endsWith('Z')) lead.updatedAt += 'Z';
+          });
+        }
+        // ✅ جيب visits وactivities كمان للأدمن
+        // بس الأدمن مش ليه brokerId معين، فهنجيب كلهم
+        this.profileData.set({ leads: data, visits: [], activities: [] });
+        // الـ visits والactivities للأدمن مش محتاجينهم في صفحة البروفايل
+        // لأن الأدمن بيتعامل مع كل العملاء مش مع بروكر معين
+      }
+    });
+  }
     else {
       this.crmService.getBrokerProfileData(brokerId).subscribe({
         next: (data) => {

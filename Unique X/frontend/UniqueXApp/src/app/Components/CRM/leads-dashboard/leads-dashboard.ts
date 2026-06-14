@@ -184,7 +184,8 @@ export class LeadsDashboardComponent implements OnInit {
       const matchCamp = campaign === '' || lead.campaignName === campaign;
       const matchStatus = status === '' || lead.statusId.toString() === status;
       const matchZone = zone === '' || lead.zoneName === zone;
-      const matchBroker = broker === '' || lead.brokerId === broker;
+      //const matchBroker = broker === '' || lead.brokerId === broker;
+      const matchBroker = broker === '' || lead.brokerName === broker; 
       const matchRefBy = refBy === '' || lead.referredBy === refBy;
 
       const matchCDate = cDate === '' || this.formatDateForFilter(lead.createdAt) === cDate;

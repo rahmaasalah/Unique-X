@@ -155,6 +155,7 @@
       </div>
     </div>
 
+
     @if (activeTab() === 'brokers') {
       <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
         <h4 class="fw-bold mb-0"><i class="bi bi-person-vcard-fill text-danger me-2"></i>CRM Brokers</h4>
@@ -169,14 +170,11 @@
         
         <!-- 🟢 2. شريط الفلاتر (نسخة طبق الأصل من شريط العملاء) -->
         <div class="row g-2 mb-3 p-3 bg-white rounded-4 border shadow-sm flex-shrink-0">
-          
-          <!-- مربع البحث -->
-          <div class="col-md-5">
+                    <div class="col-md-5">
             <input type="text" class="form-control bg-light border-0" placeholder="Search broker by name or phone..." 
                    [ngModel]="searchBroker()" (ngModelChange)="searchBroker.set($event)">
           </div>
           
-          <!-- قائمة اختيار البروكر -->
           <div class="col-md-4">
             <select class="form-select bg-light border-0" [ngModel]="globalBrokerFilter()" (ngModelChange)="globalBrokerFilter.set($event)">
   <option value="">All Sales Persons</option>
@@ -569,94 +567,221 @@
     <!-- تاب: كل العملاء (All Clients Database)         -->
     <!-- ============================================== -->
     @if (activeTab() === 'clients') {
-      <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
-        
-        <!-- 🟢 2. تظبيط الهيدر عشان الزرار يبقى على اليمين وشكله شيك -->
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
-          <h4 class="fw-bold mb-0"><i class="bi bi-database-fill text-danger me-2"></i>All Clients Database</h4>
-          
-          <button *ngIf="isAdmin()" class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm border"
-                  [ngClass]="showHiddenItems() ? 'btn-dark' : 'bg-white text-dark'"
-                  (click)="showHiddenItems.set(!showHiddenItems())">
-            <i class="bi" [ngClass]="showHiddenItems() ? 'bi-eye' : 'bi-eye-slash text-muted'"></i> 
-            {{ showHiddenItems() ? 'Hide All' : 'Show Hidden' }}
+  <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
+      <h4 class="fw-bold mb-0"><i class="bi bi-people-fill text-danger me-2"></i>All Clients Database</h4>
+      <button *ngIf="isAdmin()" class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm border"
+              [ngClass]="showHiddenItems() ? 'btn-dark' : 'bg-white text-dark'"
+              (click)="showHiddenItems.set(!showHiddenItems())">
+        <i class="bi" [ngClass]="showHiddenItems() ? 'bi-eye' : 'bi-eye-slash text-muted'"></i>
+        {{ showHiddenItems() ? 'Hide All' : 'Show Hidden' }}
+      </button>
+    </div>
+
+    <!-- ===== شريط الفلاتر الموسع (نفس leads-dashboard) ===== -->
+    <div class="card p-3 mb-3 shadow-sm border-0 bg-white rounded-3 flex-shrink-0">
+
+      <!-- السطر الأول: Search, Stage, Campaign, Sales Persons, All Zones -->
+      <div class="row g-2 mb-2">
+        <div class="col">
+          <input type="text" class="form-control bg-light border-0"
+                 placeholder="Search Client Name/Phone..."
+                 [ngModel]="searchClient()" (ngModelChange)="searchClient.set($event)">
+        </div>
+        <div class="col">
+          <select class="form-select bg-light border-0"
+                  [ngModel]="filterClientStage()" (ngModelChange)="filterClientStage.set($event)">
+            <option value="">All Stages</option>
+            <option *ngFor="let stage of stages" [value]="stage.id">{{ stage.name }}</option>
+          </select>
+        </div>
+        <div class="col">
+          <select class="form-select bg-light border-0"
+                  [ngModel]="filterCampaign()" (ngModelChange)="filterCampaign.set($event)">
+            <option value="">All Campaigns</option>
+            <option *ngFor="let c of campaignsList()" [value]="c.name">{{ c.name }}</option>
+          </select>
+        </div>
+        <div class="col">
+          <select class="form-select bg-light border-0"
+                  [ngModel]="globalBrokerFilter()" (ngModelChange)="globalBrokerFilter.set($event)">
+            <option value="">All Sales Persons</option>
+            <option *ngFor="let b of vipBrokers()" [value]="b.firstName + ' ' + b.lastName">
+              {{ b.firstName }} {{ b.lastName }}
+            </option>
+          </select>
+        </div>
+        <div class="col">
+          <select class="form-select bg-light border-0"
+                  [ngModel]="filterZone()" (ngModelChange)="filterZone.set($event)">
+            <option value="">All Zones</option>
+            <option value="Cairo">Cairo</option>
+            <option value="Alexandria">Alexandria</option>
+            <option value="North Coast">North Coast</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- السطر الثاني: Min Budget, Max Budget, Created, Updated -->
+      <div class="row g-2 mb-2">
+        <div class="col-md-2">
+          <input type="number" class="form-control bg-light border-0"
+                 placeholder="Min Budget"
+                 [ngModel]="filterMinBudget()" (ngModelChange)="filterMinBudget.set($event)">
+        </div>
+        <div class="col-md-2">
+          <input type="number" class="form-control bg-light border-0"
+                 placeholder="Max Budget"
+                 [ngModel]="filterMaxBudget()" (ngModelChange)="filterMaxBudget.set($event)">
+        </div>
+        <div class="col-md-3">
+          <div class="input-group">
+            <span class="input-group-text bg-light border-0 text-muted small fw-bold">Created</span>
+            <input type="date" class="form-control bg-light border-0"
+                   [ngModel]="filterCreationDate()" (ngModelChange)="filterCreationDate.set($event)">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="input-group">
+            <span class="input-group-text bg-light border-0 text-muted small fw-bold">Updated</span>
+            <input type="date" class="form-control bg-light border-0"
+                   [ngModel]="filterLastUpdate()" (ngModelChange)="filterLastUpdate.set($event)">
+          </div>
+        </div>
+      </div>
+
+      <!-- السطر الثالث: Clear + عداد -->
+      <div class="row g-2">
+        <div class="col-12 d-flex align-items-center gap-3">
+          <button class="btn btn-outline-danger fw-bold rounded-3 px-4"
+                  (click)="clearClientFilters()">
+            <i class="bi bi-x-circle me-1"></i> Clear Filters
           </button>
+          <span class="badge bg-dark rounded-pill px-3 py-2 fs-6 shadow-sm">
+            <i class="bi bi-people-fill me-1"></i>
+            {{ filteredClients().length }} result{{ filteredClients().length !== 1 ? 's' : '' }}
+          </span>
         </div>
-        
-        <div class="row g-2 mb-3 p-3 bg-white rounded-4 border shadow-sm flex-shrink-0">
-          <div class="col-md-3">
-            <input type="text" class="form-control bg-light border-0" placeholder="Search Client Name/Phone..." [ngModel]="searchClient()" (ngModelChange)="searchClient.set($event)">
-          </div>
-          <div class="col-md-3">
-            <select class="form-select bg-light border-0" [ngModel]="filterClientStage()" (ngModelChange)="filterClientStage.set($event)">
-              <option value="">All Stages</option>
-              <option *ngFor="let stage of stages" [value]="stage.id">{{ stage.name }}</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <select class="form-select bg-light border-0" [ngModel]="globalBrokerFilter()" (ngModelChange)="globalBrokerFilter.set($event)">
-  <option value="">All Brokers</option>
-  <option *ngFor="let b of vipBrokers()" [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
-</select>
-          </div>
-          <div class="col-md-3 text-end">
-            <button class="btn btn-outline-danger fw-bold w-100 rounded-3" (click)="clearClientFilters()">Clear Filters</button>
-          </div>
-        </div>
+      </div>
 
-        <div class="card border-0 shadow-sm rounded-4 d-flex flex-column flex-grow-1" style="min-height: 0;">
-          <div class="table-responsive flex-grow-1" style="font-size: 0.85rem; overflow-y: auto;">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light text-nowrap sticky-top" style="z-index: 2;">
-                <tr>
-                  <th class="ps-4">Client</th>
-                  <th>Assigned Broker</th>
-                  <th>Stage</th>
-                  <th>Last Update</th>
-                  <th class="text-end pe-4">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let lead of filteredClients()">
-                  <td class="ps-4 py-3">
-                    <div class="fw-bold text-dark fs-6">{{ lead.fullName }}</div>
-                    <div class="text-muted mt-1"><i class="bi bi-telephone-fill me-1"></i> {{ lead.phoneNumber }}</div>
-                  </td>
-                  <td><span class="fw-bold text-primary"><i class="bi bi-person-badge-fill me-1"></i>{{ lead.brokerName }}</span></td>
-                  <td><span class="badge bg-dark px-3 py-2 rounded-pill">{{ lead.statusName }}</span></td>
-                  <td>
-                    <div class="fw-bold text-danger bg-danger-subtle px-2 py-1 rounded d-inline-block">
-                      <i class="bi bi-clock-history me-1"></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
-                    </div>
-                  </td>
-                  <td class="text-end pe-4 text-nowrap">
+    </div>
 
-                    <button class="btn btn-sm rounded-pill px-3 shadow-sm me-2 border" 
-                            [ngClass]="favoriteLeads().includes(lead.id) ? 'btn-light border-warning' : 'btn-light'"
-                            (click)="toggleFavorite(lead.id, $event)" title="Add/Remove Favorite">
-                      <i class="bi fs-6" [ngClass]="favoriteLeads().includes(lead.id) ? 'bi-star-fill text-warning' : 'bi-star text-muted'"></i>
-                    </button>
-                    <!-- 🟢 زرار إخفاء العميل -->
-                    <button *ngIf="isAdmin()" class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm me-2" 
-                            [ngClass]="hiddenLeads().includes(lead.id) ? 'btn-success' : 'btn-outline-secondary'"
-                            (click)="toggleHideLead(lead.id)" title="Hide/Unhide Lead">
-                      <i class="bi" [ngClass]="hiddenLeads().includes(lead.id) ? 'bi-eye-fill' : 'bi-eye-slash'"></i>
-                    </button>
 
-                    <button class="btn btn-sm btn-light border rounded-pill px-4 text-danger fw-bold shadow-sm me-2" (click)="openRequestModal(lead)">
-                      <i class="bi bi-card-list me-1"></i> Request
-                    </button>
-                    <button class="btn btn-sm btn-danger rounded-pill px-4 fw-bold shadow-sm" [routerLink]="['/crm/leads', lead.id]">
-                      Profile &rarr;
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-    }
+    <!-- ===== الجدول ===== -->
+    <div class="card border-0 shadow-sm rounded-4 d-flex flex-column flex-grow-1" style="min-height: 0;">
+      <div class="table-responsive flex-grow-1" style="font-size: 0.85rem; overflow-y: auto;">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-nowrap sticky-top" style="z-index: 2;">
+            <tr>
+              <th class="ps-4">Client</th>
+              <th>Broker</th>
+              <th>Stage</th>
+              <th>Campaign</th>
+              <th>Zone</th>
+              <th>Property Info</th>
+              <th>Budget</th>
+              <th>Created Date</th>
+              <th>Last Update</th>
+              <th class="text-end pe-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let lead of filteredClients()"
+                [ngClass]="{'bg-danger-subtle': lead.isDuplicate && !lead.isApprovedDuplicate}">
+
+              <td class="ps-4 py-3">
+                <div class="fw-bold text-dark fs-6">{{ lead.fullName }}</div>
+                <div class="text-muted mt-1"><i class="bi bi-telephone-fill me-1"></i>{{ lead.phoneNumber }}</div>
+              </td>
+
+              <td>
+                <span class="fw-bold text-primary small">
+                  <i class="bi bi-person-badge-fill me-1"></i>{{ lead.brokerName }}
+                </span>
+              </td>
+
+              <td><span class="badge bg-dark px-3 py-2 rounded-pill">{{ lead.statusName }}</span></td>
+
+              <td class="text-nowrap">
+                <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm d-inline-block mb-1">
+                  <i class="bi" [ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i>
+                  {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
+                </span>
+                <div *ngIf="lead.campaignSource" class="text-muted fw-bold" style="font-size: 0.65rem;">
+                  <i class="bi bi-funnel-fill me-1"></i>{{ lead.campaignSource }}
+                </div>
+                <div *ngIf="lead.referredBy" class="text-danger fw-bold mt-1" style="font-size: 0.65rem;">
+                  <i class="bi bi-person-bounding-box me-1"></i>Ref: {{ lead.referredBy }}
+                </div>
+              </td>
+
+              <td><span class="fw-bold small text-secondary">{{ lead.zoneName }}</span></td>
+
+              <td>
+                <div class="fw-bold small text-dark">{{ lead.propertyType }}</div>
+                <div class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill mt-1"
+                     style="font-size: 0.65rem;">{{ lead.purpose }}</div>
+              </td>
+
+              <td class="fw-bold text-success text-nowrap">
+                {{ lead.totalAmount > 0 ? 'EGP ' + (lead.totalAmount | number:'1.0-0') : 'N/A' }}
+                <div *ngIf="lead.paymentMethod === 'Installment'" class="mt-1 text-muted" style="font-size: 0.65rem; font-weight: 600;">
+                  DP: <span class="text-dark">{{ lead.downPayment | currency:'EGP ':'symbol':'1.0-0' }}</span><br>
+                  Q. Inst: <span class="text-primary">{{ lead.quarterlyInstallment | currency:'EGP ':'symbol':'1.0-0' }}</span><br>
+                  Years: <span class="text-danger">{{ lead.installmentYears }}</span>
+                </div>
+              </td>
+
+              <td class="text-nowrap">
+                <div class="small fw-bold text-dark">{{ lead.createdAt | date:'mediumDate' }}</div>
+              </td>
+
+              <td class="text-nowrap">
+                <div class="small fw-bold text-danger bg-danger-subtle px-2 py-1 rounded d-inline-block">
+                  <i class="bi bi-clock-history me-1"></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
+                </div>
+              </td>
+
+              <td class="text-end pe-4 text-nowrap">
+                <!-- ⭐ نجمة المفضلة -->
+                <button class="btn btn-sm rounded-pill px-3 shadow-sm me-1 border"
+                        [ngClass]="favoriteLeads().includes(lead.id) ? 'btn-light border-warning' : 'btn-light'"
+                        (click)="toggleFavorite(lead.id, $event)" title="Add/Remove Favorite">
+                  <i class="bi fs-6" [ngClass]="favoriteLeads().includes(lead.id) ? 'bi-star-fill text-warning' : 'bi-star text-muted'"></i>
+                </button>
+
+                <!-- 👁 إخفاء -->
+                <button *ngIf="isAdmin()" class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm me-1"
+                        [ngClass]="hiddenLeads().includes(lead.id) ? 'btn-success' : 'btn-outline-secondary'"
+                        (click)="toggleHideLead(lead.id)" title="Hide/Unhide Lead">
+                  <i class="bi" [ngClass]="hiddenLeads().includes(lead.id) ? 'bi-eye-fill' : 'bi-eye-slash'"></i>
+                </button>
+
+                <!-- 📋 Request -->
+                <button class="btn btn-sm btn-light border rounded-pill px-3 text-danger fw-bold shadow-sm me-1"
+                        (click)="openRequestModal(lead)">
+                  <i class="bi bi-card-list me-1"></i> Request
+                </button>
+
+                <!-- ← Profile -->
+                <button class="btn btn-sm btn-danger rounded-pill px-3 fw-bold shadow-sm"
+                        [routerLink]="['/crm/leads', lead.id]">
+                  Profile &rarr;
+                </button>
+              </td>
+
+            </tr>
+            <tr *ngIf="filteredClients().length === 0">
+              <td colspan="10" class="text-center py-5 text-muted">No clients found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+}
 
      <!-- 🟢 تاب: العملاء المفضلين (Favorites)           -->
     <!-- ============================================== -->
