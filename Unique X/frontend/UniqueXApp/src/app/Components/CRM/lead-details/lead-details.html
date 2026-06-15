@@ -271,21 +271,20 @@
 </div>
 
               <!-- 🟢 إظهار الفيدباك لو موجود -->
-             <div *ngIf="(item._type === 'visit' && item.feedback) || (item._type === 'activity' && extractFeedback(item.notes))" 
-     class="mt-2 p-2 bg-secondary-subtle border border-secondary-subtle rounded-3 small text-dark fw-medium">
-  
-  <!-- badge للفيدباك لو من أدمن -->
-  <span *ngIf="isAdminAction(item)"
-        class="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-block mb-1"
-        style="font-size: 0.65rem;">
-    <i class="bi bi-person-badge-fill me-1"></i> By Admin
-  </span>
-  
-  <div>
-    <i class="bi bi-chat-quote-fill text-dark me-1"></i> 
-    {{ item._type === 'visit' ? item.feedback : extractFeedback(item.notes) }}
-  </div>
-</div>
+              <div *ngIf="(item._type === 'visit' && item.feedback) || (item._type === 'activity' && extractFeedback(item.notes))" 
+                   class="mt-2 p-2 bg-secondary-subtle border border-secondary-subtle rounded-3 small text-dark fw-medium">
+                <span *ngIf="isAdminAction(item)"
+                      class="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-block mb-1"
+                      style="font-size: 0.65rem;">
+                  <i class="bi bi-person-badge-fill me-1"></i> By Admin
+                </span>
+                <div>
+                  <i class="bi bi-chat-quote-fill text-dark me-1"></i> 
+                  {{ item._type === 'visit' ? cleanAdminPrefix(item.feedback) : cleanAdminPrefix(extractFeedback(item.notes)) }}
+                </div>
+              </div>
+
+            </div> <!-- ✅ قفلة col-md-6 -->
 
             <!-- تاريخ المهمة -->
             <div class="col-md-3 mb-3 mb-md-0 text-center">

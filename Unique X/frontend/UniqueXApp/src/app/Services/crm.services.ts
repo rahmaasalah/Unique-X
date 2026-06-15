@@ -188,4 +188,8 @@ rejectDuplicateLead(leadId: number): Observable<any> {
   // استخدمي الرابط المباشر للـ admin
   return this.http.patch(`${environment.apiUrl}/admin/leads/${leadId}/reject-duplicate`, {});
 }
+
+getPropertyCodes(): Observable<string[]> {
+  return this.http.get<string[]>(`${this.apiUrl}/leads/property-codes`); 
+}
 }

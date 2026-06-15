@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AlertService } from '../../Services/alert';
+import { environment } from '../../../environments/environment.development';
 
 @Component({
   selector: 'app-join-our-team',
@@ -97,7 +98,7 @@ export class JoinOurTeamComponent {
       formData.append('CvFile', this.selectedFile()!);
     }
 
-    this.http.post('https://localhost:7294/api/jobapplications', formData).subscribe({
+    this.http.post(`${environment.apiUrl}/jobapplications`, formData).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.alertService.success('Application submitted successfully! We will contact you soon.');
