@@ -32,9 +32,9 @@ namespace Unique_X.Controllers
                 var privateKey = _config["GoogleDrive:PrivateKey"];
                 var folderId = _config["GoogleDrive:FolderId"];
 
-                _logger.LogInformation("ClientEmail: {ClientEmail}", clientEmail);
-                _logger.LogInformation("PrivateKey length: {Length}", privateKey?.Length ?? 0);
-                _logger.LogInformation("FolderId: {FolderId}", folderId);
+                _logger.LogError("ClientEmail: {ClientEmail}", clientEmail);
+                _logger.LogError("PrivateKey length: {Length}", privateKey?.Length ?? 0);
+                _logger.LogError("FolderId: {FolderId}", folderId);
 
                 if (string.IsNullOrEmpty(clientEmail) || string.IsNullOrEmpty(privateKey))
                 {
@@ -65,7 +65,7 @@ namespace Unique_X.Controllers
                 request.Fields = "id, webViewLink";
                 await request.UploadAsync();
 
-                _logger.LogInformation("Upload successful. Link: {Link}", request.ResponseBody?.WebViewLink);
+                _logger.LogError("Upload successful. Link: {Link}", request.ResponseBody?.WebViewLink);
                 return request.ResponseBody?.WebViewLink;
             }
             catch (Exception ex)
