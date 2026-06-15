@@ -39,13 +39,38 @@ export class LeadsDashboardComponent implements OnInit {
   
   // 🟢 الفلاتر الشاملة (نفس اللي في البروفايل)
   searchText = signal<string>(''); 
-  filterCampaign = signal<string>('');
+  //filterCampaign = signal<string>('');
   filterStatus = signal<string>('');
   filterZone = signal<string>('');
   filterCreationDate = signal<string>('');
   filterLastUpdate = signal<string>('');
   filterMinBudget = signal<number | null>(null);
   filterMaxBudget = signal<number | null>(null);
+
+  filterPropertyType = signal<string>('');
+filterListingType = signal<string>('');
+filterCampaignCode = signal<string>('');
+searchCampaignCode = signal<string>('');
+isCampaignDropdownOpen = signal<boolean>(false);
+
+filteredCampaignCodes = computed(() => {
+  const q = this.searchCampaignCode().toLowerCase();
+  const codes = this.campaignsList()
+    .map((c: any) => c.name)
+    .filter((name: string) => name !== 'No Campaign');
+  return q ? codes.filter((c: string) => c.toLowerCase().includes(q)) : codes;
+});
+
+selectCampaign(code: string) {
+  this.filterCampaignCode.set(code);
+  this.searchCampaignCode.set(code);
+  this.isCampaignDropdownOpen.set(false);
+  this.applyFilters(true);
+}
+
+closeCampaignDropdown() {
+  setTimeout(() => this.isCampaignDropdownOpen.set(false), 200);
+}
 
   zones =[{ id: 1, name: 'Cairo' }, { id: 2, name: 'Alexandria' }, { id: 3, name: 'North Coast' }];
 
@@ -165,7 +190,7 @@ export class LeadsDashboardComponent implements OnInit {
 
   applyFilters(isUserAction: boolean = false) {
     const search = this.searchText().toLowerCase();
-    const campaign = this.filterCampaign();
+    //const campaign = this.filterCampaign();
     const status = this.filterStatus();
     const zone = this.filterZone(); 
     const cDate = this.filterCreationDate();
@@ -174,6 +199,9 @@ export class LeadsDashboardComponent implements OnInit {
     const maxB = this.filterMaxBudget();
     const broker = this.filterBroker();
     const refBy = this.filterReferredBy();
+    const propType = this.filterPropertyType();
+const listType = this.filterListingType();
+const campCode = this.filterCampaignCode();
 
     const filtered = this.allLeads().filter(lead => {
       if (!this.isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate) {
@@ -181,7 +209,7 @@ export class LeadsDashboardComponent implements OnInit {
       }
 
       const matchSearch = lead.fullName.toLowerCase().includes(search) || lead.phoneNumber.includes(search);
-      const matchCamp = campaign === '' || lead.campaignName === campaign;
+      //const matchCamp = campaign === '' || lead.campaignName === campaign;
       const matchStatus = status === '' || lead.statusId.toString() === status;
       const matchZone = zone === '' || lead.zoneName === zone;
       //const matchBroker = broker === '' || lead.brokerId === broker;
@@ -195,8 +223,13 @@ export class LeadsDashboardComponent implements OnInit {
       const matchMaxB = maxB === null || lead.totalAmount <= maxB;
 
       const matchHidden = this.showHiddenLeads() || !this.hiddenLeads().includes(lead.id);
+      const matchPropType = propType === '' || lead.propertyType === propType;
+const matchListType = listType === '' || lead.purpose === listType;
+const matchCampCode = campCode === '' || lead.campaignName === campCode;
 
-      return matchSearch && matchCamp && matchStatus && matchZone && matchBroker && matchCDate && matchUDate && matchMinB && matchMaxB && matchRefBy && matchHidden;
+      return matchSearch && matchStatus && matchZone && matchBroker 
+    && matchCDate && matchUDate && matchMinB && matchMaxB && matchRefBy 
+    && matchHidden && matchPropType && matchListType && matchCampCode;
 
       
     });
@@ -252,7 +285,7 @@ export class LeadsDashboardComponent implements OnInit {
 
   clearFilters() {
     this.searchText.set('');
-    this.filterCampaign.set('');
+    //this.filterCampaign.set('');
     this.filterStatus.set('');
     this.filterZone.set('');
     this.filterCreationDate.set('');
@@ -262,6 +295,10 @@ export class LeadsDashboardComponent implements OnInit {
     this.applyFilters(true);
     this.filterBroker.set('');
     this.filterReferredBy.set('');
+    this.filterPropertyType.set('');
+this.filterListingType.set('');
+this.filterCampaignCode.set('');
+this.searchCampaignCode.set('');
   }
 
   drop(event: CdkDragDrop<LeadResponseDto[]>, newStatusId: number) {

@@ -8,6 +8,7 @@ import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDrag, CdkDragPlaceholder,
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms'; // 1. حل مشكلة formGroup
 import { CrmService } from '../../Services/crm.services';
 
+
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -17,7 +18,7 @@ import { CrmService } from '../../Services/crm.services';
   styleUrl: './admin-dashboard.css'
 })
 export class AdminDashboardComponent implements OnInit {
-  private adminService = inject(AdminService);
+  adminService = inject(AdminService);
   private alertService = inject(AlertService);
   public authService = inject(AuthService); // لجلب بيانات البروفايل
   private fb = inject(FormBuilder);
@@ -907,6 +908,28 @@ calendarDays = signal<any[]>([]);
 calendarMonth = signal<Date>(new Date());
 selectedInterviewDate = signal<string>('');
 selectedInterviewHour = signal<string>('');
+
+// ---- فلاتر Job Applications ----
+jobSearchName = signal<string>('');
+jobStatusFilter = signal<string>('all'); // all | Pending | Confirmed | Scheduled
+jobInterviewFilter = signal<string>('all'); // all | scheduled | notScheduled
+
+filteredJobApplications = computed(() => {
+  const search = this.jobSearchName().trim().toLowerCase();
+  const status = this.jobStatusFilter();
+  const interview = this.jobInterviewFilter();
+
+  return this.jobApplications().filter(app => {
+    const matchesName = !search || (app.fullName || '').toLowerCase().includes(search);
+    const matchesStatus = status === 'all' || app.status === status;
+    const matchesInterview =
+      interview === 'all' ||
+      (interview === 'scheduled' && !!app.interviewDate) ||
+      (interview === 'notScheduled' && !app.interviewDate);
+
+    return matchesName && matchesStatus && matchesInterview;
+  });
+});
 
 loadJobApplications() {
   this.adminService.getJobApplications().subscribe({

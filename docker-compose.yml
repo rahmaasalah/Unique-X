@@ -7,6 +7,8 @@ services:
     restart: always
     ports:
       - "5000:80"
+    volumes:
+      - cv_uploads:/app/uploads
     environment:
       # ركزي هنا: غيرنا الـ IP لـ IP السيرفر واسم الداتابيز لـ Betk
       - ConnectionStrings__DefaultConnection=Server=37.60.230.225;Database=Betk;User=sa;Password=ABDO@menna2026;TrustServerCertificate=True;

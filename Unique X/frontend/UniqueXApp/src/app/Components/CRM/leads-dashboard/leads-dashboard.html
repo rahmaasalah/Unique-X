@@ -166,13 +166,60 @@
             <option value="26">Recommend to shift</option>
         </select>
       </div>
-      <div class="col-md-2">
-        <select class="form-select form-select-sm"[ngModel]="filterCampaign()" (ngModelChange)="filterCampaign.set($event); applyFilters(true)">
-          <option value="">All Campaigns</option>
-          <option value="No Campaign">Direct / Website</option>
-          @for (c of campaignsList(); track c.id) { <option [value]="c.name">{{ c.name }}</option> }
-        </select>
-      </div>
+      <div class="col-md-2 position-relative">
+  <input type="text" class="form-control form-control-sm bg-light border-0"
+         placeholder="Campaign code..."
+         [ngModel]="searchCampaignCode()" 
+         (ngModelChange)="searchCampaignCode.set($event); filterCampaignCode.set(''); isCampaignDropdownOpen.set(true)"
+         (focus)="isCampaignDropdownOpen.set(true)"
+         (blur)="closeCampaignDropdown()">
+  <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1" 
+      [class.show]="isCampaignDropdownOpen()" 
+      style="max-height: 200px; overflow-y: auto; position: absolute; z-index: 1050;">
+    <li>
+      <button type="button" class="dropdown-item py-2 text-muted small" 
+              (mousedown)="selectCampaign(''); searchCampaignCode.set('')">
+        All Campaigns
+      </button>
+    </li>
+    @for (code of filteredCampaignCodes(); track code) {
+      <li>
+        <button type="button" class="dropdown-item py-2 fw-bold" 
+                (mousedown)="selectCampaign(code)">{{ code }}</button>
+      </li>
+    } @empty {
+      <li><span class="dropdown-item text-muted small">No codes found</span></li>
+    }
+  </ul>
+</div>
+
+<div class="col-md-2">
+  <select class="form-select form-select-sm bg-light border-0" 
+          [ngModel]="filterPropertyType()" 
+          (ngModelChange)="filterPropertyType.set($event)">
+    <option value="">All Property Types</option>
+    <option value="Apartment">Apartment</option>
+    <option value="Villa">Villa</option>
+    <option value="Chalet">Chalet</option>
+    <option value="Office">Office</option>
+    <option value="Shop">Shop</option>
+    <option value="Studio">Studio</option>
+    <option value="Duplex">Duplex</option>
+    <option value="Town House">Town House</option>
+    <option value="Twin House">Twin House</option>
+  </select>
+</div>
+
+<!-- Listing Type (Primary / Resale) -->
+<div class="col-md-2">
+  <select class="form-select form-select-sm bg-light border-0"
+          [ngModel]="filterListingType()" 
+          (ngModelChange)="filterListingType.set($event)">
+    <option value="">All Listing Types</option>
+    <option value="Primary">Primary</option>
+    <option value="Resale">Resale</option>
+  </select>
+</div>
 
       <div class="col-md-2" *ngIf="isAdmin()">
         <select class="form-select form-select-sm" [ngModel]="filterBroker()" (ngModelChange)="filterBroker.set($event); applyFilters(true)">

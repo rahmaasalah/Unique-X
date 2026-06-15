@@ -170,4 +170,8 @@ scheduleInterview(id: number, dateTime: string) {
     { headers: { 'Content-Type': 'application/json' } }
   );
 }
+
+getCvUrl(id: number): string {
+  return `${environment.apiUrl}/jobapplications/${id}/cv`;
+}
 }
