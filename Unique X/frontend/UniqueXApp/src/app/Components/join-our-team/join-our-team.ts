@@ -4,8 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AlertService } from '../../Services/alert';
-import { environment } from '../../../environments/environment.development';
-
+import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-join-our-team',
   standalone: true,
