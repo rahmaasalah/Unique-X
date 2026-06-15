@@ -1,7 +1,4 @@
-﻿using Google.Apis.Auth.OAuth2;
-using Google.Apis.Drive.v3;
-using Google.Apis.Services;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Unique_X.Data;
 using Unique_X.DTOs;
@@ -17,6 +14,9 @@ namespace Unique_X.Controllers
         private readonly IConfiguration _config;
         private readonly ILogger<JobApplicationsController> _logger;
 
+        // المسار اللي هتُحفظ فيه ملفات الـ CVs داخل الكونتينر
+        private const string CvFolderName = "cvs";
+
         public JobApplicationsController(AppDbContext context, IConfiguration config, ILogger<JobApplicationsController> logger)
         {
             _context = context;
@@ -24,53 +24,40 @@ namespace Unique_X.Controllers
             _logger = logger;
         }
 
-        private async Task<string?> UploadToDriveAsync(IFormFile file)
+        private string GetCvStoragePath()
+        {
+            // /app/uploads/cvs
+            var basePath = Path.Combine(AppContext.BaseDirectory, "uploads", CvFolderName);
+            if (!Directory.Exists(basePath))
+            {
+                Directory.CreateDirectory(basePath);
+            }
+            return basePath;
+        }
+
+        private async Task<string?> SaveCvLocallyAsync(IFormFile file)
         {
             try
             {
-                var clientEmail = _config["GoogleDrive:ClientEmail"];
-                var privateKey = _config["GoogleDrive:PrivateKey"];
-                var folderId = _config["GoogleDrive:FolderId"];
+                var storagePath = GetCvStoragePath();
 
-                _logger.LogError("ClientEmail: {ClientEmail}", clientEmail);
-                _logger.LogError("PrivateKey length: {Length}", privateKey?.Length ?? 0);
-                _logger.LogError("FolderId: {FolderId}", folderId);
+                // اسم ملف فريد لتجنب التعارض
+                var safeFileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+                var fullPath = Path.Combine(storagePath, safeFileName);
 
-                if (string.IsNullOrEmpty(clientEmail) || string.IsNullOrEmpty(privateKey))
+                using (var stream = new FileStream(fullPath, FileMode.Create))
                 {
-                    _logger.LogError("Google Drive credentials are missing!");
-                    return null;
+                    await file.CopyToAsync(stream);
                 }
 
-                var credential = new ServiceAccountCredential(
-                    new ServiceAccountCredential.Initializer(clientEmail)
-                    {
-                        Scopes = new[] { DriveService.Scope.DriveFile }
-                    }.FromPrivateKey(privateKey));
+                _logger.LogInformation("CV saved locally: {FileName}", safeFileName);
 
-                var service = new DriveService(new BaseClientService.Initializer
-                {
-                    HttpClientInitializer = credential,
-                    ApplicationName = "BETK CV Uploader"
-                });
-
-                var fileMetadata = new Google.Apis.Drive.v3.Data.File
-                {
-                    Name = $"{Guid.NewGuid()}_{file.FileName}",
-                    Parents = new[] { folderId }
-                };
-
-                using var stream = file.OpenReadStream();
-                var request = service.Files.Create(fileMetadata, stream, file.ContentType);
-                request.Fields = "id, webViewLink";
-                await request.UploadAsync();
-
-                _logger.LogError("Upload successful. Link: {Link}", request.ResponseBody?.WebViewLink);
-                return request.ResponseBody?.WebViewLink;
+                // بنخزن اسم الملف بس، وهنستخدمه في endpoint التحميل
+                return safeFileName;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Drive upload error: {Message}", ex.Message);
+                _logger.LogError(ex, "Error saving CV locally: {Message}", ex.Message);
                 return null;
             }
         }
@@ -78,11 +65,11 @@ namespace Unique_X.Controllers
         [HttpPost]
         public async Task<IActionResult> Submit([FromForm] CreateJobApplicationDto dto)
         {
-            string? cvUrl = null;
+            string? cvFileName = null;
 
             if (dto.CvFile != null && dto.CvFile.Length > 0)
             {
-                cvUrl = await UploadToDriveAsync(dto.CvFile);
+                cvFileName = await SaveCvLocallyAsync(dto.CvFile);
             }
 
             var application = new JobApplication
@@ -105,7 +92,7 @@ namespace Unique_X.Controllers
                 VisitSite = dto.VisitSite,
                 DealsClosing = dto.DealsClosing,
                 SalesLastQuarter = dto.SalesLastQuarter,
-                CvUrl = cvUrl
+                CvUrl = cvFileName
             };
 
             _context.JobApplications.Add(application);
@@ -121,6 +108,38 @@ namespace Unique_X.Controllers
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync();
             return Ok(apps);
+        }
+
+        // تحميل/فتح ملف الـ CV - مثال: GET /api/jobapplications/5/cv
+        [HttpGet("{id}/cv")]
+        public async Task<IActionResult> DownloadCv(int id)
+        {
+            var app = await _context.JobApplications.FindAsync(id);
+            if (app == null || string.IsNullOrEmpty(app.CvUrl))
+            {
+                return NotFound("CV not found.");
+            }
+
+            var storagePath = GetCvStoragePath();
+            var fullPath = Path.Combine(storagePath, app.CvUrl);
+
+            if (!System.IO.File.Exists(fullPath))
+            {
+                return NotFound("CV file not found on server.");
+            }
+
+            var contentType = "application/octet-stream";
+            var ext = Path.GetExtension(app.CvUrl).ToLowerInvariant();
+            if (ext == ".pdf") contentType = "application/pdf";
+            else if (ext == ".doc") contentType = "application/msword";
+            else if (ext == ".docx") contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
+
+            // اسم تحميل أوضح للأدمن: اسم المتقدم + امتداد الملف
+            var downloadName = $"{app.FullName}_CV{ext}";
+
+            return File(bytes, contentType, downloadName);
         }
 
         [HttpPut("{id}/confirm")]

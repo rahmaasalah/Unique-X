@@ -25,6 +25,30 @@ export class CrmDashboardComponent implements OnInit {
   isAdmin = signal<boolean>(false);
   activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'pending_duplicates' | 'rejected_duplicates'>('brokers');
 
+
+  filterPropertyType = signal<string>('');
+filterListingType = signal<string>('');
+filterCampaignCode = signal<string>('');
+searchCampaignCode = signal<string>('');
+isCampaignDropdownOpen = signal<boolean>(false);
+
+filteredCampaignCodes = computed(() => {
+  const q = this.searchCampaignCode().toLowerCase();
+  const codes = this.campaignsList()
+    .map((c: any) => c.name)
+    .filter((name: string) => name !== 'No Campaign');
+  return q ? codes.filter((c: string) => c.toLowerCase().includes(q)) : codes;
+});
+
+selectCampaign(code: string) {
+  this.filterCampaignCode.set(code);
+  this.searchCampaignCode.set(code);
+  this.isCampaignDropdownOpen.set(false);
+}
+
+closeCampaignDropdown() {
+  setTimeout(() => this.isCampaignDropdownOpen.set(false), 200);
+}
   dummyBrokers = [
     { code: 'X7', name: 'Abdelrahman Ashraf' },
     { code: 'X10', name: 'Menna Ameen' },
@@ -246,6 +270,9 @@ campaignsList = signal<any[]>([]);
   const uDate = this.filterLastUpdate();
   const minB = this.filterMinBudget();
   const maxB = this.filterMaxBudget();
+  const propType = this.filterPropertyType();
+const listType = this.filterListingType();
+const campCode = this.filterCampaignCode();
 
   if (q) leads = leads.filter(l => l.fullName.toLowerCase().includes(q) || l.phoneNumber.includes(q));
   if (stage) leads = leads.filter(l => l.statusId.toString() === stage);
@@ -256,6 +283,9 @@ campaignsList = signal<any[]>([]);
   if (uDate) leads = leads.filter(l => this.formatDateForFilter(l.updatedAt || l.createdAt) === uDate);
   if (minB !== null) leads = leads.filter(l => l.totalAmount >= minB);
   if (maxB !== null) leads = leads.filter(l => l.totalAmount <= maxB);
+  if (propType) leads = leads.filter(l => l.propertyType === propType);
+if (listType) leads = leads.filter(l => l.purpose === listType);
+if (campCode) leads = leads.filter(l => l.campaignName === campCode);
   if (!this.showHiddenItems()) leads = leads.filter(l => !this.hiddenLeads().includes(l.id));
 
   return leads;
@@ -582,6 +612,10 @@ revokeAccess(userId: string) {
   this.filterLastUpdate.set('');
   this.filterMinBudget.set(null);
   this.filterMaxBudget.set(null);
+  this.filterPropertyType.set('');
+this.filterListingType.set('');
+this.filterCampaignCode.set('');
+this.searchCampaignCode.set('');
 }
 
   changeMonth(offset: number) {

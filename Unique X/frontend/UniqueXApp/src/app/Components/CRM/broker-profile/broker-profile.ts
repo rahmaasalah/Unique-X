@@ -47,6 +47,30 @@ export class BrokerProfileComponent implements OnInit {
   filterMaxBudget = signal<number | null>(null);
   filterReferredBy = signal<string>('');
 
+  filterPropertyType = signal<string>('');
+filterListingType = signal<string>('');
+filterCampaignCode = signal<string>('');
+searchCampaignCode = signal<string>('');
+isCampaignDropdownOpen = signal<boolean>(false);
+
+filteredCampaignCodes = computed(() => {
+  const q = this.searchCampaignCode().toLowerCase();
+  const codes = this.campaignsList()
+    .map((c: any) => c.name)
+    .filter((name: string) => name !== 'No Campaign');
+  return q ? codes.filter((c: string) => c.toLowerCase().includes(q)) : codes;
+});
+
+selectCampaign(code: string) {
+  this.filterCampaignCode.set(code);
+  this.searchCampaignCode.set(code);
+  this.isCampaignDropdownOpen.set(false);
+}
+
+closeCampaignDropdown() {
+  setTimeout(() => this.isCampaignDropdownOpen.set(false), 200);
+}
+
   hiddenLeads = signal<number[]>([]);
   showHiddenLeads = signal<boolean>(false);
 
@@ -106,6 +130,10 @@ filteredLeads = computed(() => {
     const maxB = this.filterMaxBudget();
     const refBy = this.filterReferredBy();
 
+    const propType = this.filterPropertyType();
+const listType = this.filterListingType();
+const campCode = this.filterCampaignCode();
+
     if (q) leads = leads.filter((l: any) => l.fullName.toLowerCase().includes(q) || l.phoneNumber.includes(q));
     if (broker) leads = leads.filter((l: any) => l.brokerName === broker);
     if (camp) leads = leads.filter((l: any) => l.campaignName === camp);
@@ -116,6 +144,9 @@ filteredLeads = computed(() => {
     if (minB !== null) leads = leads.filter((l: any) => l.totalAmount >= minB);
     if (maxB !== null) leads = leads.filter((l: any) => l.totalAmount <= maxB);
     if (refBy) leads = leads.filter((l: any) => l.referredBy === refBy);
+    if (propType) leads = leads.filter((l: any) => l.propertyType === propType);
+if (listType) leads = leads.filter((l: any) => l.purpose === listType);
+if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
 
     const ids = leads.map((l: any) => l.id);
     sessionStorage.setItem('crm_filtered_leads', JSON.stringify(ids));
@@ -341,6 +372,10 @@ filteredLeads = computed(() => {
     this.filterMinBudget.set(null);
     this.filterMaxBudget.set(null);
     this.filterReferredBy.set('');
+    this.filterPropertyType.set('');
+this.filterListingType.set('');
+this.filterCampaignCode.set('');
+this.searchCampaignCode.set('');
   }
 
   // دالة لاستخراج الفيدباك من المكالمات
