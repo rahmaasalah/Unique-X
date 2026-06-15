@@ -174,3 +174,54 @@ main {
 .table-responsive::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8; 
 }
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day-header {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #6c757d;
+  padding: 4px 0;
+}
+
+.cal-day {
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.cal-day:hover:not(.past) {
+  background: #fdecea;
+  border-color: #ef3341;
+}
+
+.cal-day.past {
+  color: #ccc;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.cal-day.selected {
+  background: #ef3341;
+  color: white;
+  font-weight: bold;
+}
+
+.cal-day.today {
+  border-color: #ef3341;
+  font-weight: bold;
+}
+
+.cal-day.empty {
+  background: transparent;
+  cursor: default;
+}

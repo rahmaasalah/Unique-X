@@ -352,11 +352,16 @@ filteredLeads = computed(() => {
 
   // دالة لاستخراج الملاحظات الأصلية
  extractOriginalNotes(notes: string): string | null {
-    if (!notes) return null;
-    const parts = notes.split('[Feedback]:');
-    // 👇 لازم ترجع null عشان الـ HTML يخفي السطر
-    return parts[0].trim() !== '' ? parts[0].trim() : null; 
-  }
+  if (!notes) return null;
+  let cleaned = notes.replace(/^\[Admin:[^\]]*\]\n?/, '');
+  const parts = cleaned.split('[Feedback]:');
+  return parts[0].trim() !== '' ? parts[0].trim() : null;
+}
+
+cleanAdminPrefix(text: string | null): string | null {
+  if (!text) return null;
+  return text.replace(/^\[Admin:[^\]]*\]\s?/, '');
+}
 
   formatDateForFilter(dateString: string): string {
     if (!dateString) return '';

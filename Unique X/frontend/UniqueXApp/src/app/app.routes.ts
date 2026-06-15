@@ -21,6 +21,7 @@ import { BrokerProfileComponent } from './Components/CRM/broker-profile/broker-p
 import { AddLeadComponent } from './Components/CRM/add-lead/add-lead';
 import { EditRequestComponent } from './Components/CRM/edit-request/edit-request';
 import { CampaignsManagerComponent } from './Components/CRM/campaigns-manager/campaigns-manager';
+import { JoinOurTeamComponent } from './Components/join-our-team/join-our-team';
 
 export const routes: Routes = [
   { 
@@ -64,6 +65,7 @@ export const routes: Routes = [
 { path: 'crm/campaigns', component: CampaignsManagerComponent },
 { path: 'crm/leads/:id/edit', component: EditRequestComponent },
 { path: 'crm/add-lead', component: AddLeadComponent },
+{ path: 'join-our-team', component: JoinOurTeamComponent },
  { path: '', component: HomeComponent, pathMatch: 'full' }, 
  { path: '**', redirectTo: '/login' }
 ];

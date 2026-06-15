@@ -112,6 +112,8 @@ export class LeadDetailsComponent implements OnInit {
   isAdmin = signal<boolean>(false);
   brokersList = signal<any[]>([]);
   selectedTransferBroker = signal<string>('');
+  adminName = signal<string>('');
+  adminId = signal<string>('');
 
 
    ngOnInit() {
@@ -123,6 +125,8 @@ export class LeadDetailsComponent implements OnInit {
       // 🟢 فحص هل المستخدم أدمن
       if (user.roles && user.roles.includes('Admin')) {
         this.isAdmin.set(true);
+  this.adminId.set(user.id || user.userId || '');
+  this.adminName.set(user.username || user.firstName + ' ' + user.lastName || 'Admin');
         // جلب قائمة البروكرز عشان الأدمن يختار منهم
         this.adminService.getAllUsers().subscribe(users => {
           this.brokersList.set(users.filter((u: any) => u.userType === 1));
@@ -521,15 +525,25 @@ export class LeadDetailsComponent implements OnInit {
 
   // 👇 3. دالة فتح المودال لإضافة جديدة (عشان نلغي وضع التأجيل ونفتح الخانات)
   openNewModal(type: 'visit' | 'activity') {
-    this.isRescheduling.set(false);
-    if (type === 'visit') {
-      this.visitForm.enable();
-      this.visitForm.reset({ leadId: this.leadId, brokerId: this.currentBrokerId });
-    } else {
-      this.activityForm.enable();
-      this.activityForm.reset({ leadId: this.leadId, assignedToId: this.currentBrokerId, activityType: 'Call' });
-    }
+  this.isRescheduling.set(false);
+  if (type === 'visit') {
+    this.visitForm.enable();
+    this.visitForm.reset({ 
+      leadId: this.leadId, 
+      brokerId: this.currentBrokerId,
+      // لو أدمن، نحط في النوتس تلقائياً [Admin] كـ marker
+      notes: this.isAdmin() ? `[Admin: ${this.adminName()}]\n` : ''
+    });
+  } else {
+    this.activityForm.enable();
+    this.activityForm.reset({ 
+      leadId: this.leadId, 
+      assignedToId: this.currentBrokerId, 
+      activityType: 'Call',
+      notes: this.isAdmin() ? `[Admin: ${this.adminName()}]\n` : ''
+    });
   }
+}
 
   // متغيرات عشان نعرف احنا بنعمل فيدباك لأنهي أكشن
   feedbackActionId = signal<number | null>(null);
@@ -544,23 +558,41 @@ export class LeadDetailsComponent implements OnInit {
   }
 
   submitActionFeedback() {
-    if (this.actionFeedbackForm.valid && this.feedbackActionId()) {
-      this.alertService.showLoading('Saving feedback...');
-      const feedbackText = this.actionFeedbackForm.value.feedback;
-      const apiCall = this.feedbackActionType() === 'visit'
-        ? this.crmService.addVisitFeedback(this.feedbackActionId()!, feedbackText)
-        : this.crmService.addActivityFeedback(this.feedbackActionId()!, feedbackText);
+  if (this.actionFeedbackForm.valid && this.feedbackActionId()) {
+    this.alertService.showLoading('Saving feedback...');
+    
+    // لو أدمن، نحط prefix قبل الفيدباك
+    const rawFeedback = this.actionFeedbackForm.value.feedback;
+    const feedbackText = this.isAdmin() 
+      ? `[Admin: ${this.adminName()}] ${rawFeedback}` 
+      : rawFeedback;
 
-      apiCall.subscribe({
-        next: () => {
-          this.alertService.close();
-          this.alertService.success('Feedback saved!');
-          this.loadLeadData(this.leadId);
-          document.getElementById('closeActionFeedbackModal')?.click();
-        }
-      });
-    }
+    const apiCall = this.feedbackActionType() === 'visit'
+      ? this.crmService.addVisitFeedback(this.feedbackActionId()!, feedbackText)
+      : this.crmService.addActivityFeedback(this.feedbackActionId()!, feedbackText);
+
+    apiCall.subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success('Feedback saved!');
+        this.loadLeadData(this.leadId);
+        document.getElementById('closeActionFeedbackModal')?.click();
+      }
+    });
   }
+}
+
+cleanAdminPrefix(text: string | null): string | null {
+  if (!text) return null;
+  return text.replace(/^\[Admin:[^\]]*\]\s?/, '');
+}
+
+isAdminAction(item: any): boolean {
+  if (item.notes?.startsWith('[Admin:')) return true;
+  // بنقارن الـ brokerId أو assignedToId بالـ admin ID
+  const itemOwnerId = item.brokerId || item.assignedToId || '';
+  return itemOwnerId !== '' && itemOwnerId === this.adminId();
+}
 
   submitGeneralNote() {
     if (this.generalNoteForm.valid) {
@@ -584,10 +616,11 @@ export class LeadDetailsComponent implements OnInit {
     return parts.length > 1 ? parts[1].trim() : null;
   }
   extractOriginalNotes(notes: string): string | null {
-    if (!notes) return null;
-    const parts = notes.split('[Feedback]:');
-    return parts[0].trim() !== '' ? parts[0].trim() : null;
-  }
+  if (!notes) return null;
+  let cleaned = notes.replace(/^\[Admin:[^\]]*\]\n?/, '');
+  const parts = cleaned.split('[Feedback]:');
+  return parts[0].trim() !== '' ? parts[0].trim() : null;
+}
 
   onRecommendClick(prop: any) {
     // 1. فتح العقار في تاب جديد للموقع الأساسي

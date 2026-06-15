@@ -56,6 +56,17 @@
          routerLinkActive="active-tab"
          (click)="closeMenu()">Agents</a>
     </li>
+
+    @if (!authService.loggedIn() || authService.getUserType() === 0) {
+  <li class="nav-item">
+    <a class="nav-link px-3 fw-bold" 
+       style="color: #c0392b;"
+       routerLink="/join-our-team"
+       (click)="closeMenu()">
+      Join Our Team
+    </a>
+  </li>
+}
     
         <!-- خيارات البروكر فقط -->
         @if (authService.loggedIn() && authService.getUserType() === 1) {
@@ -70,6 +81,7 @@
             </a>
           </li>
         }
+        
       
       </ul>
 
