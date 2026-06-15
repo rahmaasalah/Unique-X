@@ -157,7 +157,7 @@ namespace Unique_X.Controllers.CRM
                     StatusName = l.Status.Name,
                     CampaignName = l.Campaign != null ? l.Campaign.Name : "No Campaign",
                     CreatedAt = l.CreatedAt,
-                    UpdatedAt = _context.LeadStatusHistories.Where(h => h.LeadId == l.Id).Max(h => (DateTime?)h.ChangedAt) ?? l.CreatedAt,
+                    UpdatedAt = l.UpdatedAt ?? l.CreatedAt,
                     IsDuplicate = l.IsDuplicate,
                     IsApprovedDuplicate = l.IsApprovedDuplicate,
 

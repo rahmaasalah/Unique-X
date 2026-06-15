@@ -87,6 +87,17 @@
     }
   </button>
 </li>
+
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'ourTeam'"
+          (click)="activeTab.set('ourTeam'); loadJobApplications()">
+    <i class="bi bi-people me-3 fs-6"></i> Our Team
+    @if (jobApplications().length > 0) {
+      <span class="badge bg-danger ms-2">{{ jobApplications().length }}</span>
+    }
+  </button>
+</li>
         
       </ul>
     </nav>
@@ -1034,6 +1045,201 @@
       </table>
     </div>
   </section>
+}
+
+@if (activeTab() === 'ourTeam') {
+  <div class="animate__animated animate__fadeIn">
+    <h4 class="fw-bold mb-4"><i class="bi bi-people-fill me-2 text-danger"></i>Job Applications</h4>
+
+    @if (jobApplications().length === 0) {
+      <div class="text-center text-muted py-5">No applications yet.</div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover bg-white shadow-sm rounded-4 overflow-hidden">
+          <thead class="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Job Title</th>
+              <th>English</th>
+              <th>Zone</th>
+              <th>Status</th>
+              <th>Interview</th>
+              <th>CV</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (app of jobApplications(); track app.id; let i = $index) {
+              <tr>
+                <td>{{ i + 1 }}</td>
+                <td class="fw-bold">{{ app.fullName }}</td>
+                <td>{{ app.phoneNumber }}</td>
+                <td><span class="badge bg-secondary">{{ app.jobTitle }}</span></td>
+                <td>{{ app.englishLevel }}</td>
+                <td>{{ app.zoneWorkedOn }}</td>
+                <td>
+                  @if (app.status === 'Pending') {
+                    <span class="badge bg-warning text-dark">Pending</span>
+                  } @else if (app.status === 'Confirmed') {
+                    <span class="badge bg-success">Confirmed</span>
+                  } @else if (app.status === 'Scheduled') {
+                    <span class="badge bg-primary">Scheduled</span>
+                  }
+                </td>
+                <td>
+                  @if (app.interviewDate) {
+                    <small class="text-primary fw-bold">
+                      {{ app.interviewDate | date:'dd/MM/yyyy' }}<br>
+                      {{ app.interviewDate | date:'hh:mm a' }}
+                    </small>
+                  } @else { <span class="text-muted">—</span> }
+                </td>
+                <td>
+                  @if (app.cvUrl) {
+  <a [href]="app.cvUrl" target="_blank" 
+     class="text-primary fw-bold text-decoration-underline"
+     style="cursor:pointer; font-size:0.85rem;">
+    <i class="bi bi-file-earmark-person-fill me-1"></i>
+    {{ app.cvUrl | slice:app.cvUrl.lastIndexOf('/')+1 : app.cvUrl.length > 50 ? 40 : 999 }}
+  </a>
+} @else { 
+  <span class="text-muted">—</span> 
+}
+                </td>
+                <td class="d-flex gap-2">
+                  <!-- زرار View Details -->
+                  <button class="btn btn-sm btn-outline-dark" 
+                          data-bs-toggle="modal" data-bs-target="#appDetailModal"
+                          (click)="selectedApplication.set(app)">
+                    <i class="bi bi-eye"></i>
+                  </button>
+
+                  <!-- زرار Confirm -->
+                  @if (app.status === 'Pending') {
+                    <button class="btn btn-sm btn-success" (click)="confirmApplication(app.id)">
+                      <i class="bi bi-check-lg"></i> Confirm
+                    </button>
+                  }
+
+                  <!-- زرار Schedule Interview -->
+                  @if (app.status === 'Confirmed' || app.status === 'Scheduled') {
+                    <button class="btn btn-sm btn-primary" (click)="openScheduleCalendar(app)">
+                      <i class="bi bi-calendar-check"></i> Schedule
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- Modal: Application Details -->
+  <div class="modal fade" id="appDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title">Application Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        @if (selectedApplication()) {
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6"><strong>Full Name:</strong> {{ selectedApplication().fullName }}</div>
+              <div class="col-md-6"><strong>Phone:</strong> {{ selectedApplication().phoneNumber }}</div>
+              <div class="col-md-6"><strong>Address:</strong> {{ selectedApplication().address }}</div>
+              <div class="col-md-6"><strong>City:</strong> {{ selectedApplication().city || '—' }}</div>
+              <div class="col-md-6"><strong>Has Job:</strong> {{ selectedApplication().hasJob }}</div>
+              <div class="col-md-6"><strong>Work Place:</strong> {{ selectedApplication().workPlace || '—' }}</div>
+              <div class="col-md-6"><strong>Has Laptop:</strong> {{ selectedApplication().hasLaptop }}</div>
+              <div class="col-md-6"><strong>Job Title:</strong> {{ selectedApplication().jobTitle }}</div>
+              <div class="col-md-6"><strong>English Level:</strong> {{ selectedApplication().englishLevel }}</div>
+              <div class="col-md-6"><strong>CRM Tools:</strong> {{ selectedApplication().crmTools }}</div>
+              <div class="col-md-6"><strong>Company Type:</strong> {{ selectedApplication().companyType }}</div>
+              <div class="col-md-6"><strong>Zone Worked On:</strong> {{ selectedApplication().zoneWorkedOn }}</div>
+              <div class="col-md-6"><strong>Project Preparation:</strong> {{ selectedApplication().projectPreparation }}</div>
+              <div class="col-md-6"><strong>Visit Site:</strong> {{ selectedApplication().visitSite }}</div>
+              <div class="col-md-6"><strong>Deals Closing:</strong> {{ selectedApplication().dealsClosing }}</div>
+              <div class="col-md-6"><strong>Sales Last Quarter:</strong> {{ selectedApplication().salesLastQuarter }}</div>
+              <div class="col-12"><strong>Past Experiences:</strong> {{ selectedApplication().pastExperiences || '—' }}</div>
+              <div class="col-12"><strong>Real Estate Background:</strong> {{ selectedApplication().realEstateBackground || '—' }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Interview Calendar -->
+  <div class="modal fade" id="interviewCalendarModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title"><i class="bi bi-calendar3 me-2"></i>Schedule Interview</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Calendar Header -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <button class="btn btn-sm btn-outline-secondary" (click)="prevMonth()">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <strong>{{ calendarMonth() | date:'MMMM yyyy' }}</strong>
+            <button class="btn btn-sm btn-outline-secondary" (click)="nextMonth()">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+
+          <!-- Calendar Grid -->
+          <div class="calendar-grid mb-3">
+            <div class="cal-day-header" *ngFor="let d of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']">{{ d }}</div>
+            @for (day of calendarDays(); track $index) {
+              @if (day === null) {
+                <div class="cal-day empty"></div>
+              } @else {
+                <div class="cal-day"
+                     [class.past]="day.isPast"
+                     [class.selected]="selectedInterviewDate() === day.dateStr"
+                     [class.today]="day.isToday"
+                     (click)="!day.isPast && selectedInterviewDate.set(day.dateStr)">
+                  {{ day.date | date:'d' }}
+                </div>
+              }
+            }
+          </div>
+
+          <!-- Time Selection -->
+          @if (selectedInterviewDate()) {
+            <div class="mb-3">
+              <label class="fw-bold mb-2">Select Time (5 PM – 7 PM):</label>
+              <div class="d-flex gap-2 flex-wrap">
+                @for (hour of ['17:00','17:30','18:00','18:30','19:00']; track hour) {
+                  <button class="btn btn-sm"
+                          [class.btn-danger]="selectedInterviewHour() === hour"
+                          [class.btn-outline-danger]="selectedInterviewHour() !== hour"
+                          (click)="selectedInterviewHour.set(hour)">
+                    {{ hour === '17:00' ? '5:00 PM' : hour === '17:30' ? '5:30 PM' : 
+                       hour === '18:00' ? '6:00 PM' : hour === '18:30' ? '6:30 PM' : '7:00 PM' }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger px-4 rounded-pill fw-bold" 
+                  [disabled]="!selectedInterviewDate() || !selectedInterviewHour()"
+                  (click)="scheduleInterview()">
+            <i class="bi bi-calendar-check me-2"></i>Confirm Interview
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 }
 
   </main>

@@ -1,0 +1,240 @@
+<section class="py-5" style="background: #f8f9fa; min-height: 100vh;">
+  <div class="container" style="max-width: 800px;">
+
+    <!-- Header -->
+    <div class="text-center mb-5">
+      <h2 class="fw-bold" style="color: #1a1a2e;">Join Our Team</h2>
+      <p class="text-muted">Fill in your details and we'll get back to you soon.</p>
+      <div style="width: 60px; height: 4px; background: #ef3341; margin: 0 auto; border-radius: 2px;"></div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="card shadow-sm border-0 rounded-4 p-4 mb-4">
+        <h6 class="fw-bold text-danger mb-3"><i class="bi bi-person-fill me-2"></i>Personal Info</h6>
+        <div class="row g-3">
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control rounded-3" formControlName="fullName"
+                   [class.is-invalid]="isInvalid('fullName')" placeholder="Your full name">
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+            <input type="text" class="form-control rounded-3" formControlName="phoneNumber"
+                   [class.is-invalid]="isInvalid('phoneNumber')" placeholder="01xxxxxxxxx">
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Address <span class="text-danger">*</span></label>
+            <input type="text" class="form-control rounded-3" formControlName="address"
+                   [class.is-invalid]="isInvalid('address')" placeholder="Your address">
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">City</label>
+            <input type="text" class="form-control rounded-3" formControlName="city" placeholder="City">
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Employment -->
+      <div class="card shadow-sm border-0 rounded-4 p-4 mb-4">
+        <h6 class="fw-bold text-danger mb-3"><i class="bi bi-briefcase-fill me-2"></i>Employment</h6>
+        <div class="row g-3">
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Currently Employed? <span class="text-danger">*</span></label>
+            <select class="form-select rounded-3" formControlName="hasJob" [class.is-invalid]="isInvalid('hasJob')">
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="Other">Other</option>
+            </select>
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Work Place</label>
+            <input type="text" class="form-control rounded-3" formControlName="workPlace" placeholder="Current company">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Have a Laptop? <span class="text-danger">*</span></label>
+            <select class="form-select rounded-3" formControlName="hasLaptop" [class.is-invalid]="isInvalid('hasLaptop')">
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Job Title <span class="text-danger">*</span></label>
+            <select class="form-select rounded-3" formControlName="jobTitle" [class.is-invalid]="isInvalid('jobTitle')">
+              <option value="">Select...</option>
+              <option value="Fresh Sales">Fresh Sales</option>
+              <option value="Junior Property Consultant">Junior Property Consultant</option>
+              <option value="Senior Property Consultant">Senior Property Consultant</option>
+              <option value="Team Leader">Team Leader</option>
+              <option value="Social Media Specialist">Social Media Specialist</option>
+              <option value="Sales Admin">Sales Admin</option>
+            </select>
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">English Level <span class="text-danger">*</span></label>
+            <select class="form-select rounded-3" formControlName="englishLevel" [class.is-invalid]="isInvalid('englishLevel')">
+              <option value="">Select...</option>
+              <option value="Entry-level">Entry-level</option>
+              <option value="Mid-level">Mid-level</option>
+              <option value="Advanced-level">Advanced-level</option>
+            </select>
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">CRM Tools <span class="text-danger">*</span></label>
+            <div class="d-flex flex-wrap gap-2 mt-1">
+              @for (tool of crmOptions; track tool) {
+                <button type="button"
+                        class="btn btn-sm rounded-pill px-3"
+                        [class.btn-danger]="isCrmSelected(tool)"
+                        [class.btn-outline-secondary]="!isCrmSelected(tool)"
+                        (click)="onCrmToggle(tool)">
+                  {{ tool }}
+                </button>
+              }
+            </div>
+            @if (isInvalid('crmTools')) {
+              <small class="text-danger">Select at least one</small>
+            }
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Real Estate Background -->
+      <div class="card shadow-sm border-0 rounded-4 p-4 mb-4">
+        <h6 class="fw-bold text-danger mb-3"><i class="bi bi-building me-2"></i>Real Estate Background</h6>
+        <div class="row g-3">
+
+          <div class="col-12">
+            <label class="form-label fw-semibold">Past Experiences</label>
+            <textarea class="form-control rounded-3" formControlName="pastExperiences" rows="2" placeholder="Describe your past experiences..."></textarea>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label fw-semibold">Real Estate Industry Background</label>
+            <textarea class="form-control rounded-3" formControlName="realEstateBackground" rows="2" placeholder="Your background in real estate..."></textarea>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Company Type <span class="text-danger">*</span></label>
+            <select class="form-select rounded-3" formControlName="companyType" [class.is-invalid]="isInvalid('companyType')">
+              <option value="">Select...</option>
+              <option value="Broker">Broker</option>
+              <option value="Developer">Developer</option>
+              <option value="No experience in real estate">No experience in real estate</option>
+            </select>
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Zone Worked On <span class="text-danger">*</span></label>
+            <select class="form-select rounded-3" formControlName="zoneWorkedOn" [class.is-invalid]="isInvalid('zoneWorkedOn')">
+              <option value="">Select...</option>
+              <option value="Alexandria">Alexandria</option>
+              <option value="Cairo">Cairo</option>
+              <option value="North Coast">North Coast</option>
+              <option value="No experience in real estate">No experience in real estate</option>
+            </select>
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Project Preparation <span class="text-danger">*</span></label>
+            <select class="form-select rounded-3" formControlName="projectPreparation" [class.is-invalid]="isInvalid('projectPreparation')">
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="No experience in real estate">No experience in real estate</option>
+            </select>
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Visit Site <span class="text-danger">*</span></label>
+            <select class="form-select rounded-3" formControlName="visitSite" [class.is-invalid]="isInvalid('visitSite')">
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="No experience in real estate">No experience in real estate</option>
+            </select>
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Deals Closing <span class="text-danger">*</span></label>
+            <select class="form-select rounded-3" formControlName="dealsClosing" [class.is-invalid]="isInvalid('dealsClosing')">
+              <option value="">Select...</option>
+              <option value="By myself">By myself</option>
+              <option value="With team leader">With team leader</option>
+              <option value="No experience in real estate">No experience in real estate</option>
+            </select>
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Sales Last Quarter <span class="text-danger">*</span></label>
+            <select class="form-select rounded-3" formControlName="salesLastQuarter" [class.is-invalid]="isInvalid('salesLastQuarter')">
+              <option value="">Select...</option>
+              <option value="0M">0M</option>
+              <option value="0M - 15M">0M – 15M</option>
+              <option value="15M">15M</option>
+              <option value="20M">20M</option>
+              <option value="25M">25M</option>
+              <option value="35M">35M</option>
+              <option value="50M">50M</option>
+            </select>
+            <div class="invalid-feedback">Required</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CV Upload -->
+      <div class="card shadow-sm border-0 rounded-4 p-4 mb-4">
+        <h6 class="fw-bold text-danger mb-3"><i class="bi bi-file-earmark-person-fill me-2"></i>Upload CV</h6>
+        <div class="mb-2">
+          <input type="file" class="form-control rounded-3" accept=".pdf,.doc,.docx"
+                 (change)="onFileChange($event)">
+          <small class="text-muted">Accepted formats: PDF, DOC, DOCX</small>
+        </div>
+        @if (selectedFile()) {
+          <div class="alert alert-success py-2 mt-2 rounded-3">
+            <i class="bi bi-check-circle me-2"></i>{{ selectedFile()!.name }}
+          </div>
+        }
+      </div>
+
+      <!-- Submit -->
+      <div class="text-center">
+        <button type="submit" class="btn btn-danger px-5 py-2 rounded-pill fw-bold fs-5 shadow"
+                [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span class="spinner-border spinner-border-sm me-2"></span> Submitting...
+          } @else {
+            <i class="bi bi-send-fill me-2"></i> Submit Application
+          }
+        </button>
+      </div>
+    </form>
+
+  </div>
+</section>

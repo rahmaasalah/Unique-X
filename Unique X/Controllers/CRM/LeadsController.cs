@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using Unique_X.Data;
 using Unique_X.DTOs.CRM;
 using Unique_X.Models;
@@ -119,9 +120,7 @@ namespace Unique_X.Controllers.CRM
                 QuarterlyInstallment = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).QuarterlyInstallment,
 
                 // 👇 ده السطر اللي بيجيب تاريخ آخر تعديل، ولو مفيش بيجيب تاريخ الإنشاء
-                UpdatedAt = _context.LeadStatusHistories.Where(h => h.LeadId == l.Id).Max(h => (DateTime?)h.ChangedAt) ?? l.CreatedAt,
-
-                
+                UpdatedAt = l.UpdatedAt ?? l.CreatedAt,
                 IsRejectedDuplicate = l.IsRejectedDuplicate,
 
                 PropertyType = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PropertyType ?? "",
@@ -179,6 +178,7 @@ namespace Unique_X.Controllers.CRM
 
             // تحديث الحالة الأساسية للعميل
             lead.LeadStatusId = dto.NewStatusId;
+            lead.UpdatedAt = DateTime.UtcNow; // ✅ السطر ده بس المحتاج
             _context.Leads.Update(lead);
 
             await _context.SaveChangesAsync();
@@ -445,6 +445,9 @@ namespace Unique_X.Controllers.CRM
                 : newEntry + "_@|@_" + lead.GeneralFeedback;
 
             _context.Leads.Update(lead);
+            await _context.SaveChangesAsync();
+
+            lead.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return Ok(new { message = "Note added successfully" });
         }

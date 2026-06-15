@@ -66,7 +66,7 @@ export class AdminDashboardComponent implements OnInit {
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
   homeBanners = signal<any[]>([]);
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'deletions'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'deletions' | 'ourTeam' | 'interviewCalendar'>('users');
 
   detailData = signal<any[]>([]);
 
@@ -899,5 +899,108 @@ onBannerReorder(event: CdkDragDrop<any[]>) {
       }
     });
   }
+
+  // ================== Our Team ==================
+jobApplications = signal<any[]>([]);
+selectedApplication = signal<any>(null);
+calendarDays = signal<any[]>([]);
+calendarMonth = signal<Date>(new Date());
+selectedInterviewDate = signal<string>('');
+selectedInterviewHour = signal<string>('');
+
+loadJobApplications() {
+  this.adminService.getJobApplications().subscribe({
+    next: (data) => this.jobApplications.set(data),
+    error: () => this.alertService.error('Failed to load applications.')
+  });
+}
+
+confirmApplication(id: number) {
+  this.alertService.confirm('Confirm this applicant?', () => {
+    this.adminService.confirmJobApplication(id).subscribe({
+      next: () => {
+        this.alertService.success('Applicant confirmed!');
+        this.loadJobApplications();
+      }
+    });
+  });
+}
+
+openScheduleCalendar(app: any) {
+  this.selectedApplication.set(app);
+  this.generateCalendar(this.calendarMonth());
+  // افتح المودال
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('interviewCalendarModal'));
+  modal.show();
+}
+
+generateCalendar(month: Date) {
+  this.calendarMonth.set(month);
+  const year = month.getFullYear();
+  const m = month.getMonth();
+  const firstDay = new Date(year, m, 1).getDay();
+  const daysInMonth = new Date(year, m + 1, 0).getDate();
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const days: any[] = [];
+  // خلايا فاضية للأيام قبل أول يوم في الشهر
+  for (let i = 0; i < firstDay; i++) days.push(null);
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, m, d);
+    days.push({
+      date,
+      dateStr: date.toISOString().split('T')[0],
+      isPast: date < today,
+      isToday: date.getTime() === today.getTime()
+    });
+  }
+  this.calendarDays.set(days);
+}
+
+prevMonth() {
+  const d = new Date(this.calendarMonth());
+  d.setMonth(d.getMonth() - 1);
+  this.generateCalendar(d);
+}
+
+nextMonth() {
+  const d = new Date(this.calendarMonth());
+  d.setMonth(d.getMonth() + 1);
+  this.generateCalendar(d);
+}
+
+scheduleInterview() {
+  const app = this.selectedApplication();
+  if (!app || !this.selectedInterviewDate() || !this.selectedInterviewHour()) {
+    this.alertService.error('Please select a date and time.');
+    return;
+  }
+  
+  // ✅ التعديل هنا — بنبعت ISO format صح
+const localDate = new Date(
+  `${this.selectedInterviewDate()}T${this.selectedInterviewHour()}:00`
+);
+// بنطرح الـ timezone offset عشان نبعت التوقيت الصح
+const dateTime = new Date(
+  localDate.getTime() - localDate.getTimezoneOffset() * 60000
+).toISOString();
+
+  this.adminService.scheduleInterview(app.id, dateTime).subscribe({
+    next: () => {
+      this.alertService.success('Interview scheduled!');
+      this.loadJobApplications();
+      const modal = (window as any).bootstrap.Modal.getInstance(
+        document.getElementById('interviewCalendarModal')
+      );
+      modal?.hide();
+      this.selectedApplication.set(null);
+      this.selectedInterviewDate.set('');
+      this.selectedInterviewHour.set('');
+    },
+    error: () => this.alertService.error('Failed to schedule interview.')
+  });
+}
 
 }

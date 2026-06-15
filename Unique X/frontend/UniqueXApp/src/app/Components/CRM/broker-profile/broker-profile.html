@@ -316,7 +316,14 @@
             <tr *ngFor="let visit of filteredVisits()">
               <!-- العميل والتاريخ -->
               <td class="ps-3">
-                <div class="fw-bold text-dark"><i class="bi bi-person-circle text-muted me-1"></i> {{ visit.leadName }}</div>
+                <div class="fw-bold text-dark">
+  <i class="bi bi-person-circle text-muted me-1"></i> {{ visit.leadName }}
+  <span *ngIf="visit.notes?.startsWith('[Admin:')" 
+        class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1" 
+        style="font-size: 0.65rem;">
+    <i class="bi bi-person-badge-fill me-1"></i> By Admin
+  </span>
+</div>
                 <div class="small fw-bold text-danger mt-1"><i class="bi bi-clock-history me-1"></i> {{ visit.visitDate | date:'MMM d, y, h:mm a' }}</div>
               </td>
               <!-- المكان -->
@@ -353,9 +360,19 @@
                       [ngClass]="{'bg-warning text-dark': visit.status === 'Pending', 'bg-success': visit.status === 'Completed', 'bg-danger': visit.status === 'Cancelled', 'bg-info text-dark': visit.status === 'Rescheduled'}">
                   {{ visit.status || 'Pending' }}
                 </span>
-                <div *ngIf="visit.feedback" class="mt-2 p-2 bg-info-subtle border border-info-subtle rounded-3 small text-dark fw-medium lh-sm text-wrap text-break">
-                  <i class="bi bi-chat-quote-fill text-info-emphasis me-1"></i> {{ visit.feedback }}
-                </div>
+                <div *ngIf="visit.feedback" 
+     class="mt-2 p-2 bg-info-subtle border border-info-subtle rounded-3 small text-dark fw-medium lh-sm text-wrap text-break">
+  
+  <!-- badge الأدمن -->
+  <span *ngIf="visit.feedback?.startsWith('[Admin:')"
+        class="badge bg-danger-subtle text-danger border border-danger-subtle d-block mb-1"
+        style="font-size: 0.65rem;">
+    <i class="bi bi-person-badge-fill me-1"></i> By Admin
+  </span>
+  
+  <i class="bi bi-chat-quote-fill text-info-emphasis me-1"></i> 
+  {{ cleanAdminPrefix(visit.feedback) }}
+</div>
               </td>
               <!-- الأكشن -->
               <td class="text-end pe-3">
@@ -422,7 +439,12 @@
             <tr *ngFor="let task of filteredActivities()">
               <!-- العميل والتاريخ -->
               <td class="ps-3">
-                <div class="fw-bold text-dark"><i class="bi bi-person-circle text-muted me-1"></i> {{ task.leadName }}</div>
+                <div class="fw-bold text-dark">
+  <i class="bi bi-person-circle text-muted me-1"></i> {{ task.leadName }}
+  <span *ngIf="task.notes?.startsWith('[Admin:')" class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1" style="font-size: 0.65rem;">
+    <i class="bi bi-person-badge-fill me-1"></i> By Admin
+  </span>
+</div>
                 <div class="small fw-bold text-danger mt-1"><i class="bi bi-clock-history me-1"></i> {{ task.dueDate | date:'MMM d, y, h:mm a' }}</div>
               </td>
               <!-- النوع والملخص -->
@@ -451,9 +473,19 @@
                       [ngClass]="{'bg-warning text-dark': task.status === 'Pending', 'bg-success': task.status === 'Completed', 'bg-danger': task.status === 'Cancelled', 'bg-info text-dark': task.status === 'Rescheduled'}">
                   {{ task.status || 'Pending' }}
                 </span>
-                <div *ngIf="extractFeedback(task.notes)" class="mt-2 p-2 bg-info-subtle border border-info-subtle rounded-3 small text-dark fw-medium lh-sm text-wrap text-break">
-                  <i class="bi bi-chat-quote-fill text-info-emphasis me-1"></i> {{ extractFeedback(task.notes) }}
-                </div>
+                <div *ngIf="extractFeedback(task.notes)" 
+     class="mt-2 p-2 bg-info-subtle border border-info-subtle rounded-3 small text-dark fw-medium lh-sm text-wrap text-break">
+  
+  <!-- badge الأدمن -->
+  <span *ngIf="extractFeedback(task.notes)?.startsWith('[Admin:')"
+        class="badge bg-danger-subtle text-danger border border-danger-subtle d-block mb-1"
+        style="font-size: 0.65rem;">
+    <i class="bi bi-person-badge-fill me-1"></i> By Admin
+  </span>
+  
+  <i class="bi bi-chat-quote-fill text-info-emphasis me-1"></i> 
+  {{ cleanAdminPrefix(extractFeedback(task.notes)) }}
+</div>
               </td>
               <!-- الأكشن -->
               <td class="text-end pe-3">

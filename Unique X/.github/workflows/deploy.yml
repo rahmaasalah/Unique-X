@@ -57,6 +57,10 @@ jobs:
             echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> .env
             echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> .env
             echo "JWT_KEY=${{ secrets.JWT_KEY }}" >> .env
+
+            echo "GoogleDrive__ClientEmail=${{ secrets.GOOGLE_CLIENT_EMAIL }}" >> .env
+            echo "GoogleDrive__PrivateKey=${{ secrets.GOOGLE_PRIVATE_KEY }}" >> .env
+            echo "GoogleDrive__FolderId=${{ secrets.GOOGLE_FOLDER_ID }}" >> .env
             
             docker compose pull
             docker compose down

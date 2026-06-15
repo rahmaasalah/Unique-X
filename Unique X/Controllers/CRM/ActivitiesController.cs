@@ -44,6 +44,9 @@ namespace Unique_X.Controllers.CRM
             _context.LeadActivities.Add(activity);
             await _context.SaveChangesAsync();
 
+            var lead = await _context.Leads.FindAsync(dto.LeadId);
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); }
+
             return Ok(new { message = "Activity scheduled successfully!", activityId = activity.Id });
         }
 
@@ -69,6 +72,9 @@ namespace Unique_X.Controllers.CRM
             if (activity == null) return NotFound("Activity not found");
             activity.Status = status;
             await _context.SaveChangesAsync();
+
+            var lead = await _context.Leads.FindAsync(activity.LeadId);
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); }
             return Ok();
         }
 
@@ -93,6 +99,9 @@ namespace Unique_X.Controllers.CRM
             activity.Notes = string.IsNullOrEmpty(activity.Notes) ? $"[Feedback]: {feedback}" : $"{activity.Notes}\n\n[Feedback]: {feedback}";
 
             await _context.SaveChangesAsync();
+
+            var lead = await _context.Leads.FindAsync(activity.LeadId);
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); }
             return Ok();
         }
     }

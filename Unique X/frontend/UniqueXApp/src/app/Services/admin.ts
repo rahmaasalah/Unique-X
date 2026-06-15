@@ -154,4 +154,20 @@ approveDeletion(id: number): Observable<any> {
 rejectDeletion(id: number, reason: string): Observable<any> {
   return this.http.post(`${this.baseUrl}/reject-deletion/${id}`, { reason });
 }
+
+getJobApplications() {
+  return this.http.get<any[]>(`${environment.apiUrl}/jobapplications`);
+}
+
+confirmJobApplication(id: number) {
+  return this.http.put(`${environment.apiUrl}/jobapplications/${id}/confirm`, {});
+}
+
+scheduleInterview(id: number, dateTime: string) {
+  return this.http.put(
+    `${environment.apiUrl}/jobapplications/${id}/schedule`,
+    `"${dateTime}"`,  // ✅ لازم يكون JSON string بالشكل ده
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+}
 }

@@ -45,6 +45,9 @@ namespace Unique_X.Controllers.CRM
             _context.Visits.Add(visit);
             await _context.SaveChangesAsync();
 
+            var lead = await _context.Leads.FindAsync(dto.LeadId);
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); }
+
             return Ok(new { message = "Visit scheduled successfully!", visitId = visit.Id });
         }
 
@@ -151,6 +154,9 @@ namespace Unique_X.Controllers.CRM
             if (visit == null) return NotFound("Visit not found");
             visit.Status = status;
             await _context.SaveChangesAsync();
+
+            var lead = await _context.Leads.FindAsync(visit.LeadId);
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); }
             return Ok();
         }
 
@@ -172,6 +178,9 @@ namespace Unique_X.Controllers.CRM
             if (visit == null) return NotFound("Visit not found");
             visit.Feedback = feedback;
             await _context.SaveChangesAsync();
+
+            var lead = await _context.Leads.FindAsync(visit.LeadId);
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); }
             return Ok();
         }
     }

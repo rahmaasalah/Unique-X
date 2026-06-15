@@ -16,6 +16,10 @@ services:
       - CloudinarySettings__ApiSecret=${CLOUDINARY_API_SECRET}
       - JWT__Key=${JWT_KEY}
 
+      - GoogleDrive__ClientEmail=${GoogleDrive__ClientEmail}
+      - GoogleDrive__PrivateKey=${GoogleDrive__PrivateKey}
+      - GoogleDrive__FolderId=${GoogleDrive__FolderId}
+
       - FrontendUrl=https://betk.property
       - EmailSettings__Email=uniquexxxxxxx@gmail.com
       - EmailSettings__Password=xntbkmlhejfxwmhg
