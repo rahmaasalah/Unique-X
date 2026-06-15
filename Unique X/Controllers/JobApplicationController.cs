@@ -15,11 +15,13 @@ namespace Unique_X.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly ILogger<JobApplicationsController> _logger;
 
-        public JobApplicationsController(AppDbContext context, IConfiguration config)
+        public JobApplicationsController(AppDbContext context, IConfiguration config, ILogger<JobApplicationsController> logger)
         {
             _context = context;
             _config = config;
+            _logger = logger;
         }
 
         private async Task<string?> UploadToDriveAsync(IFormFile file)
@@ -30,13 +32,13 @@ namespace Unique_X.Controllers
                 var privateKey = _config["GoogleDrive:PrivateKey"];
                 var folderId = _config["GoogleDrive:FolderId"];
 
-                Console.WriteLine($"ClientEmail: {clientEmail}");
-                Console.WriteLine($"PrivateKey starts with: {privateKey?.Substring(0, 30)}");
-                Console.WriteLine($"FolderId: {folderId}");
+                _logger.LogInformation("ClientEmail: {ClientEmail}", clientEmail);
+                _logger.LogInformation("PrivateKey length: {Length}", privateKey?.Length ?? 0);
+                _logger.LogInformation("FolderId: {FolderId}", folderId);
 
                 if (string.IsNullOrEmpty(clientEmail) || string.IsNullOrEmpty(privateKey))
                 {
-                    Console.WriteLine("ERROR: Google Drive credentials are missing!");
+                    _logger.LogError("Google Drive credentials are missing!");
                     return null;
                 }
 
@@ -63,12 +65,12 @@ namespace Unique_X.Controllers
                 request.Fields = "id, webViewLink";
                 await request.UploadAsync();
 
+                _logger.LogInformation("Upload successful. Link: {Link}", request.ResponseBody?.WebViewLink);
                 return request.ResponseBody?.WebViewLink;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Drive upload error: {ex.Message}");
-                Console.WriteLine($"Full error: {ex}");
+                _logger.LogError(ex, "Drive upload error: {Message}", ex.Message);
                 return null;
             }
         }
