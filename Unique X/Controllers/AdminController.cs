@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; 
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Unique_X.Data;
 using Unique_X.DTOs;
@@ -98,7 +98,7 @@ namespace Unique_X.Controllers
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
-            return Ok(props); 
+            return Ok(props);
         }
 
         [HttpPatch("toggle-property/{id}")]
@@ -219,7 +219,7 @@ namespace Unique_X.Controllers
         }
 
         [HttpPost("track")]
-        [AllowAnonymous] 
+        [AllowAnonymous]
         public async Task<IActionResult> TrackAction(string action, int? propertyId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -264,7 +264,10 @@ namespace Unique_X.Controllers
                                      .Select(u => u.FirstName + " " + u.LastName + " (" + u.PhoneNumber + ")")
                                      .FirstOrDefault() ?? "Guest User",
                     Property = _context.Properties.Where(p => p.Id == r.PropertyId)
-                               .Select(p => new { p.Title, p.Code, p.PropertyType,
+                               .Select(p => new {
+                                   p.Title,
+                                   p.Code,
+                                   p.PropertyType,
                                    BrokerFullName = p.Broker.FirstName + " " + p.Broker.LastName
                                }).FirstOrDefault()
                 }).ToListAsync();

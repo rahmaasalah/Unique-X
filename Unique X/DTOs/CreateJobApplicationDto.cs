@@ -7,11 +7,13 @@
         public string Address { get; set; } = string.Empty;
         public string? City { get; set; }
         public string HasJob { get; set; } = string.Empty;
+        public string? HasJobOther { get; set; }
         public string? WorkPlace { get; set; }
         public string HasLaptop { get; set; } = string.Empty;
         public string JobTitle { get; set; } = string.Empty;
         public string EnglishLevel { get; set; } = string.Empty;
         public string CrmTools { get; set; } = string.Empty;
+        public string? CrmToolsOther { get; set; }
         public string? PastExperiences { get; set; }
         public string? RealEstateBackground { get; set; }
         public string CompanyType { get; set; } = string.Empty;

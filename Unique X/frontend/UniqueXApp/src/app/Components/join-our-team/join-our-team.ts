@@ -89,28 +89,18 @@ export class JoinOurTeamComponent {
     const formData = new FormData();
     const f = this.form.value;
 
-    // لو اختار Other في hasJob، نحفظ النص الإضافي معاه
-    const hasJobValue = f.hasJob === 'Other' && f.hasJobOther
-      ? `Other: ${f.hasJobOther}`
-      : f.hasJob;
-
-    // لو اختار Other في CRM Tools، نضيف النص الإضافي للقائمة
-    let crmToolsList: string[] = f.crmTools;
-    if (crmToolsList.includes('Other') && f.crmToolsOther) {
-      crmToolsList = crmToolsList.filter((t: string) => t !== 'Other');
-      crmToolsList.push(`Other: ${f.crmToolsOther}`);
-    }
-
     formData.append('FullName', f.fullName);
     formData.append('PhoneNumber', f.phoneNumber);
     formData.append('Address', f.address);
     formData.append('City', f.city || '');
-    formData.append('HasJob', hasJobValue);
+    formData.append('HasJob', f.hasJob);
+    formData.append('HasJobOther', f.hasJob === 'Other' ? (f.hasJobOther || '') : '');
     formData.append('WorkPlace', f.workPlace || '');
     formData.append('HasLaptop', f.hasLaptop);
     formData.append('JobTitle', f.jobTitle);
     formData.append('EnglishLevel', f.englishLevel);
-    formData.append('CrmTools', crmToolsList.join(', '));
+    formData.append('CrmTools', (f.crmTools as string[]).join(', '));
+    formData.append('CrmToolsOther', (f.crmTools as string[]).includes('Other') ? (f.crmToolsOther || '') : '');
     formData.append('PastExperiences', f.pastExperiences || '');
     formData.append('RealEstateBackground', f.realEstateBackground || '');
     formData.append('Notes', f.notes || '');

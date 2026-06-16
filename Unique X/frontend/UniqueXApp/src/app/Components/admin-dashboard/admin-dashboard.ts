@@ -75,7 +75,7 @@ export class AdminDashboardComponent implements OnInit {
   pendingDeletions = signal<any[]>([]);
 
   userSearchText = signal('');
-  userTypeFilter = signal('');
+  userTypeFilter = signal(''); 
   userDateFilter = signal('');
   pendingProperties = signal<any[]>([]);// الكل، بروكر، أو كلاينت
   
@@ -216,14 +216,31 @@ export class AdminDashboardComponent implements OnInit {
 
 
 
+  // أي تاريخ قبل سنة 2000 يعتبر قيمة افتراضية فاسدة (مثل 01/01/0001) ومش تاريخ حقيقي
+  isValidCreatedAt(createdAt: any): boolean {
+    if (!createdAt) return false;
+    const d = new Date(createdAt);
+    return d.getFullYear() > 2000;
+  }
+
   filteredUsers = computed(() => {
-    return this.users().filter(u => {
+    const filtered = this.users().filter(u => {
       const search = this.userSearchText().toLowerCase();
       const matchesName = (u.firstName + ' ' + u.lastName).toLowerCase().includes(search) || u.email.toLowerCase().includes(search);
       const matchesType = this.userTypeFilter() === '' || u.userType.toString() === this.userTypeFilter();
       const dateFilter = this.userDateFilter();
-      const matchesDate = !dateFilter || (u.createdAt && new Date(u.createdAt).toISOString().split('T')[0] === dateFilter);
+      const matchesDate = !dateFilter || (this.isValidCreatedAt(u.createdAt) && new Date(u.createdAt).toISOString().split('T')[0] === dateFilter);
       return matchesName && matchesType && matchesDate;
+    });
+
+    // الأحدث أولاً، واللي معندهم تاريخ صحيح يتحطوا في الآخر
+    return [...filtered].sort((a, b) => {
+      const aValid = this.isValidCreatedAt(a.createdAt);
+      const bValid = this.isValidCreatedAt(b.createdAt);
+      if (!aValid && !bValid) return 0;
+      if (!aValid) return 1;
+      if (!bValid) return -1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   });
 
@@ -398,7 +415,13 @@ onRejectDeletion(id: number) {
   });
 
   this.adminService.getAllUsers().subscribe({
-    next: (data: any[]) => this.users.set(data),
+    next: (data: any[]) => {
+      // 🟢 تظبيط فرق التوقيت (بنعرف الإنجولار إن ده توقيت عالمي عشان يحوله لمصر)
+      data.forEach(u => {
+        if (u.createdAt && !u.createdAt.endsWith('Z')) u.createdAt += 'Z';
+      });
+      this.users.set(data);
+    },
     error: (err) => console.error('Users Error:', err)
   });
 
