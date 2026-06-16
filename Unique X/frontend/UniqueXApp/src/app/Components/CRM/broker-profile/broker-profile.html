@@ -203,10 +203,10 @@
               <th class="ps-3">Client</th>
               <th *ngIf="isAdmin()">Broker</th>
               <th>Stage</th>
-              <th *ngIf="isAdmin()">Activity</th> 
+              <th>Activity</th> 
               <th>Campaign</th>
               <th>Zone</th>
-              <th *ngIf="isAdmin()">Property Info</th>
+              <th>Property Info</th>
               <th>Budget</th>
               <th>Created Date</th>
               <th>Last Update</th>
@@ -241,32 +241,36 @@
               </td>
               <td><span class="badge bg-dark">{{ lead.statusName }}</span></td>
 
-              <td *ngIf="isAdmin()" class="text-nowrap">
-                <div class="d-flex flex-column gap-1" style="font-size: 0.7rem;">
-                  <span class="text-muted fw-bold">Calls: {{ lead.activitiesCount || 0 }}</span>
-                  <span class="text-muted fw-bold">Visits: {{ lead.visitsCount || 0 }}</span>
-                </div>
-              </td>
-               <td class="text-nowrap">
-                <!-- اسم الحملة -->
-                <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm d-inline-block mb-1">
-                  <i class="bi" [ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
-                  {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
-                </span>
+              <td>
+                  <div class="d-flex flex-column gap-1" style="font-size: 0.75rem; min-width: 120px;">
+                    <span class="text-muted fw-bold"><i class="bi bi-telephone-fill text-dark me-1"></i> Calls: {{ lead.activitiesCount || 0 }}</span>
+                    <span class="text-muted fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Visits: {{ lead.visitsCount || 0 }}</span>
+                    <span *ngIf="lead.closedDealsCount > 0" class="badge bg-success rounded-pill mt-1 w-auto d-inline-block">
+                      <i class="bi bi-check-circle-fill me-1"></i> {{ lead.closedDealsCount }} Closed Deal(s)
+                    </span>
+                  </div>
+                </td>
                 
-                <!-- مصدر الحملة (يظهر لو موجود) -->
-                <div *ngIf="lead.campaignSource" class="text-muted fw-bold" style="font-size: 0.65rem;">
-                  <i class="bi bi-funnel-fill me-1"></i>{{ lead.campaignSource }}
-                </div>
+                <td class="text-nowrap">
+                  <!-- اسم الحملة -->
+                  <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm d-inline-block mb-1">
+                    <i class="bi"[ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
+                    {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
+                  </span>
+                  
+                  <!-- مصدر الحملة (يظهر لو موجود) -->
+                  <div *ngIf="lead.campaignSource" class="text-muted fw-bold" style="font-size: 0.65rem;">
+                    <i class="bi bi-funnel-fill me-1"></i>{{ lead.campaignSource }}
+                  </div>
 
-                <!-- كود البروكر (يظهر لو موجود) -->
-                <div *ngIf="lead.referredBy" class="text-danger fw-bold mt-1" style="font-size: 0.65rem;">
-                  <i class="bi bi-person-bounding-box me-1"></i>Ref: {{ lead.referredBy }}
-                </div>
-              </td>
+                  <!-- كود البروكر (يظهر لو موجود) -->
+                  <div *ngIf="lead.referredBy" class="text-danger fw-bold mt-1" style="font-size: 0.65rem;">
+                    <i class="bi bi-person-bounding-box me-1"></i>Ref: {{ lead.referredBy }}
+                  </div>
+                </td>
               <td><span class="fw-bold small text-secondary">{{ lead.zoneName }}</span></td>
 
-              <td *ngIf="isAdmin()">
+              <td >
                 <div class="fw-bold small text-dark">{{ lead.propertyType }}</div>
                 <div class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill mt-1" style="font-size: 0.65rem;">{{ lead.purpose }}</div>
               </td>

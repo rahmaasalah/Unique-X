@@ -40,7 +40,8 @@ namespace Unique_X.Controllers
                 u.UserType,
                 u.IsActive,
                 u.PhoneNumber,
-                u.HasCrmAccess
+                u.HasCrmAccess,
+                u.CreatedAt
             }).ToListAsync();
             return Ok(users);
         }

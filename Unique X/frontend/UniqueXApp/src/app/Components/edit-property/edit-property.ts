@@ -669,10 +669,19 @@ setTimeout(() => {
 
 
   formatIntegerArray(event: any, controlName: string, index: number) {
-    let input = this.convertArabicToEnglish(event.target.value);
-    let pureDigits = input.replace(/[^0-9]/g, '');
-    this.paymentPlans.at(index).get(controlName)?.setValue(pureDigits, { emitEvent: false });
+  let input = this.convertArabicToEnglish(event.target.value);
+  
+  // 🟢 التعديل: السماح برقم واحد فقط بعد العلامة العشرية (اختياري) أو السماح بـ float
+  // السماح بالأرقام والنقطة فقط
+  let pureDigits = input.replace(/[^0-9.]/g, '');
+  
+  // منع وجود أكثر من نقطة
+  if ((pureDigits.match(/\./g) || []).length > 1) {
+    pureDigits = pureDigits.substring(0, pureDigits.lastIndexOf('.'));
   }
+  
+  this.paymentPlans.at(index).get(controlName)?.setValue(pureDigits, { emitEvent: false });
+}
 
   formatPercentageArray(event: any, controlName: string, index: number) {
     let input = this.convertArabicToEnglish(event.target.value);
@@ -735,25 +744,35 @@ setTimeout(() => {
   calculateInstallments(index: number) {
   const total = this.getPureNumber('price');
   const plan = this.paymentPlans.at(index);
-  const dpAmount = Number(plan.get('downPayment')?.value?.toString().replace(/,/g, '') || 0);
-  const years = Number(plan.get('installmentYears')?.value?.toString().replace(/[^0-9]/g, '') || 0);
+  
+  const dpAmount = this.getPureNumberFromPlan(plan, 'downPayment');
+  // 🟢 استبدال parseInt بـ parseFloat لدعم الكسور (2.5)
+  const years = parseFloat(plan.get('installmentYears')?.value || 0); 
   const frequency = plan.get('frequency')?.value || 'Quarterly';
 
   if (total > 0 && years > 0) {
     const remaining = total - dpAmount;
-    if (remaining > 0) {
-      let result = 0;
-      if (frequency === 'Quarterly')    result = (remaining / years) / 4;
-      else if (frequency === 'Semi-Annual') result = (remaining / years) / 2;
-      else if (frequency === 'Annual')      result = remaining / years;
+    let result = 0;
 
-      plan.get('installmentAmount')?.setValue(
-        this.roundAmount(result).toLocaleString('en-US'), { emitEvent: false }
-      );
-    } else {
-      plan.get('installmentAmount')?.setValue('0', { emitEvent: false });
+    if (remaining > 0) {
+      // الحساب سيعمل بشكل صحيح مع 2.5 سنة (سواء سنوي أو ربع سنوي)
+      if (frequency === 'Quarterly') {
+        result = (remaining / years) / 4;
+      } else if (frequency === 'Semi-Annual') {
+        result = (remaining / years) / 2;
+      } else if (frequency === 'Annual') {
+        result = remaining / years;
+      }
+      
+      plan.get('installmentAmount')?.setValue(this.roundAmount(result).toLocaleString('en-US'), { emitEvent: false });
     }
   }
+}
+
+getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
+  const val = plan.get(controlName)?.value;
+  if (!val) return 0;
+  return Number(val.toString().replace(/,/g, ''));
 }
 
   isInstallmentSelected(): boolean { return this.editForm.get('paymentMethod')?.value === 'Installment'; }

@@ -20,6 +20,7 @@
         public string VisitSite { get; set; } = string.Empty;
         public string DealsClosing { get; set; } = string.Empty;
         public string SalesLastQuarter { get; set; } = string.Empty;
+        public string? Notes { get; set; }
         public IFormFile? CvFile { get; set; }
     }
 }

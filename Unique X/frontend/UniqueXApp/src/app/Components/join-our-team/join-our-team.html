@@ -56,6 +56,10 @@
               <option value="Other">Other</option>
             </select>
             <div class="invalid-feedback">Required</div>
+            @if (showHasJobOther) {
+              <input type="text" class="form-control rounded-3 mt-2" formControlName="hasJobOther"
+                     placeholder="Please specify...">
+            }
           </div>
 
           <div class="col-md-6">
@@ -114,6 +118,10 @@
             @if (isInvalid('crmTools')) {
               <small class="text-danger">Select at least one</small>
             }
+            @if (showCrmOther) {
+              <input type="text" class="form-control rounded-3 mt-2" formControlName="crmToolsOther"
+                     placeholder="Please specify other CRM tool...">
+            }
           </div>
 
         </div>
@@ -125,13 +133,25 @@
         <div class="row g-3">
 
           <div class="col-12">
-            <label class="form-label fw-semibold">Past Experiences</label>
-            <textarea class="form-control rounded-3" formControlName="pastExperiences" rows="2" placeholder="Describe your past experiences..."></textarea>
+            <label class="form-label fw-semibold">Past Experiences <span class="text-danger">*</span></label>
+            <textarea class="form-control rounded-3" formControlName="pastExperiences" rows="2" 
+                      placeholder="Describe your past experiences..."
+                      [class.is-invalid]="isInvalid('pastExperiences')"></textarea>
+            <div class="invalid-feedback">Required</div>
           </div>
 
           <div class="col-12">
-            <label class="form-label fw-semibold">Real Estate Industry Background</label>
-            <textarea class="form-control rounded-3" formControlName="realEstateBackground" rows="2" placeholder="Your background in real estate..."></textarea>
+            <label class="form-label fw-semibold">Real Estate Industry Background <span class="text-danger">*</span></label>
+            <textarea class="form-control rounded-3" formControlName="realEstateBackground" rows="2" 
+                      placeholder="Your background in real estate..."
+                      [class.is-invalid]="isInvalid('realEstateBackground')"></textarea>
+            <div class="invalid-feedback">Required</div>
+
+          <div class="col-12">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea class="form-control rounded-3" formControlName="notes" rows="2" 
+                      placeholder="Any additional notes..."></textarea>
+          </div>
           </div>
 
           <div class="col-md-6">

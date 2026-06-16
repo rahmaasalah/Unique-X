@@ -12,10 +12,8 @@ namespace Unique_X.Models
         public string? ProfileImagePublicId { get; set; }
         public bool IsActive { get; set; } = true;
         public bool HasCrmAccess { get; set; } = false;
-
-
         public string? BrokerTitle { get; set; }
         public string? BrokerDescription { get; set; }
-
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

@@ -140,7 +140,7 @@ namespace Unique_X.DTOs
 
     public class PaymentPlanDto
     {
-        public int InstallmentYears { get; set; }
+        public decimal InstallmentYears { get; set; }
         public decimal DownPayment { get; set; }
         public decimal InstallmentAmount { get; set; }
         public string Frequency { get; set; }

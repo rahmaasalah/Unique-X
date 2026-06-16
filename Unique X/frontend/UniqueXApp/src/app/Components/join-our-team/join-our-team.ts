@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AlertService } from '../../Services/alert';
 import { environment } from '../../../environments/environment';
+
 @Component({
   selector: 'app-join-our-team',
   standalone: true,
@@ -26,13 +27,16 @@ export class JoinOurTeamComponent {
     address:               ['', Validators.required],
     city:                  [''],
     hasJob:                ['', Validators.required],
+    hasJobOther:           [''],          // حقل "Other" لـ Currently Employed
     workPlace:             [''],
     hasLaptop:             ['', Validators.required],
     jobTitle:              ['', Validators.required],
     englishLevel:          ['', Validators.required],
     crmTools:              [[], Validators.required],
-    pastExperiences:       [''],
-    realEstateBackground:  [''],
+    crmToolsOther:         [''],          // حقل "Other" لـ CRM Tools
+    pastExperiences:       ['', Validators.required],
+    realEstateBackground:  ['', Validators.required],
+    notes:                 [''],          // Notes - غير required
     companyType:           ['', Validators.required],
     zoneWorkedOn:          ['', Validators.required],
     projectPreparation:    ['', Validators.required],
@@ -43,12 +47,26 @@ export class JoinOurTeamComponent {
 
   crmOptions = ['Odoo', 'Engaz', 'Slack', 'Other'];
 
+  // هل اختار "Other" في Currently Employed؟
+  get showHasJobOther(): boolean {
+    return this.form.get('hasJob')?.value === 'Other';
+  }
+
+  // هل اختار "Other" في CRM Tools؟
+  get showCrmOther(): boolean {
+    return (this.form.get('crmTools')?.value || []).includes('Other');
+  }
+
   onCrmToggle(tool: string) {
     const current: string[] = this.form.get('crmTools')?.value || [];
     const updated = current.includes(tool)
       ? current.filter(t => t !== tool)
       : [...current, tool];
     this.form.get('crmTools')?.setValue(updated);
+    // لو شالوا Other، نمسح الحقل
+    if (!updated.includes('Other')) {
+      this.form.get('crmToolsOther')?.setValue('');
+    }
   }
 
   isCrmSelected(tool: string): boolean {
@@ -56,12 +74,9 @@ export class JoinOurTeamComponent {
   }
 
   onFileChange(event: any) {
-  const file = event.target.files[0];
-  if (file) {
-    this.selectedFile.set(file);
-    console.log('File selected:', file.name, file.size); // أضيفي السطر ده مؤقتاً
+    const file = event.target.files[0];
+    if (file) this.selectedFile.set(file);
   }
-}
 
   onSubmit() {
     if (this.form.invalid) {
@@ -74,18 +89,31 @@ export class JoinOurTeamComponent {
     const formData = new FormData();
     const f = this.form.value;
 
+    // لو اختار Other في hasJob، نحفظ النص الإضافي معاه
+    const hasJobValue = f.hasJob === 'Other' && f.hasJobOther
+      ? `Other: ${f.hasJobOther}`
+      : f.hasJob;
+
+    // لو اختار Other في CRM Tools، نضيف النص الإضافي للقائمة
+    let crmToolsList: string[] = f.crmTools;
+    if (crmToolsList.includes('Other') && f.crmToolsOther) {
+      crmToolsList = crmToolsList.filter((t: string) => t !== 'Other');
+      crmToolsList.push(`Other: ${f.crmToolsOther}`);
+    }
+
     formData.append('FullName', f.fullName);
     formData.append('PhoneNumber', f.phoneNumber);
     formData.append('Address', f.address);
     formData.append('City', f.city || '');
-    formData.append('HasJob', f.hasJob);
+    formData.append('HasJob', hasJobValue);
     formData.append('WorkPlace', f.workPlace || '');
     formData.append('HasLaptop', f.hasLaptop);
     formData.append('JobTitle', f.jobTitle);
     formData.append('EnglishLevel', f.englishLevel);
-    formData.append('CrmTools', (f.crmTools as string[]).join(', '));
+    formData.append('CrmTools', crmToolsList.join(', '));
     formData.append('PastExperiences', f.pastExperiences || '');
     formData.append('RealEstateBackground', f.realEstateBackground || '');
+    formData.append('Notes', f.notes || '');
     formData.append('CompanyType', f.companyType);
     formData.append('ZoneWorkedOn', f.zoneWorkedOn);
     formData.append('ProjectPreparation', f.projectPreparation);

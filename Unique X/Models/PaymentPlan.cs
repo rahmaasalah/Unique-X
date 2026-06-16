@@ -3,7 +3,7 @@
     public class PaymentPlan
     {
         public int Id { get; set; }
-        public int InstallmentYears { get; set; }
+        public decimal InstallmentYears { get; set; }
 
         public decimal DownPayment { get; set; }
         public decimal QuarterInstallment { get; set; }
