@@ -582,28 +582,73 @@
     <!-- ===== شريط الفلاتر الموسع (نفس leads-dashboard) ===== -->
     <div class="card p-3 mb-3 shadow-sm border-0 bg-white rounded-3 flex-shrink-0">
 
-      <!-- السطر الأول: Search, Stage, Campaign, Sales Persons, All Zones -->
+      <!-- السطر الأول: Search, Stage, Campaign, Sales Persons, Zones, Property Type, Listing Type -->
       <div class="row g-2 mb-2">
-        <div class="col">
+        <div class="col-md-3">
           <input type="text" class="form-control bg-light border-0"
                  placeholder="Search Client Name/Phone..."
                  [ngModel]="searchClient()" (ngModelChange)="searchClient.set($event)">
         </div>
-        <div class="col">
+        <div class="col-md-2">
           <select class="form-select bg-light border-0"
                   [ngModel]="filterClientStage()" (ngModelChange)="filterClientStage.set($event)">
             <option value="">All Stages</option>
             <option *ngFor="let stage of stages" [value]="stage.id">{{ stage.name }}</option>
           </select>
         </div>
-        <div class="col">
+        <div class="col-md-2 position-relative">
+          <input type="text" class="form-control bg-light border-0"
+                 placeholder="Campaign code..."
+                 [ngModel]="searchCampaignCode()"
+                 (ngModelChange)="searchCampaignCode.set($event); filterCampaignCode.set(''); isCampaignDropdownOpen.set(true)"
+                 (focus)="isCampaignDropdownOpen.set(true)"
+                 (blur)="closeCampaignDropdown()">
+          <ul class="dropdown-menu w-100 shadow border-0 mt-1"
+              [class.show]="isCampaignDropdownOpen()"
+              style="max-height: 220px; overflow-y: auto; position: absolute; z-index: 1050;">
+            <li>
+              <button type="button" class="dropdown-item py-2 text-muted small fw-bold"
+                      (mousedown)="selectCampaign(''); searchCampaignCode.set('')">
+                All Campaigns
+              </button>
+            </li>
+            @for (code of filteredCampaignCodes(); track code) {
+              <li>
+                <button type="button" class="dropdown-item py-2 fw-bold"
+                        (mousedown)="selectCampaign(code)">{{ code }}</button>
+              </li>
+            } @empty {
+              <li><span class="dropdown-item text-muted small">No codes found</span></li>
+            }
+          </ul>
+        </div>
+        <div class="col-md-2">
           <select class="form-select bg-light border-0"
-                  [ngModel]="filterCampaign()" (ngModelChange)="filterCampaign.set($event)">
-            <option value="">All Campaigns</option>
-            <option *ngFor="let c of campaignsList()" [value]="c.name">{{ c.name }}</option>
+                  [ngModel]="filterPropertyType()" (ngModelChange)="filterPropertyType.set($event)">
+            <option value="">All Property Types</option>
+            <option value="Apartment">Apartment</option>
+            <option value="Villa">Villa</option>
+            <option value="Chalet">Chalet</option>
+            <option value="Office">Office</option>
+            <option value="Shop">Shop</option>
+            <option value="Full Floor">Full Floor</option>
           </select>
         </div>
-        <div class="col">
+        <div class="col-md-1">
+          <select class="form-select bg-light border-0"
+                  [ngModel]="filterListingType()" (ngModelChange)="filterListingType.set($event)">
+            <option value="">All Listing Types</option>
+            <option value="Primary">Primary</option>
+            <option value="Resale">Resale</option>
+            <option value="Resale Project">Resale Project</option>
+            <option value="Rent">Rent</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- السطر الثاني: Broker, Zone, Broker Code -->
+      <div class="row g-2 mb-2">
+        <div class="col-md-3">
           <select class="form-select bg-light border-0"
                   [ngModel]="globalBrokerFilter()" (ngModelChange)="globalBrokerFilter.set($event)">
             <option value="">All Sales Persons</option>
@@ -612,7 +657,7 @@
             </option>
           </select>
         </div>
-        <div class="col">
+        <div class="col-md-2">
           <select class="form-select bg-light border-0"
                   [ngModel]="filterZone()" (ngModelChange)="filterZone.set($event)">
             <option value="">All Zones</option>

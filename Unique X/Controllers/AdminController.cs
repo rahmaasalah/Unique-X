@@ -638,6 +638,19 @@ namespace Unique_X.Controllers
             return Ok(new { Message = "Deletion rejected. Property restored." });
         }
 
+        [HttpGet("approved-property-codes")]
+        public async Task<IActionResult> GetApprovedPropertyCodes()
+        {
+            var codes = await _context.Properties
+                .Where(p => p.IsApproved == true && p.Code != null)
+                .Select(p => p.Code)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+
+            return Ok(codes);
+        }
+
 
     }
 }

@@ -101,11 +101,54 @@
             <option value="26">Recommend to shift</option>
             </select>
         </div>
+        <div class="col-md-2 position-relative">
+          <input type="text" class="form-control form-control-sm"
+                 placeholder="Campaign code..."
+                 [ngModel]="searchCampaignCode()"
+                 (ngModelChange)="searchCampaignCode.set($event); filterCampaignCode.set(''); isCampaignDropdownOpen.set(true)"
+                 (focus)="isCampaignDropdownOpen.set(true)"
+                 (blur)="closeCampaignDropdown()">
+          <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+              [class.show]="isCampaignDropdownOpen()"
+              style="max-height: 200px; overflow-y: auto; position: absolute; z-index: 1050;">
+            <li>
+              <button type="button" class="dropdown-item py-2 text-muted small"
+                      (mousedown)="selectCampaign(''); searchCampaignCode.set('')">
+                All Campaigns
+              </button>
+            </li>
+            @for (code of filteredCampaignCodes(); track code) {
+              <li>
+                <button type="button" class="dropdown-item py-2 fw-bold"
+                        (mousedown)="selectCampaign(code)">{{ code }}</button>
+              </li>
+            } @empty {
+              <li><span class="dropdown-item text-muted small">No codes found</span></li>
+            }
+          </ul>
+        </div>
+
         <div class="col-md-2">
-          <select class="form-select form-select-sm"[ngModel]="filterCampaign()" (ngModelChange)="filterCampaign.set($event)">
-            <option value="">All Campaigns</option>
-            <option value="No Campaign">Direct / Website</option>
-            @for (c of campaignsList(); track c.id) { <option [value]="c.name">{{ c.name }}</option> }
+          <select class="form-select form-select-sm"
+                  [ngModel]="filterPropertyType()" (ngModelChange)="filterPropertyType.set($event)">
+            <option value="">All Property Types</option>
+            <option value="Apartment">Apartment</option>
+            <option value="Villa">Villa</option>
+            <option value="Chalet">Chalet</option>
+            <option value="Office">Office</option>
+            <option value="Shop">Shop</option>
+            <option value="Full Floor">Full Floor</option>
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <select class="form-select form-select-sm"
+                  [ngModel]="filterListingType()" (ngModelChange)="filterListingType.set($event)">
+            <option value="">All Listing Types</option>
+            <option value="Primary">Primary</option>
+            <option value="Resale">Resale</option>
+            <option value="Resale Project">Resale Project</option>
+            <option value="Rent">Rent</option>
           </select>
         </div>
 
@@ -141,6 +184,11 @@
         <div class="col-md-4 d-flex align-items-center gap-2 mt-2">
           <label class="small text-muted mb-0 text-nowrap">Updated:</label>
           <input type="date" class="form-control form-control-sm"[ngModel]="filterLastUpdate()" (ngModelChange)="filterLastUpdate.set($event)">
+        </div>
+        <div class="col-md-4 mt-2 d-flex align-items-center gap-2">
+          <span class="badge bg-dark rounded-pill px-3 py-2 fs-6">
+            <i class="bi bi-people-fill me-1"></i> {{ filteredLeads().length }} Leads
+          </span>
         </div>
         <div class="col-md-4 mt-2 text-end">
           <button class="btn btn-sm btn-outline-danger fw-bold w-100" (click)="clearFilters()"><i class="bi bi-x-circle me-1"></i> Clear Filters</button>
@@ -504,4 +552,3 @@
 
   </div>
 </div>
-   

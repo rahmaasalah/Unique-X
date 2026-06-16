@@ -190,6 +190,6 @@ rejectDuplicateLead(leadId: number): Observable<any> {
 }
 
 getPropertyCodes(): Observable<string[]> {
-  return this.http.get<string[]>(`${this.apiUrl}/leads/property-codes`); 
+  return this.http.get<string[]>(`${environment.apiUrl}/admin/approved-property-codes`); 
 }
 }
