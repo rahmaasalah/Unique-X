@@ -55,9 +55,7 @@ isCampaignDropdownOpen = signal<boolean>(false);
 
 filteredCampaignCodes = computed(() => {
   const q = this.searchCampaignCode().toLowerCase();
-  const codes = this.campaignsList()
-    .map((c: any) => c.name)
-    .filter((name: string) => name !== 'No Campaign');
+  const codes = this.campaignsList();
   return q ? codes.filter((c: string) => c.toLowerCase().includes(q)) : codes;
 });
 
@@ -259,7 +257,7 @@ if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
     }
     
     this.loadProfileData(fetchId);
-    this.crmService.getCampaigns().subscribe(data => this.campaignsList.set(data));
+    this.crmService.getPropertyCodes().subscribe(data => this.campaignsList.set(data));
   }
 
 

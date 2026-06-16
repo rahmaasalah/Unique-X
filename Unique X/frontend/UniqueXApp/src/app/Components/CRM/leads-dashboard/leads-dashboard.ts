@@ -34,6 +34,7 @@ export class LeadsDashboardComponent implements OnInit {
 
   viewMode = signal<'kanban' | 'list'>('kanban'); 
   filteredLeadsForList = signal<any[]>([]);
+  filteredLeadsCount = computed(() => this.filteredLeadsForList().length);
 
   allLeads = signal<any[]>([]); 
   
@@ -55,9 +56,7 @@ isCampaignDropdownOpen = signal<boolean>(false);
 
 filteredCampaignCodes = computed(() => {
   const q = this.searchCampaignCode().toLowerCase();
-  const codes = this.campaignsList()
-    .map((c: any) => c.name)
-    .filter((name: string) => name !== 'No Campaign');
+  const codes = this.campaignsList();
   return q ? codes.filter((c: string) => c.toLowerCase().includes(q)) : codes;
 });
 
@@ -135,9 +134,9 @@ closeCampaignDropdown() {
   }
 
   loadCampaigns() {
-    this.crmService.getCampaigns().subscribe({
+    this.crmService.getPropertyCodes().subscribe({
       next: (data) => this.campaignsList.set(data),
-      error: (err) => console.error('Error fetching campaigns', err)
+      error: (err) => console.error('Error fetching property codes', err)
     });
   }
 

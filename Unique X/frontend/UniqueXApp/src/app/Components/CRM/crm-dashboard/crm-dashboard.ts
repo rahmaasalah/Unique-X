@@ -34,9 +34,7 @@ isCampaignDropdownOpen = signal<boolean>(false);
 
 filteredCampaignCodes = computed(() => {
   const q = this.searchCampaignCode().toLowerCase();
-  const codes = this.campaignsList()
-    .map((c: any) => c.name)
-    .filter((name: string) => name !== 'No Campaign');
+  const codes = this.campaignsList();
   return q ? codes.filter((c: string) => c.toLowerCase().includes(q)) : codes;
 });
 
@@ -425,21 +423,19 @@ hiddenLeads = signal<number[]>([]);
   loadAdminData() {
     this.alertService.showLoading('Loading CRM Data...');
     
-    // 🟢 بنجيب المستخدمين والعملاء في نفس الوقت
+    // بنجيب المستخدمين والعملاء والكاليندر في نفس الوقت
+    // property-codes منفصلة عشان لو فشلت متأثرش على باقي الداتا
     forkJoin({
       users: this.adminService.getAllUsers(),
       leads: this.crmService.getLeads(''),
-      campaigns: this.crmService.getCampaigns(),
-      calendar: this.crmService.getAdminCalendarEvents() // ID فاضي يعني هات كل العملاء
+      calendar: this.crmService.getAdminCalendarEvents()
     }).subscribe({
-      next: ({ users, leads, campaigns, calendar }) => {
-        this.campaignsList.set(campaigns);
-        
-        // 🟢 1. بنفلتر كل البروكرز من المستخدمين (UserType === 1) ونحفظهم
+      next: ({ users, leads, calendar }) => {
+        // بنفلتر كل البروكرز من المستخدمين (UserType === 1) ونحفظهم
         const brokers = users.filter((u: any) => u.userType === 1);
         this.allBrokersList.set(brokers);
 
-        // 🟢 2. بنجيب البروكرز اللي معاهم الصلاحية فقط من الداتا بيز
+        // بنجيب البروكرز اللي معاهم الصلاحية فقط من الداتا بيز
         const vipUsers = brokers.filter((u: any) => u.hasCrmAccess === true);
         this.vipBrokers.set(vipUsers);
 
@@ -456,11 +452,27 @@ hiddenLeads = signal<number[]>([]);
         this.calendarEvents.set(calendar);
         
         this.alertService.close();
+
+        // بنجيب أكواد الحملات بشكل منفصل عشان لو فشلوا متأثروش على باقي الداتا
+        this.loadCampaignCodes();
       },
       error: (err) => {
         console.error(err);
         this.alertService.close();
         this.alertService.error('Failed to load CRM data.');
+      }
+    });
+  }
+
+  loadCampaignCodes() {
+    this.crmService.getPropertyCodes().subscribe({
+      next: (codes) => {
+        this.campaignsList.set(codes);
+      },
+      error: (err) => {
+        // لو فشلت مش هتعرض error للمستخدم، بس هنسجلها في الـ console
+        console.warn('Could not load campaign codes:', err);
+        this.campaignsList.set([]);
       }
     });
   }
