@@ -92,7 +92,8 @@ namespace Unique_X.Controllers
                 VisitSite = dto.VisitSite,
                 DealsClosing = dto.DealsClosing,
                 SalesLastQuarter = dto.SalesLastQuarter,
-                CvUrl = cvFileName
+                CvUrl = cvFileName,
+                Notes = dto.Notes
             };
 
             _context.JobApplications.Add(application);

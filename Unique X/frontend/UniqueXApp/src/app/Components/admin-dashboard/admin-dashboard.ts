@@ -75,7 +75,8 @@ export class AdminDashboardComponent implements OnInit {
   pendingDeletions = signal<any[]>([]);
 
   userSearchText = signal('');
-  userTypeFilter = signal(''); 
+  userTypeFilter = signal('');
+  userDateFilter = signal('');
   pendingProperties = signal<any[]>([]);// الكل، بروكر، أو كلاينت
   
   propSearchText = signal('');
@@ -220,7 +221,9 @@ export class AdminDashboardComponent implements OnInit {
       const search = this.userSearchText().toLowerCase();
       const matchesName = (u.firstName + ' ' + u.lastName).toLowerCase().includes(search) || u.email.toLowerCase().includes(search);
       const matchesType = this.userTypeFilter() === '' || u.userType.toString() === this.userTypeFilter();
-      return matchesName && matchesType;
+      const dateFilter = this.userDateFilter();
+      const matchesDate = !dateFilter || (u.createdAt && new Date(u.createdAt).toISOString().split('T')[0] === dateFilter);
+      return matchesName && matchesType && matchesDate;
     });
   });
 

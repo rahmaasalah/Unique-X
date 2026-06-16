@@ -155,7 +155,12 @@ namespace Unique_X.Controllers.CRM
                     StatusId = l.LeadStatusId,
                     GeneralFeedback = l.GeneralFeedback ?? "",
                     StatusName = l.Status.Name,
-                    CampaignName = l.Campaign != null ? l.Campaign.Name : "No Campaign",
+                    CampaignName = !string.IsNullOrEmpty(l.CampaignName) ? l.CampaignName :
+                   (l.Campaign != null ? l.Campaign.Name : "No Campaign"),
+
+                    // تأكدي من إضافة CampaignSource و ReferredBy
+                    CampaignSource = l.CampaignSource ?? "Direct",
+                    ReferredBy = l.ReferredBy ?? "",
                     CreatedAt = l.CreatedAt,
                     UpdatedAt = l.UpdatedAt ?? l.CreatedAt,
                     IsDuplicate = l.IsDuplicate,

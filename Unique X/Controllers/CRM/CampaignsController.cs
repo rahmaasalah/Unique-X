@@ -40,6 +40,20 @@ namespace Unique_X.Controllers.CRM
             return Ok(new { message = "Campaign created successfully!", campaign });
         }
 
+        // جلب أكواد الوحدات المعتمدة (متاح للأدمن والبروكر)
+        [HttpGet("approved-property-codes")]
+        public async Task<IActionResult> GetApprovedPropertyCodes()
+        {
+            var codes = await _context.Properties
+                .Where(p => p.IsApproved == true && p.Code != null)
+                .Select(p => p.Code)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+
+            return Ok(codes);
+        }
+
         // حذف حملة إعلانية
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCampaign(int id)

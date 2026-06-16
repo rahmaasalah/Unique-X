@@ -23,6 +23,7 @@
         public string SalesLastQuarter { get; set; } = string.Empty;
         public string? CvUrl { get; set; } // لينك الـ CV على Google Drive
         public string Status { get; set; } = "Pending"; // Pending / Confirmed / Scheduled
+        public string? Notes { get; set; }
         public DateTime? InterviewDate { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
