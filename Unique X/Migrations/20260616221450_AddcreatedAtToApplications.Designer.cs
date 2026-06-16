@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Unique_X.Data;
 
@@ -11,9 +12,11 @@ using Unique_X.Data;
 namespace Unique_X.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260616221450_AddcreatedAtToApplications")]
+    partial class AddcreatedAtToApplications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -402,9 +405,6 @@ namespace Unique_X.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CrmToolsOther")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("CvUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -422,9 +422,6 @@ namespace Unique_X.Migrations
 
                     b.Property<string>("HasJob")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HasJobOther")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("HasLaptop")

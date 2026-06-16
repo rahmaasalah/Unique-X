@@ -244,19 +244,23 @@
 
         <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
           <div class="row g-2">
-            <div class="col-md-8">
+            <div class="col-md-6">
               <div class="input-group">
                 <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
                 <input type="text" class="form-control bg-light border-0" placeholder="Search users by name or email..."
                        [ngModel]="userSearchText()" (ngModelChange)="userSearchText.set($event)">
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <select class="form-select bg-light border-0" [ngModel]="userTypeFilter()" (ngModelChange)="userTypeFilter.set($event)">
                 <option value="">All Account Types</option>
                 <option value="0">Clients</option>
                 <option value="1">Brokers</option>
               </select>
+            </div>
+            <div class="col-md-3">
+              <input type="date" class="form-control bg-light border-0"
+                     [ngModel]="userDateFilter()" (ngModelChange)="userDateFilter.set($event)">
             </div>
           </div>
         </div>
@@ -269,6 +273,7 @@
                    <th>EMAIL</th>
                    <th>ROLE</th>
                    <th>STATUS</th>
+                   <th>JOINED</th>
                    <th class="text-end pe-4">ACTION</th>
                </tr>
             </thead>
@@ -285,6 +290,9 @@
                     <span class="badge rounded-pill px-3" [class]="user.isActive ? 'bg-success' : 'bg-danger'">
                         {{ user.isActive ? 'Active' : 'Suspended' }}
                     </span>
+                  </td>
+                  <td class="small text-muted">
+                    {{ isValidCreatedAt(user.createdAt) ? (user.createdAt | date:'dd/MM/yyyy') : '—' }}
                   </td>
                   <td class="text-end pe-4">
                     @if(getUserTypeLabel(user.userType) != 'Admin'){
@@ -1186,12 +1194,26 @@
               <div class="col-md-6"><strong>Phone:</strong> {{ selectedApplication().phoneNumber }}</div>
               <div class="col-md-6"><strong>Address:</strong> {{ selectedApplication().address }}</div>
               <div class="col-md-6"><strong>City:</strong> {{ selectedApplication().city || '—' }}</div>
-              <div class="col-md-6"><strong>Has Job:</strong> {{ selectedApplication().hasJob }}</div>
+              <div class="col-md-6">
+                <strong>Has Job:</strong> {{ selectedApplication().hasJob }}
+                @if (selectedApplication().hasJob === 'Other') {
+                  <div class="small text-muted mt-1">
+                    Details: {{ selectedApplication().hasJobOther || 'Not specified' }}
+                  </div>
+                }
+              </div>
               <div class="col-md-6"><strong>Work Place:</strong> {{ selectedApplication().workPlace || '—' }}</div>
               <div class="col-md-6"><strong>Has Laptop:</strong> {{ selectedApplication().hasLaptop }}</div>
               <div class="col-md-6"><strong>Job Title:</strong> {{ selectedApplication().jobTitle }}</div>
               <div class="col-md-6"><strong>English Level:</strong> {{ selectedApplication().englishLevel }}</div>
-              <div class="col-md-6"><strong>CRM Tools:</strong> {{ selectedApplication().crmTools }}</div>
+              <div class="col-md-6">
+                <strong>CRM Tools:</strong> {{ selectedApplication().crmTools }}
+                @if ((selectedApplication().crmTools || '').includes('Other')) {
+                  <div class="small text-muted mt-1">
+                    Other Tool Details: {{ selectedApplication().crmToolsOther || 'Not specified' }}
+                  </div>
+                }
+              </div>
               <div class="col-md-6"><strong>Company Type:</strong> {{ selectedApplication().companyType }}</div>
               <div class="col-md-6"><strong>Zone Worked On:</strong> {{ selectedApplication().zoneWorkedOn }}</div>
               <div class="col-md-6"><strong>Project Preparation:</strong> {{ selectedApplication().projectPreparation }}</div>
@@ -1200,6 +1222,7 @@
               <div class="col-md-6"><strong>Sales Last Quarter:</strong> {{ selectedApplication().salesLastQuarter }}</div>
               <div class="col-12"><strong>Past Experiences:</strong> {{ selectedApplication().pastExperiences || '—' }}</div>
               <div class="col-12"><strong>Real Estate Background:</strong> {{ selectedApplication().realEstateBackground || '—' }}</div>
+              <div class="col-12"><strong>Notes:</strong> {{ selectedApplication().notes || '—' }}</div>
             </div>
           </div>
         }
