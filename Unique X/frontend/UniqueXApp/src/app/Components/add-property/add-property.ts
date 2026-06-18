@@ -954,6 +954,7 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
     formData.append('DeliveryStatus', (f.deliveryStatus || 0).toString());
     formData.append('DistanceFromLandmark', f.distanceFromLandmark || '');
     formData.append('View', f.view || '');
+    formData.append('PricePerMeter', cleanNum(f.pricePerMeter));
 
     // 🟢 إرسال الأرقام بعد غسيلها بـ cleanNum لضمان قبول C# لها
     formData.append('Price', cleanNum(f.price));
