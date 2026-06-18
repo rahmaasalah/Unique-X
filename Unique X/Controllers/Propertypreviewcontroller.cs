@@ -29,7 +29,7 @@ namespace Unique_X.Controllers
 
             string title = "Betk - عقارك في مصر";
             string description = "تفاصيل عقار على منصة Betk";
-            string imageUrl = "https://betk.property/assets/logo.jpeg";
+            string imageUrl = "https://betk.property/logo.jpeg";
             string pageUrl = $"https://betk.property/property-details/{id}";
 
             if (property != null)
