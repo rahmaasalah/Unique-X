@@ -91,9 +91,9 @@
                   <strong>Area:</strong> {{ prop.area }} m²
                 </li>
 
-                @if (prop.pricePerMeter > 0) {
+                @if (prop.pricePerMeter > 0 || (prop.price > 0 && prop.area > 0)) {
                   <li><i class="bi bi-calculator text-danger me-1"></i>
-                    <strong>Price/m²:</strong> EGP {{ prop.pricePerMeter | number }}
+                    <strong>Price/m²:</strong> EGP {{ (prop.pricePerMeter > 0 ? prop.pricePerMeter : (prop.price / prop.area)) | number:'1.0-0' }}
                   </li>
                 }
 
