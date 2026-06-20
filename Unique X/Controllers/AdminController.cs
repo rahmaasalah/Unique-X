@@ -85,6 +85,7 @@ namespace Unique_X.Controllers
                 TotalCallClicks = await _context.AnalyticsRecords.CountAsync(r => r.ActionType == "CallClick")
             };
             return Ok(stats);
+
         }
 
         //[HttpGet("properties")]
