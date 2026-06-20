@@ -67,6 +67,10 @@ addByCode() {
   });
 }
 
+
+
+
+
 goToHomeForCompare() {
   // بنحفظ الـ IDs الحالية عشان نرجعلها بعد الاختيار
   const currentIds = this.properties().map(p => p.id).join(',');
