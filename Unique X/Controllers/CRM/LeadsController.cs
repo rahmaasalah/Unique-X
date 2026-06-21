@@ -196,7 +196,8 @@ namespace Unique_X.Controllers.CRM
             if (property == null) return NotFound("Property not found");
 
             // 2. هل العميل ده متسجل عندنا قبل كده؟ (برقم الموبايل)
-            var existingLead = await _context.Leads.FirstOrDefaultAsync(l => l.PhoneNumber == dto.ClientPhone);
+            var existingLead = await _context.Leads.FirstOrDefaultAsync(l =>
+    l.PhoneNumber == dto.ClientPhone && l.CampaignName == property.Code);
 
             int leadId;
             bool isNewLead = existingLead == null;
