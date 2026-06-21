@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../Services/auth';
 import { AdminService } from '../../Services/admin';
 import { GoogleAnalyticsService } from 'ngx-google-analytics';
+import { CrmService } from '../../Services/crm.services';
 
 @Component({
   selector: 'app-property-card',
@@ -27,6 +28,7 @@ export class PropertyCardComponent {
   private router = inject(Router);
   private adminService = inject(AdminService);
   private gaService = inject(GoogleAnalyticsService);
+  private crmService = inject(CrmService);
 
 
    ngOnInit() {
@@ -78,6 +80,28 @@ handleContact(event: Event, type: 'whatsapp' | 'call') {
 
   this.adminService.trackAction(type === 'whatsapp' ? 'WhatsAppClick' : 'CallClick', this.property.id).subscribe();
   this.gaService.event('contact_click', type, this.property.id.toString());
+
+  // لو اللي داس عميل (Client)، نبعت بياناته للـ CRM بصمت في الخلفية
+  const userString = localStorage.getItem('user');
+  if (userString) {
+    const clientData = JSON.parse(userString);
+    const isClient = clientData.roles && clientData.roles.includes('Client');
+
+    if (isClient) {
+      const inquiryData = {
+        clientName: clientData.username || 'Website Client',
+        clientPhone: clientData.phoneNumber || '0000000000',
+        clientEmail: clientData.email,
+        propertyId: this.property.id,
+        message: `Client clicked the [${type.toUpperCase()}] button from the property card.`
+      };
+
+      this.crmService.sendWebsiteInquiry(inquiryData).subscribe({
+        next: () => console.log('Lead saved to CRM successfully in background.'),
+        error: (err) => console.error('Failed to save lead to CRM', err)
+      });
+    }
+  }
 
   const phone = this.property.brokerPhone;
   if (type === 'call') {

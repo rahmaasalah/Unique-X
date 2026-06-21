@@ -97,6 +97,7 @@ namespace Unique_X.Models
         public ApplicantUser Broker { get; set; }
         public bool IsActive { get; set; } = false;
         public bool IsApproved { get; set; } = false;
+        public bool IsHotDeal { get; set; } = false;
         public string? RejectionReason { get; set; }
 
         public string OwnerName { get; set; } = string.Empty;
