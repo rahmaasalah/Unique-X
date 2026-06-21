@@ -112,6 +112,17 @@ namespace Unique_X.Controllers
             return Ok(new { Status = prop.IsActive });
         }
 
+        // تفعيل/إلغاء وحدة كـ Hot Deal (الأدمن بيختارها من ليستة الأكواد عنده)
+        [HttpPatch("toggle-hot-deal/{id}")]
+        public async Task<IActionResult> ToggleHotDeal(int id)
+        {
+            var prop = await _context.Properties.FindAsync(id);
+            if (prop == null) return NotFound();
+            prop.IsHotDeal = !prop.IsHotDeal;
+            await _context.SaveChangesAsync();
+            return Ok(new { Status = prop.IsHotDeal });
+        }
+
         [HttpPost("add-banner")]
         public async Task<IActionResult> AddBanner([FromForm] BannerUploadDto dto)
         {

@@ -117,28 +117,30 @@ namespace Unique_X.Controllers.CRM
                 // بيحسب كام عميل مسجل بنفس الرقم ده وحالته 19 (Deal Closed)
                 ClosedDealsCount = _context.Leads.Count(c => c.PhoneNumber == l.PhoneNumber && c.LeadStatusId == 19),
                 CreatedAt = l.CreatedAt,
-                QuarterlyInstallment = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).QuarterlyInstallment,
+                QuarterlyInstallment = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).QuarterlyInstallment,
 
                 // 👇 ده السطر اللي بيجيب تاريخ آخر تعديل، ولو مفيش بيجيب تاريخ الإنشاء
                 UpdatedAt = l.UpdatedAt ?? l.CreatedAt,
                 IsRejectedDuplicate = l.IsRejectedDuplicate,
 
-                PropertyType = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PropertyType ?? "",
-                Purpose = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).Purpose ?? "",
-                TotalAmount = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).TotalAmount ?? 0,
-                PreferredLocation = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PreferredLocation ?? "Not Specified",
-                SelectedRegions = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).SelectedRegions ?? "",
-                SelectedProjects = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).SelectedProjects ?? "",
-                Notes = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).Notes ?? "",
+                // 👇 بناخد آخر LeadRequest (الأحدث) عشان الـ Lead بقى ممكن يكون ليه أكتر من طلب
+                PropertyType = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).PropertyType : "",
+                Purpose = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).Purpose : "",
+                TotalAmount = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? (_context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).TotalAmount ?? 0) : 0,
+                PreferredLocation = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).PreferredLocation : "Not Specified",
+                SelectedRegions = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).SelectedRegions : "",
+                SelectedProjects = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).SelectedProjects : "",
+                Notes = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).Notes : "",
 
-                ZoneName = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 1 ? "Cairo" :
-                       _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 2 ? "Alexandria" :
-                       _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 3 ? "North Coast" : "N/A",
+                ZoneName = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) == null ? "N/A" :
+                       _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 1 ? "Cairo" :
+                       _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 2 ? "Alexandria" :
+                       _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 3 ? "North Coast" : "N/A",
 
                 // 👇 الحقول المالية الجديدة
-                PaymentMethod = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PaymentMethod ?? "",
-                DownPayment = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).DownPayment,
-                InstallmentYears = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).InstallmentYears,
+                PaymentMethod = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).PaymentMethod : "",
+                DownPayment = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).DownPayment,
+                InstallmentYears = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).InstallmentYears,
                 VisitsCount = _context.Visits.Count(v => v.LeadId == l.Id),
                 CompletedVisits = _context.Visits.Count(v => v.LeadId == l.Id && v.Status == "Completed"),
                 PendingVisits = _context.Visits.Count(v => v.LeadId == l.Id && v.Status == "Pending"),
@@ -197,8 +199,9 @@ namespace Unique_X.Controllers.CRM
             var existingLead = await _context.Leads.FirstOrDefaultAsync(l => l.PhoneNumber == dto.ClientPhone);
 
             int leadId;
+            bool isNewLead = existingLead == null;
 
-            if (existingLead == null)
+            if (isNewLead)
             {
                 // عميل جديد تماماً
                 var newLead = new Lead
@@ -208,6 +211,8 @@ namespace Unique_X.Controllers.CRM
                     Email = dto.ClientEmail,
                     BrokerId = property.BrokerId, // تعيين للبروكر صاحب العقار
                     LeadStatusId = 1, // رقم 1 مثلاً بيمثل حالة "New"
+                    CampaignSource = "Website", // المصدر: استفسار من الموقع
+                    CampaignName = property.Code, // كود الوحدة اللي استفسر عنها أول مرة
                     CreatedAt = DateTime.UtcNow
                 };
                 _context.Leads.Add(newLead);
@@ -227,37 +232,47 @@ namespace Unique_X.Controllers.CRM
             }
             else
             {
-                // العميل موجود بالفعل، هنستخدم الـ ID بتاعه
+                // العميل موجود بالفعل، هنستخدم نفس الـ Lead ID (Lead واحد يجمع كل استفساراته)
                 leadId = existingLead.Id;
+
+                // لو الـ Lead مكنش له مصدر حملة متسجل قبل كده، نسجله كـ Website
+                if (string.IsNullOrEmpty(existingLead.CampaignSource))
+                {
+                    existingLead.CampaignSource = "Website";
+                    existingLead.CampaignName = property.Code;
+                }
+                existingLead.UpdatedAt = DateTime.UtcNow;
             }
 
-            // 3. نسجل الـ Request الخاص بالوحدة دي
+            // 3. نسجل الـ Request الخاص بالوحدة دي (حتى لو نفس العميل، بنسجل كل وحدة استفسر عنها)
             var request = new LeadRequest
             {
                 LeadId = leadId,
                 PropertyType = property.PropertyType.ToString(),
                 TotalAmount = property.Price,
 
-                // 👇 دول السطور اللي ضفناهم عشان الداتابيز مترفضش الطلب
-                Purpose = "Unknown",
+                Purpose = property.ListingType.ToString(), // 👈 بقى ياخد Listing Type الحقيقي للوحدة (Primary/Resale)
                 PaymentMethod = "", // 👈 ده اللي كان عامل المشكلة
                 PreferredLocation = "",
 
-                Notes = $"Client inquired from website about Property ID {property.Id}. Message: {dto.Message}"
+                Notes = $"Client inquired from website about Property Code: {property.Code ?? property.Id.ToString()}. Message: {dto.Message}"
             };
             _context.LeadRequests.Add(request);
 
             // 4. نعمل Task (Activity) للبروكر عشان يكلمه في أسرع وقت
-            var activity = new LeadActivity
-            {
-                LeadId = leadId,
-                ActivityType = "Call",
-                Summary = "Website Inquiry - Call ASAP",
-                DueDate = DateTime.UtcNow.AddMinutes(30), // لازم يكلمه خلال نص ساعة
-                AssignedToId = property.BrokerId,
-                Notes = "Automated task from website inquiry."
-            };
-            _context.LeadActivities.Add(activity);
+            //var activity = new LeadActivity
+            //{
+            //    LeadId = leadId,
+            //    ActivityType = "Call",
+            //    ListingType = property.ListingType.ToString(), // 👈 العمود ده NOT NULL في الداتابيز
+            //    Summary = isNewLead
+            //        ? "Website Inquiry - Call ASAP"
+            //        : $"Website Inquiry - New unit interest ({property.Code}) - Call ASAP",
+            //    DueDate = DateTime.UtcNow.AddMinutes(30), // لازم يكلمه خلال نص ساعة
+            //    AssignedToId = property.BrokerId,
+            //    Notes = $"Automated task from website inquiry. Property Code: {property.Code ?? property.Id.ToString()}"
+            //};
+            //_context.LeadActivities.Add(activity);
 
             await _context.SaveChangesAsync();
 

@@ -781,6 +781,7 @@ namespace Unique_X.Services.Implementation
 
             var properties = await _context.Properties
                 .Include(p => p.Photos)
+                .Include(p => p.Broker)
                 .Where(p => hotDealIds.Contains(p.Id) && p.IsActive && p.IsApproved && !p.IsSold)
                 .ToListAsync();
 

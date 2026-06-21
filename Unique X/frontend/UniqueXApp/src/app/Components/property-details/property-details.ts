@@ -186,7 +186,7 @@ handleContact(event: Event, method: 'call' | 'whatsapp', brokerPhone: string) {
       const waMessage = encodeURIComponent(`Hello, I'm interested in property code: #${propCode}\nLink: ${currentUrl}`);
       
       // فتح الواتساب
-      window.open(`https://wa.me/${brokerPhone}?text=${waMessage}`, '_blank');
+      window.open(this.getWhatsAppLink(brokerPhone), '_blank');
     } 
     else if (method === 'call') {
       window.location.href = `tel:${brokerPhone}`;
