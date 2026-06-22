@@ -66,7 +66,7 @@ closeCampaignDropdown() {
     {code: 'X2', name: 'Hagar Mohamed issa'},
     {code: 'X101', name: 'Alaa Ashraf'},
     {code: 'X8', name: 'Abeer Ashraf'},
-    {code: 'X110', name: 'Malak Nasser'},
+    {code: 'X110', name: 'Malak nasser Yousef'},
 
   ];
 
