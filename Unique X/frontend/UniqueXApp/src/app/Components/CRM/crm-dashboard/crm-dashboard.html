@@ -444,16 +444,42 @@
 
         <!-- فلاتر للبحث وتسهيل التحديد -->
         <div class="row g-2 mb-3 p-3 bg-white rounded-4 border shadow-sm flex-shrink-0">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <input type="text" class="form-control bg-light border-0" placeholder="Search Client Name/Phone..." [ngModel]="searchClient()" (ngModelChange)="searchClient.set($event)">
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <select class="form-select bg-light border-0" [ngModel]="globalBrokerFilter()" (ngModelChange)="globalBrokerFilter.set($event)">
               <option value="">Filter by Current Broker</option>
               <option *ngFor="let b of vipBrokers()" [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
             </select>
           </div>
-          <div class="col-md-4 text-end">
+          <div class="col-md-3 position-relative">
+            <input type="text" class="form-control bg-light border-0"
+                   placeholder="Campaign code..."
+                   [ngModel]="searchCampaignCode()"
+                   (ngModelChange)="searchCampaignCode.set($event); filterCampaignCode.set(''); isCampaignDropdownOpen.set(true)"
+                   (focus)="isCampaignDropdownOpen.set(true)"
+                   (blur)="closeCampaignDropdown()">
+            <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+                [class.show]="isCampaignDropdownOpen()"
+                style="max-height: 200px; overflow-y: auto; position: absolute; z-index: 1050;">
+              <li>
+                <button type="button" class="dropdown-item py-2 text-muted small"
+                        (mousedown)="selectCampaign(''); searchCampaignCode.set('')">
+                  All Campaigns
+                </button>
+              </li>
+              @for (code of filteredCampaignCodes(); track code) {
+                <li>
+                  <button type="button" class="dropdown-item py-2 fw-bold"
+                          (mousedown)="selectCampaign(code)">{{ code }}</button>
+                </li>
+              } @empty {
+                <li><span class="dropdown-item text-muted small">No codes found</span></li>
+              }
+            </ul>
+          </div>
+          <div class="col-md-3 text-end">
             <button class="btn btn-outline-danger fw-bold w-100 rounded-3" (click)="clearClientFilters()">Clear Filters</button>
           </div>
         </div>
@@ -472,6 +498,8 @@
                   </th>
                   <th>Client</th>
                   <th>Current Broker</th>
+                  <th>Campaign</th>
+                  <th>Budget</th>
                   <th>Stage</th>
                   <th class="text-end pe-4">Created Date</th>
                 </tr>
@@ -489,6 +517,24 @@
                     <div class="text-muted mt-1"><i class="bi bi-telephone-fill me-1"></i> {{ lead.phoneNumber }}</div>
                   </td>
                   <td><span class="fw-bold text-danger"><i class="bi bi-person-badge-fill me-1"></i>{{ lead.brokerName }}</span></td>
+                  <td>
+                    <span class="badge rounded-pill px-3 py-2 fw-bold"
+                          [style.background]="lead.campaignSource === 'Website' ? '#e0f7fa' : '#e8f5e9'"
+                          [style.color]="lead.campaignSource === 'Website' ? '#00796b' : '#2e7d32'">
+                      <i class="bi me-1" [class.bi-globe]="lead.campaignSource === 'Website'" [class.bi-megaphone-fill]="lead.campaignSource !== 'Website'"></i>
+                      {{ lead.campaignName || 'N/A' }}
+                    </span>
+                    @if (lead.campaignSource) {
+                      <div class="text-muted small mt-1"><i class="bi bi-funnel me-1"></i>{{ lead.campaignSource }}</div>
+                    }
+                  </td>
+                  <td>
+                    @if (lead.totalAmount > 0) {
+                      <span class="fw-bold text-success">EGP {{ lead.totalAmount | number }}</span>
+                    } @else {
+                      <span class="text-muted">N/A</span>
+                    }
+                  </td>
                   <td><span class="badge bg-dark px-3 py-2 rounded-pill">{{ lead.statusName }}</span></td>
                   <td class="text-end pe-4 text-nowrap">
                     <div class="fw-bold text-muted">{{ lead.createdAt | date:'mediumDate' }}</div>
