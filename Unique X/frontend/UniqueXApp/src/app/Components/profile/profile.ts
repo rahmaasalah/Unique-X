@@ -41,8 +41,14 @@ export class ProfileComponent implements OnInit {
   loadProfile() {
     this.authService.getProfile().subscribe({
       next: (data) => {
-        this.userData.set(data); // تخزين البيانات بالكامل بما فيها الصورة
-        this.profileForm.patchValue(data); // ملء الحقول في الفورم
+        this.userData.set(data);
+        this.profileForm.patchValue(data);
+
+        // 🟢 تحديث hasCrmAccess في localStorage بالقيمة الحديثة من الداتابيز
+        // عشان لو الأدمن أعطى الصلاحية بعد اللوجن، الزرار يظهر فوراً من غير logout
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        user.hasCrmAccess = !!data.hasCrmAccess;
+        localStorage.setItem('user', JSON.stringify(user));
       },
       error: () => this.alertService.error('Could not load profile data')
     });

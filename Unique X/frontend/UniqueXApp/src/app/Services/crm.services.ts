@@ -192,4 +192,13 @@ rejectDuplicateLead(leadId: number): Observable<any> {
 getPropertyCodes(): Observable<string[]> {
   return this.http.get<string[]>(`${this.apiUrl}/campaigns/approved-property-codes`); 
 }
+
+getBrokerReport(brokerId: string, from?: string, to?: string): Observable<any> {
+  let url = `${this.apiUrl}/dashboard/broker-report/${brokerId}`;
+  const params: string[] = [];
+  if (from) params.push(`from=${from}`);
+  if (to) params.push(`to=${to}`);
+  if (params.length > 0) url += '?' + params.join('&');
+  return this.http.get<any>(url);
+}
 }

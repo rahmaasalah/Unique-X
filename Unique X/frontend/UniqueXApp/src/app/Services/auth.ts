@@ -100,7 +100,21 @@ forgotPassword(email: string): Observable<any> {
       return true;
     }
 
-    // لو بروكر، بنبص على hasCrmAccess اللي بيجي من الباك إند وقت اللوجن
-    return user.hasCrmAccess === true;
+    // بنقبل true أو 1 أو "true" لأن الباك إند بيرجع 1 مش true
+    return !!user.hasCrmAccess;
+  }
+
+  // بيتحقق من الصلاحية live من الباك إند ويحدث localStorage
+  refreshCrmAccess(): Observable<boolean> {
+    return this.getProfile().pipe(
+      map((profile: any) => {
+        const hasCrmAccess = !!profile.hasCrmAccess;
+        // تحديث الـ localStorage بالقيمة الجديدة من الداتابيز
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        user.hasCrmAccess = hasCrmAccess;
+        localStorage.setItem('user', JSON.stringify(user));
+        return hasCrmAccess;
+      })
+    );
   }
 }

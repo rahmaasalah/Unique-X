@@ -23,7 +23,7 @@ export class CrmDashboardComponent implements OnInit {
   private router = inject(Router);
 
   isAdmin = signal<boolean>(false);
-  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'pending_duplicates' | 'rejected_duplicates'>('brokers');
+  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'pending_duplicates' | 'rejected_duplicates' | 'report'>('brokers');
 
 
   filterPropertyType = signal<string>('');
@@ -31,6 +31,13 @@ filterListingType = signal<string>('');
 filterCampaignCode = signal<string>('');
 searchCampaignCode = signal<string>('');
 isCampaignDropdownOpen = signal<boolean>(false);
+
+// Report tab signals
+reportBrokerId = signal<string>('');
+reportDateFrom = signal<string>('');
+reportDateTo = signal<string>('');
+reportData = signal<any>(null);
+reportLoading = signal<boolean>(false);
 
 filteredCampaignCodes = computed(() => {
   const q = this.searchCampaignCode().toLowerCase();
@@ -550,6 +557,121 @@ hiddenLeads = signal<number[]>([]);
     if (window.innerWidth <= 991) {
       this.isSidebarOpen.set(false);
     }
+  }
+
+  exportReportToExcel() {
+    const data = this.reportData();
+    if (!data) return;
+
+    // بنجيب اسم البروكر من القايمة
+    const broker = this.vipBrokers().find((b: any) => b.id === this.reportBrokerId());
+    const brokerName = broker ? `${broker.firstName} ${broker.lastName}` : 'Broker';
+
+    // لازم نعمل import للـ xlsx
+    import('xlsx').then(XLSX => {
+      const wb = XLSX.utils.book_new();
+
+      // Sheet 1: Daily Activity Summary
+      const activitySummaryRows = (data.dailySummary || []).map((d: any) => ({
+        'Date': d.date,
+        'Total Calls': d.totalCalls,
+        'Total WhatsApp': d.totalWhatsApp,
+        'Total Activities': d.totalActivities,
+        'Completed': d.completedActivities
+      }));
+      const ws1 = XLSX.utils.json_to_sheet(activitySummaryRows);
+      XLSX.utils.book_append_sheet(wb, ws1, 'Daily Activity Summary');
+
+      // Sheet 2: Daily Visit Summary
+      const visitSummaryRows = (data.dailyVisitSummary || []).map((d: any) => ({
+        'Date': d.date,
+        'Total Visits': d.totalVisits,
+        'Completed': d.completedVisits,
+        'Pending': d.pendingVisits
+      }));
+      const ws2 = XLSX.utils.json_to_sheet(visitSummaryRows);
+      XLSX.utils.book_append_sheet(wb, ws2, 'Daily Visit Summary');
+
+      // Sheet 3: Activity Details
+      const activityRows = (data.activities || []).map((a: any) => ({
+        'Client Name': a.leadName,
+        'Phone': a.leadPhone,
+        'Type': a.activityType,
+        'Summary': a.summary,
+        'Date': new Date(a.dueDate).toLocaleString('en-GB'),
+        'Status': a.status,
+        'Feedback': a.feedback || ''
+      }));
+      const ws3 = XLSX.utils.json_to_sheet(activityRows);
+      XLSX.utils.book_append_sheet(wb, ws3, 'Activity Details');
+
+      // Sheet 4: Visit Details
+      const visitRows = (data.visits || []).map((v: any) => ({
+        'Client Name': v.leadName,
+        'Phone': v.leadPhone,
+        'Property Code': v.propertyCode || '',
+        'Visit Date': new Date(v.visitDate).toLocaleString('en-GB'),
+        'Location': v.location,
+        'Status': v.status,
+        'Feedback': v.feedback || ''
+      }));
+      const ws4 = XLSX.utils.json_to_sheet(visitRows);
+      XLSX.utils.book_append_sheet(wb, ws4, 'Visit Details');
+
+      // Sheet 5: New Leads
+      const newLeadRows = (data.newLeads?.leads || []).map((l: any) => ({
+        'Client Name': l.fullName,
+        'Phone': l.phoneNumber,
+        'Created At': new Date(l.createdAt).toLocaleDateString('en-GB')
+      }));
+      const ws5 = XLSX.utils.json_to_sheet(newLeadRows);
+      XLSX.utils.book_append_sheet(wb, ws5, 'New Leads');
+
+      // Sheet 6: Requests
+      const requestRows = (data.requestLeads?.leads || []).map((l: any) => ({
+        'Client Name': l.fullName,
+        'Phone': l.phoneNumber,
+        'Created At': new Date(l.createdAt).toLocaleDateString('en-GB')
+      }));
+      const ws6 = XLSX.utils.json_to_sheet(requestRows);
+      XLSX.utils.book_append_sheet(wb, ws6, 'Requests');
+
+      // Sheet 7: Follow Up For Visit
+      const followUpRows = (data.followUpVisitLeads?.leads || []).map((l: any) => ({
+        'Client Name': l.fullName,
+        'Phone': l.phoneNumber,
+        'Created At': new Date(l.createdAt).toLocaleDateString('en-GB')
+      }));
+      const ws7 = XLSX.utils.json_to_sheet(followUpRows);
+      XLSX.utils.book_append_sheet(wb, ws7, 'Follow Up For Visit');
+
+      // تسمية الملف باسم البروكر والتاريخ
+      const fileName = `Report_${brokerName}_${this.reportDateFrom() || 'all'}_to_${this.reportDateTo() || 'all'}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    });
+  }
+
+  loadReport() {
+    const brokerId = this.reportBrokerId();
+    const from = this.reportDateFrom();
+    const to = this.reportDateTo();
+
+    if (!brokerId) {
+      this.alertService.error('Please select a broker first.');
+      return;
+    }
+
+    this.reportLoading.set(true);
+    this.crmService.getBrokerReport(brokerId, from, to).subscribe({
+      next: (data) => {
+        this.reportData.set(data);
+        this.reportLoading.set(false);
+      },
+      error: () => {
+        this.reportLoading.set(false);
+        this.alertService.error('Failed to load report.');
+      }
+    });
   }
 
   approveDuplicate(leadId: number) {

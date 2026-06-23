@@ -296,5 +296,124 @@ namespace Unique_X.Controllers.CRM
             var allEvents = visits.Concat(activities).OrderBy(e => e.Date).ToList();
             return Ok(allEvents);
         }
+
+        // 4. تقرير أداء البروكر اليومي (للأدمن)
+        // GET: api/crm/dashboard/broker-report/{brokerId}?from=2026-06-01&to=2026-06-30
+        [HttpGet("broker-report/{brokerId}")]
+        public async Task<IActionResult> GetBrokerReport(string brokerId, [FromQuery] string? from, [FromQuery] string? to)
+        {
+            // تحديد نطاق التاريخ
+            var fromDate = string.IsNullOrEmpty(from)
+                ? DateTime.UtcNow.AddDays(-30)
+                : DateTime.Parse(from).ToUniversalTime();
+            var toDate = string.IsNullOrEmpty(to)
+                ? DateTime.UtcNow.AddDays(1)
+                : DateTime.Parse(to).ToUniversalTime().AddDays(1); // نضيف يوم عشان يشمل اليوم كامل
+
+            var brokerLeadIds = await _context.Leads
+                .Where(l => l.BrokerId == brokerId)
+                .Select(l => l.Id)
+                .ToListAsync();
+
+            // Activities (Calls/WhatsApp) في الفترة دي
+            var activities = await _context.LeadActivities
+                .Include(a => a.Lead)
+                .Where(a => brokerLeadIds.Contains(a.LeadId)
+                         && a.DueDate >= fromDate
+                         && a.DueDate < toDate)
+                .OrderByDescending(a => a.DueDate)
+                .Select(a => new
+                {
+                    a.Id,
+                    LeadName = a.Lead.FullName,
+                    LeadPhone = a.Lead.PhoneNumber,
+                    a.ActivityType,
+                    a.Summary,
+                    a.Status,
+                    a.DueDate,
+                    UpdatedAt = a.DueDate, // بنستخدم DueDate كـ reference للتحديث
+                    Feedback = a.Notes ?? "",
+                    a.IsDone
+                })
+                .ToListAsync();
+
+            // Visits في الفترة دي
+            var visits = await _context.Visits
+                .Include(v => v.Lead)
+                .Where(v => brokerLeadIds.Contains(v.LeadId)
+                         && v.VisitDate >= fromDate
+                         && v.VisitDate < toDate)
+                .OrderByDescending(v => v.VisitDate)
+                .Select(v => new
+                {
+                    v.Id,
+                    LeadName = v.Lead.FullName,
+                    LeadPhone = v.Lead.PhoneNumber,
+                    v.VisitDate,
+                    v.Location,
+                    v.Status,
+                    v.Feedback,
+                    v.Notes,
+                    PropertyCode = v.PropertyCode ?? ""
+                })
+                .ToListAsync();
+
+            // Leads بحالات معينة
+            var newLeads = await _context.Leads
+                .Where(l => l.BrokerId == brokerId && l.LeadStatusId == 1)
+                .Select(l => new { l.Id, l.FullName, l.PhoneNumber, l.CreatedAt })
+                .ToListAsync();
+
+            var requestLeads = await _context.Leads
+                .Where(l => l.BrokerId == brokerId && l.LeadStatusId == 4)
+                .Select(l => new { l.Id, l.FullName, l.PhoneNumber, l.CreatedAt })
+                .ToListAsync();
+
+            var followUpVisitLeads = await _context.Leads
+                .Where(l => l.BrokerId == brokerId && l.LeadStatusId == 6)
+                .Select(l => new { l.Id, l.FullName, l.PhoneNumber, l.CreatedAt })
+                .ToListAsync();
+
+            // ملخص يومي للـ Activities
+            var dailySummary = activities
+                .GroupBy(a => a.DueDate.Date)
+                .Select(g => new
+                {
+                    Date = g.Key.ToString("yyyy-MM-dd"),
+                    TotalCalls = g.Count(a => a.ActivityType == "Call"),
+                    TotalWhatsApp = g.Count(a => a.ActivityType == "WhatsApp"),
+                    TotalActivities = g.Count(),
+                    CompletedActivities = g.Count(a => a.Status == "Completed")
+                })
+                .OrderByDescending(d => d.Date)
+                .ToList();
+
+            // ملخص يومي للـ Visits
+            var dailyVisitSummary = visits
+                .GroupBy(v => v.VisitDate.Date)
+                .Select(g => new
+                {
+                    Date = g.Key.ToString("yyyy-MM-dd"),
+                    TotalVisits = g.Count(),
+                    CompletedVisits = g.Count(v => v.Status == "Completed"),
+                    PendingVisits = g.Count(v => v.Status == "Pending")
+                })
+                .OrderByDescending(d => d.Date)
+                .ToList();
+
+            return Ok(new
+            {
+                BrokerId = brokerId,
+                FromDate = fromDate.ToString("yyyy-MM-dd"),
+                ToDate = toDate.AddDays(-1).ToString("yyyy-MM-dd"),
+                DailySummary = dailySummary,
+                DailyVisitSummary = dailyVisitSummary,
+                Activities = activities,
+                Visits = visits,
+                NewLeads = new { Count = newLeads.Count, Leads = newLeads },
+                RequestLeads = new { Count = requestLeads.Count, Leads = requestLeads },
+                FollowUpVisitLeads = new { Count = followUpVisitLeads.Count, Leads = followUpVisitLeads }
+            });
+        }
     }
 }
