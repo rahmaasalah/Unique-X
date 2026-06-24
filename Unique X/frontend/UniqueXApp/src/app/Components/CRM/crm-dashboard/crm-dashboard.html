@@ -695,6 +695,53 @@
               </table>
             </div>
           </div>
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white mt-3">
+            <h6 class="fw-bold mb-3"><i class="bi bi-card-list text-warning me-2"></i>Request Details</h6>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+              <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.82rem;">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th>Client</th>
+                    <th>Property Type</th>
+                    <th>Listing Type</th>
+                    <th>Zone</th>
+                    <th>Budget</th>
+                    <th>Payment</th>
+                    <th>Down Payment</th>
+                    <th>Years</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (r of reportData().requestDetails; track r.id) {
+                    <tr>
+                      <td>
+                        <div class="fw-bold">{{ r.leadName }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">{{ r.leadPhone }}</div>
+                      </td>
+                      <td><span class="badge bg-primary-subtle text-primary border">{{ r.propertyType || '—' }}</span></td>
+                      <td><span class="badge bg-light text-dark border">{{ r.purpose || '—' }}</span></td>
+                      <td class="text-muted">{{ r.zoneName }}</td>
+                      <td>
+                        @if (r.totalAmount > 0) {
+                          <span class="fw-bold text-success">EGP {{ r.totalAmount | number }}</span>
+                        } @else {
+                          <span class="text-muted">N/A</span>
+                        }
+                      </td>
+                      <td><span class="badge rounded-pill" [ngClass]="r.paymentMethod === 'Cash' ? 'bg-success' : 'bg-info text-dark'">{{ r.paymentMethod || '—' }}</span></td>
+                      <td class="text-muted">{{ r.downPayment > 0 ? (r.downPayment | number) : '—' }}</td>
+                      <td class="text-center">{{ r.installmentYears > 0 ? r.installmentYears + ' yrs' : '—' }}</td>
+                      <td style="max-width: 200px;"><small class="text-muted">{{ r.notes || '—' }}</small></td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="9" class="text-center text-muted py-3">No requests found</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         } @else {
           <div class="text-center py-5 text-muted">
             <i class="bi bi-bar-chart fs-1 opacity-25 d-block mb-3"></i>

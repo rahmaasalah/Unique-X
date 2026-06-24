@@ -645,6 +645,22 @@ hiddenLeads = signal<number[]>([]);
       const ws7 = XLSX.utils.json_to_sheet(followUpRows);
       XLSX.utils.book_append_sheet(wb, ws7, 'Follow Up For Visit');
 
+      // Sheet 8: Request Details
+      const requestDetailRows = (data.requestDetails || []).map((r: any) => ({
+        'Client Name': r.leadName,
+        'Phone': r.leadPhone,
+        'Property Type': r.propertyType || '',
+        'Listing Type': r.purpose || '',
+        'Zone': r.zoneName || '',
+        'Budget (EGP)': r.totalAmount || 0,
+        'Payment Method': r.paymentMethod || '',
+        'Down Payment': r.downPayment || 0,
+        'Installment Years': r.installmentYears || 0,
+        'Notes': r.notes || ''
+      }));
+      const ws8 = XLSX.utils.json_to_sheet(requestDetailRows);
+      XLSX.utils.book_append_sheet(wb, ws8, 'Request Details');
+
       // تسمية الملف باسم البروكر والتاريخ
       const fileName = `Report_${brokerName}_${this.reportDateFrom() || 'all'}_to_${this.reportDateTo() || 'all'}.xlsx`;
       XLSX.writeFile(wb, fileName);
