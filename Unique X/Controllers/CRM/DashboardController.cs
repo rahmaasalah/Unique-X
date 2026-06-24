@@ -360,7 +360,9 @@ namespace Unique_X.Controllers.CRM
 
             // Leads بحالات معينة
             var newLeads = await _context.Leads
-                .Where(l => l.BrokerId == brokerId && l.LeadStatusId == 1)
+                .Where(l => l.BrokerId == brokerId && l.LeadStatusId == 1
+                         && l.CreatedAt >= fromDate && l.CreatedAt < toDate)
+                .OrderByDescending(l => l.CreatedAt)
                 .Select(l => new { l.Id, l.FullName, l.PhoneNumber, l.CreatedAt })
                 .ToListAsync();
 
@@ -401,6 +403,33 @@ namespace Unique_X.Controllers.CRM
                 .OrderByDescending(d => d.Date)
                 .ToList();
 
+            // Request Details — جلب كل الـ LeadRequests بتاعت كل عملاء البروكر في الفترة دي
+            var requestLeadIds = await _context.Leads
+                .Where(l => l.BrokerId == brokerId && l.LeadStatusId == 4)
+                .Select(l => l.Id)
+                .ToListAsync();
+
+            var requestDetails = await _context.LeadRequests
+                .Include(r => r.Lead)
+                .Where(r => requestLeadIds.Contains(r.LeadId))
+                .OrderByDescending(r => r.Id)
+                .Select(r => new
+                {
+                    r.Id,
+                    LeadName = r.Lead.FullName,
+                    LeadPhone = r.Lead.PhoneNumber,
+                    r.PropertyType,
+                    r.Purpose,
+                    r.TotalAmount,
+                    r.PaymentMethod,
+                    r.DownPayment,
+                    r.InstallmentYears,
+                    r.PreferredLocation,
+                    r.Notes,
+                    ZoneName = r.ZoneId == 1 ? "Cairo" : r.ZoneId == 2 ? "Alexandria" : r.ZoneId == 3 ? "North Coast" : "N/A"
+                })
+                .ToListAsync();
+
             return Ok(new
             {
                 BrokerId = brokerId,
@@ -412,7 +441,8 @@ namespace Unique_X.Controllers.CRM
                 Visits = visits,
                 NewLeads = new { Count = newLeads.Count, Leads = newLeads },
                 RequestLeads = new { Count = requestLeads.Count, Leads = requestLeads },
-                FollowUpVisitLeads = new { Count = followUpVisitLeads.Count, Leads = followUpVisitLeads }
+                FollowUpVisitLeads = new { Count = followUpVisitLeads.Count, Leads = followUpVisitLeads },
+                RequestDetails = requestDetails
             });
         }
     }
