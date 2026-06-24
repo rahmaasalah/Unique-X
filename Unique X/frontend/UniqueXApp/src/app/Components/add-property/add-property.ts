@@ -76,10 +76,10 @@ projectsMapping: any = {
   2: { // Alexandria
     'any': [
       'Palm hills Alexandria', 'Sawari', 'The One', 'Muruj', 'Alex west', 'Skyline', 'Crystal towers', 
-      'Grand view', 'Twin towers', 'Valore smouha', 'Valore antoniadis', 'East towers', 
+      'Grand view', 'Twin towers', 'Valore smouha', 'Valore Antoniadis', 'East towers', 
       'Saraya gardens', 'Veranda', 'Jackranda', 'Oria city', 'Elite City',
-      'Alsafwa City', 'Vida', 'Abha hayat', 'Jewar', 'Ouruba royals', 
-      'Soly vie', 'San Stefano royals', 'Malaaz', 'Cleopatra plaza','Smoha Gate', 'Antoniades City'
+      'Alsafwa City', 'Vida', 'Abha hayat', 'Jewar', 'Ouruba royals', 
+      'Soly vie', 'San Stefano royals', 'Malaaz', 'Cleopatra Plaza','Smouha Gate', 'Antoniades City'
     ]
   },
   3: { // North Coast
@@ -195,11 +195,11 @@ dummyDevelopers =[
 
 primaryProjectCodes: any = {
     "Palm hills Alexandria": "PHA", "The One": "TO", "Skyline": "SL", "East towers": "ET",
-    "Alex west": "AW", "Valore Smouha": "VS", "Valore Antoniadis": "VA", "Muruj": "MJ",
+    "Alex west": "AW", "Valore Smouha": "VS", " Valore Antoniadis": "VA", "Muruj": "MJ",
     "Sawari": "SW", "Jackranda": "JK", "Vida": "VD", "Alsafwa": "AS", "Abha hayat": "AH",
     "Grand view": "GV", "Crystal towers": "CT", "Twin towers": "TT", "Veranda": "VR",
-    "Jewar": "JR", "Soly vie": "SV", "San Stefano royals": "SSR", "Cleopatra plaza": "CP",
-    "Malaaz": "MZ", "Smoha Gate": "SMG", "Amwaj": "AM", "Antoniades City": "AC", 'Oria City': 'OC', 'Elite City': 'EC', 'Ouruba Royals': 'OR'
+    "Jewar": "JR", "Soly vie": "SV", "San Stefano royals": "SSR", "Cleopatra Plaza": "CP",
+    "Malaaz": "MZ", "Smouha Gate": "SMG", "Amwaj": "AM", "Antoniades City": "AC", 'Oria City': 'OC', 'Elite City': 'EC', 'Ouruba Royals': 'OR'
     , 'Saraya Gardens': 'SG', 'Alsafwa City': 'AS', 'The Island': 'TI', 'Telal': 'TE', 
     "Ramla": "RA", "Azha": "AZ", "Naia Bay": "NA", "El Masyaf": "EL", "Fouka Bay": "FO",
     "Remal": "RE", "Hacienda West": "HA", "Seashore": "SE", "Ogami": "OG", "Seashell Playa": "SEA",
@@ -237,8 +237,8 @@ primaryProjectCodes: any = {
 
   resaleProjectIds: any = {
     "Sawari": "1", "Muruj": "2", "Palm hills Alexandria": "3", "The one": "4", "Alex west": "5",
-    "Skyline": "6", "Grand view": "7", "Antoniades City": "8", "Valory Antoniades": "9",
-    "Valory Smoha": "10", "Jewar": "11", "Crystal Towers": "12", "Twin Towers": "13",
+    "Skyline": "6", "Grand view": "7", "Antoniades City": "8", "Valore Antoniadis": "9",
+    "Valore Smouha": "10", "Jewar": "11", "Crystal Towers": "12", "Twin Towers": "13",
     "East Towers": "14", "Saraya Gardens": "15", "Veranda": "16", "Jackranda": "17",
     "Oria City": "18", "Elite City": "19", "Vida": "20", "Abha Hayat": "21",
     "Ouruba Royals": "22", "Soly Vie": "23", "San Stefano Royals": "24", "Malaaz": "25",
