@@ -367,7 +367,11 @@ namespace Unique_X.Controllers.CRM
                 .ToListAsync();
 
             var requestLeads = await _context.Leads
-                .Where(l => l.BrokerId == brokerId && l.LeadStatusId == 4)
+                .Where(l => l.BrokerId == brokerId
+                         && l.LeadStatusId == 4
+                         && (l.UpdatedAt ?? l.CreatedAt) >= fromDate
+                         && (l.UpdatedAt ?? l.CreatedAt) < toDate)
+                .OrderByDescending(l => l.UpdatedAt ?? l.CreatedAt)
                 .Select(l => new { l.Id, l.FullName, l.PhoneNumber, l.CreatedAt })
                 .ToListAsync();
 
@@ -403,9 +407,11 @@ namespace Unique_X.Controllers.CRM
                 .OrderByDescending(d => d.Date)
                 .ToList();
 
-            // Request Details — جلب كل الـ LeadRequests بتاعت كل عملاء البروكر في الفترة دي
             var requestLeadIds = await _context.Leads
-                .Where(l => l.BrokerId == brokerId && l.LeadStatusId == 4)
+                .Where(l => l.BrokerId == brokerId
+                         && l.LeadStatusId == 4
+                         && (l.UpdatedAt ?? l.CreatedAt) >= fromDate
+                         && (l.UpdatedAt ?? l.CreatedAt) < toDate)
                 .Select(l => l.Id)
                 .ToListAsync();
 
