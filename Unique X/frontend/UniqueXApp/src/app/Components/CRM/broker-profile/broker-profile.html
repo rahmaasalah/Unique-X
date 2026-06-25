@@ -32,11 +32,19 @@
       </button>
 
       <button class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm border"
-                [ngClass]="showHiddenLeads() ? 'btn-dark' : 'bg-white text-dark'"
-                (click)="showHiddenLeads.set(!showHiddenLeads())">
-          <i class="bi" [ngClass]="showHiddenLeads() ? 'bi-eye' : 'bi-eye-slash text-muted'"></i> 
-          {{ showHiddenLeads() ? 'Hide All' : 'Show Hidden' }}
-        </button>
+        [ngClass]="showFavouritesOnly() ? 'btn-warning text-dark' : 'bg-white text-dark'"
+        (click)="showFavouritesOnly.set(!showFavouritesOnly())">
+  <i class="bi bi-star-fill me-1" [ngClass]="showFavouritesOnly() ? 'text-dark' : 'text-warning'"></i>
+  {{ showFavouritesOnly() ? 'Show All' : 'Show Favourites' }}
+  <span class="badge bg-dark ms-1" *ngIf="favouriteLeads().length > 0">{{ favouriteLeads().length }}</span>
+</button>
+
+<button class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm border"
+        [ngClass]="showHiddenLeads() ? 'btn-dark' : 'bg-white text-dark'"
+        (click)="showHiddenLeads.set(!showHiddenLeads())">
+  <i class="bi" [ngClass]="showHiddenLeads() ? 'bi-eye' : 'bi-eye-slash text-muted'"></i> 
+  {{ showHiddenLeads() ? 'Hide All' : 'Show Hidden' }}
+</button>
     </div>
   </div>
   <!-- التابات -->
@@ -307,9 +315,15 @@
                
 
                 <!-- زرار دخول بروفايل العميل (موجود عندك) -->
-                <button class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm fw-bold" [routerLink]="['/crm/leads', lead.id]">
-                  Client File &rarr;
-                </button>
+                <button class="btn btn-sm rounded-pill px-2 shadow-sm me-1 border-0"
+        [ngClass]="favouriteLeads().includes(lead.id) ? 'btn-warning' : 'btn-outline-secondary'"
+        (click)="toggleFavouriteLead(lead.id)"
+        title="{{ favouriteLeads().includes(lead.id) ? 'Remove from Favourites' : 'Add to Favourites' }}">
+  <i class="bi" [ngClass]="favouriteLeads().includes(lead.id) ? 'bi-star-fill' : 'bi-star'"></i>
+</button>
+<button class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm fw-bold" [routerLink]="['/crm/leads', lead.id]">
+  Client File &rarr;
+</button>
               </td>
             </tr>
             <tr *ngIf="filteredLeads().length === 0">
