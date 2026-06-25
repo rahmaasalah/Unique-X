@@ -329,5 +329,33 @@ startCompare() {
   });
 }
 
+downloadPhotos() {
+    const prop = this.property();
+    if (!prop || !prop.photos || prop.photos.length === 0) {
+      this.alertService.error('No photos available to download.');
+      return;
+    }
+
+    this.alertService.success(`Downloading ${prop.photos.length} photos...`);
+
+    prop.photos.forEach((photo: any, index: number) => {
+      setTimeout(() => {
+        fetch(photo.url)
+          .then(res => res.blob())
+          .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${prop.code || prop.id}_photo_${index + 1}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          })
+          .catch(() => console.error(`Failed to download photo ${index + 1}`));
+      }, index * 500); // تأخير بين كل صورة عشان المتصفح ميبلوكش
+    });
+  }
+
   
 }

@@ -927,7 +927,8 @@ onBannerReorder(event: CdkDragDrop<any[]>) {
     });
   }
 
-  // ================== Our Team ==================
+
+// ================== Our Team ==================
 jobApplications = signal<any[]>([]);
 selectedApplication = signal<any>(null);
 calendarDays = signal<any[]>([]);
@@ -937,25 +938,65 @@ selectedInterviewHour = signal<string>('');
 
 // ---- فلاتر Job Applications ----
 jobSearchName = signal<string>('');
-jobStatusFilter = signal<string>('all'); // all | Pending | Confirmed | Scheduled
-jobInterviewFilter = signal<string>('all'); // all | scheduled | notScheduled
+jobActiveTab = signal<string>('all');
+jobStageFilter = signal<string>('all');
+jobAttendanceFilter = signal<string>('all');
+
+// Reject modal
+rejectReason = signal<string>('');
+appToReject = signal<any>(null);
+
+// Final decision modal
+finalDecisionApp = signal<any>(null);
+finalDecisionType = signal<string>('');
+finalDecisionReason = signal<string>('');
+
+rejectedApplicationsCount = computed(() =>
+  this.jobApplications().filter(a => a.status === 'Rejected').length
+);
+
+scheduledApplicationsCount = computed(() =>
+  this.jobApplications().filter(a => a.status === 'Scheduled').length
+);
+
+activeApplicationsCount = computed(() =>
+  this.jobApplications().filter(a => a.status !== 'Rejected').length
+);
 
 filteredJobApplications = computed(() => {
   const search = this.jobSearchName().trim().toLowerCase();
-  const status = this.jobStatusFilter();
-  const interview = this.jobInterviewFilter();
+  const tab = this.jobActiveTab();
+  const stage = this.jobStageFilter();
+  const attendance = this.jobAttendanceFilter();
 
   return this.jobApplications().filter(app => {
     const matchesName = !search || (app.fullName || '').toLowerCase().includes(search);
-    const matchesStatus = status === 'all' || app.status === status;
-    const matchesInterview =
-      interview === 'all' ||
-      (interview === 'scheduled' && !!app.interviewDate) ||
-      (interview === 'notScheduled' && !app.interviewDate);
 
-    return matchesName && matchesStatus && matchesInterview;
+    if (tab === 'rejected') return matchesName && app.status === 'Rejected';
+
+    if (tab === 'scheduled') {
+      if (app.status !== 'Scheduled') return false;
+      if (!matchesName) return false;
+      if (attendance === 'none') return !app.attendanceStatus;
+      if (attendance === 'Attended') return app.attendanceStatus === 'Attended';
+      if (attendance === 'NotAttended') return app.attendanceStatus === 'NotAttended';
+      return true;
+    }
+
+    // tab === 'all'
+    if (app.status === 'Rejected') return false;
+    if (!matchesName) return false;
+    if (stage !== 'all') return app.status === stage;
+    return true;
   });
 });
+
+switchJobTab(tab: string) {
+  this.jobActiveTab.set(tab);
+  this.jobStageFilter.set('all');
+  this.jobAttendanceFilter.set('all');
+  this.jobSearchName.set('');
+}
 
 loadJobApplications() {
   this.adminService.getJobApplications().subscribe({
@@ -974,11 +1015,82 @@ confirmApplication(id: number) {
     });
   });
 }
+formatInterviewDate(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'Z'); // بنضيف Z عشان نعامله UTC ونعرضه صح
+  // لا — خليها أبسط من كده
+  const parts = dateStr.split('T');
+  const [year, month, day] = parts[0].split('-');
+  const [hour, minute] = parts[1].split(':');
+  const h = parseInt(hour);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${day}/${month}/${year} ${h12}:${minute} ${ampm}`;
+}
+openRejectModal(app: any) {
+  this.appToReject.set(app);
+  this.rejectReason.set('');
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('rejectAppModal'));
+  modal.show();
+}
+
+submitReject() {
+  const app = this.appToReject();
+  const reason = this.rejectReason().trim();
+  if (!reason) { this.alertService.error('Please enter a rejection reason.'); return; }
+
+  this.adminService.rejectJobApplication(app.id, reason).subscribe({
+    next: () => {
+      this.alertService.success('Application rejected.');
+      this.loadJobApplications();
+      const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('rejectAppModal'));
+      modal?.hide();
+      this.appToReject.set(null);
+    },
+    error: () => this.alertService.error('Failed to reject application.')
+  });
+}
+
+markAttendance(id: number, attended: boolean) {
+  this.adminService.markAttended(id, attended).subscribe({
+    next: () => {
+      this.alertService.success(attended ? 'Marked as Attended!' : 'Marked as Not Attended.');
+      this.loadJobApplications();
+    },
+    error: () => this.alertService.error('Failed to update attendance.')
+  });
+}
+
+openFinalDecisionModal(app: any, decision: string) {
+  this.finalDecisionApp.set(app);
+  this.finalDecisionType.set(decision);
+  this.finalDecisionReason.set('');
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('finalDecisionModal'));
+  modal.show();
+}
+
+submitFinalDecision() {
+  const app = this.finalDecisionApp();
+  const decision = this.finalDecisionType();
+  const reason = this.finalDecisionReason().trim();
+  if (decision === 'Rejected' && !reason) {
+    this.alertService.error('Please enter a rejection reason.');
+    return;
+  }
+  this.adminService.finalDecision(app.id, decision, reason || undefined).subscribe({
+    next: () => {
+      this.alertService.success(decision === 'Accepted' ? 'Applicant Accepted!' : 'Applicant Rejected.');
+      this.loadJobApplications();
+      const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('finalDecisionModal'));
+      modal?.hide();
+    },
+    error: () => this.alertService.error('Failed to submit decision.')
+  });
+}
 
 openScheduleCalendar(app: any) {
   this.selectedApplication.set(app);
   this.generateCalendar(this.calendarMonth());
-  // افتح المودال
   const modal = new (window as any).bootstrap.Modal(document.getElementById('interviewCalendarModal'));
   modal.show();
 }
@@ -993,17 +1105,18 @@ generateCalendar(month: Date) {
   today.setHours(0,0,0,0);
 
   const days: any[] = [];
-  // خلايا فاضية للأيام قبل أول يوم في الشهر
   for (let i = 0; i < firstDay; i++) days.push(null);
-
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(year, m, d);
-    days.push({
-      date,
-      dateStr: date.toISOString().split('T')[0],
-      isPast: date < today,
-      isToday: date.getTime() === today.getTime()
-    });
+    const yyyy = date.getFullYear();
+const mm = String(date.getMonth() + 1).padStart(2, '0');
+const dd = String(date.getDate()).padStart(2, '0');
+days.push({
+  date,
+  dateStr: `${yyyy}-${mm}-${dd}`,
+  isPast: date < today,
+  isToday: date.getTime() === today.getTime()
+});
   }
   this.calendarDays.set(days);
 }
@@ -1026,23 +1139,14 @@ scheduleInterview() {
     this.alertService.error('Please select a date and time.');
     return;
   }
-  
-  // ✅ التعديل هنا — بنبعت ISO format صح
-const localDate = new Date(
-  `${this.selectedInterviewDate()}T${this.selectedInterviewHour()}:00`
-);
-// بنطرح الـ timezone offset عشان نبعت التوقيت الصح
-const dateTime = new Date(
-  localDate.getTime() - localDate.getTimezoneOffset() * 60000
-).toISOString();
 
+
+  const dateTime = `${this.selectedInterviewDate()}T${this.selectedInterviewHour()}:00`;
   this.adminService.scheduleInterview(app.id, dateTime).subscribe({
     next: () => {
       this.alertService.success('Interview scheduled!');
       this.loadJobApplications();
-      const modal = (window as any).bootstrap.Modal.getInstance(
-        document.getElementById('interviewCalendarModal')
-      );
+      const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('interviewCalendarModal'));
       modal?.hide();
       this.selectedApplication.set(null);
       this.selectedInterviewDate.set('');

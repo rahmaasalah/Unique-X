@@ -166,12 +166,36 @@ confirmJobApplication(id: number) {
 scheduleInterview(id: number, dateTime: string) {
   return this.http.put(
     `${environment.apiUrl}/jobapplications/${id}/schedule`,
-    `"${dateTime}"`,  // ✅ لازم يكون JSON string بالشكل ده
+    JSON.stringify(dateTime),
     { headers: { 'Content-Type': 'application/json' } }
   );
 }
 
 getCvUrl(id: number): string {
   return `${environment.apiUrl}/jobapplications/${id}/cv`;
+}
+
+rejectJobApplication(id: number, reason: string) {
+  return this.http.put(
+    `${environment.apiUrl}/jobapplications/${id}/reject`,
+    `"${reason}"`,
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+}
+
+markAttended(id: number, attended: boolean) {
+  return this.http.put(
+    `${environment.apiUrl}/jobapplications/${id}/mark-attended`,
+    attended,
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+}
+
+finalDecision(id: number, decision: string, reason?: string) {
+  return this.http.put(
+    `${environment.apiUrl}/jobapplications/${id}/final-decision`,
+    { decision, reason: reason || null },
+    { headers: { 'Content-Type': 'application/json' } }
+  );
 }
 }
