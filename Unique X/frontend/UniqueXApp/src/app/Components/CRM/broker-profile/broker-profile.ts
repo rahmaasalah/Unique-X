@@ -71,6 +71,8 @@ closeCampaignDropdown() {
 
   hiddenLeads = signal<number[]>([]);
   showHiddenLeads = signal<boolean>(false);
+  favouriteLeads = signal<number[]>([]);
+showFavouritesOnly = signal<boolean>(false);
 
   // 👇 نقلنا تعريف المناطق هنا عشان الـ HTML يقدر يشوفه
   zones =[
@@ -117,6 +119,10 @@ filteredLeads = computed(() => {
     if (this.isAdmin() && !this.showHiddenLeads()) {
       leads = leads.filter((l: any) => !this.hiddenLeads().includes(l.id));
     }
+
+    if (this.showFavouritesOnly()) {
+  leads = leads.filter((l: any) => this.favouriteLeads().includes(l.id));
+}
 
     const q = this.searchQuery().toLowerCase();
     const broker = this.filterBroker();
@@ -230,6 +236,11 @@ if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
     if (savedHiddenLeads) {
       this.hiddenLeads.set(JSON.parse(savedHiddenLeads));
     }
+
+    const savedFavourites = localStorage.getItem('crm_favourite_leads');
+if (savedFavourites) {
+  this.favouriteLeads.set(JSON.parse(savedFavourites));
+}
 
       if (isUserAdmin) {
         this.adminService.getAllUsers().subscribe(users => {
@@ -405,4 +416,15 @@ cleanAdminPrefix(text: string | null): string | null {
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
+
+  toggleFavouriteLead(id: number) {
+  let current = [...this.favouriteLeads()];
+  if (current.includes(id)) {
+    current = current.filter(x => x !== id);
+  } else {
+    current.push(id);
+  }
+  this.favouriteLeads.set(current);
+  localStorage.setItem('crm_favourite_leads', JSON.stringify(current));
+}
 }
