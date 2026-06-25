@@ -1059,124 +1059,392 @@
   <div class="animate__animated animate__fadeIn">
     <h4 class="fw-bold mb-4"><i class="bi bi-people-fill me-2 text-danger"></i>Job Applications</h4>
 
-    <!-- Filters -->
-    <div class="row g-3 mb-4">
-      <div class="col-md-4">
-        <label class="form-label fw-semibold small">Search by Name</label>
-        <input type="text" class="form-control rounded-3"
-               placeholder="Type a name..."
-               [ngModel]="jobSearchName()"
-               (ngModelChange)="jobSearchName.set($event)">
-      </div>
+    <!-- Sub-tabs -->
+    <div class="d-flex gap-2 mb-4 flex-wrap">
+      <button class="btn rounded-pill fw-semibold px-4"
+              [class.btn-dark]="jobActiveTab() === 'all'"
+              [class.btn-outline-secondary]="jobActiveTab() !== 'all'"
+              (click)="switchJobTab('all')">
+        <i class="bi bi-list-ul me-1"></i> All Applications
+        <span class="badge ms-1"
+              [class.bg-light]="jobActiveTab() === 'all'"
+              [class.text-dark]="jobActiveTab() === 'all'"
+              [class.bg-secondary]="jobActiveTab() !== 'all'">
+          {{ activeApplicationsCount() }}
+        </span>
+      </button>
 
-      <div class="col-md-4">
-        <label class="form-label fw-semibold small">Status</label>
-        <select class="form-select rounded-3"
-                [ngModel]="jobStatusFilter()"
-                (ngModelChange)="jobStatusFilter.set($event)">
-          <option value="all">All</option>
-          <option value="Pending">Pending</option>
-          <option value="Confirmed">Confirmed</option>
-          <option value="Scheduled">Scheduled</option>
-        </select>
-      </div>
+      <button class="btn rounded-pill fw-semibold px-4"
+              [class.btn-primary]="jobActiveTab() === 'scheduled'"
+              [class.btn-outline-primary]="jobActiveTab() !== 'scheduled'"
+              (click)="switchJobTab('scheduled')">
+        <i class="bi bi-calendar-check me-1"></i> Scheduled Interviews
+        <span class="badge ms-1 bg-white text-primary">{{ scheduledApplicationsCount() }}</span>
+      </button>
 
-      <div class="col-md-4">
-        <label class="form-label fw-semibold small">Interview</label>
-        <select class="form-select rounded-3"
-                [ngModel]="jobInterviewFilter()"
-                (ngModelChange)="jobInterviewFilter.set($event)">
-          <option value="all">All</option>
-          <option value="scheduled">Has Interview Date</option>
-          <option value="notScheduled">No Interview Date</option>
-        </select>
+      <button class="btn rounded-pill fw-semibold px-4"
+              [class.btn-danger]="jobActiveTab() === 'rejected'"
+              [class.btn-outline-danger]="jobActiveTab() !== 'rejected'"
+              (click)="switchJobTab('rejected')">
+        <i class="bi bi-x-circle me-1"></i> Rejected
+        <span class="badge ms-1 bg-white text-danger">{{ rejectedApplicationsCount() }}</span>
+      </button>
+    </div>
+
+    <!-- Stage Filters + Search -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+      <div class="row g-3 align-items-end">
+
+        <!-- Search -->
+        <div class="col-md-4">
+          <label class="form-label fw-semibold small text-muted text-uppercase">
+            <i class="bi bi-search me-1"></i>Search by Name
+          </label>
+          <input type="text" class="form-control rounded-3 border-0 bg-light"
+                 placeholder="Type a name..."
+                 [ngModel]="jobSearchName()"
+                 (ngModelChange)="jobSearchName.set($event)">
+        </div>
+
+        <!-- فلتر All tab -->
+        @if (jobActiveTab() === 'all') {
+          <div class="col-md-8">
+            <label class="form-label fw-semibold small text-muted text-uppercase">
+              <i class="bi bi-funnel me-1"></i>Stage
+            </label>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-sm rounded-pill px-3 fw-semibold"
+                      [class.btn-dark]="jobStageFilter() === 'all'"
+                      [class.btn-outline-secondary]="jobStageFilter() !== 'all'"
+                      (click)="jobStageFilter.set('all')">All</button>
+              <button class="btn btn-sm rounded-pill px-3 fw-semibold"
+                      [class.btn-warning]="jobStageFilter() === 'Pending'"
+                      [class.btn-outline-secondary]="jobStageFilter() !== 'Pending'"
+                      (click)="jobStageFilter.set('Pending')">Pending</button>
+              <button class="btn btn-sm rounded-pill px-3 fw-semibold"
+                      [class.btn-success]="jobStageFilter() === 'Confirmed'"
+                      [class.btn-outline-secondary]="jobStageFilter() !== 'Confirmed'"
+                      (click)="jobStageFilter.set('Confirmed')">Confirmed</button>
+              <button class="btn btn-sm rounded-pill px-3 fw-semibold"
+                      [class.btn-primary]="jobStageFilter() === 'Scheduled'"
+                      [class.btn-outline-secondary]="jobStageFilter() !== 'Scheduled'"
+                      (click)="jobStageFilter.set('Scheduled')">Scheduled</button>
+            </div>
+          </div>
+        }
+
+        <!-- فلتر Scheduled tab -->
+        @if (jobActiveTab() === 'scheduled') {
+          <div class="col-md-8">
+            <label class="form-label fw-semibold small text-muted text-uppercase">
+              <i class="bi bi-person-check me-1"></i>Attendance
+            </label>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-sm rounded-pill px-3 fw-semibold"
+                      [class.btn-dark]="jobAttendanceFilter() === 'all'"
+                      [class.btn-outline-secondary]="jobAttendanceFilter() !== 'all'"
+                      (click)="jobAttendanceFilter.set('all')">All</button>
+              <button class="btn btn-sm rounded-pill px-3 fw-semibold"
+                      [class.btn-warning]="jobAttendanceFilter() === 'none'"
+                      [class.btn-outline-secondary]="jobAttendanceFilter() !== 'none'"
+                      (click)="jobAttendanceFilter.set('none')">Pending Attendance</button>
+              <button class="btn btn-sm rounded-pill px-3 fw-semibold"
+                      [class.btn-success]="jobAttendanceFilter() === 'Attended'"
+                      [class.btn-outline-secondary]="jobAttendanceFilter() !== 'Attended'"
+                      (click)="jobAttendanceFilter.set('Attended')">Attended</button>
+              <button class="btn btn-sm rounded-pill px-3 fw-semibold"
+                      [class.btn-secondary]="jobAttendanceFilter() === 'NotAttended'"
+                      [class.btn-outline-secondary]="jobAttendanceFilter() !== 'NotAttended'"
+                      (click)="jobAttendanceFilter.set('NotAttended')">No Show</button>
+            </div>
+          </div>
+        }
+
       </div>
     </div>
 
-    @if (jobApplications().length === 0) {
-      <div class="text-center text-muted py-5">No applications yet.</div>
-    } @else if (filteredJobApplications().length === 0) {
-      <div class="text-center text-muted py-5">No applications match the selected filters.</div>
+    @if (filteredJobApplications().length === 0) {
+      <div class="text-center text-muted py-5">No applications found.</div>
     } @else {
-      <div class="table-responsive">
-        <table class="table table-hover align-middle bg-white shadow-sm rounded-4 overflow-hidden mb-0">
-          <thead class="table-dark">
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Job Title</th>
-              <th>English</th>
-              <th>Zone</th>
-              <th>Status</th>
-              <th>Interview</th>
-              <th>CV</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (app of filteredJobApplications(); track app.id; let i = $index) {
+
+      <!-- ===================== TAB: ALL APPLICATIONS ===================== -->
+      @if (jobActiveTab() === 'all') {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle bg-white shadow-sm rounded-4 overflow-hidden mb-0">
+            <thead class="table-dark">
               <tr>
-                <td>{{ i + 1 }}</td>
-                <td class="fw-bold">{{ app.fullName }}</td>
-                <td>{{ app.phoneNumber }}</td>
-                <td><span class="badge bg-secondary">{{ app.jobTitle }}</span></td>
-                <td>{{ app.englishLevel }}</td>
-                <td>{{ app.zoneWorkedOn }}</td>
-                <td>
-                  @if (app.status === 'Pending') {
-                    <span class="badge bg-warning text-dark">Pending</span>
-                  } @else if (app.status === 'Confirmed') {
-                    <span class="badge bg-success">Confirmed</span>
-                  } @else if (app.status === 'Scheduled') {
-                    <span class="badge bg-primary">Scheduled</span>
-                  }
-                </td>
-                <td>
-                  @if (app.interviewDate) {
-                    <small class="text-primary fw-bold">
-                      {{ app.interviewDate | date:'dd/MM/yyyy' }}<br>
-                      {{ app.interviewDate | date:'hh:mm a' }}
-                    </small>
-                  } @else { <span class="text-muted">—</span> }
-                </td>
-                <td>
-                  @if (app.cvUrl) {
-                    <a [href]="adminService.getCvUrl(app.id)" target="_blank" class="btn btn-sm btn-outline-danger">
-                      <i class="bi bi-file-earmark-pdf"></i> Download CV
-                    </a>
-                  } @else {
-                    <span class="text-muted">No CV</span>
-                  }
-                </td>
-                <td class="d-flex gap-2">
-                  <!-- زرار View Details -->
-                  <button class="btn btn-sm btn-outline-dark" 
-                          data-bs-toggle="modal" data-bs-target="#appDetailModal"
-                          (click)="selectedApplication.set(app)">
-                    <i class="bi bi-eye"></i>
-                  </button>
-
-                  <!-- زرار Confirm -->
-                  @if (app.status === 'Pending') {
-                    <button class="btn btn-sm btn-success" (click)="confirmApplication(app.id)">
-                      <i class="bi bi-check-lg"></i> Confirm
-                    </button>
-                  }
-
-                  <!-- زرار Schedule Interview -->
-                  @if (app.status === 'Confirmed' || app.status === 'Scheduled') {
-                    <button class="btn btn-sm btn-primary" (click)="openScheduleCalendar(app)">
-                      <i class="bi bi-calendar-check"></i> Schedule
-                    </button>
-                  }
-                </td>
+                <th>#</th><th>Name</th><th>Phone</th><th>Job Title</th>
+                <th>English</th><th>Zone</th><th>Status</th><th>CV</th><th>Actions</th>
               </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              @for (app of filteredJobApplications(); track app.id; let i = $index) {
+                <tr>
+                  <td>{{ i + 1 }}</td>
+                  <td class="fw-bold">{{ app.fullName }}</td>
+                  <td>{{ app.phoneNumber }}</td>
+                  <td><span class="badge bg-secondary">{{ app.jobTitle }}</span></td>
+                  <td>{{ app.englishLevel }}</td>
+                  <td>{{ app.zoneWorkedOn }}</td>
+                  <td>
+                    @if (app.status === 'Pending') {
+                      <span class="badge bg-warning text-dark">Pending</span>
+                    } @else if (app.status === 'Confirmed') {
+                      <span class="badge bg-success">Confirmed</span>
+                    } @else if (app.status === 'Scheduled') {
+                      <span class="badge bg-primary">Scheduled</span>
+                    }
+                  </td>
+                  <td>
+                    @if (app.cvUrl) {
+                      <a [href]="adminService.getCvUrl(app.id)" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>CV
+                      </a>
+                    } @else {
+                      <span class="text-muted small">No CV</span>
+                    }
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-start gap-2">
+                      <!-- زرار العين لوحده -->
+                      <button class="btn btn-sm btn-outline-dark rounded-circle"
+                              style="width:34px;height:34px;padding:0;flex-shrink:0;"
+                              data-bs-toggle="modal" data-bs-target="#appDetailModal"
+                              (click)="selectedApplication.set(app)">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <!-- الزراين تحت بعض -->
+                      <div class="d-flex flex-column gap-1">
+                        @if (app.status === 'Pending') {
+                          <button class="btn btn-sm btn-success rounded-pill px-3 fw-semibold" (click)="confirmApplication(app.id)">
+                            <i class="bi bi-check-lg me-1"></i>Confirm
+                          </button>
+                          <button class="btn btn-sm btn-danger rounded-pill px-3 fw-semibold" (click)="openRejectModal(app)">
+                            <i class="bi bi-x-lg me-1"></i>Reject
+                          </button>
+                        }
+                        @if (app.status === 'Confirmed' || app.status === 'Scheduled') {
+                          <button class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold" (click)="openScheduleCalendar(app)">
+                            <i class="bi bi-calendar-check me-1"></i>Schedule
+                          </button>
+                          <button class="btn btn-sm btn-danger rounded-pill px-3 fw-semibold" (click)="openRejectModal(app)">
+                            <i class="bi bi-x-lg me-1"></i>Reject
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- ===================== TAB: SCHEDULED INTERVIEWS ===================== -->
+      @if (jobActiveTab() === 'scheduled') {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle bg-white shadow-sm rounded-4 overflow-hidden mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>#</th><th>Name</th><th>Phone</th><th>Job Title</th>
+                <th>Interview Date</th><th>Attendance</th><th>Final Decision</th><th>CV</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (app of filteredJobApplications(); track app.id; let i = $index) {
+                <tr>
+                  <td>{{ i + 1 }}</td>
+                  <td class="fw-bold">{{ app.fullName }}</td>
+                  <td>{{ app.phoneNumber }}</td>
+                  <td><span class="badge bg-secondary">{{ app.jobTitle }}</span></td>
+                  <td>
+                    <small class="text-primary fw-bold">
+                      {{ app.interviewDate | date:'dd/MM/yyyy' : '+0300' }}<br>
+{{ app.interviewDate | date:'hh:mm a' : '+0300' }}
+                    </small>
+                  </td>
+                  <td>
+                    @if (!app.attendanceStatus) {
+                      <div class="d-flex flex-column gap-1">
+                        <button class="btn btn-sm btn-success rounded-pill px-3 fw-semibold" (click)="markAttendance(app.id, true)">
+                          <i class="bi bi-person-check-fill me-1"></i>Attended
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold" (click)="markAttendance(app.id, false)">
+                          <i class="bi bi-person-dash me-1"></i>No Show
+                        </button>
+                      </div>
+                    } @else if (app.attendanceStatus === 'Attended') {
+                      <span class="badge bg-success px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i>Attended</span>
+                    } @else {
+                      <span class="badge bg-secondary px-3 py-2"><i class="bi bi-x-circle-fill me-1"></i>No Show</span>
+                    }
+                  </td>
+                  <td>
+                    @if (!app.finalDecision) {
+                      @if (app.attendanceStatus === 'Attended') {
+                        <div class="d-flex flex-column gap-1">
+                          <button class="btn btn-sm btn-success rounded-pill px-3 fw-semibold" (click)="openFinalDecisionModal(app, 'Accepted')">
+                            <i class="bi bi-trophy-fill me-1"></i>Accept
+                          </button>
+                          <button class="btn btn-sm btn-danger rounded-pill px-3 fw-semibold" (click)="openFinalDecisionModal(app, 'Rejected')">
+                            <i class="bi bi-x-circle-fill me-1"></i>Reject
+                          </button>
+                        </div>
+                      } @else {
+                        <span class="text-muted small">—</span>
+                      }
+                    } @else if (app.finalDecision === 'Accepted') {
+                      <span class="badge bg-success px-3 py-2"><i class="bi bi-trophy-fill me-1"></i>Accepted</span>
+                    } @else {
+                      <div>
+                        <span class="badge bg-danger px-3 py-2"><i class="bi bi-x-circle-fill me-1"></i>Rejected</span>
+                        @if (app.finalRejectionReason) {
+                          <div class="small text-muted mt-1">{{ app.finalRejectionReason }}</div>
+                        }
+                      </div>
+                    }
+                  </td>
+                  <td>
+                    @if (app.cvUrl) {
+                      <a [href]="adminService.getCvUrl(app.id)" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>CV
+                      </a>
+                    } @else { <span class="text-muted small">No CV</span> }
+                  </td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <button class="btn btn-sm btn-outline-dark rounded-pill"
+                              data-bs-toggle="modal" data-bs-target="#appDetailModal"
+                              (click)="selectedApplication.set(app)">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-primary rounded-pill" (click)="openScheduleCalendar(app)">
+                        <i class="bi bi-calendar-check"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- ===================== TAB: REJECTED ===================== -->
+      @if (jobActiveTab() === 'rejected') {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle bg-white shadow-sm rounded-4 overflow-hidden mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>#</th><th>Name</th><th>Phone</th><th>Job Title</th>
+                <th>Zone</th><th>Rejection Reason</th><th>CV</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (app of filteredJobApplications(); track app.id; let i = $index) {
+                <tr>
+                  <td>{{ i + 1 }}</td>
+                  <td class="fw-bold">{{ app.fullName }}</td>
+                  <td>{{ app.phoneNumber }}</td>
+                  <td><span class="badge bg-secondary">{{ app.jobTitle }}</span></td>
+                  <td>{{ app.zoneWorkedOn }}</td>
+                  <td>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2">
+                      {{ app.rejectionReason || '—' }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (app.cvUrl) {
+                      <a [href]="adminService.getCvUrl(app.id)" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>CV
+                      </a>
+                    } @else { <span class="text-muted small">No CV</span> }
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-dark rounded-pill"
+                            data-bs-toggle="modal" data-bs-target="#appDetailModal"
+                            (click)="selectedApplication.set(app)">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     }
+  </div>
+
+  <!-- Modal: Reject Application -->
+  <div class="modal fade" id="rejectAppModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-x-circle me-2"></i>Reject Application</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="fw-semibold mb-3">Applicant: <span class="text-danger fw-bold">{{ appToReject()?.fullName }}</span></p>
+          <label class="form-label fw-semibold">Rejection Reason <span class="text-danger">*</span></label>
+          <textarea class="form-control rounded-3 bg-light border-0" rows="3"
+                    placeholder="Enter reason for rejection..."
+                    [ngModel]="rejectReason()"
+                    (ngModelChange)="rejectReason.set($event)"></textarea>
+        </div>
+        <div class="modal-footer border-0 px-4 pb-4">
+          <button class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger rounded-pill fw-bold px-5" (click)="submitReject()">
+            <i class="bi bi-x-circle me-2"></i>Confirm Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Final Decision -->
+  <div class="modal fade" id="finalDecisionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+        <div class="modal-header text-white"
+             [class.bg-success]="finalDecisionType() === 'Accepted'"
+             [class.bg-danger]="finalDecisionType() === 'Rejected'">
+          <h5 class="modal-title fw-bold">
+            @if (finalDecisionType() === 'Accepted') {
+              <i class="bi bi-trophy-fill me-2"></i>Accept Applicant
+            } @else {
+              <i class="bi bi-x-circle me-2"></i>Reject After Interview
+            }
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="fw-semibold mb-3">Applicant: <span class="fw-bold">{{ finalDecisionApp()?.fullName }}</span></p>
+          @if (finalDecisionType() === 'Rejected') {
+            <label class="form-label fw-semibold">Rejection Reason <span class="text-danger">*</span></label>
+            <textarea class="form-control rounded-3 bg-light border-0" rows="3"
+                      placeholder="Enter reason..."
+                      [ngModel]="finalDecisionReason()"
+                      (ngModelChange)="finalDecisionReason.set($event)"></textarea>
+          } @else {
+            <div class="alert alert-success rounded-3 border-0">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              Are you sure you want to <strong>accept</strong> this applicant?
+            </div>
+          }
+        </div>
+        <div class="modal-footer border-0 px-4 pb-4">
+          <button class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn rounded-pill fw-bold px-5"
+                  [class.btn-success]="finalDecisionType() === 'Accepted'"
+                  [class.btn-danger]="finalDecisionType() === 'Rejected'"
+                  (click)="submitFinalDecision()">
+            <i class="bi bi-check-lg me-1"></i>Confirm
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal: Application Details -->
@@ -1278,7 +1546,7 @@
                           [class.btn-danger]="selectedInterviewHour() === hour"
                           [class.btn-outline-danger]="selectedInterviewHour() !== hour"
                           (click)="selectedInterviewHour.set(hour)">
-                    {{ hour === '17:00' ? '5:00 PM' : hour === '17:30' ? '5:30 PM' : 
+                    {{ hour === '17:00' ? '5:00 PM' : hour === '17:30' ? '5:30 PM' :
                        hour === '18:00' ? '6:00 PM' : hour === '18:30' ? '6:30 PM' : '7:00 PM' }}
                   </button>
                 }
@@ -1287,7 +1555,7 @@
           }
         </div>
         <div class="modal-footer">
-          <button class="btn btn-danger px-4 rounded-pill fw-bold" 
+          <button class="btn btn-danger px-4 rounded-pill fw-bold"
                   [disabled]="!selectedInterviewDate() || !selectedInterviewHour()"
                   (click)="scheduleInterview()">
             <i class="bi bi-calendar-check me-2"></i>Confirm Interview

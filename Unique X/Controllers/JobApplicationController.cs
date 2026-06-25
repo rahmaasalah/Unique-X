@@ -26,8 +26,8 @@ namespace Unique_X.Controllers
 
         private string GetCvStoragePath()
         {
-            // /app/uploads/cvs
-            var basePath = Path.Combine(AppContext.BaseDirectory, "uploads", CvFolderName);
+            // بنحط الملفات جنب الـ project مش جوه bin
+            var basePath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", CvFolderName);
             if (!Directory.Exists(basePath))
             {
                 Directory.CreateDirectory(basePath);
@@ -156,12 +156,44 @@ namespace Unique_X.Controllers
         }
 
         [HttpPut("{id}/schedule")]
-        public async Task<IActionResult> ScheduleInterview(int id, [FromBody] DateTime interviewDate)
+        public async Task<IActionResult> ScheduleInterview(int id, [FromBody] string interviewDate)
         {
             var app = await _context.JobApplications.FindAsync(id);
             if (app == null) return NotFound();
-            app.InterviewDate = interviewDate;
+            app.InterviewDate = interviewDate; // بنحفظه string كما هو
             app.Status = "Scheduled";
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPut("{id}/reject")]
+        public async Task<IActionResult> Reject(int id, [FromBody] string reason)
+        {
+            var app = await _context.JobApplications.FindAsync(id);
+            if (app == null) return NotFound();
+            app.Status = "Rejected";
+            app.RejectionReason = reason;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPut("{id}/mark-attended")]
+        public async Task<IActionResult> MarkAttended(int id, [FromBody] bool attended)
+        {
+            var app = await _context.JobApplications.FindAsync(id);
+            if (app == null) return NotFound();
+            app.AttendanceStatus = attended ? "Attended" : "NotAttended";
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPut("{id}/final-decision")]
+        public async Task<IActionResult> FinalDecision(int id, [FromBody] FinalDecisionDto dto)
+        {
+            var app = await _context.JobApplications.FindAsync(id);
+            if (app == null) return NotFound();
+            app.FinalDecision = dto.Decision;       // "Accepted" or "Rejected"
+            app.FinalRejectionReason = dto.Reason;
             await _context.SaveChangesAsync();
             return Ok();
         }
