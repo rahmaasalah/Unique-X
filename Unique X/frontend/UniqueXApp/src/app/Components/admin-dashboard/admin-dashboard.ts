@@ -7,6 +7,9 @@ import { RouterModule, Router } from '@angular/router';
 import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDrag, CdkDragPlaceholder, DragDropModule } from '@angular/cdk/drag-drop';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms'; // 1. حل مشكلة formGroup
 import { CrmService } from '../../Services/crm.services';
+import { BlogService } from '../../Services/blog.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 
 @Component({
@@ -23,7 +26,9 @@ export class AdminDashboardComponent implements OnInit {
   public authService = inject(AuthService); // لجلب بيانات البروفايل
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  private crmService = inject(CrmService); // حقن خدمة الـ CRM
+  private crmService = inject(CrmService);
+  private blogService = inject(BlogService);
+  private http = inject(HttpClient);
   adminLeadForm!: FormGroup;
 
   campaignsList = signal<any[]>([]);
@@ -67,7 +72,7 @@ export class AdminDashboardComponent implements OnInit {
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
   homeBanners = signal<any[]>([]);
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'deletions' | 'ourTeam' | 'interviewCalendar'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs'>('users');
 
   detailData = signal<any[]>([]);
 
@@ -350,6 +355,7 @@ export class AdminDashboardComponent implements OnInit {
     this.loadAdminProfile();
     this.loadPendingProperties();
     this.loadPendingDeletions();
+    this.initBlogForm(); // initialize blog form on load
   }
 
   loadPendingDeletions() {
@@ -951,6 +957,14 @@ finalDecisionApp = signal<any>(null);
 finalDecisionType = signal<string>('');
 finalDecisionReason = signal<string>('');
 
+// Call Feedback modal
+callFeedbackApp = signal<any>(null);
+callFeedbackText = signal<string>('');
+
+// Final Feedback modal
+finalFeedbackApp = signal<any>(null);
+finalFeedbackText = signal<string>('');
+
 rejectedApplicationsCount = computed(() =>
   this.jobApplications().filter(a => a.status === 'Rejected').length
 );
@@ -1088,6 +1102,54 @@ submitFinalDecision() {
   });
 }
 
+openCallFeedbackModal(app: any) {
+  this.callFeedbackApp.set(app);
+  this.callFeedbackText.set(app.callFeedback || '');
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('callFeedbackModal'));
+  modal.show();
+}
+
+submitCallFeedback() {
+  const app = this.callFeedbackApp();
+  const text = this.callFeedbackText().trim();
+  if (!text) { this.alertService.error('Please enter feedback.'); return; }
+  this.http.put(`${environment.apiUrl}/jobapplications/${app.id}/call-feedback`, JSON.stringify(text), {
+    headers: { 'Content-Type': 'application/json' }
+  }).subscribe({
+    next: () => {
+      this.alertService.success('Call feedback saved!');
+      this.loadJobApplications();
+      const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('callFeedbackModal'));
+      modal?.hide();
+    },
+    error: () => this.alertService.error('Failed to save feedback.')
+  });
+}
+
+openFinalFeedbackModal(app: any) {
+  this.finalFeedbackApp.set(app);
+  this.finalFeedbackText.set(app.finalFeedback || '');
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('finalFeedbackModal'));
+  modal.show();
+}
+
+submitFinalFeedback() {
+  const app = this.finalFeedbackApp();
+  const text = this.finalFeedbackText().trim();
+  if (!text) { this.alertService.error('Please enter feedback.'); return; }
+  this.http.put(`${environment.apiUrl}/jobapplications/${app.id}/final-feedback`, JSON.stringify(text), {
+    headers: { 'Content-Type': 'application/json' }
+  }).subscribe({
+    next: () => {
+      this.alertService.success('Final feedback saved!');
+      this.loadJobApplications();
+      const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('finalFeedbackModal'));
+      modal?.hide();
+    },
+    error: () => this.alertService.error('Failed to save feedback.')
+  });
+}
+
 openScheduleCalendar(app: any) {
   this.selectedApplication.set(app);
   this.generateCalendar(this.calendarMonth());
@@ -1155,5 +1217,197 @@ scheduleInterview() {
     error: () => this.alertService.error('Failed to schedule interview.')
   });
 }
+// ================== Blogs ==================
+blogs = signal<any[]>([]);
+blogForm!: FormGroup;
+editingBlog = signal<any>(null);
+blogCoverFile = signal<File | null>(null);
+blogMasterPlanFile = signal<File | null>(null);
+blogSliderFiles = signal<File[]>([]);
+blogButtonFiles: { [key: number]: File | null } = { 1: null, 2: null, 3: null };
+blogSubmitting = signal(false);
+paymentPlans = signal<any[]>([]);
+articleSections = signal<any[]>([]);
+faqs = signal<any[]>([]);
 
+initBlogForm(blog?: any) {
+  this.blogForm = this.fb.group({
+    title:                [''],
+    excerpt:              [''],
+    category:             [''],
+    isPublished:          [true],
+    pricePerMeterResale:  [null],
+    pricePerMeterPrimary: [null],
+    adminPhone:           [''],
+    projectDetails:       [''],
+    mapEmbedUrl:          [''],
+    unitIdsStr:           [''],
+  });
+  if (blog) {
+    this.blogForm.patchValue({
+      title:                blog.title || '',
+      excerpt:              blog.excerpt || '',
+      category:             blog.category || '',
+      isPublished:          blog.isPublished,
+      pricePerMeterResale:  blog.pricePerMeterResale,
+      pricePerMeterPrimary: blog.pricePerMeterPrimary,
+      adminPhone:           blog.adminPhone || '',
+      projectDetails:       blog.projectDetails || '',
+      mapEmbedUrl:          blog.mapEmbedUrl || '',
+      unitIdsStr:           blog.unitIdsJson ? JSON.parse(blog.unitIdsJson || '[]').join(', ') : '',
+    });
+    this.paymentPlans.set(this.parseJson(blog.paymentPlansJson));
+    this.articleSections.set(this.parseJson(blog.articleSectionsJson));
+    this.faqs.set(this.parseJson(blog.faqsJson));
+  } else {
+    this.paymentPlans.set([]);
+    this.articleSections.set([]);
+    this.faqs.set([]);
+  }
+}
+
+parseJson(json: string | null | undefined): any[] {
+  if (!json) return [];
+  try { return JSON.parse(json); } catch { return []; }
+}
+
+getSliderImagesArray(blog: any): string[] {
+  if (!blog?.sliderImages) return [];
+  return blog.sliderImages.split('|').filter((s: string) => s.trim());
+}
+
+loadBlogs() {
+  this.blogService.getAll().subscribe({
+    next: (data) => this.blogs.set(data),
+    error: () => this.alertService.error('Failed to load projects.')
+  });
+}
+
+openAddBlog() {
+  this.editingBlog.set(null);
+  this.blogSliderFiles.set([]);
+  this.blogMasterPlanFile.set(null);
+  this.blogButtonFiles = { 1: null, 2: null, 3: null };
+  this.initBlogForm();
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('blogFormModal'));
+  modal.show();
+}
+
+openEditBlog(blog: any) {
+  this.editingBlog.set(blog);
+  this.blogSliderFiles.set([]);
+  this.blogMasterPlanFile.set(null);
+  this.blogButtonFiles = { 1: null, 2: null, 3: null };
+  this.initBlogForm(blog);
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('blogFormModal'));
+  modal.show();
+}
+
+onSliderImagesChange(event: any) {
+  const files = Array.from(event.target.files) as File[];
+  this.blogSliderFiles.set(files);
+}
+
+onMasterPlanChange(event: any) {
+  const file = event.target.files[0];
+  if (file) this.blogMasterPlanFile.set(file);
+}
+
+onButtonImageChange(event: any, btn: number) {
+  const file = event.target.files[0];
+  if (file) this.blogButtonFiles[btn] = file;
+}
+
+onBlogCoverChange(event: any) {
+  const file = event.target.files[0];
+  if (file) this.blogCoverFile.set(file);
+}
+
+removeSliderImage(filename: string) {
+  const blog = this.editingBlog();
+  if (!blog) return;
+  this.blogService.deleteSliderImage(blog.id, filename).subscribe({
+    next: () => {
+      const imgs = this.getSliderImagesArray(blog).filter(i => i !== filename);
+      this.editingBlog.set({ ...blog, sliderImages: imgs.join('|') });
+      this.loadBlogs();
+    }
+  });
+}
+
+// Payment Plans
+addPaymentPlan()         { this.paymentPlans.update(p => [...p, { name: '', downPayment: '', installment: '', years: null, note: '' }]); }
+removePaymentPlan(i: number) { this.paymentPlans.update(p => p.filter((_, idx) => idx !== i)); }
+
+// Article Sections
+addArticleSection()          { this.articleSections.update(s => [...s, { headline: '', text: '' }]); }
+removeArticleSection(i: number) { this.articleSections.update(s => s.filter((_, idx) => idx !== i)); }
+
+// FAQs
+addFaq()       { this.faqs.update(f => [...f, { question: '', answer: '' }]); }
+removeFaq(i: number) { this.faqs.update(f => f.filter((_, idx) => idx !== i)); }
+
+submitBlog() {
+  if (!this.blogForm.value.title?.trim()) { this.alertService.error('Please enter a project name.'); return; }
+  this.blogSubmitting.set(true);
+  const f = this.blogForm.value;
+
+  // Parse unit IDs
+  const unitIds = f.unitIdsStr
+    ? f.unitIdsStr.split(',').map((s: string) => parseInt(s.trim())).filter((n: number) => !isNaN(n)).slice(0, 12)
+    : [];
+
+  const fd = new FormData();
+  fd.append('Title',                f.title);
+  fd.append('Excerpt',              f.excerpt);
+  fd.append('Category',             f.category || '');
+  fd.append('IsPublished',          f.isPublished ? 'true' : 'false');
+  fd.append('PricePerMeterResale',  f.pricePerMeterResale?.toString() || '');
+  fd.append('PricePerMeterPrimary', f.pricePerMeterPrimary?.toString() || '');
+  fd.append('AdminPhone',           f.adminPhone || '');
+  fd.append('Button1Label',         'Gallery');
+  fd.append('Button2Label',         'View on Map');
+  fd.append('Button3Label',         'Master Plan');
+  fd.append('ProjectDetails',       f.projectDetails || '');
+  fd.append('MapEmbedUrl',          f.mapEmbedUrl || '');
+  fd.append('PaymentPlansJson',     JSON.stringify(this.paymentPlans()));
+  fd.append('UnitIdsJson',          JSON.stringify(unitIds));
+  fd.append('ArticleSectionsJson',  JSON.stringify(this.articleSections()));
+  fd.append('FaqsJson',             JSON.stringify(this.faqs()));
+
+  this.blogSliderFiles().forEach(file => fd.append('SliderImages', file));
+  if (this.blogMasterPlanFile()) fd.append('MasterPlanImage', this.blogMasterPlanFile()!);
+  [1, 2, 3].forEach(btn => {
+    if (this.blogButtonFiles[btn]) fd.append(`Button${btn}Image`, this.blogButtonFiles[btn]!);
+  });
+
+  const editing = this.editingBlog();
+  const req = editing ? this.blogService.update(editing.id, fd) : this.blogService.create(fd);
+
+  req.subscribe({
+    next: () => {
+      this.blogSubmitting.set(false);
+      this.alertService.success(editing ? 'Project updated!' : 'Project created!');
+      this.loadBlogs();
+      const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('blogFormModal'));
+      modal?.hide();
+    },
+    error: () => { this.blogSubmitting.set(false); this.alertService.error('Failed to save project.'); }
+  });
+}
+
+deleteBlog(id: number) {
+  this.alertService.confirm('Delete this project?', () => {
+    this.blogService.delete(id).subscribe({
+      next: () => { this.alertService.success('Project deleted.'); this.loadBlogs(); },
+      error: () => this.alertService.error('Failed to delete project.')
+    });
+  });
+}
+
+getBlogImageUrl(filename: string) { return this.blogService.getImageUrl(filename); }
+getBlogFirstImage(blog: any): string {
+  const imgs = this.blogService.getSliderImages(blog);
+  return imgs.length > 0 ? imgs[0] : '';
+}
 }

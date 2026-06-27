@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Unique_X.Data;
 
@@ -11,9 +12,11 @@ using Unique_X.Data;
 namespace Unique_X.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260625112445_AddBlogs")]
+    partial class AddBlogs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -286,30 +289,6 @@ namespace Unique_X.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AdminPhone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ArticleSectionsJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Button1ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Button1Label")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Button2ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Button2Label")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Button3ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Button3Label")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Category")
                         .HasColumnType("nvarchar(max)");
 
@@ -327,38 +306,11 @@ namespace Unique_X.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("FaqsJson")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsPublished")
                         .HasColumnType("bit");
 
-                    b.Property<string>("MapEmbedUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MasterPlanImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PaymentPlansJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("PricePerMeterPrimary")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal?>("PricePerMeterResale")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("ProjectDetails")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SliderImages")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UnitIdsJson")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -482,9 +434,6 @@ namespace Unique_X.Migrations
                     b.Property<string>("AttendanceStatus")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CallFeedback")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("City")
                         .HasColumnType("nvarchar(max)");
 
@@ -514,9 +463,6 @@ namespace Unique_X.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FinalDecision")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FinalFeedback")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FinalRejectionReason")

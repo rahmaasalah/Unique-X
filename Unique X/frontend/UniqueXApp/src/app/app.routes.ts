@@ -23,6 +23,9 @@ import { EditRequestComponent } from './Components/CRM/edit-request/edit-request
 import { CampaignsManagerComponent } from './Components/CRM/campaigns-manager/campaigns-manager';
 import { JoinOurTeamComponent } from './Components/join-our-team/join-our-team';
 
+import { BlogListComponent } from './Components/blog-list/blog-list';
+import { BlogDetailComponent } from './Components/blog-detail/blog-detail';
+
 export const routes: Routes = [
   { 
     path: 'admin', 
@@ -66,6 +69,10 @@ export const routes: Routes = [
 { path: 'crm/leads/:id/edit', component: EditRequestComponent },
 { path: 'crm/add-lead', component: AddLeadComponent },
 { path: 'join-our-team', component: JoinOurTeamComponent },
+
+{ path: 'blog',    component: BlogListComponent },
+  { path: 'blog/:id', component: BlogDetailComponent },
+
  { path: '', component: HomeComponent, pathMatch: 'full' }, 
  { path: '**', redirectTo: '/login' }
 ];

@@ -1,0 +1,52 @@
+﻿namespace Unique_X.Models
+{
+    public class Blog
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Excerpt { get; set; } = string.Empty; // وصف قصير للكارت
+        public string Content { get; set; } = string.Empty; // المحتوى الكامل (HTML أو Markdown)
+        public string? CoverImageUrl { get; set; }          // صورة الغلاف
+        public string? Category { get; set; }               // مثلاً: "Market Trends", "Guides"
+        public bool IsPublished { get; set; } = true;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+
+        // Photo Slider — مفصولة بـ |
+        public string? SliderImages { get; set; }
+
+        // سعر المتر
+        public decimal? PricePerMeterResale { get; set; }
+        public decimal? PricePerMeterPrimary { get; set; }
+
+        // 3 Buttons
+        public string? Button1Label { get; set; }
+        public string? Button1ImageUrl { get; set; }
+        public string? Button2Label { get; set; }
+        public string? Button2ImageUrl { get; set; }
+        public string? Button3Label { get; set; }
+        public string? Button3ImageUrl { get; set; }
+
+        // تفاصيل المشروع
+        public string? ProjectDetails { get; set; }
+
+        // Map
+        public string? MapEmbedUrl { get; set; }
+
+        // Master Plan
+        public string? MasterPlanImageUrl { get; set; }
+
+        // Payment Plans — JSON array
+        public string? PaymentPlansJson { get; set; }
+
+        // Units — JSON array of property IDs (max 12)
+        public string? UnitIdsJson { get; set; }
+
+        // Article Sections — JSON array [{headline, text}]
+        public string? ArticleSectionsJson { get; set; }
+
+        // FAQs — JSON array [{question, answer}]
+        public string? FaqsJson { get; set; }
+        public string? AdminPhone { get; set; }
+    }
+}
