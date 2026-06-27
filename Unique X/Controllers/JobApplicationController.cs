@@ -177,6 +177,26 @@ namespace Unique_X.Controllers
             return Ok();
         }
 
+        [HttpPut("{id}/call-feedback")]
+        public async Task<IActionResult> SetCallFeedback(int id, [FromBody] string feedback)
+        {
+            var app = await _context.JobApplications.FindAsync(id);
+            if (app == null) return NotFound();
+            app.CallFeedback = feedback;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPut("{id}/final-feedback")]
+        public async Task<IActionResult> SetFinalFeedback(int id, [FromBody] string feedback)
+        {
+            var app = await _context.JobApplications.FindAsync(id);
+            if (app == null) return NotFound();
+            app.FinalFeedback = feedback;
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         [HttpPut("{id}/mark-attended")]
         public async Task<IActionResult> MarkAttended(int id, [FromBody] bool attended)
         {

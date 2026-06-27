@@ -1,0 +1,105 @@
+<section class="py-5" style="background:#f8f9fa;min-height:100vh;">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="text-center mb-5">
+      <h2 class="fw-bold" style="color:#1a1a2e;">Our Projects</h2>
+      <p class="text-muted">Explore our latest real estate projects and investment opportunities.</p>
+      <div style="width:60px;height:4px;background:#ef3341;margin:0 auto;border-radius:2px;"></div>
+    </div>
+
+    <!-- Category Filter -->
+    @if (categories().length > 0) {
+      <div class="d-flex gap-2 flex-wrap justify-content-center mb-5">
+        <button class="btn rounded-pill px-4 fw-semibold"
+                [class.btn-danger]="activeCategory() === ''"
+                [class.btn-outline-secondary]="activeCategory() !== ''"
+                (click)="activeCategory.set('')">All</button>
+        @for (cat of categories(); track cat) {
+          <button class="btn rounded-pill px-4 fw-semibold"
+                  [class.btn-danger]="activeCategory() === cat"
+                  [class.btn-outline-secondary]="activeCategory() !== cat"
+                  (click)="activeCategory.set(cat)">{{ cat }}</button>
+        }
+      </div>
+    }
+
+    @if (isLoading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-danger" role="status"></div>
+      </div>
+    }
+
+    @if (!isLoading()) {
+      @if (filteredBlogs().length === 0) {
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-buildings fs-1 d-block mb-3 opacity-25"></i>
+          No projects found.
+        </div>
+      } @else {
+        <div class="row g-4">
+          @for (blog of filteredBlogs(); track blog.id) {
+            <div class="col-md-6 col-lg-4">
+              <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden"
+                   style="cursor:pointer;transition:transform .2s,box-shadow .2s;"
+                   (click)="goToBlog(blog.id)"
+                   (mouseenter)="$event.currentTarget['style'].transform='translateY(-4px)';$event.currentTarget['style'].boxShadow='0 12px 30px rgba(0,0,0,0.13)'"
+                   (mouseleave)="$event.currentTarget['style'].transform='';$event.currentTarget['style'].boxShadow=''">
+
+                <!-- Cover: أول صورة من الـ slider أو placeholder -->
+                @if (getFirstImage(blog)) {
+                  <img [src]="blogService.getImageUrl(getFirstImage(blog))"
+                       class="card-img-top" style="height:210px;object-fit:cover;" alt="project">
+                } @else {
+                  <div class="d-flex align-items-center justify-content-center bg-light"
+                       style="height:210px;">
+                    <i class="bi bi-buildings text-muted fs-1 opacity-25"></i>
+                  </div>
+                }
+
+                <div class="card-body d-flex flex-column p-4">
+                  @if (blog.category) {
+                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3 mb-2 align-self-start">
+                      {{ blog.category }}
+                    </span>
+                  }
+                  <h5 class="fw-bold mb-2" style="line-height:1.3;">{{ blog.title }}</h5>
+                  <p class="text-muted small mb-3"
+                     style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                    {{ blog.excerpt }}
+                  </p>
+
+                  <!-- Price per meter -->
+                  @if (blog.pricePerMeterResale || blog.pricePerMeterPrimary) {
+                    <div class="d-flex gap-3 mb-3">
+                      @if (blog.pricePerMeterResale) {
+                        <div class="text-center bg-danger-subtle rounded-3 px-3 py-2 flex-fill">
+                          <div class="small text-muted">Resale/m²</div>
+                          <div class="fw-bold text-danger">{{ blog.pricePerMeterResale | number }} EGP</div>
+                        </div>
+                      }
+                      @if (blog.pricePerMeterPrimary) {
+                        <div class="text-center bg-light rounded-3 px-3 py-2 flex-fill">
+                          <div class="small text-muted">Primary/m²</div>
+                          <div class="fw-bold text-dark">{{ blog.pricePerMeterPrimary | number }} EGP</div>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <div class="mt-auto d-flex align-items-center justify-content-between">
+                    <small class="text-muted">
+                      <i class="bi bi-calendar3 me-1"></i>{{ blog.createdAt | date:'MMM d, y' }}
+                    </small>
+                    <span class="text-danger fw-semibold small">View Project →</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+  </div>
+</section>

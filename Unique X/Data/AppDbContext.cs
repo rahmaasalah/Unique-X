@@ -26,6 +26,8 @@ namespace Unique_X.Data
         public DbSet<Campaign> Campaigns { get; set; }
         public DbSet<LeadStatusHistory> LeadStatusHistories { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
+        public DbSet<Blog> Blogs { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder builder)
