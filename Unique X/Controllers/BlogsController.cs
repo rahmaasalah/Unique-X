@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Unique_X.Data;
 using Unique_X.DTOs;
 using Unique_X.Models;
+using Unique_X.Services.Interface;
 
 namespace Unique_X.Controllers
 {
@@ -11,47 +12,40 @@ namespace Unique_X.Controllers
     public class BlogsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public BlogsController(AppDbContext context) => _context = context;
+        private readonly IPhotoService _photoService;
 
-        private string GetPath(string sub = "blogs")
+        public BlogsController(AppDbContext context, IPhotoService photoService)
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "uploads", sub);
-            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-            return path;
+            _context = context;
+            _photoService = photoService;
         }
 
-        private async Task<string> SaveFile(IFormFile file, string sub = "blogs")
+        // ── رفع صورة على Cloudinary وإرجاع الـ URL ──
+        private async Task<string?> UploadToCloudinary(IFormFile file)
         {
-            var name = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
-            var fullPath = Path.Combine(GetPath(sub), name);
-            using var stream = new FileStream(fullPath, FileMode.Create);
-            await file.CopyToAsync(stream);
-            return name;
+            var result = await _photoService.AddPhotoAsync(file);
+            if (result.Error != null) return null;
+            return result.SecureUrl?.AbsoluteUri;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll() =>
-            Ok(await _context.Blogs.Where(b => b.IsPublished).OrderByDescending(b => b.CreatedAt).ToListAsync());
+            Ok(await _context.Blogs
+                .Where(b => b.IsPublished)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync());
 
         [HttpGet("all")]
         public async Task<IActionResult> GetAllAdmin() =>
-            Ok(await _context.Blogs.OrderByDescending(b => b.CreatedAt).ToListAsync());
+            Ok(await _context.Blogs
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync());
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var blog = await _context.Blogs.FindAsync(id);
             return blog == null ? NotFound() : Ok(blog);
-        }
-
-        [HttpGet("image/{filename}")]
-        public IActionResult GetImage(string filename)
-        {
-            var path = Path.Combine(GetPath(), filename);
-            if (!System.IO.File.Exists(path)) return NotFound();
-            var ext = Path.GetExtension(filename).ToLower();
-            var ct = ext == ".png" ? "image/png" : ext == ".webp" ? "image/webp" : "image/jpeg";
-            return PhysicalFile(path, ct);
         }
 
         [HttpPost]
@@ -74,20 +68,25 @@ namespace Unique_X.Controllers
                 UnitIdsJson = dto.UnitIdsJson,
                 ArticleSectionsJson = dto.ArticleSectionsJson,
                 FaqsJson = dto.FaqsJson,
+                AdminPhone = dto.AdminPhone,
             };
 
-            // Slider images
+            // Slider images → Cloudinary
             if (dto.SliderImages != null && dto.SliderImages.Count > 0)
             {
-                var names = new List<string>();
-                foreach (var f in dto.SliderImages) names.Add(await SaveFile(f));
-                blog.SliderImages = string.Join("|", names);
+                var urls = new List<string>();
+                foreach (var f in dto.SliderImages)
+                {
+                    var url = await UploadToCloudinary(f);
+                    if (url != null) urls.Add(url);
+                }
+                blog.SliderImages = string.Join("|", urls);
             }
 
-            if (dto.Button1Image != null) blog.Button1ImageUrl = await SaveFile(dto.Button1Image);
-            if (dto.Button2Image != null) blog.Button2ImageUrl = await SaveFile(dto.Button2Image);
-            if (dto.Button3Image != null) blog.Button3ImageUrl = await SaveFile(dto.Button3Image);
-            if (dto.MasterPlanImage != null) blog.MasterPlanImageUrl = await SaveFile(dto.MasterPlanImage);
+            if (dto.Button1Image != null) blog.Button1ImageUrl = await UploadToCloudinary(dto.Button1Image);
+            if (dto.Button2Image != null) blog.Button2ImageUrl = await UploadToCloudinary(dto.Button2Image);
+            if (dto.Button3Image != null) blog.Button3ImageUrl = await UploadToCloudinary(dto.Button3Image);
+            if (dto.MasterPlanImage != null) blog.MasterPlanImageUrl = await UploadToCloudinary(dto.MasterPlanImage);
 
             _context.Blogs.Add(blog);
             await _context.SaveChangesAsync();
@@ -115,19 +114,28 @@ namespace Unique_X.Controllers
             blog.UnitIdsJson = dto.UnitIdsJson;
             blog.ArticleSectionsJson = dto.ArticleSectionsJson;
             blog.FaqsJson = dto.FaqsJson;
+            blog.AdminPhone = dto.AdminPhone;
             blog.UpdatedAt = DateTime.UtcNow;
 
+            // Slider images جديدة → أضفها لفوق القديمة
             if (dto.SliderImages != null && dto.SliderImages.Count > 0)
             {
-                var existing = string.IsNullOrEmpty(blog.SliderImages) ? new List<string>() : blog.SliderImages.Split('|').ToList();
-                foreach (var f in dto.SliderImages) existing.Add(await SaveFile(f));
+                var existing = string.IsNullOrEmpty(blog.SliderImages)
+                    ? new List<string>()
+                    : blog.SliderImages.Split('|').ToList();
+
+                foreach (var f in dto.SliderImages)
+                {
+                    var url = await UploadToCloudinary(f);
+                    if (url != null) existing.Add(url);
+                }
                 blog.SliderImages = string.Join("|", existing);
             }
 
-            if (dto.Button1Image != null) blog.Button1ImageUrl = await SaveFile(dto.Button1Image);
-            if (dto.Button2Image != null) blog.Button2ImageUrl = await SaveFile(dto.Button2Image);
-            if (dto.Button3Image != null) blog.Button3ImageUrl = await SaveFile(dto.Button3Image);
-            if (dto.MasterPlanImage != null) blog.MasterPlanImageUrl = await SaveFile(dto.MasterPlanImage);
+            if (dto.Button1Image != null) blog.Button1ImageUrl = await UploadToCloudinary(dto.Button1Image);
+            if (dto.Button2Image != null) blog.Button2ImageUrl = await UploadToCloudinary(dto.Button2Image);
+            if (dto.Button3Image != null) blog.Button3ImageUrl = await UploadToCloudinary(dto.Button3Image);
+            if (dto.MasterPlanImage != null) blog.MasterPlanImageUrl = await UploadToCloudinary(dto.MasterPlanImage);
 
             await _context.SaveChangesAsync();
             return Ok(blog);
@@ -144,13 +152,17 @@ namespace Unique_X.Controllers
         }
 
         // حذف صورة واحدة من الـ slider
-        [HttpDelete("{id}/slider-image/{filename}")]
-        public async Task<IActionResult> DeleteSliderImage(int id, string filename)
+        [HttpDelete("{id}/slider-image")]
+        public async Task<IActionResult> DeleteSliderImage(int id, [FromBody] string imageUrl)
         {
             var blog = await _context.Blogs.FindAsync(id);
             if (blog == null) return NotFound();
-            var images = string.IsNullOrEmpty(blog.SliderImages) ? new List<string>() : blog.SliderImages.Split('|').ToList();
-            images.Remove(filename);
+
+            var images = string.IsNullOrEmpty(blog.SliderImages)
+                ? new List<string>()
+                : blog.SliderImages.Split('|').ToList();
+
+            images.Remove(imageUrl);
             blog.SliderImages = string.Join("|", images);
             await _context.SaveChangesAsync();
             return Ok();

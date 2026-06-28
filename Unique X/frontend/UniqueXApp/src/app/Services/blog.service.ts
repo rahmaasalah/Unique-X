@@ -13,10 +13,21 @@ export class BlogService {
   create(fd: FormData)                  { return this.http.post<any>(this.base, fd); }
   update(id: number, fd: FormData)      { return this.http.put<any>(`${this.base}/${id}`, fd); }
   delete(id: number)                    { return this.http.delete(`${this.base}/${id}`); }
-  getImageUrl(filename: string): string { return `${this.base}/image/${filename}`; }
 
-  deleteSliderImage(blogId: number, filename: string) {
-    return this.http.delete(`${this.base}/${blogId}/slider-image/${filename}`);
+  // دلوقتي الـ URLs بتيجي من Cloudinary مباشرة — مش محتاجين نبني URL
+  getImageUrl(url: string): string {
+    if (!url) return '';
+    // لو URL كامل (Cloudinary) رجعه كما هو
+    if (url.startsWith('http')) return url;
+    // fallback لو لسه في قديم بـ filename
+    return `${this.base}/image/${url}`;
+  }
+
+  deleteSliderImage(blogId: number, imageUrl: string) {
+    return this.http.delete(`${this.base}/${blogId}/slider-image`, {
+      body: imageUrl,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   parseJson(json: string | null | undefined): any[] {
