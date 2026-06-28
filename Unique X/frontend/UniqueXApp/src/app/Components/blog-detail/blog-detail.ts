@@ -33,6 +33,9 @@ export class BlogDetailComponent implements OnInit {
   galleryOpen = signal(false);
   galleryIndex = signal(0);
 
+  // Map modal
+  mapModalOpen = signal(false);
+
   // Contact form
   contactName = '';
   contactPhone = '';
@@ -120,13 +123,39 @@ export class BlogDetailComponent implements OnInit {
     this.modalImageUrl.set('');
   }
 
-  // Contact — بيروح WhatsApp
+  // رقم الأدمن ثابت في السيستم
+  private readonly ADMIN_PHONE = '01509064020';
+
+  getAdminPhone(type: 'tel' | 'wa'): string {
+    if (type === 'tel') return `tel:${this.ADMIN_PHONE}`;
+    // كود مصر هو 20 - بنشيل الصفر الأول ونحط 20 قبله
+    const cleaned = '20' + this.ADMIN_PHONE.replace(/^0+/, '');
+    return `https://wa.me/${cleaned}`;
+  }
+
+  // WhatsApp link للبروكر مع كود الوحدة ورابط الصفحة
+  getBrokerWhatsAppLink(phone: string, unitCode?: string): string {
+    if (!phone) return '#';
+    let cleaned = phone.replace(/\D/g, '');
+    // لو الرقم بيبدأ بـ 0 نشيله ونحط كود مصر 20
+    if (cleaned.startsWith('0')) cleaned = '20' + cleaned.substring(1);
+    // بنشتق الـ base URL من الـ apiUrl (بنشيل /api من الآخر)
+    const baseUrl = environment.apiUrl.replace(/\/api$/, '');
+    const pageUrl = baseUrl + window.location.pathname;
+    const msg = encodeURIComponent(
+      `Hello, I'm interested in property: #${unitCode || ''}\nLink: ${pageUrl}`
+    );
+    return `https://wa.me/${cleaned}?text=${msg}`;
+  }
+
+  // Contact form → بيروح WhatsApp الأدمن مباشرة
   submitContact() {
     if (!this.contactName || !this.contactPhone) return;
+    const adminWa = this.getAdminPhone('wa');
     const msg = encodeURIComponent(
-      `New inquiry for ${this.blog()?.title}\nName: ${this.contactName}\nPhone: ${this.contactPhone}\nMessage: ${this.contactMessage}`
+      `New inquiry for: ${this.blog()?.title}\nName: ${this.contactName}\nPhone: ${this.contactPhone}\nMessage: ${this.contactMessage || 'N/A'}`
     );
-    window.open(`https://wa.me/?text=${msg}`, '_blank');
+    window.open(`${adminWa}?text=${msg}`, '_blank');
     this.contactName = '';
     this.contactPhone = '';
     this.contactMessage = '';

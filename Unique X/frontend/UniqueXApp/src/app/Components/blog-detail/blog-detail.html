@@ -121,21 +121,19 @@
             }
           </div>
 
-          <!-- Call + WhatsApp (admin) -->
-          @if (blog().adminPhone) {
-            <div class="d-flex gap-2">
-              <a [href]="'tel:' + blog().adminPhone"
-                 class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2">
-                <i class="bi bi-telephone-fill"></i> Call Us
-              </a>
-              <a [href]="'https://wa.me/20' + blog().adminPhone.replace(/^0+/, '')"
-                 target="_blank"
-                 class="btn fw-semibold rounded-pill px-4 py-2 d-flex align-items-center gap-2"
-                 style="background:#25D366;color:#fff;">
-                <i class="bi bi-whatsapp"></i> Whatsapp
-              </a>
-            </div>
-          }
+          <!-- Call + WhatsApp (admin — ثابت دايماً) -->
+          <div class="d-flex gap-2">
+            <a [href]="getAdminPhone('tel')"
+               class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2">
+              <i class="bi bi-telephone-fill"></i> Call Us
+            </a>
+            <a [href]="getAdminPhone('wa')"
+               target="_blank"
+               class="btn fw-semibold rounded-pill px-4 py-2 d-flex align-items-center gap-2"
+               style="background:#25D366;color:#fff;">
+              <i class="bi bi-whatsapp"></i> Whatsapp
+            </a>
+          </div>
 
         </div>
       </div>
@@ -154,37 +152,48 @@
             <i class="bi bi-arrow-left me-2"></i>Back to Projects
           </button>
 
-          <!-- ===== 3 BUTTONS (Fixed: Gallery / View on Map / Master Plan) ===== -->
-          <div class="mb-5">
+          <!-- ===== 3 BUTTONS (Gallery / View on Map / Master Plan) ===== -->
+          <div class="mb-4">
             <h5 class="fw-bold mb-3" style="color:#1a1a2e;">Details</h5>
-            <div class="d-flex gap-3 flex-wrap align-items-center">
-              <!-- Gallery -->
-              @if (blog().button1ImageUrl) {
-                <button class="btn btn-outline-secondary rounded-3 px-4 py-3 fw-semibold d-flex flex-column align-items-center gap-1"
-                        style="min-width:120px;"
-                        (click)="openImageModal(blogService.getImageUrl(blog().button1ImageUrl))">
-                  <i class="bi bi-images fs-3 text-danger"></i>
-                  <span class="small">Gallery</span>
-                </button>
-              }
-              <!-- View on Map -->
-              @if (blog().button2ImageUrl) {
-                <button class="btn btn-outline-secondary rounded-3 px-4 py-3 fw-semibold d-flex flex-column align-items-center gap-1"
-                        style="min-width:120px;"
-                        (click)="openImageModal(blogService.getImageUrl(blog().button2ImageUrl))">
-                  <i class="bi bi-map fs-3 text-danger"></i>
-                  <span class="small">View on Map</span>
-                </button>
-              }
-              <!-- Master Plan -->
-              @if (blog().button3ImageUrl) {
-                <button class="btn btn-outline-secondary rounded-3 px-4 py-3 fw-semibold d-flex flex-column align-items-center gap-1"
-                        style="min-width:120px;"
-                        (click)="openImageModal(blogService.getImageUrl(blog().button3ImageUrl))">
-                  <i class="bi bi-layout-text-window-sidebar fs-3 text-danger"></i>
-                  <span class="small">Master Plan</span>
-                </button>
-              }
+            <div class="d-flex gap-3 flex-wrap">
+
+              <!-- Gallery → يفتح الـ lightbox -->
+              <button class="btn rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
+                      style="min-width:120px;min-height:90px;padding:16px;"
+                      [class.btn-outline-secondary]="sliderImages().length > 0"
+                      [class.btn-outline-light]="sliderImages().length === 0"
+                      [style.opacity]="sliderImages().length === 0 ? '0.4' : '1'"
+                      [disabled]="sliderImages().length === 0"
+                      (click)="sliderImages().length > 0 && openGallery(0)">
+                <i class="bi bi-images fs-3" style="color:#1a1a2e;"></i>
+                <span class="small text-dark">Gallery</span>
+              </button>
+
+              <!-- View on Map → يفتح modal جوا الموقع -->
+              <button class="btn rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
+                      style="min-width:120px;min-height:90px;padding:16px;"
+                      [class.btn-outline-secondary]="blog().mapEmbedUrl"
+                      [class.btn-outline-light]="!blog().mapEmbedUrl"
+                      [style.opacity]="!blog().mapEmbedUrl ? '0.4' : '1'"
+                      [disabled]="!blog().mapEmbedUrl"
+                      (click)="blog().mapEmbedUrl && mapModalOpen.set(true)">
+                <i class="bi bi-map fs-3" style="color:#1a1a2e;"></i>
+                <span class="small text-dark">View on Map</span>
+              </button>
+
+              <!-- Master Plan → يفتح الصورة في modal -->
+              <button class="btn rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
+                      style="min-width:120px;min-height:90px;padding:16px;"
+                      [class.btn-outline-secondary]="blog().masterPlanImageUrl"
+                      [class.btn-outline-light]="!blog().masterPlanImageUrl"
+                      [style.opacity]="!blog().masterPlanImageUrl ? '0.4' : '1'"
+                      [disabled]="!blog().masterPlanImageUrl"
+                      (click)="blog().masterPlanImageUrl && openImageModal(blogService.getImageUrl(blog().masterPlanImageUrl))">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#1a1a2e" viewBox="0 0 24 24">
+                  <path d="M3 3h8v8H3zm2 2v4h4V5zm8-2h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zm8-2h8v8h-8zm2 2v4h4v-4z"/>
+                </svg>
+                <span class="small text-dark">Master Plan</span>
+              </button>
 
             </div>
           </div>
@@ -281,7 +290,7 @@
                                  title="Call broker">
                                 <i class="bi bi-telephone-fill text-dark" style="font-size:0.85rem;"></i>
                               </a>
-                              <a [href]="'https://wa.me/20' + (unit.brokerPhone || '').replace(/^0+/, '')"
+                              <a [href]="getBrokerWhatsAppLink(unit.brokerPhone, unit.code)"
                                  target="_blank"
                                  class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
                                  style="width:36px;height:36px;background:#25D366;"
@@ -401,7 +410,7 @@
                         [(ngModel)]="contactMessage"></textarea>
               <button class="btn btn-danger w-100 rounded-3 fw-bold py-2"
                       (click)="submitContact()">
-                Submit
+                <i class="bi bi-whatsapp me-2"></i>Send via WhatsApp
               </button>
             </div>
           </div>
@@ -411,6 +420,24 @@
     </div>
   }
 </div>
+
+<!-- ===== MAP MODAL ===== -->
+@if (mapModalOpen()) {
+  <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+       style="background:rgba(0,0,0,0.85);z-index:9999;" (click)="mapModalOpen.set(false)">
+    <div class="position-relative bg-white rounded-4 overflow-hidden shadow-lg"
+         style="width:90vw;max-width:900px;height:80vh;"
+         (click)="$event.stopPropagation()">
+      <button class="btn btn-dark position-absolute top-0 end-0 m-3 rounded-circle"
+              style="width:36px;height:36px;padding:0;z-index:1;"
+              (click)="mapModalOpen.set(false)">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <iframe [src]="safeMapUrl()" width="100%" height="100%"
+              style="border:0;" allowfullscreen loading="lazy"></iframe>
+    </div>
+  </div>
+}
 
 <!-- ===== GALLERY LIGHTBOX ===== -->
 @if (galleryOpen()) {

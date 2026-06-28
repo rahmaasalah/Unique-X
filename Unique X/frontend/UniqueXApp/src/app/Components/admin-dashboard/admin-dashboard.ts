@@ -1230,6 +1230,59 @@ paymentPlans = signal<any[]>([]);
 articleSections = signal<any[]>([]);
 faqs = signal<any[]>([]);
 
+// --- Unit selector signals ---
+unitSearchText = signal<string>('');
+isUnitDropdownOpen = signal<boolean>(false);
+selectedUnits = signal<any[]>([]);
+
+filteredUnitOptions = computed(() => {
+  const search = this.unitSearchText().toLowerCase();
+  const selectedIds = this.selectedUnits().map(u => u.id);
+  return this.properties()
+    .filter(p =>
+      (p.code && p.code.toLowerCase().includes(search)) ||
+      (p.title && p.title.toLowerCase().includes(search))
+    )
+    .slice(0, 50);
+});
+
+isUnitSelected(id: number): boolean {
+  return this.selectedUnits().some(u => u.id === id);
+}
+
+addUnitId(prop: any) {
+  if (this.selectedUnits().length >= 12) return;
+  if (!this.isUnitSelected(prop.id)) {
+    this.selectedUnits.update(list => [...list, { id: prop.id, code: prop.code, title: prop.title }]);
+  }
+  this.unitSearchText.set('');
+  this.isUnitDropdownOpen.set(false);
+}
+
+removeUnitId(id: number) {
+  this.selectedUnits.update(list => list.filter(u => u.id !== id));
+}
+
+closeUnitDropdown() {
+  setTimeout(() => this.isUnitDropdownOpen.set(false), 150);
+}
+
+// --- Slider preview ---
+sliderPreviewUrls = signal<string[]>([]);
+
+removeNewSliderImage(index: number) {
+  const current = [...this.blogSliderFiles()];
+  current.splice(index, 1);
+  this.blogSliderFiles.set(current);
+  // إعادة بناء الـ preview URLs
+  const urls = current.map(f => URL.createObjectURL(f));
+  this.sliderPreviewUrls.set(urls);
+}
+
+getSliderPreviewUrl(index: number): string {
+  return this.sliderPreviewUrls()[index] || '';
+}
+
 initBlogForm(blog?: any) {
   this.blogForm = this.fb.group({
     title:                [''],
@@ -1238,10 +1291,8 @@ initBlogForm(blog?: any) {
     isPublished:          [true],
     pricePerMeterResale:  [null],
     pricePerMeterPrimary: [null],
-    adminPhone:           [''],
     projectDetails:       [''],
     mapEmbedUrl:          [''],
-    unitIdsStr:           [''],
   });
   if (blog) {
     this.blogForm.patchValue({
@@ -1251,10 +1302,8 @@ initBlogForm(blog?: any) {
       isPublished:          blog.isPublished,
       pricePerMeterResale:  blog.pricePerMeterResale,
       pricePerMeterPrimary: blog.pricePerMeterPrimary,
-      adminPhone:           blog.adminPhone || '',
       projectDetails:       blog.projectDetails || '',
       mapEmbedUrl:          blog.mapEmbedUrl || '',
-      unitIdsStr:           blog.unitIdsJson ? JSON.parse(blog.unitIdsJson || '[]').join(', ') : '',
     });
     this.paymentPlans.set(this.parseJson(blog.paymentPlansJson));
     this.articleSections.set(this.parseJson(blog.articleSectionsJson));
@@ -1286,8 +1335,11 @@ loadBlogs() {
 openAddBlog() {
   this.editingBlog.set(null);
   this.blogSliderFiles.set([]);
+  this.sliderPreviewUrls.set([]);
   this.blogMasterPlanFile.set(null);
   this.blogButtonFiles = { 1: null, 2: null, 3: null };
+  this.selectedUnits.set([]);
+  this.unitSearchText.set('');
   this.initBlogForm();
   const modal = new (window as any).bootstrap.Modal(document.getElementById('blogFormModal'));
   modal.show();
@@ -1296,8 +1348,19 @@ openAddBlog() {
 openEditBlog(blog: any) {
   this.editingBlog.set(blog);
   this.blogSliderFiles.set([]);
+  this.sliderPreviewUrls.set([]);
   this.blogMasterPlanFile.set(null);
   this.blogButtonFiles = { 1: null, 2: null, 3: null };
+  this.unitSearchText.set('');
+
+  // ملء selectedUnits من الـ blog الموجود
+  const unitIds: number[] = this.parseJson(blog.unitIdsJson);
+  const unitObjects = unitIds
+    .map(id => this.properties().find(p => p.id === id))
+    .filter(p => !!p)
+    .map(p => ({ id: p.id, code: p.code, title: p.title }));
+  this.selectedUnits.set(unitObjects);
+
   this.initBlogForm(blog);
   const modal = new (window as any).bootstrap.Modal(document.getElementById('blogFormModal'));
   modal.show();
@@ -1306,6 +1369,9 @@ openEditBlog(blog: any) {
 onSliderImagesChange(event: any) {
   const files = Array.from(event.target.files) as File[];
   this.blogSliderFiles.set(files);
+  // بناء preview URLs للصور الجديدة
+  const urls = files.map(f => URL.createObjectURL(f));
+  this.sliderPreviewUrls.set(urls);
 }
 
 onMasterPlanChange(event: any) {
@@ -1352,10 +1418,8 @@ submitBlog() {
   this.blogSubmitting.set(true);
   const f = this.blogForm.value;
 
-  // Parse unit IDs
-  const unitIds = f.unitIdsStr
-    ? f.unitIdsStr.split(',').map((s: string) => parseInt(s.trim())).filter((n: number) => !isNaN(n)).slice(0, 12)
-    : [];
+  // Parse unit IDs from selectedUnits signal
+  const unitIds = this.selectedUnits().map(u => u.id).slice(0, 12);
 
   const fd = new FormData();
   fd.append('Title',                f.title);
@@ -1364,7 +1428,7 @@ submitBlog() {
   fd.append('IsPublished',          f.isPublished ? 'true' : 'false');
   fd.append('PricePerMeterResale',  f.pricePerMeterResale?.toString() || '');
   fd.append('PricePerMeterPrimary', f.pricePerMeterPrimary?.toString() || '');
-  fd.append('AdminPhone',           f.adminPhone || '');
+  fd.append('AdminPhone',           '01509064020'); // رقم الادمن ثابت
   fd.append('Button1Label',         'Gallery');
   fd.append('Button2Label',         'View on Map');
   fd.append('Button3Label',         'Master Plan');
