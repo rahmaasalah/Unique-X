@@ -1786,18 +1786,41 @@
           <h6 class="fw-bold text-danger mb-3"><i class="bi bi-images me-2"></i>Photo Slider</h6>
           <div class="mb-4">
             <input type="file" class="form-control rounded-3 bg-light border-0"
-                   accept="image/*" multiple (change)="onSliderImagesChange($event)">
+                   accept="image/*" multiple (change)="onSliderImagesChange($event)" #sliderInput>
             <small class="text-muted">Select multiple images for the slider</small>
+
+            <!-- صور موجودة على السيرفر (عند التعديل) -->
             @if (editingBlog()?.sliderImages) {
-              <div class="d-flex flex-wrap gap-2 mt-3">
-                @for (img of getSliderImagesArray(editingBlog()); track img) {
-                  <div class="position-relative">
-                    <img [src]="getBlogImageUrl(img)" style="width:80px;height:60px;object-fit:cover;border-radius:8px;" alt="">
-                    <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0"
-                            style="width:18px;height:18px;font-size:10px;line-height:1;"
-                            (click)="removeSliderImage(img)">×</button>
-                  </div>
-                }
+              <div class="mt-3">
+                <small class="text-muted fw-semibold d-block mb-2">Existing Images:</small>
+                <div class="d-flex flex-wrap gap-2">
+                  @for (img of getSliderImagesArray(editingBlog()); track img) {
+                    <div class="position-relative">
+                      <img [src]="getBlogImageUrl(img)" style="width:80px;height:60px;object-fit:cover;border-radius:8px;" alt="">
+                      <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0"
+                              style="width:18px;height:18px;font-size:10px;line-height:1;"
+                              (click)="removeSliderImage(img)">×</button>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- صور تم اختيارها حديثاً (Preview قبل الرفع) -->
+            @if (blogSliderFiles().length > 0) {
+              <div class="mt-3">
+                <small class="text-muted fw-semibold d-block mb-2">New Images Selected ({{ blogSliderFiles().length }}):</small>
+                <div class="d-flex flex-wrap gap-2">
+                  @for (file of blogSliderFiles(); track $index; let i = $index) {
+                    <div class="position-relative">
+                      <img [src]="getSliderPreviewUrl(i)" style="width:80px;height:60px;object-fit:cover;border-radius:8px;border:2px solid #ef3341;" alt="">
+                      <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0"
+                              style="width:18px;height:18px;font-size:10px;line-height:1;"
+                              (mousedown)="removeNewSliderImage(i)">×</button>
+                      <span class="position-absolute bottom-0 start-0 badge bg-danger" style="font-size:8px;border-radius:0 0 0 6px;">NEW</span>
+                    </div>
+                  }
+                </div>
               </div>
             }
           </div>
@@ -1822,60 +1845,7 @@
           <hr class="my-3">
 
           <!-- ── Section 4: Quick View Buttons (أسماء ثابتة) ── -->
-          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-grid-3x1-gap me-2"></i>Quick View Buttons</h6>
-          <div class="row g-3 mb-4">
-            <div class="col-md-4">
-              <div class="card border-0 bg-light rounded-3 p-3">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                  <i class="bi bi-images text-danger"></i>
-                  <span class="fw-bold small">Gallery</span>
-                </div>
-                <input type="file" class="form-control form-control-sm rounded-3 border-0"
-                       accept="image/*" (change)="onButtonImageChange($event, 1)">
-                @if (editingBlog()?.button1ImageUrl) {
-                  <img [src]="getBlogImageUrl(editingBlog().button1ImageUrl)"
-                       class="mt-2 rounded-2" style="height:50px;object-fit:cover;" alt="">
-                }
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="card border-0 bg-light rounded-3 p-3">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                  <i class="bi bi-map text-danger"></i>
-                  <span class="fw-bold small">View on Map</span>
-                </div>
-                <input type="file" class="form-control form-control-sm rounded-3 border-0"
-                       accept="image/*" (change)="onButtonImageChange($event, 2)">
-                @if (editingBlog()?.button2ImageUrl) {
-                  <img [src]="getBlogImageUrl(editingBlog().button2ImageUrl)"
-                       class="mt-2 rounded-2" style="height:50px;object-fit:cover;" alt="">
-                }
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="card border-0 bg-light rounded-3 p-3">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                  <i class="bi bi-layout-text-window-sidebar text-danger"></i>
-                  <span class="fw-bold small">Master Plan</span>
-                </div>
-                <input type="file" class="form-control form-control-sm rounded-3 border-0"
-                       accept="image/*" (change)="onButtonImageChange($event, 3)">
-                @if (editingBlog()?.button3ImageUrl) {
-                  <img [src]="getBlogImageUrl(editingBlog().button3ImageUrl)"
-                       class="mt-2 rounded-2" style="height:50px;object-fit:cover;" alt="">
-                }
-              </div>
-            </div>
-          </div>
-
-          <!-- ── Admin Contact ── -->
-          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-telephone me-2"></i>Admin Contact Number</h6>
-          <div class="mb-4">
-            <input type="text" class="form-control rounded-3 bg-light border-0"
-                   formControlName="adminPhone"
-                   placeholder="e.g. 01012345678">
-            <small class="text-muted">This number will appear as Call Us & WhatsApp buttons on the project page</small>
-          </div>
+          
 
           <hr class="my-3">
 
@@ -1884,7 +1854,7 @@
           <div class="mb-4">
             <textarea class="form-control rounded-3 bg-light border-0" rows="5"
                       formControlName="projectDetails"
-                      placeholder="Full project details... (HTML supported)"></textarea>
+                      placeholder="Full project details..."></textarea>
           </div>
 
           <hr class="my-3">
@@ -1894,7 +1864,7 @@
           <div class="mb-4">
             <input type="text" class="form-control rounded-3 bg-light border-0"
                    formControlName="mapEmbedUrl"
-                   placeholder="Google Maps embed URL (iframe src)">
+                   placeholder="Google Maps embed URL">
             <small class="text-muted">From Google Maps: Share → Embed a map → copy the src URL</small>
           </div>
 
@@ -1937,7 +1907,7 @@
                            placeholder="Installment (e.g. 5% quarterly)" [(ngModel)]="plan.installment" [ngModelOptions]="{standalone:true}">
                   </div>
                   <div class="col-md-3">
-                    <input type="number" class="form-control form-control-sm rounded-3 border-0"
+                    <input type="number" class="form-control form-control-sm rounded-3 border-0" min="0"
                            placeholder="Years" [(ngModel)]="plan.years" [ngModelOptions]="{standalone:true}">
                   </div>
                   <div class="col-md-3">
@@ -1957,10 +1927,54 @@
           <!-- ── Section 9: Unit IDs ── -->
           <h6 class="fw-bold text-danger mb-3"><i class="bi bi-house me-2"></i>Units (max 12)</h6>
           <div class="mb-4">
-            <input type="text" class="form-control rounded-3 bg-light border-0"
-                   formControlName="unitIdsStr"
-                   placeholder="Property IDs separated by commas (e.g. 12, 45, 78)">
-            <small class="text-muted">Enter property IDs from the system, max 12</small>
+            <!-- Searchable unit selector -->
+            <div class="position-relative">
+              <input type="text" class="form-control rounded-3 bg-light border-0"
+                     placeholder="Search by property code or title..."
+                     [ngModel]="unitSearchText()" 
+                     (ngModelChange)="unitSearchText.set($event); isUnitDropdownOpen.set(true)"
+                     (focus)="isUnitDropdownOpen.set(true)"
+                     (blur)="closeUnitDropdown()"
+                     [ngModelOptions]="{standalone:true}">
+
+              <!-- Dropdown list -->
+              <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+                  [class.show]="isUnitDropdownOpen() && filteredUnitOptions().length > 0"
+                  style="max-height: 220px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1060;">
+                @for (prop of filteredUnitOptions(); track prop.id) {
+                  <li>
+                    <button class="dropdown-item py-2 border-bottom border-light d-flex align-items-center justify-content-between"
+                            (mousedown)="addUnitId(prop)">
+                      <span>
+                        <span class="badge bg-light text-dark border me-2">{{ prop.code }}</span>
+                        <span class="small text-muted">{{ prop.title }}</span>
+                      </span>
+                      @if (isUnitSelected(prop.id)) {
+                        <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                      }
+                    </button>
+                  </li>
+                } @empty {
+                  <li><span class="dropdown-item text-muted small py-2">No properties found.</span></li>
+                }
+              </ul>
+            </div>
+
+            <!-- Selected Units Tags -->
+            @if (selectedUnits().length > 0) {
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                @for (unit of selectedUnits(); track unit.id) {
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 d-flex align-items-center gap-1" style="font-size:0.8rem;">
+                    <span class="fw-bold">{{ unit.code }}</span>
+                    <span class="text-muted small">- {{ unit.title | slice:0:20 }}{{ unit.title?.length > 20 ? '...' : '' }}</span>
+                    <button class="btn-close btn-close-sm ms-1" style="font-size:0.6rem;" (mousedown)="removeUnitId(unit.id)"></button>
+                  </span>
+                }
+              </div>
+              <small class="text-muted mt-1 d-block">{{ selectedUnits().length }}/12 units selected</small>
+            } @else {
+              <small class="text-muted">Search and select property units from the system, max 12</small>
+            }
           </div>
 
           <hr class="my-3">
@@ -1978,7 +1992,7 @@
                 <input type="text" class="form-control form-control-sm rounded-3 border-0 mb-2"
                        placeholder="Headline" [(ngModel)]="section.headline" [ngModelOptions]="{standalone:true}">
                 <textarea class="form-control form-control-sm rounded-3 border-0" rows="3"
-                          placeholder="Text content (HTML supported)"
+                          placeholder="Text content"
                           [(ngModel)]="section.text" [ngModelOptions]="{standalone:true}"></textarea>
               </div>
             }
