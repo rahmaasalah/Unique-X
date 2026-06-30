@@ -257,30 +257,30 @@
   </div>
   
   <!-- الملاحظات الأصلية -->
-  <div *ngIf="item._type === 'visit' && extractOriginalNotes(item.notes)" class="mt-1">
+  <div *ngIf="item._type === 'visit' && item._originalNotes" class="mt-1">
   <span class="text-muted">Notes: </span> 
   <div class="fw-bold text-dark pe-2 mt-1" style="max-height: 120px; overflow-y: auto; white-space: pre-line;">
-    {{ extractOriginalNotes(item.notes) }}
+    {{ item._originalNotes }}
   </div>
 </div>
   
-  <div *ngIf="item._type === 'activity' && extractOriginalNotes(item.notes)" class="mt-1">
+  <div *ngIf="item._type === 'activity' && item._originalNotes" class="mt-1">
     <span class="text-muted">Notes: </span> 
-    <div class="fw-bold text-dark pe-2 mt-1" style="max-height: 120px; overflow-y: auto; white-space: pre-line;">{{ extractOriginalNotes(item.notes) }}</div>
+    <div class="fw-bold text-dark pe-2 mt-1" style="max-height: 120px; overflow-y: auto; white-space: pre-line;">{{ item._originalNotes }}</div>
   </div>
 </div>
 
               <!-- 🟢 إظهار الفيدباك لو موجود -->
-              <div *ngIf="(item._type === 'visit' && item.feedback) || (item._type === 'activity' && extractFeedback(item.notes))" 
+              <div *ngIf="item._feedback" 
                    class="mt-2 p-2 bg-secondary-subtle border border-secondary-subtle rounded-3 small text-dark fw-medium">
-                <span *ngIf="isAdminAction(item)"
+                <span *ngIf="item._isAdminAction"
                       class="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-block mb-1"
                       style="font-size: 0.65rem;">
                   <i class="bi bi-person-badge-fill me-1"></i> By Admin
                 </span>
                 <div>
                   <i class="bi bi-chat-quote-fill text-dark me-1"></i> 
-                  {{ item._type === 'visit' ? cleanAdminPrefix(item.feedback) : cleanAdminPrefix(extractFeedback(item.notes)) }}
+                  {{ item._feedback }}
                 </div>
               </div>
 
@@ -309,7 +309,7 @@
               </select>
 
               <!-- 🟢 زرار Add Feedback يظهر فقط لو المهمة Completed ومفيش فيدباك متسجل -->
-              <button *ngIf="item.status === 'Completed' && ((item._type === 'visit' && !item.feedback) || (item._type === 'activity' && !extractFeedback(item.notes)))"
+              <button *ngIf="item.status === 'Completed' && !item._feedback"
                       class="btn btn-sm btn-outline-danger rounded-pill mt-2 fw-bold" 
                       (click)="openFeedbackModal(item)">
                 + Add Feedback

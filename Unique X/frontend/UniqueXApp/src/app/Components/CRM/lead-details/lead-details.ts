@@ -331,6 +331,17 @@ export class LeadDetailsComponent implements OnInit {
         const v = (res.visits ||[]).map((x: any) => ({ ...x, _type: 'visit', _date: x.visitDate }));
         const a = (res.activities ||[]).map((x: any) => ({ ...x, _type: 'activity', _date: x.dueDate }));
         const combined = [...v, ...a].sort((a, b) => new Date(b._date).getTime() - new Date(a._date).getTime());
+
+        // 🟢 بنحسب القيم المشتقة مرة واحدة هنا بدل ما الـ template يستدعي
+        // extractFeedback / extractOriginalNotes / cleanAdminPrefix / isAdminAction
+        // في كل دورة change detection (وده كان بيسبب البطء أثناء الكتابة)
+        combined.forEach((item: any) => {
+          const rawFeedback = item._type === 'visit' ? item.feedback : this.extractFeedback(item.notes);
+          item._feedback = this.cleanAdminPrefix(rawFeedback);
+          item._originalNotes = this.extractOriginalNotes(item.notes);
+          item._isAdminAction = this.isAdminAction(item);
+        });
+
         this.combinedTimeline.set(combined);
       },
       error: (err) => console.error('Error fetching lead details:', err)
