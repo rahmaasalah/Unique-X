@@ -4,9 +4,10 @@ import { PropertyCardComponent } from '../property-card/property-card'; // مه�
 import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
 import { ActivatedRoute } from '@angular/router';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../Services/auth';
 import { AdminService } from '../../Services/admin';
+import { BlogService } from '../../Services/blog.service';
 import { GoogleAnalyticsService } from 'ngx-google-analytics';
 
 
@@ -14,7 +15,7 @@ import { GoogleAnalyticsService } from 'ngx-google-analytics';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, PropertyCardComponent], 
+  imports: [CommonModule, PropertyCardComponent, RouterModule], 
   templateUrl: './home.html',
   styleUrl: './home.css'
 })
@@ -22,9 +23,11 @@ export class HomeComponent implements OnInit {
   properties = signal<Property[]>([]); 
   message = signal<string>('');
   ads = signal<any[]>([]);
+  blogs = signal<any[]>([]);
 
   adminPhone = signal<string>('');
   private gaService = inject(GoogleAnalyticsService);
+  private blogService = inject(BlogService);
 
   resaleProps = computed(() => this.properties().filter(p => p.listingType === 'Resale'));
   resaleProjectProps = computed(() => this.properties().filter(p => p.listingType === 'ResaleProject'));
@@ -151,10 +154,22 @@ ngOnInit(): void {
   this.authService.getAdminContact().subscribe(res => {
     this.adminPhone.set(res.phoneNumber);
   });
+
+  this.loadBlogs();
 }
 loadHotDeals() {
   // افترضي وجود هذه الدالة في الـ PropertyService
   this.propertyService.getHotDeals().subscribe(data => this.hotDealsList.set(data));
+}
+
+loadBlogs() {
+  this.blogService.getAll().subscribe({
+    next: (data: any[]) => {
+      // بنعرض البلوجز المنشورة بس
+      this.blogs.set(data.filter(b => b.isPublished));
+    },
+    error: () => {}
+  });
 }
 
 updateProjectsList(cityId: any) {
@@ -418,5 +433,21 @@ addToCompare(propertyId: number) {
     // لو من الهوم، نبدأ مقارنة جديدة
     this.router.navigate(['/compare', propertyId]);
   }
+}
+
+getBlogImageUrl(filename: string): string {
+  if (!filename) return '';
+  return this.blogService.getImageUrl(filename);
+}
+
+getBlogThumbnail(blog: any): string {
+  // لو في cover image نستخدمه
+  if (blog.coverImageUrl) return this.blogService.getImageUrl(blog.coverImageUrl);
+  // fallback: أول صورة من الـ sliderImages
+  if (blog.sliderImages) {
+    const first = blog.sliderImages.split('|').find((s: string) => s.trim());
+    if (first) return first.trim();
+  }
+  return '';
 }
 }
