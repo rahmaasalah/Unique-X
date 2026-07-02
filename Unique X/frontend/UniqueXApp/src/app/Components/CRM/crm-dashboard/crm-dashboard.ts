@@ -79,17 +79,28 @@ closeCampaignDropdown() {
 
   visitSearch = signal<string>('');
 visitStatusFilter = signal<string>('');
+visitDateFrom = signal<string>('');
+visitDateTo = signal<string>('');
 activitySearch = signal<string>('');
 activityStatusFilter = signal<string>('');
+activityDateFrom = signal<string>('');
+activityDateTo = signal<string>('');
 
 // دالة فلترة الزيارات
 filteredVisits = computed(() => {
   let list = this.allVisitsList();
   const q = this.visitSearch().toLowerCase();
   const status = this.visitStatusFilter();
+  const from = this.visitDateFrom();
+  const to = this.visitDateTo();
 
   if (q) list = list.filter(v => v.clientName.toLowerCase().includes(q));
   if (status) list = list.filter(v => v.status === status);
+  if (from) list = list.filter(v => new Date(v.date) >= new Date(from));
+  if (to) {
+    const toEnd = new Date(to); toEnd.setHours(23, 59, 59, 999);
+    list = list.filter(v => new Date(v.date) <= toEnd);
+  }
   return list;
 });
 
@@ -98,9 +109,16 @@ filteredActivities = computed(() => {
   let list = this.allActivitiesList();
   const q = this.activitySearch().toLowerCase();
   const status = this.activityStatusFilter();
+  const from = this.activityDateFrom();
+  const to = this.activityDateTo();
 
   if (q) list = list.filter(a => a.clientName.toLowerCase().includes(q));
   if (status) list = list.filter(a => a.status === status);
+  if (from) list = list.filter(a => new Date(a.date) >= new Date(from));
+  if (to) {
+    const toEnd = new Date(to); toEnd.setHours(23, 59, 59, 999);
+    list = list.filter(a => new Date(a.date) <= toEnd);
+  }
   return list;
 });
 
@@ -108,9 +126,13 @@ clearFilters(type: 'visit' | 'activity') {
   if (type === 'visit') {
     this.visitSearch.set('');
     this.visitStatusFilter.set('');
+    this.visitDateFrom.set('');
+    this.visitDateTo.set('');
   } else {
     this.activitySearch.set('');
     this.activityStatusFilter.set('');
+    this.activityDateFrom.set('');
+    this.activityDateTo.set('');
   }
 }
 
@@ -349,6 +371,71 @@ if (campCode) leads = leads.filter(l => l.campaignName === campCode);
 requestsList = computed(() => this.baseFilteredLeads().filter(l => l.statusId === 4));
 closingStageList = computed(() => this.baseFilteredLeads().filter(l => l.statusId === 18));
 revenueList = computed(() => this.baseFilteredLeads().filter(l => l.totalAmount > 0).sort((a, b) => b.totalAmount - a.totalAmount));
+
+// --- فلاتر تاب Requests ---
+reqSearch = signal<string>('');
+reqBroker = signal<string>('');
+reqCategory = signal<string>('');   // purpose: Primary / Resale / Rent / Resale Project
+reqMinBudget = signal<number | null>(null);
+reqMaxBudget = signal<number | null>(null);
+reqDateFrom = signal<string>('');
+reqDateTo = signal<string>('');
+reqCampaignCode = signal<string>('');
+reqSearchCampaign = signal<string>('');
+isReqCampaignOpen = signal<boolean>(false);
+
+filteredReqCampaignCodes = computed(() => {
+  const q = this.reqSearchCampaign().toLowerCase();
+  const codes = this.campaignsList();
+  return q ? codes.filter((c: string) => c.toLowerCase().includes(q)) : codes;
+});
+
+selectReqCampaign(code: string) {
+  this.reqCampaignCode.set(code);
+  this.reqSearchCampaign.set(code);
+  this.isReqCampaignOpen.set(false);
+}
+
+closeReqCampaignDropdown() {
+  setTimeout(() => this.isReqCampaignOpen.set(false), 200);
+}
+
+filteredRequestsList = computed(() => {
+  let list = this.requestsList();
+  const q = this.reqSearch().toLowerCase();
+  const broker = this.reqBroker();
+  const category = this.reqCategory();
+  const minB = this.reqMinBudget();
+  const maxB = this.reqMaxBudget();
+  const from = this.reqDateFrom();
+  const to = this.reqDateTo();
+  const campaign = this.reqCampaignCode();
+
+  if (q) list = list.filter(l => l.fullName.toLowerCase().includes(q) || l.phoneNumber.includes(q));
+  if (broker) list = list.filter(l => l.brokerName === broker);
+  if (category) list = list.filter(l => l.purpose === category);
+  if (campaign) list = list.filter(l => l.campaignName === campaign);
+  if (minB !== null) list = list.filter(l => l.totalAmount >= minB);
+  if (maxB !== null) list = list.filter(l => l.totalAmount <= maxB);
+  if (from) list = list.filter(l => new Date(l.createdAt) >= new Date(from));
+  if (to) {
+    const toEnd = new Date(to); toEnd.setHours(23, 59, 59, 999);
+    list = list.filter(l => new Date(l.createdAt) <= toEnd);
+  }
+  return list;
+});
+
+clearRequestFilters() {
+  this.reqSearch.set('');
+  this.reqBroker.set('');
+  this.reqCategory.set('');
+  this.reqMinBudget.set(null);
+  this.reqMaxBudget.set(null);
+  this.reqDateFrom.set('');
+  this.reqDateTo.set('');
+  this.reqCampaignCode.set('');
+  this.reqSearchCampaign.set('');
+}
 
 //allVisitsList = computed(() => this.baseFilteredEvents().filter(e => e.type === 'Visit').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
 allVisitsList = computed(() => {

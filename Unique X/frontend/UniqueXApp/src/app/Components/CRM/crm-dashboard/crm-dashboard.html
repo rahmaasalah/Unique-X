@@ -1313,11 +1313,11 @@
       </section>
     }
 
-    @if (activeTab() === 'closed_deals' || activeTab() === 'requests' || activeTab() === 'closing_stage') {
+    @if (activeTab() === 'closed_deals' || activeTab() === 'closing_stage') {
       <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
         <h4 class="fw-bold mb-3 flex-shrink-0">
-          <i class="bi" [ngClass]="{'bi-handshake-fill text-success': activeTab() === 'closed_deals', 'bi-telephone-inbound-fill text-warning': activeTab() === 'requests', 'bi-hourglass-split text-secondary': activeTab() === 'closing_stage'}"></i> 
-          {{ activeTab() === 'closed_deals' ? 'Closed Deals Details' : activeTab() === 'requests' ? 'Clients Requests (To Call)' : 'Leads in Closing Stage' }}
+          <i class="bi" [ngClass]="{'bi-handshake-fill text-success': activeTab() === 'closed_deals', 'bi-hourglass-split text-secondary': activeTab() === 'closing_stage'}"></i> 
+          {{ activeTab() === 'closed_deals' ? 'Closed Deals Details' : 'Leads in Closing Stage' }}
         </h4>
         
         <div class="card border-0 shadow-sm rounded-4 d-flex flex-column flex-grow-1" style="min-height: 0;">
@@ -1334,7 +1334,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let lead of (activeTab() === 'closed_deals' ? closedDealsList() : activeTab() === 'requests' ? requestsList() : closingStageList())">
+                <tr *ngFor="let lead of (activeTab() === 'closed_deals' ? closedDealsList() : closingStageList())">
                   <td class="ps-4 py-3">
                     <div class="fw-bold text-dark fs-6">{{ lead.fullName }}</div>
                     <div class="text-muted mt-1"><i class="bi bi-telephone-fill me-1"></i> {{ lead.phoneNumber }}</div>
@@ -1357,8 +1357,168 @@
                     <button class="btn btn-sm btn-danger rounded-pill px-4 fw-bold shadow-sm" [routerLink]="['/crm/leads', lead.id]">Profile</button>
                   </td>
                 </tr>
-                <tr *ngIf="(activeTab() === 'closed_deals' ? closedDealsList() : activeTab() === 'requests' ? requestsList() : closingStageList()).length === 0">
+                <tr *ngIf="(activeTab() === 'closed_deals' ? closedDealsList() : closingStageList()).length === 0">
                   <td colspan="6" class="text-center py-5 text-muted">No records found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ============ Requests Tab (منفصل مع فلاتر) ============ -->
+    @if (activeTab() === 'requests') {
+      <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
+        <h4 class="fw-bold mb-3 flex-shrink-0">
+          <i class="bi bi-telephone-inbound-fill text-warning me-2"></i> Clients Requests (To Call)
+        </h4>
+
+        <!-- شريط الفلاتر - سطرين -->
+        <div class="p-3 bg-white rounded-4 border shadow-sm mb-3">
+          <!-- السطر الأول -->
+          <div class="row g-2 mb-2">
+            <div class="col-md-3 col-6">
+              <label class="form-label small fw-bold text-muted mb-1">Client / Phone</label>
+              <input type="text" class="form-control bg-light border-0" placeholder="Search..." [(ngModel)]="reqSearch">
+            </div>
+            <div class="col-md-3 col-6">
+              <label class="form-label small fw-bold text-muted mb-1">Broker</label>
+              <select class="form-select bg-light border-0" [(ngModel)]="reqBroker">
+                <option value="">All Brokers</option>
+                <option *ngFor="let b of vipBrokers()" [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
+              </select>
+            </div>
+            <div class="col-md-3 col-6">
+              <label class="form-label small fw-bold text-muted mb-1">Property Type</label>
+              <select class="form-select bg-light border-0" [(ngModel)]="reqCategory">
+                <option value="">All Property Types</option>
+                <option value="Primary">Primary</option>
+                <option value="Resale">Resale</option>
+                <option value="Rent">Rent</option>
+                <option value="Resale Project">Resale Project</option>
+              </select>
+            </div>
+            <!-- Campaign Dropdown -->
+            <div class="col-md-3 col-6 position-relative">
+              <label class="form-label small fw-bold text-muted mb-1">Campaign Code</label>
+              <input type="text" class="form-control bg-light border-0"
+                     placeholder="Campaign code..."
+                     [ngModel]="reqSearchCampaign()"
+                     (ngModelChange)="reqSearchCampaign.set($event); reqCampaignCode.set(''); isReqCampaignOpen.set(true)"
+                     (focus)="isReqCampaignOpen.set(true)"
+                     (blur)="closeReqCampaignDropdown()">
+              <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+                  [class.show]="isReqCampaignOpen()"
+                  style="max-height: 200px; overflow-y: auto; position: absolute; z-index: 1050;">
+                <li>
+                  <button type="button" class="dropdown-item py-2 text-muted small"
+                          (mousedown)="selectReqCampaign(''); reqSearchCampaign.set('')">
+                    All Campaigns
+                  </button>
+                </li>
+                @for (code of filteredReqCampaignCodes(); track code) {
+                  <li>
+                    <button type="button" class="dropdown-item py-2 fw-bold"
+                            (mousedown)="selectReqCampaign(code)">{{ code }}</button>
+                  </li>
+                } @empty {
+                  <li><span class="dropdown-item text-muted small">No codes found</span></li>
+                }
+              </ul>
+            </div>
+          </div>
+
+          <!-- السطر التاني -->
+          <div class="row g-2 align-items-end">
+            <div class="col-md-2 col-6">
+              <label class="form-label small fw-bold text-muted mb-1">Budget Min (EGP)</label>
+              <input type="number" class="form-control bg-light border-0" placeholder="0" min="0"
+                     [ngModel]="reqMinBudget()" (ngModelChange)="reqMinBudget.set($event || null)">
+            </div>
+            <div class="col-md-2 col-6">
+              <label class="form-label small fw-bold text-muted mb-1">Budget Max (EGP)</label>
+              <input type="number" class="form-control bg-light border-0" placeholder="∞" min="0"
+                     [ngModel]="reqMaxBudget()" (ngModelChange)="reqMaxBudget.set($event || null)">
+            </div>
+            <div class="col-md-2 col-6">
+              <label class="form-label small fw-bold text-muted mb-1">Created From</label>
+              <input type="date" class="form-control bg-light border-0" [(ngModel)]="reqDateFrom">
+            </div>
+            <div class="col-md-2 col-6">
+              <label class="form-label small fw-bold text-muted mb-1">Created To</label>
+              <input type="date" class="form-control bg-light border-0" [(ngModel)]="reqDateTo">
+            </div>
+            <div class="col-md-2 col-6 text-center">
+              <label class="form-label small fw-bold text-muted mb-1 d-block">Count</label>
+              <span class="badge bg-danger p-2 px-4 fs-6">{{ filteredRequestsList().length }}</span>
+            </div>
+            <div class="col-md-2 col-6">
+              <button class="btn btn-outline-danger w-100 fw-bold rounded-pill" (click)="clearRequestFilters()">
+                <i class="bi bi-x-circle me-1"></i> Clear All
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- الجدول -->
+        <div class="card border-0 shadow-sm rounded-4 d-flex flex-column flex-grow-1" style="min-height: 0;">
+          <div class="table-responsive flex-grow-1" style="font-size: 0.85rem; overflow-y: auto;">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-nowrap sticky-top" style="z-index: 2;">
+                <tr>
+                  <th class="ps-4">Client</th>
+                  <th>Assigned Broker</th>
+                  <th>Campaign & Source</th>
+                  <th>Category</th>
+                  <th>Budget</th>
+                  <th>Created Date</th>
+                  <th>Last Update</th>
+                  <th class="text-end pe-4">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let lead of filteredRequestsList()">
+                  <td class="ps-4 py-3">
+                    <div class="fw-bold text-dark fs-6">{{ lead.fullName }}</div>
+                    <div class="text-muted mt-1"><i class="bi bi-telephone-fill me-1"></i> {{ lead.phoneNumber }}</div>
+                  </td>
+                  <td><span class="fw-bold text-primary"><i class="bi bi-person-badge-fill me-1"></i>{{ lead.brokerName }}</span></td>
+                  <td>
+                    <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm d-block mb-1 w-auto" style="max-width: fit-content;">
+                      <i class="bi" [ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
+                    </span>
+                    <small class="text-muted fw-bold" *ngIf="lead.campaignSource"><i class="bi bi-funnel-fill"></i> {{ lead.campaignSource }}</small>
+                  </td>
+                  <td>
+                    <span *ngIf="lead.purpose" class="badge rounded-pill px-3 py-2"
+                          [ngClass]="{
+                            'bg-success-subtle text-success border border-success-subtle': lead.purpose === 'Primary',
+                            'bg-warning-subtle text-warning border border-warning-subtle': lead.purpose === 'Resale',
+                            'bg-info-subtle text-info border border-info-subtle': lead.purpose === 'Rent',
+                            'bg-secondary-subtle text-secondary border border-secondary-subtle': lead.purpose === 'Resale Project'
+                          }">
+                      {{ lead.purpose }}
+                    </span>
+                    <span *ngIf="!lead.purpose" class="text-muted small">—</span>
+                  </td>
+                  <td>
+                    <span *ngIf="lead.totalAmount" class="fw-bold text-success">{{ lead.totalAmount | number }} EGP</span>
+                    <span *ngIf="!lead.totalAmount" class="text-muted small">—</span>
+                  </td>
+                  <td><div class="fw-bold text-dark">{{ lead.createdAt | date:'mediumDate' }}</div></td>
+                  <td>
+                    <div class="fw-bold text-danger bg-danger-subtle px-2 py-1 rounded d-inline-block">
+                      <i class="bi bi-clock-history me-1"></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
+                    </div>
+                  </td>
+                  <td class="text-end pe-4 text-nowrap">
+                    <button class="btn btn-sm btn-light border rounded-pill px-3 text-danger fw-bold shadow-sm me-2" (click)="openRequestModal(lead)"><i class="bi bi-card-list me-1"></i> Request</button>
+                    <button class="btn btn-sm btn-danger rounded-pill px-3 fw-bold shadow-sm" [routerLink]="['/crm/leads', lead.id]">Profile</button>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredRequestsList().length === 0">
+                  <td colspan="8" class="text-center py-5 text-muted">No records found.</td>
                 </tr>
               </tbody>
             </table>
@@ -1414,10 +1574,10 @@
         </h4>
 
         <div class="row g-2 mb-3 p-3 bg-white rounded-4 border shadow-sm align-items-center">
-  <div class="col-md-4">
+  <div class="col-md-3">
     <input type="text" class="form-control bg-light border-0" placeholder="Search Client..." [(ngModel)]="visitSearch">
   </div>
-  <div class="col-md-3">
+  <div class="col-md-2">
     <select class="form-select bg-light border-0" [(ngModel)]="visitStatusFilter">
       <option value="">All Statuses</option>
       <option value="Pending">Pending</option>
@@ -1425,8 +1585,16 @@
       <option value="Cancelled">Cancelled</option>
     </select>
   </div>
-  <div class="col-md-2 text-end fw-bold"><span class="badge bg-danger p-2 px-3">Count: {{ filteredVisits().length }}</span></div>
-  <div class="col-md-3">
+  <div class="col-md-2">
+    <input type="date" class="form-control bg-light border-0" placeholder="From" [(ngModel)]="visitDateFrom"
+           title="From date">
+  </div>
+  <div class="col-md-2">
+    <input type="date" class="form-control bg-light border-0" placeholder="To" [(ngModel)]="visitDateTo"
+           title="To date">
+  </div>
+  <div class="col-md-1 text-end fw-bold"><span class="badge bg-danger p-2 px-3">Count: {{ filteredVisits().length }}</span></div>
+  <div class="col-md-2">
     <button class="btn btn-outline-danger w-100 fw-bold rounded-pill" (click)="clearFilters('visit')">
       <i class="bi bi-x-circle me-1"></i> Clear
     </button>
@@ -1489,10 +1657,10 @@
         </h4>
 
         <div class="row g-2 mb-3 p-3 bg-white rounded-4 border shadow-sm align-items-center">
-  <div class="col-md-4">
+  <div class="col-md-3">
     <input type="text" class="form-control bg-light border-0" placeholder="Search Summary..." [(ngModel)]="activitySearch">
   </div>
-  <div class="col-md-3">
+  <div class="col-md-2">
     <select class="form-select bg-light border-0" [(ngModel)]="activityStatusFilter">
       <option value="">All Statuses</option>
       <option value="Pending">Pending</option>
@@ -1500,8 +1668,16 @@
       <option value="Cancelled">Cancelled</option>
     </select>
   </div>
-  <div class="col-md-2 text-end fw-bold"><span class="badge bg-danger p-2 px-3">Count: {{ filteredActivities().length }}</span></div>
-  <div class="col-md-3">
+  <div class="col-md-2">
+    <input type="date" class="form-control bg-light border-0" [(ngModel)]="activityDateFrom"
+           title="From date">
+  </div>
+  <div class="col-md-2">
+    <input type="date" class="form-control bg-light border-0" [(ngModel)]="activityDateTo"
+           title="To date">
+  </div>
+  <div class="col-md-1 text-end fw-bold"><span class="badge bg-danger p-2 px-3">Count: {{ filteredActivities().length }}</span></div>
+  <div class="col-md-2">
     <button class="btn btn-outline-danger w-100 fw-bold rounded-pill" (click)="clearFilters('activity')">
       <i class="bi bi-x-circle me-1"></i> Clear
     </button>
