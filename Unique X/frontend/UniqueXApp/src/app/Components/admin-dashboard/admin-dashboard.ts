@@ -961,6 +961,23 @@ finalDecisionReason = signal<string>('');
 callFeedbackApp = signal<any>(null);
 callFeedbackText = signal<string>('');
 
+// === Interview Feedback Modal ===
+interviewFeedbackApp = signal<any>(null);
+viewFeedbackApp = signal<any>(null);
+interviewFeedback = signal({
+  experienceInRE: '',
+  pastExperiences: '',
+  whyRealEstate: '',
+  knowledge: '',
+  salesProcess: '',
+  goal: '',
+  appearance: '',
+  communication: '',
+  presentation: '',
+  language: '',
+  notes: ''
+});
+
 // Final Feedback modal
 finalFeedbackApp = signal<any>(null);
 finalFeedbackText = signal<string>('');
@@ -1066,12 +1083,61 @@ submitReject() {
 }
 
 markAttendance(id: number, attended: boolean) {
-  this.adminService.markAttended(id, attended).subscribe({
+  if (attended) {
+    // لو حضر → نفتح فورم الفيدباك
+    const app = this.jobApplications().find((a: any) => a.id === id);
+    this.interviewFeedbackApp.set(app);
+    this.interviewFeedback.set({
+      experienceInRE: '', pastExperiences: '', whyRealEstate: '',
+      knowledge: '', salesProcess: '', goal: '', appearance: '',
+      communication: '', presentation: '', language: '', notes: ''
+    });
+    const modal = new (window as any).bootstrap.Modal(document.getElementById('interviewFeedbackModal'));
+    modal.show();
+  } else {
+    // لو No Show → نحفظ مباشرة
+    this.adminService.markAttended(id, false).subscribe({
+      next: () => { this.alertService.success('Marked as No Show.'); this.loadJobApplications(); },
+      error: () => this.alertService.error('Failed to update attendance.')
+    });
+  }
+}
+
+updateInterviewFeedback(field: string, value: string) {
+  this.interviewFeedback.update(f => ({ ...f, [field]: value }));
+}
+
+openViewFeedbackModal(app: any) {
+  this.viewFeedbackApp.set(app);
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('viewInterviewFeedbackModal'));
+  modal.show();
+}
+
+submitInterviewFeedback() {
+  const app = this.interviewFeedbackApp();
+  if (!app) return;
+  const fb = this.interviewFeedback();
+
+  this.http.put(`${this.adminService['baseUrl'].replace('/Admin', '')}/jobapplications/${app.id}/interview-feedback`, {
+    experienceInRE:  fb.experienceInRE,
+    pastExperiences: fb.pastExperiences,
+    whyRealEstate:   fb.whyRealEstate,
+    knowledge:       fb.knowledge,
+    salesProcess:    fb.salesProcess,
+    goal:            fb.goal,
+    appearance:      fb.appearance,
+    communication:   fb.communication,
+    presentation:    fb.presentation,
+    language:        fb.language,
+    notes:           fb.notes
+  }).subscribe({
     next: () => {
-      this.alertService.success(attended ? 'Marked as Attended!' : 'Marked as Not Attended.');
+      this.alertService.success('Interview feedback saved!');
+      const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('interviewFeedbackModal'));
+      modal?.hide();
       this.loadJobApplications();
     },
-    error: () => this.alertService.error('Failed to update attendance.')
+    error: () => this.alertService.error('Failed to save feedback.')
   });
 }
 

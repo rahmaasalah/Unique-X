@@ -1,78 +1,43 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './Components/login/login';
-import { RegisterComponent } from './Components/register/register';
-import { HomeComponent } from './Components/home/home';
 import { authGuard } from './Guards/auth-guard';
 import { guestGuard } from './Guards/guest-guard';
-import { PropertyDetailsComponent } from './Components/property-details/property-details';
-import { AddPropertyComponent } from './Components/add-property/add-property';
-import { MyPropertiesComponent } from './Components/my-properties/my-properties';
-import { EditPropertyComponent } from './Components/edit-property/edit-property';
-import { WishlistComponent } from './Components/wishlist/wishlist';
-import { ProfileComponent } from './Components/profile/profile';
-import {adminGuard } from './Guards/admin-guard';
-import { AdminDashboardComponent } from './Components/admin-dashboard/admin-dashboard';
-import { FindAgentComponent } from './Components/find-agent/find-agent';
-import { ComparePropertiesComponent } from './Components/compare-properties/compare-properties';
-import { LeadsDashboardComponent } from './Components/CRM/leads-dashboard/leads-dashboard'; 
-import { LeadDetailsComponent } from './Components/CRM/lead-details/lead-details';
-import { CrmDashboardComponent } from './Components/CRM/crm-dashboard/crm-dashboard';
-import { BrokerProfileComponent } from './Components/CRM/broker-profile/broker-profile';
-import { AddLeadComponent } from './Components/CRM/add-lead/add-lead';
-import { EditRequestComponent } from './Components/CRM/edit-request/edit-request';
-import { CampaignsManagerComponent } from './Components/CRM/campaigns-manager/campaigns-manager';
-import { JoinOurTeamComponent } from './Components/join-our-team/join-our-team';
-
-import { BlogListComponent } from './Components/blog-list/blog-list';
-import { BlogDetailComponent } from './Components/blog-detail/blog-detail';
+import { adminGuard } from './Guards/admin-guard';
 
 export const routes: Routes = [
-  { 
-    path: 'admin', 
-    component: AdminDashboardComponent, // الكومبوننت اللي هتعمليه للأدمن
-    canActivate: [adminGuard] // تفعيل الحماية
-  },
-  { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
-  { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
-
-  { path: 'find-agent', component: FindAgentComponent },
-  { path: 'home', component: HomeComponent },
-  { path: 'add-property', component: AddPropertyComponent, canActivate: [authGuard] },
-  { path: 'property-details/:id', component: PropertyDetailsComponent },
-  { path: 'property-details/:id/:title', component: PropertyDetailsComponent },
+  // ===== Public =====
+  { path: '', loadComponent: () => import('./Components/home/home').then(m => m.HomeComponent), pathMatch: 'full' },
+  { path: 'home', loadComponent: () => import('./Components/home/home').then(m => m.HomeComponent) },
+  { path: 'login', loadComponent: () => import('./Components/login/login').then(m => m.LoginComponent), canActivate: [guestGuard] },
+  { path: 'register', loadComponent: () => import('./Components/register/register').then(m => m.RegisterComponent), canActivate: [guestGuard] },
   { path: 'forgot-password', loadComponent: () => import('./Components/forgot-password/forgot-password').then(m => m.ForgotPasswordComponent) },
-{ path: 'reset-password', loadComponent: () => import('./Components/reset-password/reset-password').then(m => m.ResetPasswordComponent) },
-  { path: 'my-properties', component: MyPropertiesComponent, canActivate: [authGuard] },
-  { path: 'edit-property/:id', component: EditPropertyComponent, canActivate: [authGuard] },
-  { path: 'wishlist', component: WishlistComponent, canActivate: [authGuard] },
-  { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
-  { path: 'compare/:ids', component: ComparePropertiesComponent },
+  { path: 'reset-password', loadComponent: () => import('./Components/reset-password/reset-password').then(m => m.ResetPasswordComponent) },
+  { path: 'find-agent', loadComponent: () => import('./Components/find-agent/find-agent').then(m => m.FindAgentComponent) },
+  { path: 'property-details/:id', loadComponent: () => import('./Components/property-details/property-details').then(m => m.PropertyDetailsComponent) },
+  { path: 'property-details/:id/:title', loadComponent: () => import('./Components/property-details/property-details').then(m => m.PropertyDetailsComponent) },
+  { path: 'compare/:ids', loadComponent: () => import('./Components/compare-properties/compare-properties').then(m => m.ComparePropertiesComponent) },
+  { path: 'join-our-team', loadComponent: () => import('./Components/join-our-team/join-our-team').then(m => m.JoinOurTeamComponent) },
+  { path: 'blog', loadComponent: () => import('./Components/blog-list/blog-list').then(m => m.BlogListComponent) },
+  { path: 'blog/:id', loadComponent: () => import('./Components/blog-detail/blog-detail').then(m => m.BlogDetailComponent) },
 
-  { 
-    path: 'crm/leads', 
-    component: LeadsDashboardComponent 
-  },
-  { 
-  path: 'crm/leads/:id', 
-  component: LeadDetailsComponent 
-},
-{ 
-  path: 'crm/dashboard', 
-  component: CrmDashboardComponent 
-},
+  // ===== Auth Required =====
+  { path: 'add-property', loadComponent: () => import('./Components/add-property/add-property').then(m => m.AddPropertyComponent), canActivate: [authGuard] },
+  { path: 'my-properties', loadComponent: () => import('./Components/my-properties/my-properties').then(m => m.MyPropertiesComponent), canActivate: [authGuard] },
+  { path: 'edit-property/:id', loadComponent: () => import('./Components/edit-property/edit-property').then(m => m.EditPropertyComponent), canActivate: [authGuard] },
+  { path: 'wishlist', loadComponent: () => import('./Components/wishlist/wishlist').then(m => m.WishlistComponent), canActivate: [authGuard] },
+  { path: 'profile', loadComponent: () => import('./Components/profile/profile').then(m => m.ProfileComponent), canActivate: [authGuard] },
 
-{ 
-  path: 'crm/profile', 
-  component: BrokerProfileComponent 
-},
-{ path: 'crm/campaigns', component: CampaignsManagerComponent },
-{ path: 'crm/leads/:id/edit', component: EditRequestComponent },
-{ path: 'crm/add-lead', component: AddLeadComponent },
-{ path: 'join-our-team', component: JoinOurTeamComponent },
+  // ===== Admin =====
+  { path: 'admin', loadComponent: () => import('./Components/admin-dashboard/admin-dashboard').then(m => m.AdminDashboardComponent), canActivate: [adminGuard] },
 
-{ path: 'blog',    component: BlogListComponent },
-  { path: 'blog/:id', component: BlogDetailComponent },
+  // ===== CRM =====
+  { path: 'crm/leads', loadComponent: () => import('./Components/CRM/leads-dashboard/leads-dashboard').then(m => m.LeadsDashboardComponent) },
+  { path: 'crm/leads/:id', loadComponent: () => import('./Components/CRM/lead-details/lead-details').then(m => m.LeadDetailsComponent) },
+  { path: 'crm/leads/:id/edit', loadComponent: () => import('./Components/CRM/edit-request/edit-request').then(m => m.EditRequestComponent) },
+  { path: 'crm/dashboard', loadComponent: () => import('./Components/CRM/crm-dashboard/crm-dashboard').then(m => m.CrmDashboardComponent) },
+  { path: 'crm/profile', loadComponent: () => import('./Components/CRM/broker-profile/broker-profile').then(m => m.BrokerProfileComponent) },
+  { path: 'crm/campaigns', loadComponent: () => import('./Components/CRM/campaigns-manager/campaigns-manager').then(m => m.CampaignsManagerComponent) },
+  { path: 'crm/add-lead', loadComponent: () => import('./Components/CRM/add-lead/add-lead').then(m => m.AddLeadComponent) },
 
- { path: '', component: HomeComponent, pathMatch: 'full' }, 
- { path: '**', redirectTo: '/login' }
+  // ===== Fallback =====
+  { path: '**', redirectTo: '/login' }
 ];

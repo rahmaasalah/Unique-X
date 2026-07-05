@@ -1308,7 +1308,15 @@
                         </button>
                       </div>
                     } @else if (app.attendanceStatus === 'Attended') {
-                      <span class="badge bg-success px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i>Attended</span>
+                      <div class="d-flex flex-column gap-1 align-items-start">
+                        <span class="badge bg-success px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i>Attended</span>
+                        @if (app.interviewFeedbackAppearance || app.interviewFeedbackCommunication || app.interviewFeedbackGoal) {
+                          <button class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold mt-1"
+                                  (click)="openViewFeedbackModal(app)">
+                            <i class="bi bi-eye me-1"></i> View Feedback
+                          </button>
+                        }
+                      </div>
                     } @else {
                       <span class="badge bg-secondary px-3 py-2"><i class="bi bi-x-circle-fill me-1"></i>No Show</span>
                     }
@@ -1587,6 +1595,132 @@
           <button class="btn btn-info text-white rounded-pill fw-bold px-5" (click)="submitFinalFeedback()">
             <i class="bi bi-save me-2"></i>Save Feedback
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal: View Interview Feedback ===== -->
+  <div class="modal fade" id="viewInterviewFeedbackModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header bg-success text-white rounded-top-4">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-clipboard2-check-fill me-2"></i>Interview Feedback
+            — {{ viewFeedbackApp()?.fullName }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          @if (viewFeedbackApp()) {
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="p-3 bg-light rounded-3 h-100">
+                  <div class="small text-muted fw-bold mb-1"><i class="bi bi-building me-1"></i>Experience in RE</div>
+                  <span class="badge rounded-pill px-3 py-2 fs-6"
+                        [class.bg-success]="viewFeedbackApp().interviewFeedbackExperienceInRE === 'Yes'"
+                        [class.bg-danger]="viewFeedbackApp().interviewFeedbackExperienceInRE === 'No'"
+                        [class.bg-secondary]="!viewFeedbackApp().interviewFeedbackExperienceInRE">
+                    {{ viewFeedbackApp().interviewFeedbackExperienceInRE || '—' }}
+                  </span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="p-3 bg-light rounded-3 h-100">
+                  <div class="small text-muted fw-bold mb-1"><i class="bi bi-graph-up-arrow me-1"></i>Knows Sales Process</div>
+                  <span class="badge rounded-pill px-3 py-2 fs-6"
+                        [class.bg-success]="viewFeedbackApp().interviewFeedbackSalesProcess === 'Yes'"
+                        [class.bg-danger]="viewFeedbackApp().interviewFeedbackSalesProcess === 'No'"
+                        [class.bg-secondary]="!viewFeedbackApp().interviewFeedbackSalesProcess">
+                    {{ viewFeedbackApp().interviewFeedbackSalesProcess || '—' }}
+                  </span>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="p-3 bg-light rounded-3">
+                  <div class="small text-muted fw-bold mb-1"><i class="bi bi-trophy me-1"></i>Goal (Monthly)</div>
+                  <span class="badge bg-success rounded-pill px-3 py-2">{{ viewFeedbackApp().interviewFeedbackGoal || '—' }}</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-3 bg-light rounded-3 text-center">
+                  <div class="small text-muted fw-bold mb-2"><i class="bi bi-person-bounding-box me-1"></i>Appearance</div>
+                  <span class="badge rounded-pill px-3 py-2"
+                        [class.bg-success]="viewFeedbackApp().interviewFeedbackAppearance === 'Excellent'"
+                        [class.bg-warning]="viewFeedbackApp().interviewFeedbackAppearance === 'Good'"
+                        [class.bg-danger]="viewFeedbackApp().interviewFeedbackAppearance === 'Bad'"
+                        [class.bg-secondary]="!viewFeedbackApp().interviewFeedbackAppearance">
+                    {{ viewFeedbackApp().interviewFeedbackAppearance || '—' }}
+                  </span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-3 bg-light rounded-3 text-center">
+                  <div class="small text-muted fw-bold mb-2"><i class="bi bi-chat-dots me-1"></i>Communication</div>
+                  <span class="badge rounded-pill px-3 py-2"
+                        [class.bg-success]="viewFeedbackApp().interviewFeedbackCommunication === 'Excellent'"
+                        [class.bg-warning]="viewFeedbackApp().interviewFeedbackCommunication === 'Good'"
+                        [class.bg-danger]="viewFeedbackApp().interviewFeedbackCommunication === 'Bad'"
+                        [class.bg-secondary]="!viewFeedbackApp().interviewFeedbackCommunication">
+                    {{ viewFeedbackApp().interviewFeedbackCommunication || '—' }}
+                  </span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-3 bg-light rounded-3 text-center">
+                  <div class="small text-muted fw-bold mb-2"><i class="bi bi-easel me-1"></i>Presentation</div>
+                  <span class="badge rounded-pill px-3 py-2"
+                        [class.bg-success]="viewFeedbackApp().interviewFeedbackPresentation === 'Excellent'"
+                        [class.bg-warning]="viewFeedbackApp().interviewFeedbackPresentation === 'Good'"
+                        [class.bg-danger]="viewFeedbackApp().interviewFeedbackPresentation === 'Bad'"
+                        [class.bg-secondary]="!viewFeedbackApp().interviewFeedbackPresentation">
+                    {{ viewFeedbackApp().interviewFeedbackPresentation || '—' }}
+                  </span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="p-3 bg-light rounded-3">
+                  <div class="small text-muted fw-bold mb-1"><i class="bi bi-translate me-1"></i>Language Level</div>
+                  <span class="badge bg-info text-dark rounded-pill px-3 py-2">{{ viewFeedbackApp().interviewFeedbackLanguage || '—' }}</span>
+                </div>
+              </div>
+              @if (viewFeedbackApp().interviewFeedbackPastExperiences) {
+                <div class="col-12">
+                  <div class="p-3 bg-light rounded-3">
+                    <div class="small text-muted fw-bold mb-1"><i class="bi bi-briefcase me-1"></i>Past Experiences</div>
+                    <p class="mb-0 text-dark">{{ viewFeedbackApp().interviewFeedbackPastExperiences }}</p>
+                  </div>
+                </div>
+              }
+              @if (viewFeedbackApp().interviewFeedbackWhyRealEstate) {
+                <div class="col-12">
+                  <div class="p-3 bg-light rounded-3">
+                    <div class="small text-muted fw-bold mb-1"><i class="bi bi-question-circle me-1"></i>Why Real Estate</div>
+                    <p class="mb-0 text-dark">{{ viewFeedbackApp().interviewFeedbackWhyRealEstate }}</p>
+                  </div>
+                </div>
+              }
+              @if (viewFeedbackApp().interviewFeedbackKnowledge) {
+                <div class="col-12">
+                  <div class="p-3 bg-light rounded-3">
+                    <div class="small text-muted fw-bold mb-1"><i class="bi bi-lightbulb me-1"></i>RE Knowledge</div>
+                    <p class="mb-0 text-dark">{{ viewFeedbackApp().interviewFeedbackKnowledge }}</p>
+                  </div>
+                </div>
+              }
+              @if (viewFeedbackApp().interviewFeedbackNotes) {
+                <div class="col-12">
+                  <div class="p-3 bg-warning-subtle rounded-3">
+                    <div class="small text-muted fw-bold mb-1"><i class="bi bi-pencil-square me-1"></i>Notes</div>
+                    <p class="mb-0 text-dark">{{ viewFeedbackApp().interviewFeedbackNotes }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
