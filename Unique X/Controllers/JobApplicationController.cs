@@ -217,5 +217,47 @@ namespace Unique_X.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+
+        [HttpPut("{id}/interview-feedback")]
+        public async Task<IActionResult> SaveInterviewFeedback(int id, [FromBody] InterviewFeedbackDto dto)
+        {
+            var app = await _context.JobApplications.FindAsync(id);
+            if (app == null) return NotFound();
+
+            // نسجل الحضور
+            app.AttendanceStatus = "Attended";
+
+            // نحفظ الفيدباك
+            app.InterviewFeedbackExperienceInRE = dto.ExperienceInRE;
+            app.InterviewFeedbackPastExperiences = dto.PastExperiences;
+            app.InterviewFeedbackWhyRealEstate = dto.WhyRealEstate;
+            app.InterviewFeedbackKnowledge = dto.Knowledge;
+            app.InterviewFeedbackSalesProcess = dto.SalesProcess;
+            app.InterviewFeedbackGoal = dto.Goal;
+            app.InterviewFeedbackAppearance = dto.Appearance;
+            app.InterviewFeedbackCommunication = dto.Communication;
+            app.InterviewFeedbackPresentation = dto.Presentation;
+            app.InterviewFeedbackLanguage = dto.Language;
+            app.InterviewFeedbackNotes = dto.Notes;
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
     }
+}
+
+// DTO
+public class InterviewFeedbackDto
+{
+    public string? ExperienceInRE { get; set; }
+    public string? PastExperiences { get; set; }
+    public string? WhyRealEstate { get; set; }
+    public string? Knowledge { get; set; }
+    public string? SalesProcess { get; set; }
+    public string? Goal { get; set; }
+    public string? Appearance { get; set; }
+    public string? Communication { get; set; }
+    public string? Presentation { get; set; }
+    public string? Language { get; set; }
+    public string? Notes { get; set; }
 }

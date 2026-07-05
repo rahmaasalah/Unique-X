@@ -79,20 +79,15 @@ closeCampaignDropdown() {
     { code: 'X249', name: 'Ashraf Saad' },
     { code: 'X646', name: 'Nadia Salem' },
     { code: 'X9', name: 'Hussine Ehab' },
-    { code: 'X652', name: 'Mohamed Ali' },
-    { code: 'X653', name: 'Mohamed Khaled' },
     { code: 'X656', name: 'Mayar Elkhalil' },
     { code: 'X659', name: 'Yasmine Mohamed' },
-    { code: 'X660', name: 'Ahmed Ramadan' },
-    {code: 'X661', name: 'Ibrahim Mahmoud'},
-    {code: 'X665', name: 'Belal Elsayed'},
     {code: 'X666', name: 'Mohmoud Ali'},
-    {code: 'X668', name: 'Mostafa Elsayed'},
     {code: 'X2', name: 'Hagar Mohamed'},
     {code: 'X101', name: 'Alaa Ashraf'},
     {code: 'X8', name: 'Abeer Ashraf'},
     {code: 'X110', name: 'Malak nasser Yousef'},
-
+    {code: 'X675', name: 'Abdelrahman Abdala'},
+    {code: 'X669', name: 'Muhammad Elsayied'},
   ];
 
   boardColumns = signal<any[]>([]);

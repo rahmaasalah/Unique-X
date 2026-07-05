@@ -34,6 +34,19 @@
         public string? FinalFeedback { get; set; }    // ملاحظات نهائية بعد الـ Accept
         public string? Notes { get; set; }
         public string? InterviewDate { get; set; }
+
+        // === Interview Feedback ===
+        public string? InterviewFeedbackExperienceInRE { get; set; }  // Yes / No
+        public string? InterviewFeedbackPastExperiences { get; set; }
+        public string? InterviewFeedbackWhyRealEstate { get; set; }
+        public string? InterviewFeedbackKnowledge { get; set; }
+        public string? InterviewFeedbackSalesProcess { get; set; }    // Yes / No
+        public string? InterviewFeedbackGoal { get; set; }            // e.g. "50K-100K"
+        public string? InterviewFeedbackAppearance { get; set; }      // Bad / Good / Excellent
+        public string? InterviewFeedbackCommunication { get; set; }   // Bad / Good / Excellent
+        public string? InterviewFeedbackPresentation { get; set; }    // Bad / Good / Excellent
+        public string? InterviewFeedbackLanguage { get; set; }        // Entry-level / Mid-level / Advanced
+        public string? InterviewFeedbackNotes { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
