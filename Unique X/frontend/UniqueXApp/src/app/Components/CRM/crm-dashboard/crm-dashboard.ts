@@ -23,7 +23,7 @@ export class CrmDashboardComponent implements OnInit {
   private router = inject(Router);
 
   isAdmin = signal<boolean>(false);
-  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'pending_duplicates' | 'rejected_duplicates' | 'report'>('brokers');
+  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'admin_favorites' | 'pending_duplicates' | 'rejected_duplicates' | 'report'>('brokers');
 
 
   filterPropertyType = signal<string>('');
@@ -134,6 +134,23 @@ clearFilters(type: 'visit' | 'activity') {
   allLeads = signal<any[]>([]);
   vipBrokers = signal<any[]>([]);
   favoriteLeads = signal<number[]>([]);
+  allFavoriteLeads = signal<any[]>([]); // للأدمن - كل المفضلة من كل البروكرز
+
+  // فلاتر تاب Admin Favorites
+  adminFavSearch = signal<string>('');
+  adminFavBroker = signal<string>('');
+
+  filteredAdminFavorites = computed(() => {
+    let list = this.allFavoriteLeads();
+    const q = this.adminFavSearch().toLowerCase();
+    const broker = this.adminFavBroker();
+    if (q) list = list.filter(f =>
+      f.fullName?.toLowerCase().includes(q) ||
+      f.phoneNumber?.includes(q)
+    );
+    if (broker) list = list.filter(f => f.brokerName === broker);
+    return list;
+  });
 
 allBrokersList = signal<any[]>([]); // كل البروكرز اللي في السيستم
 selectedBrokerToAdd = signal<string>(''); // البروكر اللي الأدمن اختاره من القائمة
@@ -488,6 +505,14 @@ hiddenLeads = signal<number[]>([]);
 
     const sFavs = localStorage.getItem(`crm_fav_leads_${this.currentBrokerId}`);
     if (sFavs) this.favoriteLeads.set(JSON.parse(sFavs));
+
+    // نجيب الـ favorites من الـ DB كمان
+    if (this.currentBrokerId) {
+      this.crmService.getFavoriteIds(this.currentBrokerId).subscribe({
+        next: (ids) => this.favoriteLeads.set(ids),
+        error: () => {} // لو فشل نسيب الـ localStorage كـ fallback
+      });
+    }
     
     const sLeads = localStorage.getItem('crm_hidden_leads');
     if (sLeads) this.hiddenLeads.set(JSON.parse(sLeads));
@@ -541,6 +566,12 @@ hiddenLeads = signal<number[]>([]);
         this.calendarEvents.set(calendar);
         
         this.alertService.close();
+
+        // بنجيب كل المفضلة من كل البروكرز للأدمن
+        this.crmService.getAllFavorites().subscribe({
+          next: (favs) => this.allFavoriteLeads.set(favs),
+          error: () => {}
+        });
 
         // بنجيب أكواد الحملات بشكل منفصل عشان لو فشلوا متأثروش على باقي الداتا
         this.loadCampaignCodes();
@@ -597,17 +628,27 @@ hiddenLeads = signal<number[]>([]);
 
   toggleFavorite(leadId: number, event?: Event) {
     if (event) event.stopPropagation();
-    let current = [...this.favoriteLeads()];
-    
-    if (current.includes(leadId)) {
-      current = current.filter(id => id !== leadId); // لو موجود، نشيله
+    const isFav = this.favoriteLeads().includes(leadId);
+
+    if (isFav) {
+      // إزالة من المفضلة
+      this.crmService.removeFavorite(this.currentBrokerId, leadId).subscribe({
+        next: () => {
+          this.favoriteLeads.update(ids => ids.filter(id => id !== leadId));
+          localStorage.setItem(`crm_fav_leads_${this.currentBrokerId}`, JSON.stringify(this.favoriteLeads()));
+        },
+        error: () => this.alertService.error('Failed to remove from favorites.')
+      });
     } else {
-      current.push(leadId); // لو مش موجود، نضيفه
+      // إضافة للمفضلة
+      this.crmService.addFavorite(this.currentBrokerId, leadId).subscribe({
+        next: () => {
+          this.favoriteLeads.update(ids => [...ids, leadId]);
+          localStorage.setItem(`crm_fav_leads_${this.currentBrokerId}`, JSON.stringify(this.favoriteLeads()));
+        },
+        error: () => this.alertService.error('Failed to add to favorites.')
+      });
     }
-    
-    this.favoriteLeads.set(current);
-    // بنحفظها باسم اليوزر عشان كل يوزر ليه مفضلته
-    localStorage.setItem(`crm_fav_leads_${this.currentBrokerId}`, JSON.stringify(current));
   }
 
   toggleHideBroker(brokerId: string) {
