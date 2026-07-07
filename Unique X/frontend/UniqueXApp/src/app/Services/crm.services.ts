@@ -193,6 +193,22 @@ getPropertyCodes(): Observable<string[]> {
   return this.http.get<string[]>(`${this.apiUrl}/campaigns/approved-property-codes`); 
 }
 
+getFavoriteIds(brokerId: string): Observable<number[]> {
+  return this.http.get<number[]>(`${this.apiUrl}/favorites?brokerId=${brokerId}`);
+}
+
+getAllFavorites(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/favorites/all`);
+}
+
+addFavorite(brokerId: string, leadId: number): Observable<any> {
+  return this.http.post(`${this.apiUrl}/favorites`, { brokerId, leadId });
+}
+
+removeFavorite(brokerId: string, leadId: number): Observable<any> {
+  return this.http.delete(`${this.apiUrl}/favorites?brokerId=${brokerId}&leadId=${leadId}`);
+}
+
 getBrokerReport(brokerId: string, from?: string, to?: string): Observable<any> {
   let url = `${this.apiUrl}/dashboard/broker-report/${brokerId}`;
   const params: string[] = [];

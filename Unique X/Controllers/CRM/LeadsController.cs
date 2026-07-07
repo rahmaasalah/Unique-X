@@ -29,6 +29,22 @@ namespace Unique_X.Controllers.CRM
 
             bool isDuplicate = await _context.Leads.AnyAsync(l => l.PhoneNumber == dto.PhoneNumber);
 
+            // لو متكرر، نجيب اسم البروكر الأصلي
+            string? originalBrokerName = null;
+            string? duplicateRequestedByName = null;
+            if (isDuplicate)
+            {
+                var originalLead = await _context.Leads
+                    .Include(l => l.Broker)
+                    .FirstOrDefaultAsync(l => l.PhoneNumber == dto.PhoneNumber);
+                if (originalLead?.Broker != null)
+                    originalBrokerName = originalLead.Broker.FirstName + " " + originalLead.Broker.LastName;
+
+                var requestingBroker = await _context.Users.FindAsync(dto.BrokerId) as ApplicantUser;
+                if (requestingBroker != null)
+                    duplicateRequestedByName = requestingBroker.FirstName + " " + requestingBroker.LastName;
+            }
+
             // 1. إنشاء وحفظ الـ Lead الأساسي
             var newLead = new Lead
             {
@@ -40,8 +56,10 @@ namespace Unique_X.Controllers.CRM
                 CampaignName = dto.CampaignName,
                 LeadStatusId = dto.LeadStatusId,
                 ReferredBy = dto.ReferredBy,
-                IsDuplicate = isDuplicate, // لو متكرر هيبقى True
+                IsDuplicate = isDuplicate,
                 IsApprovedDuplicate = !isDuplicate,
+                OriginalBrokerName = originalBrokerName,
+                DuplicateRequestedByBrokerName = duplicateRequestedByName,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -77,9 +95,9 @@ namespace Unique_X.Controllers.CRM
             });
         }
 
-            // 2. Endpoint: عشان البروكر يجيب الـ Leads بتاعته (بالفلاتر)
-            // GET: api/crm/leads?brokerId=123&statusId=5
-            [HttpGet]
+        // 2. Endpoint: عشان البروكر يجيب الـ Leads بتاعته (بالفلاتر)
+        // GET: api/crm/leads?brokerId=123&statusId=5
+        [HttpGet]
         public async Task<IActionResult> GetLeads([FromQuery] string? brokerId, [FromQuery] int? statusId)
         {
             var query = _context.Leads
@@ -114,15 +132,15 @@ namespace Unique_X.Controllers.CRM
                 ReferredBy = l.ReferredBy ?? "", // 👈 السطر ده جديد
                 IsDuplicate = l.IsDuplicate,
                 IsApprovedDuplicate = l.IsApprovedDuplicate,
-                // بيحسب كام عميل مسجل بنفس الرقم ده وحالته 19 (Deal Closed)
+                IsRejectedDuplicate = l.IsRejectedDuplicate,
+                OriginalBrokerName = l.OriginalBrokerName,
+                DuplicateRequestedByBrokerName = l.DuplicateRequestedByBrokerName,
                 ClosedDealsCount = _context.Leads.Count(c => c.PhoneNumber == l.PhoneNumber && c.LeadStatusId == 19),
                 CreatedAt = l.CreatedAt,
                 QuarterlyInstallment = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).QuarterlyInstallment,
 
                 // 👇 ده السطر اللي بيجيب تاريخ آخر تعديل، ولو مفيش بيجيب تاريخ الإنشاء
                 UpdatedAt = l.UpdatedAt ?? l.CreatedAt,
-                IsRejectedDuplicate = l.IsRejectedDuplicate,
-
                 // 👇 بناخد آخر LeadRequest (الأحدث) عشان الـ Lead بقى ممكن يكون ليه أكتر من طلب
                 PropertyType = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).PropertyType : "",
                 Purpose = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).Purpose : "",
@@ -653,41 +671,41 @@ namespace Unique_X.Controllers.CRM
 
                         // نتأكد إن العميل ده مش متسجل قبل كده بنفس الرقم
                         bool isDuplicate = await _context.Leads.AnyAsync(l => l.PhoneNumber == phone);
-                            var newLead = new Lead
-                            {
-                                FullName = values[0].Trim(),
-                                PhoneNumber = phone,
-                                Email = values.Length > 2 ? values[2].Trim() : "",
-                                BrokerId = brokerId,
-                                LeadStatusId = 1, // New
-                                CreatedAt = DateTime.UtcNow
-                            };
-                            _context.Leads.Add(newLead);
-                            await _context.SaveChangesAsync();
+                        var newLead = new Lead
+                        {
+                            FullName = values[0].Trim(),
+                            PhoneNumber = phone,
+                            Email = values.Length > 2 ? values[2].Trim() : "",
+                            BrokerId = brokerId,
+                            LeadStatusId = 1, // New
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.Leads.Add(newLead);
+                        await _context.SaveChangesAsync();
 
-                            // إضافة Request افتراضي للعميل ده
-                            _context.LeadRequests.Add(new LeadRequest
-                            {
-                                LeadId = newLead.Id,
-                                PropertyType = values.Length > 3 ? values[3].Trim() : "Apartment",
-                                Purpose = "Sale",
-                                PaymentMethod = "Cash",
-                                Notes = "Imported via Bulk CSV Upload"
-                            });
-                            await _context.SaveChangesAsync();
+                        // إضافة Request افتراضي للعميل ده
+                        _context.LeadRequests.Add(new LeadRequest
+                        {
+                            LeadId = newLead.Id,
+                            PropertyType = values.Length > 3 ? values[3].Trim() : "Apartment",
+                            Purpose = "Sale",
+                            PaymentMethod = "Cash",
+                            Notes = "Imported via Bulk CSV Upload"
+                        });
+                        await _context.SaveChangesAsync();
 
-                            // إضافة هيستوري
-                            _context.LeadStatusHistories.Add(new LeadStatusHistory
-                            {
-                                LeadId = newLead.Id,
-                                OldStatusId = 0,
-                                NewStatusId = 1,
-                                ChangedById = brokerId,
-                                Notes = "Imported from CSV Sheet",
-                                ChangedAt = DateTime.UtcNow
-                            });
-                            newLeadsCount++;
-                        
+                        // إضافة هيستوري
+                        _context.LeadStatusHistories.Add(new LeadStatusHistory
+                        {
+                            LeadId = newLead.Id,
+                            OldStatusId = 0,
+                            NewStatusId = 1,
+                            ChangedById = brokerId,
+                            Notes = "Imported from CSV Sheet",
+                            ChangedAt = DateTime.UtcNow
+                        });
+                        newLeadsCount++;
+
                     }
                 }
             }

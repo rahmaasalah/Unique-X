@@ -34,5 +34,9 @@
         public bool IsDuplicate { get; set; } = false; // هل العميل ده متكرر؟
         public bool IsApprovedDuplicate { get; set; } = true; // هل الأدمن وافق على التكرار ده؟
         public bool IsRejectedDuplicate { get; set; } // هل الأدمن رفضه
+
+        public string? OriginalBrokerName { get; set; }
+        // اسم البروكر اللي طلب إضافة العميل للمرة التانية
+        public string? DuplicateRequestedByBrokerName { get; set; }
     }
 }

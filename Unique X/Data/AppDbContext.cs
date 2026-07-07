@@ -27,6 +27,7 @@ namespace Unique_X.Data
         public DbSet<LeadStatusHistory> LeadStatusHistories { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
         public DbSet<Blog> Blogs { get; set; }
+        public DbSet<LeadFavorite> LeadFavorites { get; set; }
 
 
 

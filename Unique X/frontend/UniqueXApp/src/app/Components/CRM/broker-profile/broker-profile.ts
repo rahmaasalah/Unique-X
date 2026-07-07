@@ -233,9 +233,17 @@ if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
     }
 
     const savedFavourites = localStorage.getItem('crm_favourite_leads');
-if (savedFavourites) {
-  this.favouriteLeads.set(JSON.parse(savedFavourites));
-}
+    if (savedFavourites) {
+      this.favouriteLeads.set(JSON.parse(savedFavourites));
+    }
+
+    // نجيب الـ favorites من الـ DB (الأصح والأحدث)
+    if (this.currentBrokerId) {
+      this.crmService.getFavoriteIds(this.currentBrokerId).subscribe({
+        next: (ids) => this.favouriteLeads.set(ids),
+        error: () => {} // لو فشل نسيب الـ localStorage كـ fallback
+      });
+    }
 
       if (isUserAdmin) {
         this.adminService.getAllUsers().subscribe(users => {
@@ -413,13 +421,24 @@ cleanAdminPrefix(text: string | null): string | null {
   }
 
   toggleFavouriteLead(id: number) {
-  let current = [...this.favouriteLeads()];
-  if (current.includes(id)) {
-    current = current.filter(x => x !== id);
-  } else {
-    current.push(id);
+    const isFav = this.favouriteLeads().includes(id);
+
+    if (isFav) {
+      this.crmService.removeFavorite(this.currentBrokerId, id).subscribe({
+        next: () => {
+          this.favouriteLeads.update(ids => ids.filter(x => x !== id));
+          localStorage.setItem('crm_favourite_leads', JSON.stringify(this.favouriteLeads()));
+        },
+        error: () => console.error('Failed to remove favorite')
+      });
+    } else {
+      this.crmService.addFavorite(this.currentBrokerId, id).subscribe({
+        next: () => {
+          this.favouriteLeads.update(ids => [...ids, id]);
+          localStorage.setItem('crm_favourite_leads', JSON.stringify(this.favouriteLeads()));
+        },
+        error: () => console.error('Failed to add favorite')
+      });
+    }
   }
-  this.favouriteLeads.set(current);
-  localStorage.setItem('crm_favourite_leads', JSON.stringify(current));
-}
 }
