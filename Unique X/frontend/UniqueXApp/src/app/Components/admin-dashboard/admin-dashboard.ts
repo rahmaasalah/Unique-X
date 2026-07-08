@@ -1118,6 +1118,14 @@ submitInterviewFeedback() {
   if (!app) return;
   const fb = this.interviewFeedback();
 
+  // Validation — كل الحقول required ماعدا notes
+  if (!fb.experienceInRE || !fb.pastExperiences?.trim() || !fb.whyRealEstate?.trim() ||
+      !fb.knowledge?.trim() || !fb.salesProcess || !fb.goal ||
+      !fb.appearance || !fb.communication || !fb.presentation || !fb.language) {
+    this.alertService.error('Please fill all required fields.');
+    return;
+  }
+
   this.http.put(`${this.adminService['baseUrl'].replace('/Admin', '')}/jobapplications/${app.id}/interview-feedback`, {
     experienceInRE:  fb.experienceInRE,
     pastExperiences: fb.pastExperiences,
@@ -1539,5 +1547,11 @@ getBlogImageUrl(filename: string) { return this.blogService.getImageUrl(filename
 getBlogFirstImage(blog: any): string {
   const imgs = this.blogService.getSliderImages(blog);
   return imgs.length > 0 ? imgs[0] : '';
+}
+
+formatPrice(event: any) {
+  const input = event.target;
+  const raw = input.value.replace(/[^0-9]/g, '');
+  input.value = raw ? Number(raw).toLocaleString('en-US') : '';
 }
 }

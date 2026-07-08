@@ -103,7 +103,7 @@
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
           [class.active]="activeTab() === 'blogs'"
           (click)="activeTab.set('blogs'); loadBlogs()">
-    <i class="bi bi-newspaper me-3 fs-6"></i> Blogs
+    <i class="bi bi-newspaper me-3 fs-6"></i> Projects
     @if (blogs().length > 0) {
       <span class="badge bg-danger ms-2">{{ blogs().length }}</span>
     }
@@ -1548,6 +1548,215 @@
     </div>
   </div>
 
+  <!-- Modal: Interview Feedback -->
+  <div class="modal fade" id="interviewFeedbackModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+
+        <div class="modal-header text-white" style="background:#1a1a2e;">
+          <div>
+            <h5 class="modal-title fw-bold mb-0">
+              <i class="bi bi-clipboard2-check-fill me-2"></i>Interview Feedback
+            </h5>
+            <small class="opacity-75">{{ interviewFeedbackApp()?.fullName }}</small>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body p-4" style="background:#f8f9fa;">
+          <div class="row g-3">
+
+            <!-- Experience in Real Estate -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-dark">
+                Experience in Real Estate <span class="text-danger">*</span>
+              </label>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn rounded-pill px-4 fw-semibold flex-grow-1"
+                        [class.btn-danger]="interviewFeedback().experienceInRE === 'Yes'"
+                        [class.btn-outline-secondary]="interviewFeedback().experienceInRE !== 'Yes'"
+                        (click)="updateInterviewFeedback('experienceInRE', 'Yes')">
+                  <i class="bi bi-check-lg me-1"></i>Yes
+                </button>
+                <button type="button" class="btn rounded-pill px-4 fw-semibold flex-grow-1"
+                        [class.btn-dark]="interviewFeedback().experienceInRE === 'No'"
+                        [class.btn-outline-secondary]="interviewFeedback().experienceInRE !== 'No'"
+                        (click)="updateInterviewFeedback('experienceInRE', 'No')">
+                  <i class="bi bi-x-lg me-1"></i>No
+                </button>
+              </div>
+            </div>
+
+            <!-- Sales Process -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-dark">
+                Sales Process <span class="text-danger">*</span>
+              </label>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn rounded-pill px-4 fw-semibold flex-grow-1"
+                        [class.btn-danger]="interviewFeedback().salesProcess === 'Yes'"
+                        [class.btn-outline-secondary]="interviewFeedback().salesProcess !== 'Yes'"
+                        (click)="updateInterviewFeedback('salesProcess', 'Yes')">
+                  <i class="bi bi-check-lg me-1"></i>Yes
+                </button>
+                <button type="button" class="btn rounded-pill px-4 fw-semibold flex-grow-1"
+                        [class.btn-dark]="interviewFeedback().salesProcess === 'No'"
+                        [class.btn-outline-secondary]="interviewFeedback().salesProcess !== 'No'"
+                        (click)="updateInterviewFeedback('salesProcess', 'No')">
+                  <i class="bi bi-x-lg me-1"></i>No
+                </button>
+              </div>
+            </div>
+
+            <!-- Past Experiences -->
+            <div class="col-12">
+              <label class="form-label fw-semibold small text-dark">
+                Past Experience in Real Estate or Another Field <span class="text-danger">*</span>
+              </label>
+              <textarea class="form-control rounded-3 border-0 shadow-sm" rows="2"
+                        placeholder="Describe past experiences..."
+                        [ngModel]="interviewFeedback().pastExperiences"
+                        (ngModelChange)="updateInterviewFeedback('pastExperiences', $event)"></textarea>
+            </div>
+
+            <!-- Why Real Estate -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-dark">
+                Why Real Estate? <span class="text-danger">*</span>
+              </label>
+              <textarea class="form-control rounded-3 border-0 shadow-sm" rows="2"
+                        placeholder="Candidate's motivation..."
+                        [ngModel]="interviewFeedback().whyRealEstate"
+                        (ngModelChange)="updateInterviewFeedback('whyRealEstate', $event)"></textarea>
+            </div>
+
+            <!-- Knowledge -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-dark">
+                Knowledge About Real Estate <span class="text-danger">*</span>
+              </label>
+              <textarea class="form-control rounded-3 border-0 shadow-sm" rows="2"
+                        placeholder="Level of market knowledge..."
+                        [ngModel]="interviewFeedback().knowledge"
+                        (ngModelChange)="updateInterviewFeedback('knowledge', $event)"></textarea>
+            </div>
+
+            <!-- Goal -->
+            <div class="col-12">
+              <label class="form-label fw-semibold small text-dark">
+                Goal in Real Estate <span class="text-danger">*</span>
+              </label>
+              <div class="d-flex flex-wrap gap-2">
+                @for (goal of ['50k', '50k–100k', '100k–300k', '300k–500k', 'Above 500k', 'Above 1M']; track goal) {
+                  <button type="button" class="btn btn-sm rounded-pill px-3 fw-semibold"
+                          [class.btn-danger]="interviewFeedback().goal === goal"
+                          [class.btn-outline-secondary]="interviewFeedback().goal !== goal"
+                          (click)="updateInterviewFeedback('goal', goal)">
+                    {{ goal }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="col-12"><hr class="my-1"></div>
+
+            <!-- Appearance -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small text-dark">
+                Appearance <span class="text-danger">*</span>
+              </label>
+              <div class="d-flex flex-column gap-1">
+                @for (opt of ['Bad', 'Good', 'Excellent']; track opt) {
+                  <button type="button" class="btn btn-sm rounded-pill fw-semibold"
+                          [class.btn-danger]="opt === 'Bad' && interviewFeedback().appearance === opt"
+                          [class.btn-warning]="opt === 'Good' && interviewFeedback().appearance === opt"
+                          [class.btn-success]="opt === 'Excellent' && interviewFeedback().appearance === opt"
+                          [class.btn-outline-secondary]="interviewFeedback().appearance !== opt"
+                          (click)="updateInterviewFeedback('appearance', opt)">
+                    {{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Communication -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small text-dark">
+                Communication Skills <span class="text-danger">*</span>
+              </label>
+              <div class="d-flex flex-column gap-1">
+                @for (opt of ['Bad', 'Good', 'Excellent']; track opt) {
+                  <button type="button" class="btn btn-sm rounded-pill fw-semibold"
+                          [class.btn-danger]="opt === 'Bad' && interviewFeedback().communication === opt"
+                          [class.btn-warning]="opt === 'Good' && interviewFeedback().communication === opt"
+                          [class.btn-success]="opt === 'Excellent' && interviewFeedback().communication === opt"
+                          [class.btn-outline-secondary]="interviewFeedback().communication !== opt"
+                          (click)="updateInterviewFeedback('communication', opt)">
+                    {{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Presentation -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small text-dark">
+                Presentation Skills <span class="text-danger">*</span>
+              </label>
+              <div class="d-flex flex-column gap-1">
+                @for (opt of ['Bad', 'Good', 'Excellent']; track opt) {
+                  <button type="button" class="btn btn-sm rounded-pill fw-semibold"
+                          [class.btn-danger]="opt === 'Bad' && interviewFeedback().presentation === opt"
+                          [class.btn-warning]="opt === 'Good' && interviewFeedback().presentation === opt"
+                          [class.btn-success]="opt === 'Excellent' && interviewFeedback().presentation === opt"
+                          [class.btn-outline-secondary]="interviewFeedback().presentation !== opt"
+                          (click)="updateInterviewFeedback('presentation', opt)">
+                    {{ opt }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Language -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-dark">
+                Language Level <span class="text-danger">*</span>
+              </label>
+              <div class="d-flex gap-2 flex-wrap">
+                @for (lvl of ['Entry-level', 'Mid-level', 'Advanced-level']; track lvl) {
+                  <button type="button" class="btn btn-sm rounded-pill px-3 fw-semibold flex-grow-1"
+                          [class.btn-danger]="interviewFeedback().language === lvl"
+                          [class.btn-outline-secondary]="interviewFeedback().language !== lvl"
+                          (click)="updateInterviewFeedback('language', lvl)">
+                    {{ lvl }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small text-dark">Notes</label>
+              <textarea class="form-control rounded-3 border-0 shadow-sm" rows="2"
+                        placeholder="Any additional notes..."
+                        [ngModel]="interviewFeedback().notes"
+                        (ngModelChange)="updateInterviewFeedback('notes', $event)"></textarea>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer border-0 px-4 pb-4" style="background:#f8f9fa;">
+          <button class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger rounded-pill fw-bold px-5 shadow-sm" (click)="submitInterviewFeedback()">
+            <i class="bi bi-save me-2"></i>Save & Mark Attended
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Call Feedback -->
   <div class="modal fade" id="callFeedbackModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -1616,7 +1825,7 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="p-3 bg-light rounded-3 h-100">
-                  <div class="small text-muted fw-bold mb-1"><i class="bi bi-building me-1"></i>Experience in RE</div>
+                  <div class="small text-muted fw-bold mb-1"><i class="bi bi-building me-1"></i>Experience in real estate</div>
                   <span class="badge rounded-pill px-3 py-2 fs-6"
                         [class.bg-success]="viewFeedbackApp().interviewFeedbackExperienceInRE === 'Yes'"
                         [class.bg-danger]="viewFeedbackApp().interviewFeedbackExperienceInRE === 'No'"
@@ -1627,7 +1836,7 @@
               </div>
               <div class="col-md-6">
                 <div class="p-3 bg-light rounded-3 h-100">
-                  <div class="small text-muted fw-bold mb-1"><i class="bi bi-graph-up-arrow me-1"></i>Knows Sales Process</div>
+                  <div class="small text-muted fw-bold mb-1"><i class="bi bi-graph-up-arrow me-1"></i>Sales Process</div>
                   <span class="badge rounded-pill px-3 py-2 fs-6"
                         [class.bg-success]="viewFeedbackApp().interviewFeedbackSalesProcess === 'Yes'"
                         [class.bg-danger]="viewFeedbackApp().interviewFeedbackSalesProcess === 'No'"
@@ -1638,7 +1847,7 @@
               </div>
               <div class="col-12">
                 <div class="p-3 bg-light rounded-3">
-                  <div class="small text-muted fw-bold mb-1"><i class="bi bi-trophy me-1"></i>Goal (Monthly)</div>
+                  <div class="small text-muted fw-bold mb-1"><i class="bi bi-trophy me-1"></i>Goal</div>
                   <span class="badge bg-success rounded-pill px-3 py-2">{{ viewFeedbackApp().interviewFeedbackGoal || '—' }}</span>
                 </div>
               </div>
@@ -1687,7 +1896,7 @@
               @if (viewFeedbackApp().interviewFeedbackPastExperiences) {
                 <div class="col-12">
                   <div class="p-3 bg-light rounded-3">
-                    <div class="small text-muted fw-bold mb-1"><i class="bi bi-briefcase me-1"></i>Past Experiences</div>
+                    <div class="small text-muted fw-bold mb-1"><i class="bi bi-briefcase me-1"></i>Past Experiences in Real Estate</div>
                     <p class="mb-0 text-dark">{{ viewFeedbackApp().interviewFeedbackPastExperiences }}</p>
                   </div>
                 </div>
@@ -1695,7 +1904,7 @@
               @if (viewFeedbackApp().interviewFeedbackWhyRealEstate) {
                 <div class="col-12">
                   <div class="p-3 bg-light rounded-3">
-                    <div class="small text-muted fw-bold mb-1"><i class="bi bi-question-circle me-1"></i>Why Real Estate</div>
+                    <div class="small text-muted fw-bold mb-1"><i class="bi bi-question-circle me-1"></i>Why Real Estate?</div>
                     <p class="mb-0 text-dark">{{ viewFeedbackApp().interviewFeedbackWhyRealEstate }}</p>
                   </div>
                 </div>
@@ -1703,7 +1912,7 @@
               @if (viewFeedbackApp().interviewFeedbackKnowledge) {
                 <div class="col-12">
                   <div class="p-3 bg-light rounded-3">
-                    <div class="small text-muted fw-bold mb-1"><i class="bi bi-lightbulb me-1"></i>RE Knowledge</div>
+                    <div class="small text-muted fw-bold mb-1"><i class="bi bi-lightbulb me-1"></i>Real Estate Knowledge</div>
                     <p class="mb-0 text-dark">{{ viewFeedbackApp().interviewFeedbackKnowledge }}</p>
                   </div>
                 </div>
@@ -1965,15 +2174,17 @@
           <h6 class="fw-bold text-danger mb-3"><i class="bi bi-currency-dollar me-2"></i>Price per Meter</h6>
           <div class="row g-3 mb-4">
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Resale Price / m²</label>
-              <input type="number" class="form-control rounded-3 bg-light border-0"
-                     formControlName="pricePerMeterResale" placeholder="e.g. 85000">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Developer (Primary) Price / m²</label>
-              <input type="number" class="form-control rounded-3 bg-light border-0"
-                     formControlName="pricePerMeterPrimary" placeholder="e.g. 120000">
-            </div>
+  <label class="form-label fw-semibold">Resale Price / m²</label>
+  <input type="text" class="form-control rounded-3 bg-light border-0"
+         formControlName="pricePerMeterResale" placeholder="e.g. 85,000"
+         (input)="formatPrice($event)">
+</div>
+<div class="col-md-6">
+  <label class="form-label fw-semibold">Developer (Primary) Price / m²</label>
+  <input type="text" class="form-control rounded-3 bg-light border-0"
+         formControlName="pricePerMeterPrimary" placeholder="e.g. 120,000"
+         (input)="formatPrice($event)">
+</div>
           </div>
 
           <hr class="my-3">
