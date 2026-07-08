@@ -33,13 +33,25 @@
     
     <div class="row g-2 mb-3">
       <!-- خانة البحث (لو مفيش مشروع تاخد 6 أعمدة، لو فيه مشروع تصغر لـ 3) -->
-      <div [class]="(currentListingType === '2' || currentListingType === '3') ? 'col-md-3' : 'col-md-6'">
-        <label class="form-label x-small-bold mb-1 text-dark">Keyword</label>
-        <div class="input-group input-group-sm shadow-sm border rounded-2 bg-white">
-          <span class="input-group-text bg-white border-0"><i class="bi bi-search text-danger"></i></span>
-          <input type="text" class="form-control border-0 bg-transparent" placeholder="e.g. Palm Hills, Maadi..." #searchTerm>
-        </div>
-      </div>
+
+<div [class]="(currentListingType === '2' || currentListingType === '3') ? 'col-md-2' : 'col-md-4'">
+  <label class="form-label x-small-bold mb-1 text-dark">Keyword</label>
+  <div class="input-group input-group-sm shadow-sm border rounded-2 bg-white">
+    <span class="input-group-text bg-white border-0"><i class="bi bi-search text-danger"></i></span>
+    <input type="text" class="form-control border-0 bg-transparent" placeholder="e.g. Palm Hills, Maadi..." #searchTerm>
+  </div>
+</div>
+
+   <div class="col-md-2">
+  <label class="form-label x-small-bold mb-1 text-dark">Property Type</label>
+  <select class="form-select form-select-sm border shadow-sm rounded-2" #propertyType>
+  <option value="">All Types</option>
+  <option value="Primary">Primary</option>
+  <option value="ResaleProject">Resale Project</option>
+  <option value="Resale">Resale</option>
+  <option value="Rent">Rent</option>
+</select>
+</div>
 
       <div class="col-md-3">
         <label class="form-label x-small-bold mb-1 text-dark">Property Code</label>
@@ -125,26 +137,33 @@
         <div class="row g-1">
           <div class="col-6">
             <label class="form-label x-small-bold mb-1 text-muted">Min Price</label>
-            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" #minPrice>
+<input type="text" class="form-control form-control-sm shadow-sm" (input)="formatPrice($event)" #minPrice>
           </div>
           <div class="col-6">
             <label class="form-label x-small-bold mb-1 text-muted">Max Price</label>
-            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" #maxPrice>
+            <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatPrice($event)" #maxPrice>
           </div>
         </div>
       </div>
       <div class="col-md-4">
-        <button class="btn btn-danger btn-sm w-100 fw-bold shadow py-2 rounded-3" 
-                (click)="onSearch({
-                  searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: projectName.value,
-                  code: code.value, minPrice: minPrice.value, maxPrice: maxPrice.value, 
-                  minFloor: minFloor.value, maxFloor: maxFloor.value,
-                  minRooms: minRooms.value, maxRooms: maxRooms.value, 
-                  minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value
-                })">
-          <i class="bi bi-search me-1"></i> Search Properties
-        </button>
-      </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-danger btn-sm fw-bold shadow py-2 rounded-3 flex-grow-1" 
+            (click)="onSearch({
+              searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: projectName.value,
+              code: code.value, minPrice: minPrice.value, maxPrice: maxPrice.value,
+              listingType: propertyType.value,
+              minFloor: minFloor.value, maxFloor: maxFloor.value,
+              minRooms: minRooms.value, maxRooms: maxRooms.value,
+              minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value
+            })">
+      <i class="bi bi-search me-1"></i> Search Properties
+    </button>
+    <button class="btn btn-outline-secondary btn-sm fw-bold shadow py-2 px-3 rounded-3"
+            (click)="clearFilters()">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+</div>
     </div>
 
   </div>

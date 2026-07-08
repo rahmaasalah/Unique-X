@@ -132,15 +132,15 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
   }
 
   addGeneralNote(leadId: number, brokerId: string, note: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/leads/${leadId}/add-note?brokerId=${brokerId}`, `"${note}"`, { headers: { 'Content-Type': 'application/json' }});
+    return this.http.post(`${this.apiUrl}/leads/${leadId}/add-note?brokerId=${brokerId}`, JSON.stringify(note), { headers: { 'Content-Type': 'application/json' }});
   }
 
   addVisitFeedback(id: number, feedback: string): Observable<any> {
-    return this.http.put(`${this.apiUrl}/visits/${id}/feedback`, `"${feedback}"`, { headers: { 'Content-Type': 'application/json' }});
+    return this.http.put(`${this.apiUrl}/visits/${id}/feedback`, JSON.stringify(feedback), { headers: { 'Content-Type': 'application/json' }});
   }
 
   addActivityFeedback(id: number, feedback: string): Observable<any> {
-    return this.http.put(`${this.apiUrl}/activities/${id}/feedback`, `"${feedback}"`, { headers: { 'Content-Type': 'application/json' }});
+    return this.http.put(`${this.apiUrl}/activities/${id}/feedback`, JSON.stringify(feedback), { headers: { 'Content-Type': 'application/json' }});
   }
 
   // جلب الترشيحات

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
@@ -24,10 +24,12 @@ export function futureDateValidator(): ValidatorFn {
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
   templateUrl: './lead-details.html',
-  styleUrls: ['./lead-details.css']
+  styleUrls: ['./lead-details.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LeadDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private cdr = inject(ChangeDetectorRef);
   private crmService = inject(CrmService);
   private fb = inject(FormBuilder);
   private alertService = inject(AlertService);
@@ -343,12 +345,13 @@ export class LeadDetailsComponent implements OnInit {
         });
 
         this.combinedTimeline.set(combined);
+        this.cdr.markForCheck();
       },
       error: (err) => console.error('Error fetching lead details:', err)
     });
 
     this.crmService.getLeadRecommendations(id).subscribe({
-      next: (recs) => this.recommendations.set(recs),
+      next: (recs) => { this.recommendations.set(recs); this.cdr.markForCheck(); },
       error: (err) => console.error('Error fetching recommendations', err)
     });
   }

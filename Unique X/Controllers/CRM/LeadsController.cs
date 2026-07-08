@@ -29,22 +29,6 @@ namespace Unique_X.Controllers.CRM
 
             bool isDuplicate = await _context.Leads.AnyAsync(l => l.PhoneNumber == dto.PhoneNumber);
 
-            // لو متكرر، نجيب اسم البروكر الأصلي
-            string? originalBrokerName = null;
-            string? duplicateRequestedByName = null;
-            if (isDuplicate)
-            {
-                var originalLead = await _context.Leads
-                    .Include(l => l.Broker)
-                    .FirstOrDefaultAsync(l => l.PhoneNumber == dto.PhoneNumber);
-                if (originalLead?.Broker != null)
-                    originalBrokerName = originalLead.Broker.FirstName + " " + originalLead.Broker.LastName;
-
-                var requestingBroker = await _context.Users.FindAsync(dto.BrokerId) as ApplicantUser;
-                if (requestingBroker != null)
-                    duplicateRequestedByName = requestingBroker.FirstName + " " + requestingBroker.LastName;
-            }
-
             // 1. إنشاء وحفظ الـ Lead الأساسي
             var newLead = new Lead
             {
@@ -56,10 +40,8 @@ namespace Unique_X.Controllers.CRM
                 CampaignName = dto.CampaignName,
                 LeadStatusId = dto.LeadStatusId,
                 ReferredBy = dto.ReferredBy,
-                IsDuplicate = isDuplicate,
+                IsDuplicate = isDuplicate, // لو متكرر هيبقى True
                 IsApprovedDuplicate = !isDuplicate,
-                OriginalBrokerName = originalBrokerName,
-                DuplicateRequestedByBrokerName = duplicateRequestedByName,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -132,15 +114,15 @@ namespace Unique_X.Controllers.CRM
                 ReferredBy = l.ReferredBy ?? "", // 👈 السطر ده جديد
                 IsDuplicate = l.IsDuplicate,
                 IsApprovedDuplicate = l.IsApprovedDuplicate,
-                IsRejectedDuplicate = l.IsRejectedDuplicate,
-                OriginalBrokerName = l.OriginalBrokerName,
-                DuplicateRequestedByBrokerName = l.DuplicateRequestedByBrokerName,
+                // بيحسب كام عميل مسجل بنفس الرقم ده وحالته 19 (Deal Closed)
                 ClosedDealsCount = _context.Leads.Count(c => c.PhoneNumber == l.PhoneNumber && c.LeadStatusId == 19),
                 CreatedAt = l.CreatedAt,
                 QuarterlyInstallment = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).QuarterlyInstallment,
 
                 // 👇 ده السطر اللي بيجيب تاريخ آخر تعديل، ولو مفيش بيجيب تاريخ الإنشاء
                 UpdatedAt = l.UpdatedAt ?? l.CreatedAt,
+                IsRejectedDuplicate = l.IsRejectedDuplicate,
+
                 // 👇 بناخد آخر LeadRequest (الأحدث) عشان الـ Lead بقى ممكن يكون ليه أكتر من طلب
                 PropertyType = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).PropertyType : "",
                 Purpose = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).Purpose : "",
@@ -405,9 +387,51 @@ namespace Unique_X.Controllers.CRM
         [HttpPut("{id}/update-details")]
         public async Task<IActionResult> UpdateLeadDetails(int id, [FromBody] UpdateLeadDetailsDto dto)
         {
-            // 1. تحديث بيانات العميل الأساسية
             var lead = await _context.Leads.FindAsync(id);
             if (lead == null) return NotFound("Lead not found");
+
+            // ===== تحقق من تكرار الرقم لو اتغير =====
+            bool phoneChanged = lead.PhoneNumber != dto.PhoneNumber;
+            if (phoneChanged)
+            {
+                var existingLead = await _context.Leads
+                    .Include(l => l.Broker)
+                    .FirstOrDefaultAsync(l => l.PhoneNumber == dto.PhoneNumber && l.Id != id);
+
+                if (existingLead != null)
+                {
+                    // في تكرار — نحفظ التغيير ونعلّم الـ lead إنه pending
+                    lead.IsDuplicate = true;
+                    lead.IsApprovedDuplicate = false;
+                    lead.IsRejectedDuplicate = false;
+                    lead.OriginalBrokerName = existingLead.Broker != null
+                        ? existingLead.Broker.FirstName + " " + existingLead.Broker.LastName
+                        : existingLead.BrokerId;
+
+                    // نجيب اسم البروكر اللي عمل التعديل
+                    var editingBroker = await _context.Users.FindAsync(lead.BrokerId) as ApplicantUser;
+                    lead.DuplicateRequestedByBrokerName = editingBroker != null
+                        ? editingBroker.FirstName + " " + editingBroker.LastName
+                        : lead.BrokerId;
+
+                    lead.PhoneNumber = dto.PhoneNumber;
+                    lead.FullName = dto.FullName;
+                    lead.Email = dto.Email;
+                    lead.LeadStatusId = dto.LeadStatusId;
+                    lead.CampaignSource = dto.CampaignSource;
+                    lead.CampaignName = dto.CampaignName;
+                    lead.ReferredBy = dto.ReferredBy;
+                    _context.Leads.Update(lead);
+                    await _context.SaveChangesAsync();
+
+                    return Ok(new
+                    {
+                        message = "Duplicate detected. Pending admin approval.",
+                        isDuplicate = true,
+                        originalBrokerName = lead.OriginalBrokerName
+                    });
+                }
+            }
 
             // 👇 السحر هنا: لو البروكر غير الحالة من جوه صفحة التعديل، نسجلها في الـ History فوراً
             if (lead.LeadStatusId != dto.LeadStatusId)
@@ -418,7 +442,7 @@ namespace Unique_X.Controllers.CRM
                     OldStatusId = lead.LeadStatusId,
                     NewStatusId = dto.LeadStatusId,
                     ChangedById = lead.BrokerId,
-                    Notes = "Stage updated from Edit Request Form", // رسالة توضح إنها اتعدلت من الفورم
+                    Notes = "Stage updated from Edit Request Form",
                     ChangedAt = DateTime.UtcNow
                 };
                 _context.LeadStatusHistories.Add(history);
