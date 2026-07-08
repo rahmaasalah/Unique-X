@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
+import { AdminService } from '../../../Services/admin';
 
 @Component({
   selector: 'app-edit-request',
@@ -14,6 +15,7 @@ import { AlertService } from '../../../Services/alert';
 export class EditRequestComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private crmService = inject(CrmService);
+  private adminService = inject(AdminService);
   private fb = inject(FormBuilder);
   private alertService = inject(AlertService);
   public router = inject(Router);
@@ -22,6 +24,13 @@ export class EditRequestComponent implements OnInit {
   editRequestForm!: FormGroup;
   campaignsList: any[] =[];
   currentBrokerId: string = '';
+  isAdmin = signal<boolean>(false);
+  originalPhone: string = ''; // الرقم الأصلي قبل التعديل
+
+  // Duplicate modal
+  duplicateModalOpen = signal<boolean>(false);
+  duplicateInfo = signal<{originalBroker: string, newBroker: string} | null>(null);
+  pendingSubmitData: any = null;
 
   availablePropertyCodes = signal<string[]>([]); 
 
@@ -102,18 +111,32 @@ export class EditRequestComponent implements OnInit {
 
   ngOnInit() {
     this.leadId = Number(this.route.snapshot.paramMap.get('id'));
+
+    // نجيب بيانات اليوزر الحالي
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      this.currentBrokerId = user.id || user.userId || '';
+      const roles = user.roles || [];
+      const isUserAdmin = roles.includes('Admin') || user.userType === 2 || user.userType === 'Admin';
+      this.isAdmin.set(isUserAdmin);
+
+      // Debug مؤقت — احذفيه بعد ما تتأكدي
+      console.log('User object:', user);
+      console.log('isAdmin:', isUserAdmin);
+    }
+
     this.initForm();
     if (this.leadId) {
       this.loadLeadData(this.leadId);
     }
     this.setupDynamicFields();
-    
   }
 
   initForm() {
     this.editRequestForm = this.fb.group({
       fullName: ['', Validators.required],
-      phoneNumber: ['', Validators.required],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
       email: [''],
       leadStatusId: [1, Validators.required],
       
@@ -143,6 +166,7 @@ export class EditRequestComponent implements OnInit {
         if (res.leadInfo && res.requestDetails) {
           const info = res.leadInfo;
           const req = res.requestDetails;
+          this.originalPhone = info.phoneNumber; // نحفظ الرقم الأصلي
           
           this.editRequestForm.get('zoneId')?.setValue(req.zoneId || '', { emitEvent: false });
           this.availableRegions = this.regionsMapping[req.zoneId] ||[];
@@ -276,33 +300,74 @@ export class EditRequestComponent implements OnInit {
   }
 
   onUpdateRequest() {
-    if (this.editRequestForm.valid) {
-      this.alertService.showLoading('Saving Changes...');
-      const submitData = { ...this.editRequestForm.value };
-      
-      // تجهيز المصفوفات لنصوص
-      submitData.selectedRegions = submitData.selectedRegions.join(', ');
-      submitData.selectedProjects = submitData.selectedProjects.join(', ');
+    if (this.editRequestForm.invalid) return;
 
-      // 🟢 تنظيف الأرقام من الفواصل قبل ما تروح للداتابيز
-      submitData.totalAmount = submitData.totalAmount ? parseInt(String(submitData.totalAmount).replace(/,/g, ''), 10) : 0;
-      submitData.downPayment = submitData.downPayment ? parseInt(String(submitData.downPayment).replace(/,/g, ''), 10) : 0;
-      submitData.quarterlyInstallment = submitData.quarterlyInstallment ? parseInt(String(submitData.quarterlyInstallment).replace(/,/g, ''), 10) : 0;
-      submitData.installmentYears = submitData.installmentYears ? parseInt(String(submitData.installmentYears).replace(/,/g, ''), 10) : 0;
+    this.alertService.showLoading('Saving Changes...');
+    const submitData = { ...this.editRequestForm.value };
 
-      if (submitData.campaignId === '') submitData.campaignId = null;
-      if (submitData.zoneId === '') submitData.zoneId = null;
+    submitData.selectedRegions = submitData.selectedRegions.join(', ');
+    submitData.selectedProjects = submitData.selectedProjects.join(', ');
+    submitData.totalAmount = submitData.totalAmount ? parseInt(String(submitData.totalAmount).replace(/,/g, ''), 10) : 0;
+    submitData.downPayment = submitData.downPayment ? parseInt(String(submitData.downPayment).replace(/,/g, ''), 10) : 0;
+    submitData.quarterlyInstallment = submitData.quarterlyInstallment ? parseInt(String(submitData.quarterlyInstallment).replace(/,/g, ''), 10) : 0;
+    submitData.installmentYears = submitData.installmentYears ? parseInt(String(submitData.installmentYears).replace(/,/g, ''), 10) : 0;
+    if (submitData.campaignId === '') submitData.campaignId = null;
+    if (submitData.zoneId === '') submitData.zoneId = null;
 
-      this.crmService.updateLeadDetails(this.leadId, submitData).subscribe({
-        next: () => {
-          this.alertService.close();
+    // الـ backend هيتحقق من التكرار تلقائياً ويرجع isDuplicate لو في تكرار
+    this.saveUpdate(submitData);
+  }
+
+  saveUpdate(submitData: any) {
+    this.alertService.showLoading('Saving Changes...');
+    this.crmService.updateLeadDetails(this.leadId, submitData).subscribe({
+      next: (res: any) => {
+        this.alertService.close();
+        if (res?.isDuplicate) {
+          if (this.isAdmin()) {
+            // الأدمن يشوف modal يقبل أو يرفض
+            this.duplicateInfo.set({
+              originalBroker: res.originalBrokerName || 'Unknown',
+              newBroker: 'Admin'
+            });
+            this.pendingSubmitData = null; // البيانات اتحفظت بالفعل
+            this.duplicateModalOpen.set(true);
+          } else {
+            // البروكر يشوف رسالة انتظار
+            this.alertService.success(
+              'Phone number already exists for another client. Your change has been saved and is pending Admin approval.'
+            );
+            this.router.navigate(['/crm/leads', String(this.leadId)]);
+          }
+        } else {
           this.alertService.success('Lead updated successfully!');
-          this.router.navigate(['/crm/leads', this.leadId]); // نرجعه للبروفايل
-        },
-        error: () => {
-          this.alertService.close();
-          this.alertService.error('Failed to update details.');
+          this.router.navigate(['/crm/leads', String(this.leadId)]);
         }
+      },
+      error: () => {
+        this.alertService.close();
+        this.alertService.error('Failed to update details.');
+      }
+    });
+  }
+
+  confirmDuplicateAdmin(approve: boolean) {
+    this.duplicateModalOpen.set(false);
+    if (approve) {
+      this.crmService.approveDuplicateLead(this.leadId).subscribe({
+        next: () => {
+          this.alertService.success('Duplicate approved successfully!');
+          this.router.navigate(['/crm/leads', String(this.leadId)]);
+        },
+        error: () => this.alertService.error('Failed to approve duplicate.')
+      });
+    } else {
+      this.crmService.updateLeadDetails(this.leadId, { phoneNumber: this.originalPhone }).subscribe({
+        next: () => {
+          this.alertService.success('Change rejected. Original phone number restored.');
+          this.router.navigate(['/crm/leads', String(this.leadId)]);
+        },
+        error: () => this.alertService.error('Failed to revert phone number.')
       });
     }
   }

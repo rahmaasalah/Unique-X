@@ -139,7 +139,7 @@ export class AddLeadComponent implements OnInit {
   initForm() {
     this.leadForm = this.fb.group({
       fullName: ['', Validators.required],
-      phoneNumber: ['', Validators.required],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
       email: [''],
       brokerId: [this.isAdmin() ? '' : this.currentBrokerId, Validators.required],
       leadStatusId: [1, Validators.required], 

@@ -356,16 +356,31 @@ getSmartSearchTerm(term: string): string {
     const input = event.target;
     input.value = input.value.replace(/[^0-9]/g, ''); // حذف أي شيء ليس رقماً
   }
+  formatPrice(event: any) {
+  const input = event.target;
+  const raw = input.value.replace(/[^0-9]/g, '');
+  input.value = raw ? Number(raw).toLocaleString('en-US') : '';
+}
 
   
-  onSearch(params: any) {
-  // تجميع الفلاتر مع مراعاة الحفاظ على listingType الحالي في الرابط
+ onSearch(params: any) {
+
+  const listingTypeMap: any = {
+    'Resale': 0,
+    'Rent': 1,
+    'Primary': 2,
+    'ResaleProject': 3
+  };
+
+  const rawType = params.listingType;
+  const resolvedType = rawType ? (listingTypeMap[rawType] ?? rawType) : null;
+
   const filters = {
-    ...this.route.snapshot.queryParams,
     searchTerm: params.searchTerm || null,
     city: params.city || null,
-    minPrice: params.minPrice || null,
-    maxPrice: params.maxPrice || null,
+    minPrice: params.minPrice ? params.minPrice.replace(/,/g, '') : null,
+    maxPrice: params.maxPrice ? params.maxPrice.replace(/,/g, '') : null,
+    listingType: resolvedType,
     projectName: params.projectName || null,
     code: params.code || null,
     area: params.area || null,
@@ -378,7 +393,6 @@ getSmartSearchTerm(term: string): string {
     maxFloor: params.maxFloor || null
   };
 
-  // تحديث الرابط فوراً
   this.router.navigate(['/home'], { queryParams: filters });
 }
 clearFilters() {

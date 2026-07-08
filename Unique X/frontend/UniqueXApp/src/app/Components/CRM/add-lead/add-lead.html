@@ -118,7 +118,15 @@
         </div>
         <div class="col-md-4">
           <label class="form-label small fw-bold text-dark">Phone Number *</label>
-          <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="phoneNumber">
+          <input type="text" class="form-control bg-light border-0 rounded-3"
+                 formControlName="phoneNumber"
+                 maxlength="11"
+                 placeholder="01XXXXXXXXX">
+          @if (leadForm.get('phoneNumber')?.invalid && leadForm.get('phoneNumber')?.touched) {
+            <small class="text-danger mt-1 d-block">
+              <i class="bi bi-exclamation-circle me-1"></i> Phone must be exactly 11 digits.
+            </small>
+          }
         </div>
         <div class="col-md-4">
           <label class="form-label small fw-bold text-dark">Email</label>
