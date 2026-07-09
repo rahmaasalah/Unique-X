@@ -1011,6 +1011,7 @@ filteredJobApplications = computed(() => {
       if (attendance === 'none') return !app.attendanceStatus;
       if (attendance === 'Attended') return app.attendanceStatus === 'Attended';
       if (attendance === 'NotAttended') return app.attendanceStatus === 'NotAttended';
+      if (attendance === 'Rejected') return app.finalDecision === 'Rejected';
       return true;
     }
 
