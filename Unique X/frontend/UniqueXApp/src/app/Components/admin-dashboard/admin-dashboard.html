@@ -1167,6 +1167,12 @@
                       [class.btn-secondary]="jobAttendanceFilter() === 'NotAttended'"
                       [class.btn-outline-secondary]="jobAttendanceFilter() !== 'NotAttended'"
                       (click)="jobAttendanceFilter.set('NotAttended')">No Show</button>
+
+                      <button class="btn btn-sm rounded-pill px-3"
+        [class.btn-danger]="jobAttendanceFilter() === 'Rejected'"
+        [class.btn-outline-secondary]="jobAttendanceFilter() !== 'Rejected'"
+        (click)="jobAttendanceFilter.set('Rejected')">
+  <i class="bi bi-x-circle me-1"></i>Rejected</button>
             </div>
           </div>
         }
