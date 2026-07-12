@@ -28,6 +28,7 @@
 
         public int VisitsCount { get; set; }
         public int ActivitiesCount { get; set; }
+        public string? LastActionBy { get; set; }
 
         public bool IsDuplicate { get; set; }
         public bool IsApprovedDuplicate { get; set; }

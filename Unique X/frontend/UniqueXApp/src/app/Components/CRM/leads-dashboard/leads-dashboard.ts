@@ -91,8 +91,12 @@ closeCampaignDropdown() {
   ];
 
   boardColumns = signal<any[]>([]);
-  isAdmin = signal<boolean>(false); // 👈 متغير جديد
+  isAdmin = signal<boolean>(false);
   selectedRequest = signal<any>(null);
+  activeTab = signal<'pipeline' | 'pending'>('pipeline');
+  pendingClients = signal<any[]>([]);
+  pendingLoading = signal<boolean>(false);
+  selectedNewBroker: { [leadId: number]: string } = {};
 
   ngOnInit() {
     if (!this.authService.isAllowedToOpenCrm()) {
@@ -337,6 +341,36 @@ this.searchCampaignCode.set('');
         }
       });
     }
+  }
+
+  loadPendingClients() {
+    this.pendingLoading.set(true);
+    this.crmService.getPendingClients().subscribe({
+      next: (data) => { this.pendingClients.set(data); this.pendingLoading.set(false); },
+      error: () => this.pendingLoading.set(false)
+    });
+  }
+
+  switchTab(tab: 'pipeline' | 'pending') {
+    this.activeTab.set(tab);
+    if (tab === 'pending') this.loadPendingClients();
+  }
+
+  transferPendingLead(leadId: number) {
+    const newBrokerId = this.selectedNewBroker[leadId];
+    if (!newBrokerId) { this.alertService.error('Please select a broker first.'); return; }
+
+    const adminId = this.currentBrokerId;
+    this.alertService.confirm('Transfer this client to the selected broker?', () => {
+      this.crmService.transferLead(leadId, newBrokerId, adminId).subscribe({
+        next: () => {
+          this.alertService.success('Client transferred successfully!');
+          this.loadPendingClients();
+          this.loadLeads('');
+        },
+        error: () => this.alertService.error('Transfer failed.')
+      });
+    });
   }
 
   approveDuplicate(leadId: number) {

@@ -189,7 +189,7 @@ namespace Unique_X.Services.Implementation
                 PaymentMethod = dto.PaymentMethod ?? "Cash",
                 MonthlyRent = dto.MonthlyRent,
                 SecurityDeposit = dto.SecurityDeposit,
-                CommissionPercentage = 2.5m, 
+                CommissionPercentage = 2.5m,
 
                 // الحالات والخدمات (Booleans)
                 HasMasterRoom = dto.HasMasterRoom ?? false,
@@ -262,11 +262,23 @@ namespace Unique_X.Services.Implementation
         {
 
             var userFavorites = new List<int>();
+            var userShortlisted = new List<int>();
+            var userVisitListed = new List<int>();
             if (!string.IsNullOrEmpty(userId))
             {
                 userFavorites = await _context.Wishlists
                     .Where(w => w.UserId == userId)
                     .Select(w => w.PropertyId)
+                    .ToListAsync();
+
+                userShortlisted = await _context.Shortlists
+                    .Where(s => s.UserId == userId)
+                    .Select(s => s.PropertyId)
+                    .ToListAsync();
+
+                userVisitListed = await _context.VisitLists
+                    .Where(v => v.UserId == userId)
+                    .Select(v => v.PropertyId)
                     .ToListAsync();
             }
 
@@ -289,7 +301,7 @@ namespace Unique_X.Services.Implementation
 
             if (filter.PropertyType.HasValue)
                 query = query.Where(p => p.PropertyType == (PropertyType)filter.PropertyType.Value);
-            
+
 
             if (!string.IsNullOrEmpty(filter.Code))
                 query = query.Where(p => p.Code == filter.Code);
@@ -351,7 +363,7 @@ namespace Unique_X.Services.Implementation
             {
                 query = query.Where(p => p.ListingType == (ListingType)filter.ListingType.Value);
             }
-            query = query.Where(p => !p.IsSold && p.IsActive && p.IsApproved); 
+            query = query.Where(p => !p.IsSold && p.IsActive && p.IsApproved);
 
             if (!string.IsNullOrEmpty(filter.SearchTerm))
             {
@@ -381,7 +393,9 @@ namespace Unique_X.Services.Implementation
 
             return properties.Select(p => {
                 var dto = MapToResponseDto(p);
-                dto.IsFavorite = userFavorites.Contains(p.Id); 
+                dto.IsFavorite = userFavorites.Contains(p.Id);
+                dto.IsShortlisted = userShortlisted.Contains(p.Id);
+                dto.IsVisitListed = userVisitListed.Contains(p.Id);
                 return dto;
             });
         }
@@ -407,7 +421,7 @@ namespace Unique_X.Services.Implementation
             }
             else
             {
-               
+
                 var relatedProperties = await _context.Properties
                     .Where(p => p.Code == baseCode || p.Code.StartsWith(baseCode + "-COPY"))
                     .ToListAsync();
@@ -508,7 +522,7 @@ namespace Unique_X.Services.Implementation
             if (dto.FirstBaths.HasValue) property.FirstBaths = dto.FirstBaths.Value;
             if (dto.FirstReception.HasValue) property.FirstReception = dto.FirstReception.Value;
             if (dto.SecondRooms.HasValue) property.SecondRooms = dto.SecondRooms.Value;
-            if(dto.SecondBaths.HasValue) property.SecondBaths = dto.SecondBaths.Value;
+            if (dto.SecondBaths.HasValue) property.SecondBaths = dto.SecondBaths.Value;
             if (dto.SecondReception.HasValue) property.SecondReception = dto.SecondReception.Value;
             if (dto.AreaType.HasValue) property.AreaType = dto.AreaType.Value;
             if (dto.VillaCategory.HasValue) property.VillaCategory = dto.VillaCategory.Value;
@@ -526,7 +540,7 @@ namespace Unique_X.Services.Implementation
             if (dto.HasGarden.HasValue) property.HasGarden = dto.HasGarden.Value;
 
             if (dto.MonthlyRent.HasValue) property.MonthlyRent = dto.MonthlyRent.Value;
-            
+
             if (dto.SecurityDeposit.HasValue) property.SecurityDeposit = dto.SecurityDeposit.Value;
 
             // تحديث الـ Booleans
@@ -688,7 +702,7 @@ namespace Unique_X.Services.Implementation
                 OwnerName = property.OwnerName,
                 OwnerPhone = property.OwnerPhone,
                 DeveloperName = property.DeveloperName,
-                
+
                 // البيانات الفنية
                 Floor = property.Floor,
                 TotalFloors = property.TotalFloors,
@@ -700,7 +714,7 @@ namespace Unique_X.Services.Implementation
 
                 // البيانات المالية والخدمات
                 PaymentMethod = property.PaymentMethod,
-                
+
                 SecurityDeposit = property.SecurityDeposit,
                 MonthlyRent = property.MonthlyRent,
                 CommissionPercentage = property.CommissionPercentage,
@@ -744,7 +758,7 @@ namespace Unique_X.Services.Implementation
                 IsApproved = property.IsApproved,
                 IsActive = property.IsActive,
                 RejectionReason = property.RejectionReason,
-                PendingDeletion = property.PendingDeletion,          
+                PendingDeletion = property.PendingDeletion,
                 DeletionRejectionReason = property.DeletionRejectionReason,
                 BrokerName = property.Broker != null ? $"{property.Broker.FirstName} {property.Broker.LastName}" : "System Agent",
                 BrokerPhone = property.Broker?.PhoneNumber ?? "N/A",
@@ -765,11 +779,11 @@ namespace Unique_X.Services.Implementation
                 Photos = property.Photos?
                    .OrderByDescending(p => p.IsMain)
                    .Select(p => new PhotoResponseDto
-                      {
-                        Id = p.Id,
-                        Url = p.Url,
-                        IsMain = p.IsMain
-                      }).ToList() ?? new List<PhotoResponseDto>()
+                   {
+                       Id = p.Id,
+                       Url = p.Url,
+                       IsMain = p.IsMain
+                   }).ToList() ?? new List<PhotoResponseDto>()
             };
 
 
@@ -832,7 +846,7 @@ namespace Unique_X.Services.Implementation
             {
                 if (property.City == City.NorthCoast)
                 {
-                    prefix = "NR93-"; 
+                    prefix = "NR93-";
                 }
                 else
                 {

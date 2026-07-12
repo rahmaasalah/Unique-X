@@ -22,5 +22,6 @@
         public string Location { get; set; }
         public string Feedback { get; set; } // رأي العميل بعد الزيارة
         public bool IsCompleted { get; set; } // اتعملت ولا لسه
+        public bool IsAdminAction { get; set; } = false;
     }
 }

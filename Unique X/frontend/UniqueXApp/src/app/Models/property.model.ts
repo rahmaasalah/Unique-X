@@ -24,6 +24,8 @@ export interface Property {
   listingType: string;
   propertyType: string;
   isFavorite: boolean;
+  isShortlisted: boolean;
+isVisitListed: boolean;
   isSold: boolean;
   isActive: boolean; 
   distanceFromLandmark: string;

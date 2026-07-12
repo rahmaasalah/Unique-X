@@ -99,6 +99,16 @@
     }
   </button>
 </li>
+<li class="mb-2">
+  <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold"
+          [ngClass]="activeTab() === 'pending_clients' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'"
+          (click)="switchTab('pending_clients')">
+    <i class="bi bi-hourglass-split me-3 fs-5"></i> Pending Clients
+    @if (pendingClients().length > 0) {
+      <span class="badge bg-danger ms-auto rounded-pill">{{ pendingClients().length }}</span>
+    }
+  </button>
+</li>
       </ul>
     </nav>
   </aside>
@@ -1915,6 +1925,128 @@
             </div>
           </div>
         </div>
+      </section>
+    }
+
+    <!-- ===== Pending Clients Section ===== -->
+    @if (activeTab() === 'pending_clients') {
+      <section class="animate__animated animate__fadeIn">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div>
+            <h4 class="fw-bold mb-1"><i class="bi bi-hourglass-split text-warning me-2"></i>Pending Clients</h4>
+            <p class="text-muted small mb-0">Clients with no broker activity for more than 48 hours.</p>
+          </div>
+          <button class="btn btn-outline-secondary rounded-pill px-4" (click)="loadPendingClients()">
+            <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+          </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+          <div class="row g-2 align-items-center">
+            <div class="col-md-5">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" class="form-control border-start-0 bg-white"
+                       placeholder="Search by client name..."
+                       [ngModel]="pendingSearchName()"
+                       (ngModelChange)="pendingSearchName.set($event)">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <select class="form-select form-select-sm"
+                      [ngModel]="pendingFilterBroker()"
+                      (ngModelChange)="pendingFilterBroker.set($event)">
+                <option value="">-- All Brokers --</option>
+                @for (broker of vipBrokers(); track broker.id) {
+                  <option [value]="broker.firstName + ' ' + broker.lastName">
+                    {{ broker.firstName }} {{ broker.lastName }}
+                  </option>
+                }
+              </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+              <span class="badge bg-warning text-dark px-3 py-2 rounded-pill align-self-center">
+                {{ filteredPendingClients.length }} clients
+              </span>
+              @if (pendingSearchName() || pendingFilterBroker()) {
+                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                        (click)="pendingSearchName.set(''); pendingFilterBroker.set('')">
+                  <i class="bi bi-x-lg me-1"></i>Clear
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        @if (pendingClientsLoading()) {
+          <div class="text-center py-5"><div class="spinner-border text-warning"></div></div>
+        } @else if (pendingClients().length === 0) {
+          <div class="text-center py-5 bg-white rounded-4 shadow-sm">
+            <i class="bi bi-check-circle fs-1 text-success opacity-50"></i>
+            <p class="text-muted mt-3 fw-semibold">All leads are up to date!</p>
+          </div>
+        } @else {
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead style="background:#1a1a2e; color:white;">
+                  <tr>
+                    <th class="ps-4 py-3">Client</th>
+                    <th class="py-3">Phone</th>
+                    <th class="py-3">Stage</th>
+                    <th class="py-3">Current Broker</th>
+                    <th class="py-3">Last Update</th>
+                    <th class="py-3">Assign to New Broker</th>
+                    <th class="py-3 pe-4">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @if (filteredPendingClients.length === 0) {
+                    <tr>
+                      <td colspan="7" class="text-center text-muted py-4">No clients match your filters.</td>
+                    </tr>
+                  }
+                  @for (client of filteredPendingClients; track client.id) {
+                    <tr>
+                      <td class="ps-4 fw-bold">{{ client.fullName }}</td>
+                      <td class="text-muted small">{{ client.phoneNumber }}</td>
+                      <td>
+                        <span class="badge bg-secondary rounded-pill px-2 small">{{ client.statusName }}</span>
+                      </td>
+                      <td>
+                        <span class="fw-semibold text-dark">{{ client.brokerName }}</span>
+                      </td>
+                      <td>
+                        <div class="small fw-bold text-dark">
+                          <i class="bi bi-clock-history me-1"></i>{{ client.lastUpdate | date:'MMM d, h:mm a' }}
+                        </div>
+                        <div class="text-danger" style="font-size:0.7rem;">{{ client.hoursSinceUpdate }}h ago</div>
+                      </td>
+                      <td>
+                        <select class="form-select form-select-sm rounded-3 border-0 bg-light"
+                                style="min-width:160px;"
+                                [(ngModel)]="selectedNewBroker[client.id]">
+                          <option value="">-- Select Broker --</option>
+                          @for (broker of allBrokersList(); track broker.id) {
+                            <option [value]="broker.id">{{ broker.firstName }} {{ broker.lastName }}</option>
+                          }
+                        </select>
+                      </td>
+                      <td class="pe-4">
+                        <button class="btn btn-sm btn-danger rounded-pill px-3 fw-bold"
+                                (click)="transferPendingLead(client.id)"
+                                [disabled]="!selectedNewBroker[client.id]">
+                          <i class="bi bi-arrow-right-circle me-1"></i>Transfer
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
       </section>
     }
 

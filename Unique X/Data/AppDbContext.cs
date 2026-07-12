@@ -29,6 +29,9 @@ namespace Unique_X.Data
         public DbSet<Blog> Blogs { get; set; }
         public DbSet<LeadFavorite> LeadFavorites { get; set; }
 
+        public DbSet<Shortlist> Shortlists { get; set; }
+        public DbSet<VisitList> VisitLists { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder builder)

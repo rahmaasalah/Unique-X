@@ -23,7 +23,22 @@ export class CrmDashboardComponent implements OnInit {
   private router = inject(Router);
 
   isAdmin = signal<boolean>(false);
-  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'admin_favorites' | 'pending_duplicates' | 'rejected_duplicates' | 'report'>('brokers');
+  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'admin_favorites' | 'pending_duplicates' | 'rejected_duplicates' | 'report' | 'pending_clients'>('brokers');
+  pendingClients = signal<any[]>([]);
+  pendingClientsLoading = signal<boolean>(false);
+  selectedNewBroker: { [leadId: number]: string } = {};
+  pendingSearchName = signal<string>('');
+  pendingFilterBroker = signal<string>('');
+
+  get filteredPendingClients() {
+    const search = this.pendingSearchName().toLowerCase();
+    const broker = this.pendingFilterBroker();
+    return this.pendingClients().filter(c => {
+      const matchName = !search || c.fullName.toLowerCase().includes(search);
+      const matchBroker = !broker || c.brokerName === broker;
+      return matchName && matchBroker;
+    });
+  }
 
 
   filterPropertyType = signal<string>('');
@@ -676,9 +691,33 @@ hiddenLeads = signal<number[]>([]);
   // دالة بتقفل القائمة أوتوماتيك لما اليوزر يختار تاب في الموبايل
   switchTab(tab: any) {
     this.activeTab.set(tab);
+    if (tab === 'pending_clients') this.loadPendingClients();
     if (window.innerWidth <= 991) {
       this.isSidebarOpen.set(false);
     }
+  }
+
+  loadPendingClients() {
+    this.pendingClientsLoading.set(true);
+    this.crmService.getPendingClients().subscribe({
+      next: (data) => { this.pendingClients.set(data); this.pendingClientsLoading.set(false); },
+      error: () => this.pendingClientsLoading.set(false)
+    });
+  }
+
+  transferPendingLead(leadId: number) {
+    const newBrokerId = this.selectedNewBroker[leadId];
+    if (!newBrokerId) { this.alertService.error('Please select a broker first.'); return; }
+    const adminId = this.currentBrokerId;
+    this.alertService.confirm('Transfer this client to the selected broker?', () => {
+      this.crmService.transferLead(leadId, newBrokerId, adminId).subscribe({
+        next: () => {
+          this.alertService.success('Client transferred successfully!');
+          this.loadPendingClients();
+        },
+        error: () => this.alertService.error('Transfer failed.')
+      });
+    });
   }
 
   exportReportToExcel() {

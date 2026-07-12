@@ -24,5 +24,6 @@
         public string? Notes { get; set; }
         public string Status { get; set; } = "Pending"; // Pending, Completed, Cancelled, Rescheduled
         public bool IsDone { get; set; } = false; // اتعملت ولا لسه
+        public bool IsAdminAction { get; set; } = false;
     }
 }

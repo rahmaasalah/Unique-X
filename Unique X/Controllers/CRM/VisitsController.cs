@@ -46,7 +46,7 @@ namespace Unique_X.Controllers.CRM
             await _context.SaveChangesAsync();
 
             var lead = await _context.Leads.FindAsync(dto.LeadId);
-            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); }
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; lead.LastActionBy = "broker"; await _context.SaveChangesAsync(); }
 
             return Ok(new { message = "Visit scheduled successfully!", visitId = visit.Id });
         }
@@ -156,7 +156,7 @@ namespace Unique_X.Controllers.CRM
             await _context.SaveChangesAsync();
 
             var lead = await _context.Leads.FindAsync(visit.LeadId);
-            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); }
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; lead.LastActionBy = "broker"; await _context.SaveChangesAsync(); }
             return Ok();
         }
 
@@ -180,7 +180,7 @@ namespace Unique_X.Controllers.CRM
             await _context.SaveChangesAsync();
 
             var lead = await _context.Leads.FindAsync(visit.LeadId);
-            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; await _context.SaveChangesAsync(); }
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; lead.LastActionBy = "broker"; await _context.SaveChangesAsync(); }
             return Ok();
         }
     }
