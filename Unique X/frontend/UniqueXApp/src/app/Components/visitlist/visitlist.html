@@ -1,0 +1,28 @@
+<section class="py-5" style="background:#f8f9fa; min-height:100vh;">
+  <div class="container">
+    <div class="mb-4">
+      <h3 class="fw-bold"><i class="bi bi-geo-alt-fill text-primary me-2"></i>My Visit List</h3>
+      <p class="text-muted">Properties you're planning to visit.</p>
+    </div>
+
+    @if (loading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-danger"></div>
+      </div>
+    } @else if (properties().length === 0) {
+      <div class="text-center py-5">
+        <i class="bi bi-geo-alt fs-1 text-muted opacity-25"></i>
+        <p class="text-muted mt-3">No properties in your visit list yet.</p>
+        <button class="btn btn-primary rounded-pill px-5 fw-bold" routerLink="/home">Browse Properties</button>
+      </div>
+    } @else {
+      <div class="row g-4">
+        @for (prop of properties(); track prop.id) {
+          <div class="col-md-4 col-lg-3">
+            <app-property-card [property]="prop"></app-property-card>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</section>

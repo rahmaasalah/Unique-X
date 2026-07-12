@@ -28,7 +28,8 @@
         public string? CampaignName { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; } 
+        public DateTime? UpdatedAt { get; set; }
+        public string? LastActionBy { get; set; } // "broker" or "admin"
 
 
         public bool IsDuplicate { get; set; } = false; // هل العميل ده متكرر؟

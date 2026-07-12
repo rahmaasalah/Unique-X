@@ -82,4 +82,20 @@ getNextCode(prefix: string) {
   // استخدام encodeURIComponent للتعامل مع الرموز مثل #
   return this.http.get<Property>(`${this.baseUrl}/by-code/${encodeURIComponent(code)}`);
 }
+
+toggleShortlist(propertyId: number): Observable<any> {
+  return this.http.post(`${environment.apiUrl}/shortlist/toggle/${propertyId}`, {});
+}
+
+getMyShortlist(): Observable<any[]> {
+  return this.http.get<any[]>(`${environment.apiUrl}/shortlist`);
+}
+
+toggleVisitList(propertyId: number): Observable<any> {
+  return this.http.post(`${environment.apiUrl}/visitlist/toggle/${propertyId}`, {});
+}
+
+getMyVisitList(): Observable<any[]> {
+  return this.http.get<any[]>(`${environment.apiUrl}/visitlist`);
+}
 }

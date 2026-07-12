@@ -208,6 +208,9 @@ addFavorite(brokerId: string, leadId: number): Observable<any> {
 removeFavorite(brokerId: string, leadId: number): Observable<any> {
   return this.http.delete(`${this.apiUrl}/favorites?brokerId=${brokerId}&leadId=${leadId}`);
 }
+getPendingClients(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/leads/pending-clients`);
+}
 
 getBrokerReport(brokerId: string, from?: string, to?: string): Observable<any> {
   let url = `${this.apiUrl}/dashboard/broker-report/${brokerId}`;

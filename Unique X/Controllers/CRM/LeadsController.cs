@@ -121,6 +121,7 @@ namespace Unique_X.Controllers.CRM
 
                 // 👇 ده السطر اللي بيجيب تاريخ آخر تعديل، ولو مفيش بيجيب تاريخ الإنشاء
                 UpdatedAt = l.UpdatedAt ?? l.CreatedAt,
+                LastActionBy = l.LastActionBy ?? "broker",
                 IsRejectedDuplicate = l.IsRejectedDuplicate,
 
                 // 👇 بناخد آخر LeadRequest (الأحدث) عشان الـ Lead بقى ممكن يكون ليه أكتر من طلب
@@ -180,7 +181,8 @@ namespace Unique_X.Controllers.CRM
 
             // تحديث الحالة الأساسية للعميل
             lead.LeadStatusId = dto.NewStatusId;
-            lead.UpdatedAt = DateTime.UtcNow; // ✅ السطر ده بس المحتاج
+            lead.UpdatedAt = DateTime.UtcNow;
+            lead.LastActionBy = (dto.IsAdminAction == true) ? "admin" : "broker";
             _context.Leads.Update(lead);
 
             await _context.SaveChangesAsync();
@@ -455,6 +457,8 @@ namespace Unique_X.Controllers.CRM
             lead.CampaignSource = dto.CampaignSource;
             lead.CampaignName = dto.CampaignName;
             lead.ReferredBy = dto.ReferredBy;
+            lead.UpdatedAt = DateTime.UtcNow;
+            lead.LastActionBy = (dto.IsAdminAction == true) ? "admin" : "broker";
 
             _context.Leads.Update(lead);
 
@@ -502,10 +506,10 @@ namespace Unique_X.Controllers.CRM
                 ? newEntry
                 : newEntry + "_@|@_" + lead.GeneralFeedback;
 
-            _context.Leads.Update(lead);
-            await _context.SaveChangesAsync();
-
             lead.UpdatedAt = DateTime.UtcNow;
+            lead.LastActionBy = "broker"; // النوت دايماً من البروكر
+
+            _context.Leads.Update(lead);
             await _context.SaveChangesAsync();
             return Ok(new { message = "Note added successfully" });
         }
@@ -744,6 +748,8 @@ namespace Unique_X.Controllers.CRM
             if (lead == null) return NotFound("Lead not found");
 
             lead.BrokerId = dto.NewBrokerId;
+            lead.UpdatedAt = DateTime.UtcNow;
+            lead.LastActionBy = "admin";
             _context.Leads.Update(lead);
 
             // نقل المهام والزيارات المعلقة للبروكر الجديد
@@ -800,6 +806,39 @@ namespace Unique_X.Controllers.CRM
             return Ok(codes);
         }
 
+        // GET: api/crm/leads/pending-clients
+        // العملاء اللي UpdatedAt بتاعهم +48 ساعة من غير أي تغيير
+        [HttpGet("pending-clients")]
+        public async Task<IActionResult> GetPendingClients()
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-48);
+
+            var pendingLeads = await _context.Leads
+                .Include(l => l.Broker)
+                .Include(l => l.Status)
+                .Where(l => (l.UpdatedAt ?? l.CreatedAt) <= cutoff
+                         && l.LeadStatusId != 19  // مش Deal Closed
+                         && l.LeadStatusId != 22  // مش Lost
+                         && l.LeadStatusId != 23  // مش Low Budget
+                         && l.LeadStatusId != 24) // مش Number Issue
+                .OrderBy(l => l.UpdatedAt ?? l.CreatedAt)
+                .Select(l => new
+                {
+                    l.Id,
+                    l.FullName,
+                    l.PhoneNumber,
+                    StatusName = l.Status.Name,
+                    StatusId = l.LeadStatusId,
+                    BrokerId = l.BrokerId,
+                    BrokerName = l.Broker != null ? l.Broker.FirstName + " " + l.Broker.LastName : "Unknown",
+                    LastUpdate = l.UpdatedAt ?? l.CreatedAt,
+                    HoursSinceUpdate = (int)(DateTime.UtcNow - (l.UpdatedAt ?? l.CreatedAt)).TotalHours
+                })
+                .ToListAsync();
+
+            return Ok(pendingLeads);
+        }
+
         [HttpPut("bulk-transfer")]
         public async Task<IActionResult> BulkTransferLeads([FromBody] BulkTransferDto dto, [FromQuery] string adminId)
         {
@@ -811,6 +850,8 @@ namespace Unique_X.Controllers.CRM
             foreach (var lead in leads)
             {
                 lead.BrokerId = dto.NewBrokerId;
+                lead.UpdatedAt = DateTime.UtcNow;
+                lead.LastActionBy = "admin";
 
                 // نقل المهام المعلقة
                 var pendingActivities = await _context.LeadActivities.Where(a => a.LeadId == lead.Id && a.Status == "Pending").ToListAsync();

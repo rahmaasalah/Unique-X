@@ -151,18 +151,64 @@
         }
 
         <!-- لو كلاينت: اعرض كارت تفاعلي للمفضلة -->
-        @if (userData()?.userType === 0) {
-          <div class="text-center py-5">
-            <div class="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow-sm" style="width: 100px; height: 100px;">
-              <i class="bi bi-heart-fill fs-1"></i>
-            </div>
-            <h3 class="fw-bold">{{ userData()?.totalWishlist }}</h3>
-            <p class="text-muted fs-5">Saved Items in Your Wishlist</p>
-            <button class="btn btn-danger btn-lg rounded-pill px-5 fw-bold shadow mt-3" routerLink="/wishlist">
-              Browse My Favorites
-            </button>
+       @if (userData()?.userType === 0 || userData()?.userType === 1) {
+  <div class="d-flex flex-column gap-3">
+
+    <!-- Wishlist (كلاينت بس) -->
+    
+      <div class="d-flex align-items-center justify-content-between p-3 rounded-3 bg-light">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-danger d-flex align-items-center justify-content-center"
+               style="width:48px;height:48px;">
+            <i class="bi bi-heart-fill text-white fs-5"></i>
           </div>
-        }
+          <div>
+            <div class="fw-bold">Wishlist</div>
+            <div class="text-muted small">{{ userData()?.totalWishlist }} saved units</div>
+          </div>
+        </div>
+        <button class="btn btn-outline-danger rounded-pill px-4 fw-bold" routerLink="/wishlist">
+          Browse
+        </button>
+      </div>
+    
+
+    <!-- Shortlist -->
+    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 bg-light">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center"
+             style="width:48px;height:48px;">
+          <i class="bi bi-bookmark-fill text-white fs-5"></i>
+        </div>
+        <div>
+          <div class="fw-bold">Shortlist</div>
+          <div class="text-muted small">{{ userData()?.totalShortlist }} shortlisted units</div>
+        </div>
+      </div>
+      <button class="btn btn-outline-warning rounded-pill px-4 fw-bold" routerLink="/shortlist">
+        Browse
+      </button>
+    </div>
+
+    <!-- Visit List -->
+    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 bg-light">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center"
+             style="width:48px;height:48px;">
+          <i class="bi bi-geo-alt-fill text-white fs-5"></i>
+        </div>
+        <div>
+          <div class="fw-bold">Visit List</div>
+          <div class="text-muted small">{{ userData()?.totalVisitList }} units to visit</div>
+        </div>
+      </div>
+      <button class="btn btn-outline-primary rounded-pill px-4 fw-bold" routerLink="/visit-list">
+        Browse
+      </button>
+    </div>
+
+  </div>
+}
 
       </div>
     </div>

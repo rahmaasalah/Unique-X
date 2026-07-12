@@ -10,6 +10,7 @@
         public string? CampaignName { get; set; }
         public string? ReferredBy { get; set; }
         public decimal? QuarterlyInstallment { get; set; }
+        public bool IsAdminAction { get; set; } = false;
 
         // الحقول العقارية القديمة
         public string PropertyType { get; set; }

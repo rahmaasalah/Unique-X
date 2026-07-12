@@ -20,6 +20,8 @@ namespace Unique_X.DTOs
         public int Area { get; set; }
         public int Rooms { get; set; }
         public bool IsFavorite { get; set; }
+        public bool IsShortlisted { get; set; }
+        public bool IsVisitListed { get; set; }
         public int Bathrooms { get; set; }
         public string? Region { get; set; }
         public string? Address { get; set; }

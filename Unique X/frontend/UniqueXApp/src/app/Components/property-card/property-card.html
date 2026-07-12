@@ -8,23 +8,18 @@
          style="height: 200px;" alt="Property Image">
     
     <div class="position-absolute top-0 start-0 m-3 d-flex flex-column gap-1" style="z-index: 5;">
-      <!-- نوع المعاملة -->
       <span class="badge bg-danger rounded-pill px-3 py-2 shadow-sm">
         {{ property.listingType }}
       </span>
-
-      <!-- حالة التسليم (Ready / Off) -->
       <span class="badge rounded-pill px-3 py-1 shadow-sm fw-bold text-uppercase"
-      [class.bg-danger]="property.deliveryStatus === 'Ready'"
-      [class.bg-secondary]="property.deliveryStatus !== 'Ready'"
-      style="font-size: 0.65rem; width: fit-content;">
-  
-  <i class="bi" 
-     [class.bi-check-circle]="property.deliveryStatus === 'Ready'"
-     [class.bi-clock]="property.deliveryStatus !== 'Ready'"></i>
-  
-  {{ property.deliveryStatus === 'Ready' ? 'Ready' : 'Delivery ' + property.deliveryYear }}
-</span>
+            [class.bg-danger]="property.deliveryStatus === 'Ready'"
+            [class.bg-secondary]="property.deliveryStatus !== 'Ready'"
+            style="font-size: 0.65rem; width: fit-content;">
+        <i class="bi" 
+           [class.bi-check-circle]="property.deliveryStatus === 'Ready'"
+           [class.bi-clock]="property.deliveryStatus !== 'Ready'"></i>
+        {{ property.deliveryStatus === 'Ready' ? 'Ready' : 'Delivery ' + property.deliveryYear }}
+      </span>
     </div>
 
     @if (property.isHotDeal) {
@@ -33,21 +28,50 @@
       </div>
     }
 
-    @if (authService.getUserType() === 0) {
-  <button class="btn btn-light rounded-circle position-absolute top-0 end-0 m-2 shadow-sm border-0 wishlist-btn"
-          (click)="onToggleWishlist($event)" 
-          style="z-index: 10; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: white;">
-    
-    <i class="bi fs-5" 
-       [class.bi-heart-fill]="isLiked" 
-       [class.bi-heart]="!isLiked"
-       [class.text-danger]="isLiked"
-       [style.color]="!isLiked ? '#adb5bd' : ''">
-    </i>
-  </button>
-}
+    <!-- Action Buttons (Wishlist / Shortlist / Visit) -->
+    @if (authService.loggedIn()) {
+      <div class="position-absolute top-0 end-0 m-2 d-flex flex-column gap-1" style="z-index: 10;">
 
-    
+        <!-- Wishlist: كلاينت بس -->
+        
+          <button class="btn btn-light rounded-circle shadow-sm border-0 wishlist-btn"
+                  (click)="onToggleWishlist($event)"
+                  style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:white;"
+                  title="Wishlist">
+            <i class="bi fs-6"
+               [class.bi-heart-fill]="isLiked"
+               [class.bi-heart]="!isLiked"
+               [class.text-danger]="isLiked"
+               [style.color]="!isLiked ? '#adb5bd' : ''"></i>
+          </button>
+        
+
+        <!-- Shortlist: كلاينت وبروكر -->
+        <button class="btn btn-light rounded-circle shadow-sm border-0"
+                (click)="onToggleShortlist($event)"
+                style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:white;"
+                title="Shortlist">
+          <i class="bi fs-6"
+             [class.bi-bookmark-fill]="isShortlisted"
+             [class.bi-bookmark]="!isShortlisted"
+             [class.text-warning]="isShortlisted"
+             [style.color]="!isShortlisted ? '#adb5bd' : ''"></i>
+        </button>
+
+        <!-- Visit: كلاينت وبروكر -->
+        <button class="btn btn-light rounded-circle shadow-sm border-0"
+                (click)="onToggleVisitList($event)"
+                style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:white;"
+                title="Mark to Visit">
+          <i class="bi fs-6"
+             [class.bi-geo-alt-fill]="isVisitListed"
+             [class.bi-geo-alt]="!isVisitListed"
+             [class.text-primary]="isVisitListed"
+             [style.color]="!isVisitListed ? '#adb5bd' : ''"></i>
+        </button>
+
+      </div>
+    }
   </div>
 
   <div class="card-body d-flex flex-column p-3">
@@ -65,62 +89,46 @@
           </p>
         }
     </div>
-    <!-- السعر (بالخط العريض - Signature Style) -->
-    <h6 class=" text-dark mb-1">EGP {{ property.price | number }}</h6>
+    <h6 class="text-dark mb-1">EGP {{ property.price | number }}</h6>
 
     @if (property.listingType === 'Primary' && property.downPayment > 0) {
-      <h6 class=" text-dark mb-1">Down Payment {{ property.downPayment | number }}</h6>
+      <h6 class="text-dark mb-1">Down Payment {{ property.downPayment | number }}</h6>
     }
 
-    
-    <!-- العنوان -->
     <p class="text-truncate text-muted small mb-2">
       <i class="bi bi-geo-alt-fill text-danger me-1"></i>
        {{ property.region }}, {{ property.city }}
     </p>
 
-    <!-- التفاصيل (الأيقونات) -->
     <div class="d-flex justify-content-between border-top pt-3 text-muted small mb-3">
-      <!-- يظهر فقط إذا كان الإجمالي أكبر من 0 -->
       @if (displayRooms > 0) {
         <span><i class="bi bi-door-open me-1"></i> {{ displayRooms }} Beds</span>
       }
-      
       @if (displayBaths > 0) {
         <span><i class="bi bi-droplet me-1"></i> {{ displayBaths }} Baths</span>
       }
-      
-      <!-- المساحة تظهر دائماً -->
       <span class="d-flex flex-column align-items-center">
-    <i class="bi bi-aspect-ratio mb-1"></i> 
-    {{ property.area }} m²
-    <!-- إظهار الـ Built-up Area للفيلا فقط -->
-    @if(property.propertyType === 'Villa' && property.builtUpArea > 0) {
-      <small class="text-danger fw-bold" style="font-size: 0.65rem;">
-        B.U.A: {{ property.builtUpArea }} m²
-      </small>
-    }
-  </span>
+        <i class="bi bi-aspect-ratio mb-1"></i> 
+        {{ property.area }} m²
+        @if(property.propertyType === 'Villa' && property.builtUpArea > 0) {
+          <small class="text-danger fw-bold" style="font-size: 0.65rem;">
+            B.U.A: {{ property.builtUpArea }} m²
+          </small>
+        }
+      </span>
     </div>
-    <!-- ===================================================================== -->
 
-    
-   <div class="mt-auto pt-2">
-      
-      <!-- زر الاتصال (Call Now) -->
+    <div class="mt-auto pt-2">
       <a href="javascript:void(0)" 
-     (click)="handleContact($event, 'call')"
-     class="btn btn-outline-dark w-100 rounded-pill fw-bold py-2 mb-2 shadow-sm d-flex align-items-center justify-content-center transition-all">
-    <i class="bi bi-telephone-fill me-2 fs-6"></i> Call Now
-  </a>
-
-  <!-- زر الواتساب -->
-  <a href="javascript:void(0)" 
-     (click)="handleContact($event, 'whatsapp')"
-     class="btn btn-success w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center transition-all">
-    <i class="bi bi-whatsapp me-2 fs-5"></i> WhatsApp
-  </a>
-
+         (click)="handleContact($event, 'call')"
+         class="btn btn-outline-dark w-100 rounded-pill fw-bold py-2 mb-2 shadow-sm d-flex align-items-center justify-content-center transition-all">
+        <i class="bi bi-telephone-fill me-2 fs-6"></i> Call Now
+      </a>
+      <a href="javascript:void(0)" 
+         (click)="handleContact($event, 'whatsapp')"
+         class="btn btn-success w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center transition-all">
+        <i class="bi bi-whatsapp me-2 fs-5"></i> WhatsApp
+      </a>
     </div>
   </div>
 </div>
