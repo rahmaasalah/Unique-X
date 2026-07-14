@@ -667,6 +667,59 @@ namespace Unique_X.Controllers
             return Ok(codes);
         }
 
+        // GET: api/admin/brokers-with-codes
+        // بيرجع كل البروكرز مع الـ Code بتاعهم
+        [HttpGet("brokers-with-codes")]
+        public async Task<IActionResult> GetBrokersWithCodes()
+        {
+            var brokers = await _userManager.Users
+                .Where(u => u.UserType == 1 && u.IsActive)
+                .OrderBy(u => u.FirstName)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.FirstName,
+                    u.LastName,
+                    u.PhoneNumber,
+                    u.BrokerCode
+                })
+                .ToListAsync();
+
+            return Ok(brokers);
+        }
+
+        // PUT: api/admin/set-broker-code/{id}
+        // بيحدد أو يعدل الـ Code بتاع بروكر معين
+        [HttpPut("set-broker-code/{id}")]
+        public async Task<IActionResult> SetBrokerCode(string id, [FromBody] string code)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null || user.UserType != 1)
+                return NotFound("Broker not found.");
+
+            // تأكد إن الكود مش متكرر
+            var codeExists = await _userManager.Users
+                .AnyAsync(u => u.BrokerCode == code && u.Id != id);
+            if (codeExists)
+                return BadRequest($"Code '{code}' is already used by another broker.");
+
+            user.BrokerCode = code;
+            await _userManager.UpdateAsync(user);
+            return Ok(new { message = "Broker code updated successfully.", code });
+        }
+
+        // DELETE: api/admin/clear-broker-code/{id}
+        // بيمسح الـ Code بتاع بروكر
+        [HttpDelete("clear-broker-code/{id}")]
+        public async Task<IActionResult> ClearBrokerCode(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+            user.BrokerCode = null;
+            await _userManager.UpdateAsync(user);
+            return Ok(new { message = "Broker code cleared." });
+        }
+
 
     }
 }

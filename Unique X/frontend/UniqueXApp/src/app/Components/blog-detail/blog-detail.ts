@@ -23,8 +23,10 @@ export class BlogDetailComponent implements OnInit {
   blog = signal<any>(null);
   isLoading = signal(true);
   modalImageUrl = signal<string>('');
-  units = signal<any[]>([]);
-  unitsLoading = signal(false);
+  resaleUnits = signal<any[]>([]);
+  resaleUnitsLoading = signal(false);
+  primaryUnits = signal<any[]>([]);
+  primaryUnitsLoading = signal(false);
 
   // Main slider
   activeSlide = signal(0);
@@ -45,7 +47,8 @@ export class BlogDetailComponent implements OnInit {
   paymentPlans = computed(() => this.blogService.parseJson(this.blog()?.paymentPlansJson));
   articleSections = computed(() => this.blogService.parseJson(this.blog()?.articleSectionsJson));
   faqs = computed(() => this.blogService.parseJson(this.blog()?.faqsJson));
-  unitIds = computed(() => this.blogService.parseJson(this.blog()?.unitIdsJson));
+  resaleUnitIds = computed(() => this.blogService.getResaleUnitIds(this.blog()));
+  primaryUnitIds = computed(() => this.blogService.getPrimaryUnitIds(this.blog()));
 
   // بنعالج الـ mapEmbedUrl عشان نشيل منه الـ iframe لو موجود
   safeMapUrl(): SafeResourceUrl {
@@ -62,25 +65,25 @@ export class BlogDetailComponent implements OnInit {
       next: (data) => {
         this.blog.set(data);
         this.isLoading.set(false);
-        this.loadUnits();
+        this.loadUnits(this.resaleUnitIds(), this.resaleUnits, this.resaleUnitsLoading);
+        this.loadUnits(this.primaryUnitIds(), this.primaryUnits, this.primaryUnitsLoading);
       },
       error: () => this.isLoading.set(false)
     });
   }
 
-  loadUnits() {
-    const ids = this.unitIds();
+  loadUnits(ids: number[], target: any, loadingFlag: any) {
     if (!ids.length) return;
-    this.unitsLoading.set(true);
-    const requests = ids.slice(0, 12).map((id: number) =>
+    loadingFlag.set(true);
+    const requests = ids.map((id: number) =>
       this.http.get<any>(`${environment.apiUrl}/Properties/${id}`)
     );
     Promise.all(requests.map((r: any) => r.toPromise()))
       .then(results => {
-        this.units.set(results.filter(Boolean));
-        this.unitsLoading.set(false);
+        target.set(results.filter(Boolean));
+        loadingFlag.set(false);
       })
-      .catch(() => this.unitsLoading.set(false));
+      .catch(() => loadingFlag.set(false));
   }
 
   // Main slider controls

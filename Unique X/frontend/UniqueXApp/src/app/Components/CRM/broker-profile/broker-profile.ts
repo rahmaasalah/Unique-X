@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms'; // 👈 استيراد FormsModule مهم للفلاتر
@@ -15,7 +15,7 @@ import { AdminService } from '../../../Services/admin'; // 👈 استيراد A
   templateUrl: './broker-profile.html',
   styleUrls: ['./broker-profile.css']
 })
-export class BrokerProfileComponent implements OnInit {
+export class BrokerProfileComponent implements OnInit, OnDestroy {
   private crmService = inject(CrmService);
   private alertService = inject(AlertService);
   private authService = inject(AuthService);
@@ -35,6 +35,10 @@ export class BrokerProfileComponent implements OnInit {
 
   brokersList = signal<any[]>([]);
   filterBroker = signal<string>('');
+
+  // 🟢 Tracker الـ 48 ساعة: بيتحدث كل دقيقة عشان العداد يفضل حي من غير ما يحتاج refresh
+  nowTick = signal<number>(Date.now());
+  private trackerInterval: any;
 
   // 🟢 الفلاتر
  searchQuery = signal<string>('');
@@ -81,22 +85,7 @@ showFavouritesOnly = signal<boolean>(false);
     { id: 3, name: 'North Coast' }
   ];
 
-  dummyBrokers = [
-    { code: 'X7', name: 'Abdelrahman Ashraf' },
-    { code: 'X10', name: 'Menna Ameen' },
-    { code: 'X249', name: 'Ashraf Saad' },
-    { code: 'X646', name: 'Nadia Salem' },
-    { code: 'X9', name: 'Hussine Ehab' },
-    { code: 'X656', name: 'Mayar Elkhalil' },
-    { code: 'X659', name: 'Yasmine Mohamed' },
-    {code: 'X666', name: 'Mohmoud Ali'},
-    {code: 'X2', name: 'Hagar Mohamed'},
-    {code: 'X101', name: 'Alaa Ashraf'},
-    {code: 'X8', name: 'Abeer Ashraf'},
-    {code: 'X110', name: 'Malak nasser Yousef'},
-    {code: 'X675', name: 'Abdelrahman Abdala'},
-    {code: 'X669', name: 'Muhammad Elsayied'},
-  ];
+  dummyBrokers = signal<any[]>([]);
 
   // 🟢 فلترة العملاء لحظياً
   
@@ -212,6 +201,7 @@ if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
   }
 
   ngOnInit() {
+    this.trackerInterval = setInterval(() => this.nowTick.set(Date.now()), 60000);
 
     if (!this.authService.isAllowedToOpenCrm()) {
       this.router.navigate(['/home']);
@@ -273,6 +263,14 @@ if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
     
     this.loadProfileData(fetchId);
     this.crmService.getPropertyCodes().subscribe(data => this.campaignsList.set(data));
+    this.adminService.getBrokersWithCodes().subscribe({
+      next: (data) => {
+        const formatted = data
+          .filter((b: any) => b.brokerCode)
+          .map((b: any) => ({ code: b.brokerCode, name: `${b.firstName} ${b.lastName}` }));
+        this.dummyBrokers.set(formatted);
+      }
+    });
   }
 
 
@@ -322,6 +320,30 @@ if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
         error: (err) => console.error('Error fetching profile data', err)
       });
     }
+  }
+
+  ngOnDestroy() {
+    if (this.trackerInterval) clearInterval(this.trackerInterval);
+  }
+
+  // بيرجع الوقت المتبقي من الـ 48 ساعة تراكر، بيتحسب من آخر تحديث للـ lead (updatedAt)
+  // ولو مفيش updatedAt بيرجع للـ createdAt
+  getTrackerRemaining(lead: any): { text: string; expired: boolean; level: 'safe' | 'warning' | 'danger' } {
+    const baseDate = lead?.updatedAt || lead?.createdAt;
+    if (!baseDate) return { text: '-', expired: false, level: 'safe' };
+
+    const deadline = new Date(baseDate).getTime() + 48 * 60 * 60 * 1000;
+    const diffMs = deadline - this.nowTick();
+
+    if (diffMs <= 0) {
+      return { text: 'Tracker Expired', expired: true, level: 'danger' };
+    }
+
+    const hours = Math.floor(diffMs / (60 * 60 * 1000));
+    const minutes = Math.floor((diffMs % (60 * 60 * 1000)) / (60 * 1000));
+    const level = hours >= 24 ? 'safe' : hours >= 6 ? 'warning' : 'danger';
+
+    return { text: `${hours}h ${minutes}m left`, expired: false, level };
   }
 
   toggleHideLead(leadId: number, event?: Event) {

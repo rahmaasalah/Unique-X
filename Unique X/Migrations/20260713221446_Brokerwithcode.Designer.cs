@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Unique_X.Data;
 
@@ -11,9 +12,11 @@ using Unique_X.Data;
 namespace Unique_X.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260713221446_Brokerwithcode")]
+    partial class Brokerwithcode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -313,6 +316,9 @@ namespace Unique_X.Migrations
                     b.Property<string>("Button3Label")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Category")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -322,9 +328,6 @@ namespace Unique_X.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("DeveloperName")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Excerpt")
                         .IsRequired()
@@ -351,16 +354,7 @@ namespace Unique_X.Migrations
                     b.Property<decimal?>("PricePerMeterResale")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("PrimaryUnitIdsJson")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ProjectDetails")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProjectName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ResaleUnitIdsJson")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SliderImages")
@@ -370,11 +364,11 @@ namespace Unique_X.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UnitIdsJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Zone")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

@@ -2031,8 +2031,8 @@
         @for (blog of blogs(); track blog.id) {
           <div class="col-md-6 col-xl-4">
             <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-              @if (getBlogFirstImage(blog)) {
-                <img [src]="getBlogImageUrl(getBlogFirstImage(blog))" class="card-img-top"
+              @if (getBlogCoverImage(blog)) {
+                <img [src]="getBlogImageUrl(getBlogCoverImage(blog))" class="card-img-top"
                      style="height:180px;object-fit:cover;" alt="cover">
               } @else {
                 <div class="bg-light d-flex align-items-center justify-content-center" style="height:180px;">
@@ -2040,9 +2040,12 @@
                 </div>
               }
               <div class="card-body d-flex flex-column p-3">
-                <div class="d-flex gap-2 mb-2">
-                  @if (blog.category) {
-                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3">{{ blog.category }}</span>
+                <div class="d-flex gap-2 mb-2 flex-wrap">
+                  @if (blog.zone) {
+                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3">{{ blog.zone }}</span>
+                  }
+                  @if (blog.developerName) {
+                    <span class="badge bg-dark-subtle text-dark rounded-pill px-3">{{ blog.developerName }}</span>
                   }
                   @if (!blog.isPublished) {
                     <span class="badge bg-secondary rounded-pill px-3">Draft</span>
@@ -2101,19 +2104,12 @@
                      formControlName="title" placeholder="e.g. Mountain View 4 October">
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Category</label>
-              <select class="form-select rounded-3 bg-light border-0" formControlName="category">
-                <option value="">No Category</option>
-                <option value="Compound">Compound</option>
-                <option value="Apartment">Apartment</option>
-                <option value="Villa">Villa</option>
-                <option value="Townhouse">Townhouse</option>
-                <option value="Twin House">Twin House</option>
-                <option value="Commercial">Commercial</option>
-                <option value="North Coast">North Coast</option>
-                <option value="New Cairo">New Cairo</option>
-                <option value="6th October">6th October</option>
+              <label class="form-label fw-semibold">Zone</label>
+              <select class="form-select rounded-3 bg-light border-0" formControlName="zone">
+                <option value="">No Zone</option>
                 <option value="Alexandria">Alexandria</option>
+                <option value="Cairo">Cairo</option>
+                <option value="North Coast">North Coast</option>
               </select>
             </div>
             <div class="col-md-6 d-flex align-items-end">
@@ -2121,6 +2117,24 @@
                 <input class="form-check-input" type="checkbox" id="blogPublished" formControlName="isPublished">
                 <label class="form-check-label fw-semibold" for="blogPublished">Published</label>
               </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Project <span class="text-muted small">(optional)</span></label>
+              <select class="form-select rounded-3 bg-light border-0" formControlName="projectName">
+                <option value="">No Project</option>
+                @for (proj of blogProjectOptions(); track proj) {
+                  <option [value]="proj">{{ proj }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Developer <span class="text-muted small">(optional)</span></label>
+              <select class="form-select rounded-3 bg-light border-0" formControlName="developerName">
+                <option value="">No Developer</option>
+                @for (dev of uniqueDevelopers(); track dev.code) {
+                  <option [value]="dev.name">{{ dev.name }}</option>
+                }
+              </select>
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Short Description <span class="text-danger">*</span></label>
@@ -2136,7 +2150,7 @@
           <div class="mb-4">
             <input type="file" class="form-control rounded-3 bg-light border-0"
                    accept="image/*" multiple (change)="onSliderImagesChange($event)" #sliderInput>
-            <small class="text-muted">Select multiple images for the slider</small>
+            <small class="text-muted">Select multiple images for the slider — click an image to set it as the main/cover photo</small>
 
             <!-- صور موجودة على السيرفر (عند التعديل) -->
             @if (editingBlog()?.sliderImages) {
@@ -2144,11 +2158,16 @@
                 <small class="text-muted fw-semibold d-block mb-2">Existing Images:</small>
                 <div class="d-flex flex-wrap gap-2">
                   @for (img of getSliderImagesArray(editingBlog()); track img) {
-                    <div class="position-relative">
-                      <img [src]="getBlogImageUrl(img)" style="width:80px;height:60px;object-fit:cover;border-radius:8px;" alt="">
+                    <div class="position-relative" style="cursor:pointer;" (click)="setMainExistingImage(img)">
+                      <img [src]="getBlogImageUrl(img)"
+                           style="width:80px;height:60px;object-fit:cover;border-radius:8px;"
+                           [style.border]="isMainExistingImage(img) ? '3px solid #ef3341' : '3px solid transparent'" alt="">
+                      @if (isMainExistingImage(img)) {
+                        <span class="position-absolute bottom-0 start-0 badge bg-danger" style="font-size:8px;border-radius:0 0 0 6px;">MAIN</span>
+                      }
                       <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0"
                               style="width:18px;height:18px;font-size:10px;line-height:1;"
-                              (click)="removeSliderImage(img)">×</button>
+                              (click)="$event.stopPropagation(); removeSliderImage(img)">×</button>
                     </div>
                   }
                 </div>
@@ -2161,12 +2180,19 @@
                 <small class="text-muted fw-semibold d-block mb-2">New Images Selected ({{ blogSliderFiles().length }}):</small>
                 <div class="d-flex flex-wrap gap-2">
                   @for (file of blogSliderFiles(); track $index; let i = $index) {
-                    <div class="position-relative">
-                      <img [src]="getSliderPreviewUrl(i)" style="width:80px;height:60px;object-fit:cover;border-radius:8px;border:2px solid #ef3341;" alt="">
+                    <div class="position-relative" style="cursor:pointer;" (click)="setMainNewImage(i)">
+                      <img [src]="getSliderPreviewUrl(i)"
+                           style="width:80px;height:60px;object-fit:cover;border-radius:8px;"
+                           [style.border]="isMainNewImage(i) ? '3px solid #ef3341' : '2px solid #ef3341'"
+                           [style.opacity]="isMainNewImage(i) ? '1' : '0.85'" alt="">
+                      @if (isMainNewImage(i)) {
+                        <span class="position-absolute bottom-0 start-0 badge bg-danger" style="font-size:8px;border-radius:0 0 0 6px;">MAIN</span>
+                      } @else {
+                        <span class="position-absolute bottom-0 start-0 badge bg-secondary" style="font-size:8px;border-radius:0 0 0 6px;">NEW</span>
+                      }
                       <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0"
                               style="width:18px;height:18px;font-size:10px;line-height:1;"
-                              (mousedown)="removeNewSliderImage(i)">×</button>
-                      <span class="position-absolute bottom-0 start-0 badge bg-danger" style="font-size:8px;border-radius:0 0 0 6px;">NEW</span>
+                              (mousedown)="$event.stopPropagation(); removeNewSliderImage(i)">×</button>
                     </div>
                   }
                 </div>
@@ -2245,23 +2271,29 @@
                           (click)="removePaymentPlan(i)">Remove</button>
                 </div>
                 <div class="row g-2">
-                  <div class="col-md-6">
+                  <div class="col-12">
                     <input type="text" class="form-control form-control-sm rounded-3 border-0"
                            placeholder="Plan name (e.g. 5 Years)" [(ngModel)]="plan.name" [ngModelOptions]="{standalone:true}">
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-md-4">
+                    <label class="form-label small text-muted mb-1">Avg of Down Payment</label>
                     <input type="text" class="form-control form-control-sm rounded-3 border-0"
-                           placeholder="Down Payment (e.g. 10%)" [(ngModel)]="plan.downPayment" [ngModelOptions]="{standalone:true}">
+                           placeholder="e.g. 500,000" [(ngModel)]="plan.avgDownPayment" [ngModelOptions]="{standalone:true}"
+                           (input)="formatPrice($event)">
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-md-4">
+                    <label class="form-label small text-muted mb-1">Avg of Installment</label>
                     <input type="text" class="form-control form-control-sm rounded-3 border-0"
-                           placeholder="Installment (e.g. 5% quarterly)" [(ngModel)]="plan.installment" [ngModelOptions]="{standalone:true}">
+                           placeholder="e.g. 25,000" [(ngModel)]="plan.avgInstallment" [ngModelOptions]="{standalone:true}"
+                           (input)="formatPrice($event)">
                   </div>
-                  <div class="col-md-3">
-                    <input type="number" class="form-control form-control-sm rounded-3 border-0" min="0"
-                           placeholder="Years" [(ngModel)]="plan.years" [ngModelOptions]="{standalone:true}">
+                  <div class="col-md-4">
+                    <label class="form-label small text-muted mb-1">Number of Years</label>
+                    <input type="text" class="form-control form-control-sm rounded-3 border-0"
+                           placeholder="e.g. 8" [(ngModel)]="plan.years" [ngModelOptions]="{standalone:true}"
+                           (input)="formatPrice($event)">
                   </div>
-                  <div class="col-md-3">
+                  <div class="col-md-12">
                     <input type="text" class="form-control form-control-sm rounded-3 border-0"
                            placeholder="Note (optional)" [(ngModel)]="plan.note" [ngModelOptions]="{standalone:true}">
                   </div>
@@ -2275,32 +2307,32 @@
 
           <hr class="my-3">
 
-          <!-- ── Section 9: Unit IDs ── -->
-          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-house me-2"></i>Units (max 12)</h6>
+          <!-- ── Section 9: Resale Units ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-house me-2"></i>Resale Units</h6>
           <div class="mb-4">
             <!-- Searchable unit selector -->
             <div class="position-relative">
               <input type="text" class="form-control rounded-3 bg-light border-0"
                      placeholder="Search by property code or title..."
-                     [ngModel]="unitSearchText()" 
-                     (ngModelChange)="unitSearchText.set($event); isUnitDropdownOpen.set(true)"
-                     (focus)="isUnitDropdownOpen.set(true)"
-                     (blur)="closeUnitDropdown()"
+                     [ngModel]="resaleUnitSearchText()"
+                     (ngModelChange)="resaleUnitSearchText.set($event); isResaleUnitDropdownOpen.set(true)"
+                     (focus)="isResaleUnitDropdownOpen.set(true)"
+                     (blur)="closeResaleUnitDropdown()"
                      [ngModelOptions]="{standalone:true}">
 
               <!-- Dropdown list -->
               <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
-                  [class.show]="isUnitDropdownOpen() && filteredUnitOptions().length > 0"
+                  [class.show]="isResaleUnitDropdownOpen() && filteredResaleUnitOptions().length > 0"
                   style="max-height: 220px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1060;">
-                @for (prop of filteredUnitOptions(); track prop.id) {
+                @for (prop of filteredResaleUnitOptions(); track prop.id) {
                   <li>
                     <button class="dropdown-item py-2 border-bottom border-light d-flex align-items-center justify-content-between"
-                            (mousedown)="addUnitId(prop)">
+                            (mousedown)="addResaleUnitId(prop)">
                       <span>
                         <span class="badge bg-light text-dark border me-2">{{ prop.code }}</span>
                         <span class="small text-muted">{{ prop.title }}</span>
                       </span>
-                      @if (isUnitSelected(prop.id)) {
+                      @if (isResaleUnitSelected(prop.id)) {
                         <i class="bi bi-check-circle-fill text-success ms-2"></i>
                       }
                     </button>
@@ -2312,19 +2344,74 @@
             </div>
 
             <!-- Selected Units Tags -->
-            @if (selectedUnits().length > 0) {
+            @if (selectedResaleUnits().length > 0) {
               <div class="d-flex flex-wrap gap-2 mt-3">
-                @for (unit of selectedUnits(); track unit.id) {
+                @for (unit of selectedResaleUnits(); track unit.id) {
                   <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 d-flex align-items-center gap-1" style="font-size:0.8rem;">
                     <span class="fw-bold">{{ unit.code }}</span>
                     <span class="text-muted small">- {{ unit.title | slice:0:20 }}{{ unit.title?.length > 20 ? '...' : '' }}</span>
-                    <button class="btn-close btn-close-sm ms-1" style="font-size:0.6rem;" (mousedown)="removeUnitId(unit.id)"></button>
+                    <button class="btn-close btn-close-sm ms-1" style="font-size:0.6rem;" (mousedown)="removeResaleUnitId(unit.id)"></button>
                   </span>
                 }
               </div>
-              <small class="text-muted mt-1 d-block">{{ selectedUnits().length }}/12 units selected</small>
+              <small class="text-muted mt-1 d-block">{{ selectedResaleUnits().length }} units selected</small>
             } @else {
-              <small class="text-muted">Search and select property units from the system, max 12</small>
+              <small class="text-muted">Search and select property units from the system</small>
+            }
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 9b: Primary Units ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-house-check me-2"></i>Primary Units</h6>
+          <div class="mb-4">
+            <!-- Searchable unit selector -->
+            <div class="position-relative">
+              <input type="text" class="form-control rounded-3 bg-light border-0"
+                     placeholder="Search by property code or title..."
+                     [ngModel]="primaryUnitSearchText()"
+                     (ngModelChange)="primaryUnitSearchText.set($event); isPrimaryUnitDropdownOpen.set(true)"
+                     (focus)="isPrimaryUnitDropdownOpen.set(true)"
+                     (blur)="closePrimaryUnitDropdown()"
+                     [ngModelOptions]="{standalone:true}">
+
+              <!-- Dropdown list -->
+              <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+                  [class.show]="isPrimaryUnitDropdownOpen() && filteredPrimaryUnitOptions().length > 0"
+                  style="max-height: 220px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1060;">
+                @for (prop of filteredPrimaryUnitOptions(); track prop.id) {
+                  <li>
+                    <button class="dropdown-item py-2 border-bottom border-light d-flex align-items-center justify-content-between"
+                            (mousedown)="addPrimaryUnitId(prop)">
+                      <span>
+                        <span class="badge bg-light text-dark border me-2">{{ prop.code }}</span>
+                        <span class="small text-muted">{{ prop.title }}</span>
+                      </span>
+                      @if (isPrimaryUnitSelected(prop.id)) {
+                        <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                      }
+                    </button>
+                  </li>
+                } @empty {
+                  <li><span class="dropdown-item text-muted small py-2">No properties found.</span></li>
+                }
+              </ul>
+            </div>
+
+            <!-- Selected Units Tags -->
+            @if (selectedPrimaryUnits().length > 0) {
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                @for (unit of selectedPrimaryUnits(); track unit.id) {
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 d-flex align-items-center gap-1" style="font-size:0.8rem;">
+                    <span class="fw-bold">{{ unit.code }}</span>
+                    <span class="text-muted small">- {{ unit.title | slice:0:20 }}{{ unit.title?.length > 20 ? '...' : '' }}</span>
+                    <button class="btn-close btn-close-sm ms-1" style="font-size:0.6rem;" (mousedown)="removePrimaryUnitId(unit.id)"></button>
+                  </span>
+                }
+              </div>
+              <small class="text-muted mt-1 d-block">{{ selectedPrimaryUnits().length }} units selected</small>
+            } @else {
+              <small class="text-muted">Search and select property units from the system</small>
             }
           </div>
 
