@@ -109,6 +109,13 @@
     }
   </button>
 </li>
+<li class="mb-2">
+  <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold"
+          [ngClass]="activeTab() === 'broker_codes' ? 'btn-dark text-white' : 'text-white-50 btn-outline-dark border-0'"
+          (click)="switchTab('broker_codes')">
+    <i class="bi bi-tag-fill me-3 fs-5"></i> Broker Codes
+  </button>
+</li>
       </ul>
     </nav>
   </aside>
@@ -1028,8 +1035,7 @@
   <section class="d-flex flex-column flex-grow-1 animate__animated animate__fadeIn" style="min-height: 0;">
     <h4 class="fw-bold mb-3 flex-shrink-0"><i class="bi bi-person-fill-lock text-success me-2"></i>CRM Access Management</h4>
 
-
-    <!-- كارت الإضافة -->
+    <!-- كارت الإضافة - Grant Access -->
     <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white flex-shrink-0">
       <h6 class="fw-bold mb-3 text-dark">Grant CRM Workspace Access</h6>
       <div class="row g-3 align-items-end">
@@ -1052,8 +1058,8 @@
 
     <!-- جدول عرض البروكرز الحاليين وإمكانية الحذف -->
     <h5 class="fw-bold mb-3 mt-2"><i class="bi bi-people-fill text-danger me-2"></i>Current CRM Members ({{ vipBrokers().length }})</h5>
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden flex-grow-1" style="min-height: 0;">
-      <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 flex-shrink-0">
+      <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light sticky-top">
             <tr>
@@ -1075,6 +1081,64 @@
               </tr>
             } @empty {
               <tr><td colspan="3" class="text-center py-5 text-muted">No brokers have CRM access yet.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== Broker Codes Management ===== -->
+    <h5 class="fw-bold mb-3 mt-2"><i class="bi bi-tag-fill text-warning me-2"></i>Broker Codes Management</h5>
+    <p class="text-muted small mb-3">Assign unique codes to brokers (e.g. X7, X10). These codes appear in the Referred By dropdown across the CRM.</p>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden flex-grow-1" style="min-height: 0;">
+      <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="sticky-top" style="background:#1a1a2e; color:white;">
+            <tr>
+              <th class="ps-4 py-3">Broker Name</th>
+              <th class="py-3">Phone</th>
+              <th class="py-3" style="width:180px;">Code</th>
+              <th class="py-3 pe-4 text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of brokersWithCodes(); track b.id) {
+              <tr>
+                <td class="ps-4 fw-bold">
+                  <i class="bi bi-person-circle text-muted me-2"></i>{{ b.firstName }} {{ b.lastName }}
+                </td>
+                <td class="text-muted small">{{ b.phoneNumber }}</td>
+                <td>
+                  <div class="input-group input-group-sm">
+                    <input type="text" class="form-control rounded-3 border-0 bg-light fw-bold"
+                           placeholder="e.g. X7"
+                           [ngModel]="brokerCodeInputs[b.id]"
+                           (ngModelChange)="brokerCodeInputs[b.id] = $event"
+                           style="max-width:100px;">
+                    @if (b.brokerCode) {
+                      <span class="badge bg-warning text-dark ms-2 align-self-center rounded-pill px-2">{{ b.brokerCode }}</span>
+                    }
+                  </div>
+                </td>
+                <td class="text-end pe-4">
+                  <div class="d-flex gap-2 justify-content-end">
+                    <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold"
+                            (click)="saveBrokerCode(b.id)"
+                            [disabled]="!brokerCodeInputs[b.id]?.trim()">
+                      <i class="bi bi-save me-1"></i>Save
+                    </button>
+                    @if (b.brokerCode) {
+                      <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
+                              (click)="removeBrokerCode(b.id)">
+                        <i class="bi bi-x-lg me-1"></i>Remove
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="text-center py-4 text-muted">Loading brokers...</td></tr>
             }
           </tbody>
         </table>
@@ -2021,7 +2085,7 @@
                         <div class="small fw-bold text-dark">
                           <i class="bi bi-clock-history me-1"></i>{{ client.lastUpdate | date:'MMM d, h:mm a' }}
                         </div>
-                        <div class="text-danger" style="font-size:0.7rem;">{{ client.hoursSinceUpdate }}h ago</div>
+                        <div class="text-danger" style="font-size:0.7rem;">{{ daysAgo(client.hoursSinceUpdate) }} days ago</div>
                       </td>
                       <td>
                         <select class="form-select form-select-sm rounded-3 border-0 bg-light"
@@ -2034,11 +2098,21 @@
                         </select>
                       </td>
                       <td class="pe-4">
-                        <button class="btn btn-sm btn-danger rounded-pill px-3 fw-bold"
-                                (click)="transferPendingLead(client.id)"
-                                [disabled]="!selectedNewBroker[client.id]">
-                          <i class="bi bi-arrow-right-circle me-1"></i>Transfer
-                        </button>
+                        <div class="d-flex flex-column gap-1">
+                          <button class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold"
+                                  [routerLink]="['/crm/leads', client.id]">
+                            <i class="bi bi-folder2-open me-1"></i>Client File
+                          </button>
+                          <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
+                                  (click)="openRequestModalForClient(client)">
+                            <i class="bi bi-card-list me-1"></i>Request
+                          </button>
+                          <button class="btn btn-sm btn-danger rounded-pill px-3 fw-bold"
+                                  (click)="transferPendingLead(client.id)"
+                                  [disabled]="!selectedNewBroker[client.id]">
+                            <i class="bi bi-arrow-right-circle me-1"></i>Transfer
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   }
@@ -2047,6 +2121,80 @@
             </div>
           </div>
         }
+      </section>
+    }
+
+    <!-- ===== Broker Codes Section ===== -->
+    @if (activeTab() === 'broker_codes') {
+      <section class="animate__animated animate__fadeIn">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <div>
+            <h4 class="fw-bold mb-1"><i class="bi bi-tag-fill text-warning me-2"></i>Broker Codes</h4>
+            <p class="text-muted small mb-0">Assign unique codes to brokers. These codes appear in the "Referred By" dropdown across the CRM.</p>
+          </div>
+          <button class="btn btn-outline-secondary rounded-pill px-4" (click)="loadBrokersWithCodes()">
+            <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+          </button>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead style="background:#1a1a2e; color:white;">
+                <tr>
+                  <th class="ps-4 py-3">Broker Name</th>
+                  <th class="py-3">Phone</th>
+                  <th class="py-3">Current Code</th>
+                  <th class="py-3" style="width:200px;">Set New Code</th>
+                  <th class="py-3 pe-4 text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (b of brokersWithCodes(); track b.id) {
+                  <tr>
+                    <td class="ps-4 fw-bold">
+                      <i class="bi bi-person-circle text-muted me-2"></i>{{ b.firstName }} {{ b.lastName }}
+                    </td>
+                    <td class="text-muted small">{{ b.phoneNumber }}</td>
+                    <td>
+                      @if (b.brokerCode) {
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold fs-6">{{ b.brokerCode }}</span>
+                      } @else {
+                        <span class="text-muted small">N/A</span>
+                      }
+                    </td>
+                    <td>
+                      <input type="text" class="form-control form-control-sm rounded-3 border-0 bg-light fw-bold"
+                             placeholder="e.g. X7"
+                             [ngModel]="brokerCodeInputs[b.id]"
+                             (ngModelChange)="brokerCodeInputs[b.id] = $event"
+                             style="max-width:120px;">
+                    </td>
+                    <td class="text-end pe-4">
+                      <div class="d-flex gap-2 justify-content-end">
+                        <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold"
+                                (click)="saveBrokerCode(b.id)"
+                                [disabled]="!brokerCodeInputs[b.id]?.trim()">
+                          <i class="bi bi-save me-1"></i>Save
+                        </button>
+                        @if (b.brokerCode) {
+                          <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
+                                  (click)="removeBrokerCode(b.id)">
+                            <i class="bi bi-x-lg me-1"></i>Remove
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5" class="text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm text-warning me-2"></div>Loading brokers...
+                  </td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
     }
 

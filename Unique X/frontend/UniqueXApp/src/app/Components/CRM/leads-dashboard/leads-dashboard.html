@@ -232,7 +232,7 @@
       <div class="col-md-2" *ngIf="isAdmin()">
         <select class="form-select form-select-sm" [ngModel]="filterReferredBy()" (ngModelChange)="filterReferredBy.set($event); applyFilters(true)">
           <option value="">All Broker Codes</option>
-          @for (broker of dummyBrokers; track broker.code) { 
+          @for (broker of brokerCodes(); track broker.code) { 
             <option [value]="broker.code">{{ broker.name }} ({{ broker.code }})</option> 
           }
         </select>

@@ -42,22 +42,7 @@ export class EditRequestComponent implements OnInit {
 
   zones =[{ id: 1, name: 'Cairo' }, { id: 2, name: 'Alexandria' }, { id: 3, name: 'North Coast' }];
 
-  dummyBrokers = [
-    { code: 'X7', name: 'Abdelrahman Ashraf' },
-    { code: 'X10', name: 'Menna Ameen' },
-    { code: 'X249', name: 'Ashraf Saad' },
-    { code: 'X646', name: 'Nadia Salem' },
-    { code: 'X9', name: 'Hussine Ehab' },
-    { code: 'X656', name: 'Mayar Elkhalil' },
-    { code: 'X659', name: 'Yasmine Mohamed' },
-    {code: 'X666', name: 'Mohmoud Ali'},
-    {code: 'X2', name: 'Hagar Mohamed'},
-    {code: 'X101', name: 'Alaa Ashraf'},
-    {code: 'X8', name: 'Abeer Ashraf'},
-    {code: 'X110', name: 'Malak nasser Yousef'},
-    {code: 'X675', name: 'Abdelrahman Abdala'},
-    {code: 'X669', name: 'Muhammad Elsayied'},
-  ];
+  dummyBrokers = signal<any[]>([]);
   
   regionsMapping: any = {
     1:['Sheikh Zayed', 'Green belt', '6th of October', 'North Expansions', 'October Gardens', 'Eastern Expansions', 'New Cairo'],
@@ -131,6 +116,14 @@ export class EditRequestComponent implements OnInit {
       this.loadLeadData(this.leadId);
     }
     this.setupDynamicFields();
+    this.adminService.getBrokersWithCodes().subscribe({
+      next: (data) => {
+        const formatted = data
+          .filter((b: any) => b.brokerCode)
+          .map((b: any) => ({ code: b.brokerCode, name: `${b.firstName} ${b.lastName}` }));
+        this.dummyBrokers.set(formatted);
+      }
+    });
   }
 
   initForm() {

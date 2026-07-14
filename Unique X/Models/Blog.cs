@@ -7,7 +7,9 @@
         public string Excerpt { get; set; } = string.Empty; // وصف قصير للكارت
         public string Content { get; set; } = string.Empty; // المحتوى الكامل (HTML أو Markdown)
         public string? CoverImageUrl { get; set; }          // صورة الغلاف
-        public string? Category { get; set; }               // مثلاً: "Market Trends", "Guides"
+        public string? Zone { get; set; }                    // Alexandria / Cairo / North Coast
+        public string? ProjectName { get; set; }             // اختياري - من ليست المشروعات حسب الـ Zone
+        public string? DeveloperName { get; set; }           // اختياري - من ليست المطورين
         public bool IsPublished { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
@@ -39,8 +41,9 @@
         // Payment Plans — JSON array
         public string? PaymentPlansJson { get; set; }
 
-        // Units — JSON array of property IDs (max 12)
-        public string? UnitIdsJson { get; set; }
+        // Units — JSON array of property IDs
+        public string? ResaleUnitIdsJson { get; set; }
+        public string? PrimaryUnitIdsJson { get; set; }
 
         // Article Sections — JSON array [{headline, text}]
         public string? ArticleSectionsJson { get; set; }

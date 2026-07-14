@@ -39,4 +39,19 @@ export class BlogService {
     if (!blog?.sliderImages) return [];
     return blog.sliderImages.split('|').filter((s: string) => s.trim());
   }
+
+  // صورة الغلاف: لو الأدمن حدد main image بيرجعها، وإلا أول صورة في السلايدر
+  getCoverImage(blog: any): string {
+    if (blog?.coverImageUrl) return blog.coverImageUrl;
+    const imgs = this.getSliderImages(blog);
+    return imgs.length > 0 ? imgs[0] : '';
+  }
+
+  getResaleUnitIds(blog: any): number[] {
+    return this.parseJson(blog?.resaleUnitIdsJson);
+  }
+
+  getPrimaryUnitIds(blog: any): number[] {
+    return this.parseJson(blog?.primaryUnitIdsJson);
+  }
 }

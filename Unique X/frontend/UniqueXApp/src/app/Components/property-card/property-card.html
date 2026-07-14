@@ -37,7 +37,7 @@
           <button class="btn btn-light rounded-circle shadow-sm border-0 wishlist-btn"
                   (click)="onToggleWishlist($event)"
                   style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:white;"
-                  title="Wishlist">
+                  title="Add to Wishlist">
             <i class="bi fs-6"
                [class.bi-heart-fill]="isLiked"
                [class.bi-heart]="!isLiked"
@@ -50,7 +50,7 @@
         <button class="btn btn-light rounded-circle shadow-sm border-0"
                 (click)="onToggleShortlist($event)"
                 style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:white;"
-                title="Shortlist">
+                title="Add to Shortlist">
           <i class="bi fs-6"
              [class.bi-bookmark-fill]="isShortlisted"
              [class.bi-bookmark]="!isShortlisted"

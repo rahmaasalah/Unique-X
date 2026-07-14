@@ -198,4 +198,20 @@ finalDecision(id: number, decision: string, reason?: string) {
     { headers: { 'Content-Type': 'application/json' } }
   );
 }
+
+// إدارة أكواد البروكرز
+getBrokersWithCodes(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/brokers-with-codes`);
+}
+
+setBrokerCode(userId: string, code: string): Observable<any> {
+  return this.http.put(`${this.baseUrl}/set-broker-code/${userId}`,
+    JSON.stringify(code),
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+}
+
+clearBrokerCode(userId: string): Observable<any> {
+  return this.http.delete(`${this.baseUrl}/clear-broker-code/${userId}`);
+}
 }

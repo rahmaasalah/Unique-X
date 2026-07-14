@@ -40,7 +40,6 @@ export class BlogListComponent implements OnInit {
   }
 
   getFirstImage(blog: any): string {
-    const imgs = this.blogService.getSliderImages(blog);
-    return imgs.length > 0 ? imgs[0] : '';
+    return this.blogService.getCoverImage(blog);
   }
 }

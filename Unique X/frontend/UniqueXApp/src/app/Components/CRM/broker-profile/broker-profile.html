@@ -170,7 +170,7 @@
           <div class="col-md-2" *ngIf="isAdmin()">
           <select class="form-select form-select-sm" [ngModel]="filterReferredBy()" (ngModelChange)="filterReferredBy.set($event)">
             <option value="">All Broker Codes</option>
-            <option *ngFor="let broker of dummyBrokers" [value]="broker.code">
+            <option *ngFor="let broker of dummyBrokers()" [value]="broker.code">
               {{ broker.name }} ({{ broker.code }})
             </option>
           </select>
@@ -300,6 +300,17 @@
               <td class="text-nowrap">
                 <div class="small fw-bold text-dark d-inline-block">
                   <i class=""></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
+                </div>
+                <div class="mt-1">
+                  <span class="badge rounded-pill px-2 py-1 fw-bold"
+                        [ngClass]="{
+                          'bg-success-subtle text-success-emphasis border border-success-subtle': getTrackerRemaining(lead).level === 'safe',
+                          'bg-warning-subtle text-warning-emphasis border border-warning-subtle': getTrackerRemaining(lead).level === 'warning',
+                          'bg-danger-subtle text-danger-emphasis border border-danger-subtle': getTrackerRemaining(lead).level === 'danger'
+                        }"
+                        style="font-size: 0.65rem;">
+                    <i class="bi bi-stopwatch me-1"></i>{{ getTrackerRemaining(lead).text }}
+                  </span>
                 </div>
               </td>
              <td class="text-end pe-3 text-nowrap">

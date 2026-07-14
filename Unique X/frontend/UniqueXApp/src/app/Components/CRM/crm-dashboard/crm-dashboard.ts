@@ -23,12 +23,14 @@ export class CrmDashboardComponent implements OnInit {
   private router = inject(Router);
 
   isAdmin = signal<boolean>(false);
-  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'admin_favorites' | 'pending_duplicates' | 'rejected_duplicates' | 'report' | 'pending_clients'>('brokers');
+  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'admin_favorites' | 'pending_duplicates' | 'rejected_duplicates' | 'report' | 'pending_clients' | 'broker_codes'>('brokers');
   pendingClients = signal<any[]>([]);
   pendingClientsLoading = signal<boolean>(false);
   selectedNewBroker: { [leadId: number]: string } = {};
   pendingSearchName = signal<string>('');
   pendingFilterBroker = signal<string>('');
+  brokersWithCodes = signal<any[]>([]);
+  brokerCodeInputs: { [id: string]: string } = {};
 
   get filteredPendingClients() {
     const search = this.pendingSearchName().toLowerCase();
@@ -168,7 +170,8 @@ clearFilters(type: 'visit' | 'activity') {
   });
 
 allBrokersList = signal<any[]>([]); // كل البروكرز اللي في السيستم
-selectedBrokerToAdd = signal<string>(''); // البروكر اللي الأدمن اختاره من القائمة
+selectedBrokerToAdd = signal<string>('');
+  
 
 selectedDayEvents = signal<any>(null);
 
@@ -692,9 +695,46 @@ hiddenLeads = signal<number[]>([]);
   switchTab(tab: any) {
     this.activeTab.set(tab);
     if (tab === 'pending_clients') this.loadPendingClients();
+    if (tab === 'broker_codes') this.loadBrokersWithCodes();
     if (window.innerWidth <= 991) {
       this.isSidebarOpen.set(false);
     }
+  }
+
+  loadBrokersWithCodes() {
+    this.adminService.getBrokersWithCodes().subscribe({
+      next: (data) => {
+        this.brokersWithCodes.set(data);
+        data.forEach((b: any) => {
+          this.brokerCodeInputs[b.id] = b.brokerCode || '';
+        });
+      },
+      error: () => this.alertService.error('Failed to load brokers.')
+    });
+  }
+
+  saveBrokerCode(userId: string) {
+    const code = this.brokerCodeInputs[userId]?.trim();
+    if (!code) { this.alertService.error('Please enter a code.'); return; }
+    this.adminService.setBrokerCode(userId, code).subscribe({
+      next: () => {
+        this.alertService.success(`Code "${code}" saved!`);
+        this.loadBrokersWithCodes();
+      },
+      error: (err) => this.alertService.error(err.error || 'Code may already be in use.')
+    });
+  }
+
+  removeBrokerCode(userId: string) {
+    this.alertService.confirm('Remove this broker code?', () => {
+      this.adminService.clearBrokerCode(userId).subscribe({
+        next: () => {
+          this.alertService.success('Code removed.');
+          this.loadBrokersWithCodes();
+        },
+        error: () => this.alertService.error('Failed to remove code.')
+      });
+    });
   }
 
   loadPendingClients() {
@@ -867,6 +907,8 @@ hiddenLeads = signal<number[]>([]);
   });
 }
 
+  
+
   grantAccess() {
   const userId = this.selectedBrokerToAdd();
   if (!userId) return;
@@ -912,6 +954,17 @@ revokeAccess(userId: string) {
     this.selectedRequest.set(lead);
     const bootstrap = (window as any).bootstrap;
     new bootstrap.Modal(document.getElementById('requestModal')).show();
+  }
+
+  daysAgo(hours: number): number {
+    return Math.floor((hours || 0) / 24);
+  }
+
+  // الـ pending clients list بيرجع بيانات مختصرة بس، فبندور على الـ lead الكامل
+  // من allLeads (اللي فيه كل تفاصيل الـ request) قبل ما نفتح المودال
+  openRequestModalForClient(client: any) {
+    const fullLead = this.allLeads().find(l => l.id === client.id);
+    this.openRequestModal(fullLead || client);
   }
 
   clearClientFilters() {

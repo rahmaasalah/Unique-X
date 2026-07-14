@@ -13,6 +13,7 @@ namespace Unique_X.Models
         public bool IsActive { get; set; } = true;
         public bool HasCrmAccess { get; set; } = false;
         public string? BrokerTitle { get; set; }
+        public string? BrokerCode { get; set; } // مثال: X7, X10, X249
         public string? BrokerDescription { get; set; }
         public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
     }

@@ -55,7 +55,9 @@ namespace Unique_X.Controllers
             {
                 Title = dto.Title,
                 Excerpt = dto.Excerpt,
-                Category = dto.Category,
+                Zone = dto.Zone,
+                ProjectName = dto.ProjectName,
+                DeveloperName = dto.DeveloperName,
                 IsPublished = dto.IsPublished,
                 PricePerMeterResale = dto.PricePerMeterResale,
                 PricePerMeterPrimary = dto.PricePerMeterPrimary,
@@ -65,7 +67,8 @@ namespace Unique_X.Controllers
                 ProjectDetails = dto.ProjectDetails,
                 MapEmbedUrl = dto.MapEmbedUrl,
                 PaymentPlansJson = dto.PaymentPlansJson,
-                UnitIdsJson = dto.UnitIdsJson,
+                ResaleUnitIdsJson = dto.ResaleUnitIdsJson,
+                PrimaryUnitIdsJson = dto.PrimaryUnitIdsJson,
                 ArticleSectionsJson = dto.ArticleSectionsJson,
                 FaqsJson = dto.FaqsJson,
                 AdminPhone = dto.AdminPhone,
@@ -81,7 +84,17 @@ namespace Unique_X.Controllers
                     if (url != null) urls.Add(url);
                 }
                 blog.SliderImages = string.Join("|", urls);
+
+                // لو الأدمن اختار صورة "main" من الصور الجديدة، تبقى هي الـ cover
+                if (dto.MainNewImageIndex.HasValue && dto.MainNewImageIndex.Value >= 0 && dto.MainNewImageIndex.Value < urls.Count)
+                {
+                    blog.CoverImageUrl = urls[dto.MainNewImageIndex.Value];
+                }
             }
+
+            // لو الأدمن اختار صورة main من صورة موجودة بالفعل (نادر في Create، بس بنغطيها)
+            if (!string.IsNullOrEmpty(dto.CoverImageUrl) && string.IsNullOrEmpty(blog.CoverImageUrl))
+                blog.CoverImageUrl = dto.CoverImageUrl;
 
             if (dto.Button1Image != null) blog.Button1ImageUrl = await UploadToCloudinary(dto.Button1Image);
             if (dto.Button2Image != null) blog.Button2ImageUrl = await UploadToCloudinary(dto.Button2Image);
@@ -101,7 +114,9 @@ namespace Unique_X.Controllers
 
             blog.Title = dto.Title;
             blog.Excerpt = dto.Excerpt;
-            blog.Category = dto.Category;
+            blog.Zone = dto.Zone;
+            blog.ProjectName = dto.ProjectName;
+            blog.DeveloperName = dto.DeveloperName;
             blog.IsPublished = dto.IsPublished;
             blog.PricePerMeterResale = dto.PricePerMeterResale;
             blog.PricePerMeterPrimary = dto.PricePerMeterPrimary;
@@ -111,13 +126,15 @@ namespace Unique_X.Controllers
             blog.ProjectDetails = dto.ProjectDetails;
             blog.MapEmbedUrl = dto.MapEmbedUrl;
             blog.PaymentPlansJson = dto.PaymentPlansJson;
-            blog.UnitIdsJson = dto.UnitIdsJson;
+            blog.ResaleUnitIdsJson = dto.ResaleUnitIdsJson;
+            blog.PrimaryUnitIdsJson = dto.PrimaryUnitIdsJson;
             blog.ArticleSectionsJson = dto.ArticleSectionsJson;
             blog.FaqsJson = dto.FaqsJson;
             blog.AdminPhone = dto.AdminPhone;
             blog.UpdatedAt = DateTime.UtcNow;
 
             // Slider images جديدة → أضفها لفوق القديمة
+            List<string> newUrls = new List<string>();
             if (dto.SliderImages != null && dto.SliderImages.Count > 0)
             {
                 var existing = string.IsNullOrEmpty(blog.SliderImages)
@@ -127,9 +144,22 @@ namespace Unique_X.Controllers
                 foreach (var f in dto.SliderImages)
                 {
                     var url = await UploadToCloudinary(f);
-                    if (url != null) existing.Add(url);
+                    if (url != null) newUrls.Add(url);
                 }
+                existing.AddRange(newUrls);
                 blog.SliderImages = string.Join("|", existing);
+            }
+
+            // تحديد صورة الـ cover/main:
+            // لو اختار صورة من الصور الجديدة اللي هيرفعها دلوقتي
+            if (dto.MainNewImageIndex.HasValue && dto.MainNewImageIndex.Value >= 0 && dto.MainNewImageIndex.Value < newUrls.Count)
+            {
+                blog.CoverImageUrl = newUrls[dto.MainNewImageIndex.Value];
+            }
+            // لو اختار صورة من الصور الموجودة بالفعل (Cloudinary URL)
+            else if (!string.IsNullOrEmpty(dto.CoverImageUrl))
+            {
+                blog.CoverImageUrl = dto.CoverImageUrl;
             }
 
             if (dto.Button1Image != null) blog.Button1ImageUrl = await UploadToCloudinary(dto.Button1Image);
