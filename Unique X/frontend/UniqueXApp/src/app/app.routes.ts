@@ -24,6 +24,7 @@ export const routes: Routes = [
   { path: 'my-properties', loadComponent: () => import('./Components/my-properties/my-properties').then(m => m.MyPropertiesComponent), canActivate: [authGuard] },
   { path: 'edit-property/:id', loadComponent: () => import('./Components/edit-property/edit-property').then(m => m.EditPropertyComponent), canActivate: [authGuard] },
   { path: 'wishlist', loadComponent: () => import('./Components/wishlist/wishlist').then(m => m.WishlistComponent), canActivate: [authGuard] },
+  { path: 'settings', loadComponent: () => import('./Components/settings/settings').then(m => m.SettingsComponent), canActivate: [authGuard] },
   { path: 'shortlist', loadComponent: () => import('./Components/shortlist/shortlist').then(m => m.ShortlistComponent), canActivate: [authGuard] },
   { path: 'visit-list', loadComponent: () => import('./Components/visitlist/visitlist').then(m => m.VisitListComponent), canActivate: [authGuard] },
   { path: 'profile', loadComponent: () => import('./Components/profile/profile').then(m => m.ProfileComponent), canActivate: [authGuard] },
