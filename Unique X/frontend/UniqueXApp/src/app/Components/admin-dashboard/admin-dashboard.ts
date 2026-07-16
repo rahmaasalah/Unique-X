@@ -188,7 +188,8 @@ export class AdminDashboardComponent implements OnInit {
   {code: 'FAG', name: 'Farag Amer' },
   {code: 'SED', name: 'Saudi Egyptian Development' },
   {code: 'HBD', name: 'Housing and Development bank' },
-  {code: 'MRC', name: 'Mercon' }
+  {code: 'MRC', name: 'Mercon' },
+  {code: 'ALE', name: 'Alex West' }
 ];
   uniqueOwners = computed(() => {
     const owners = this.properties().map(p => p.ownerName).filter(n => n && n.trim() !== '');

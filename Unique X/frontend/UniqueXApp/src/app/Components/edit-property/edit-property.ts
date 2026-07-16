@@ -34,7 +34,7 @@ currentPrefix: string = '';
   regionsMapping: any = {
   1: ['Sheikh Zayed', 'Green belt', '6th of October', 'North Expansions', 'October Gardens', 'Eastern Expansions', 'New Cairo'], // Cairo
   2: [
-    'Zizinia', 'Janaklis', 'Gliem', 'Fleming', 'San Stefano', 'Shods', 
+    'Zizinia', 'Janaklis', 'Gliem', 'Fleming', 'San Stefano', 'Shods', 'Sporting',
     'Elshalalat', 'Wabur al-miyah', 'Al-Ibrahimiya', 'Al-Manshiyya', 
     'Camp Schésar', 'Muharram Bik', 'Mahattat Misr', 'Cleopatra', 
     'Al-Azariṭa', 'Al-Shatibi', 'Saba Basha', 'Sidi Gaber', 'Roshdy', 
@@ -185,7 +185,8 @@ dummyDevelopers =[
   {code: 'FAG', name: 'Farag Amer' },
   {code: 'SED', name: 'Saudi Egyptian Development' },
   {code: 'HBD', name: 'Housing and Development bank' },
-  {code: 'MRC', name: 'Mercon' }
+  {code: 'MRC', name: 'Mercon' },
+  {code: 'ALE', name: 'Alex West' }
 ];
 
 primaryProjectCodes: any = {
