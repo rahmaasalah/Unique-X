@@ -44,6 +44,10 @@
         // Units — JSON array of property IDs
         public string? ResaleUnitIdsJson { get; set; }
         public string? PrimaryUnitIdsJson { get; set; }
+        public string? RentUnitIdsJson { get; set; }
+
+        public decimal? DownPaymentPercentage { get; set; }
+        public decimal? AvgDownPayment { get; set; }
 
         // Article Sections — JSON array [{headline, text}]
         public string? ArticleSectionsJson { get; set; }

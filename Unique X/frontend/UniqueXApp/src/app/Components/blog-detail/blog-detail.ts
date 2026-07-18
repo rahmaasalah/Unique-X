@@ -23,10 +23,11 @@ export class BlogDetailComponent implements OnInit {
   blog = signal<any>(null);
   isLoading = signal(true);
   modalImageUrl = signal<string>('');
-  resaleUnits = signal<any[]>([]);
-  resaleUnitsLoading = signal(false);
+  units = signal<any[]>([]);
   primaryUnits = signal<any[]>([]);
-  primaryUnitsLoading = signal(false);
+  resaleUnits = signal<any[]>([]);
+  rentUnits = signal<any[]>([]);
+  unitsLoading = signal(false);
 
   // Main slider
   activeSlide = signal(0);
@@ -47,8 +48,16 @@ export class BlogDetailComponent implements OnInit {
   paymentPlans = computed(() => this.blogService.parseJson(this.blog()?.paymentPlansJson));
   articleSections = computed(() => this.blogService.parseJson(this.blog()?.articleSectionsJson));
   faqs = computed(() => this.blogService.parseJson(this.blog()?.faqsJson));
-  resaleUnitIds = computed(() => this.blogService.getResaleUnitIds(this.blog()));
-  primaryUnitIds = computed(() => this.blogService.getPrimaryUnitIds(this.blog()));
+  unitIds = computed(() => this.blogService.parseJson(this.blog()?.unitIdsJson));
+  resaleUnitIds = computed(() => this.blogService.parseJson(this.blog()?.resaleUnitIdsJson));
+  primaryUnitIds = computed(() => this.blogService.parseJson(this.blog()?.primaryUnitIdsJson));
+  rentUnitIds = computed(() => this.blogService.parseJson(this.blog()?.rentUnitIdsJson));
+  allUnitIds = computed(() => [
+    ...this.primaryUnitIds(),
+    ...this.resaleUnitIds(),
+    ...this.rentUnitIds(),
+    ...this.unitIds() // fallback للقديم
+  ].filter((v, i, a) => a.indexOf(v) === i)); // unique
 
   // بنعالج الـ mapEmbedUrl عشان نشيل منه الـ iframe لو موجود
   safeMapUrl(): SafeResourceUrl {
@@ -65,25 +74,35 @@ export class BlogDetailComponent implements OnInit {
       next: (data) => {
         this.blog.set(data);
         this.isLoading.set(false);
-        this.loadUnits(this.resaleUnitIds(), this.resaleUnits, this.resaleUnitsLoading);
-        this.loadUnits(this.primaryUnitIds(), this.primaryUnits, this.primaryUnitsLoading);
+        this.loadUnits();
       },
       error: () => this.isLoading.set(false)
     });
   }
 
-  loadUnits(ids: number[], target: any, loadingFlag: any) {
-    if (!ids.length) return;
-    loadingFlag.set(true);
-    const requests = ids.map((id: number) =>
-      this.http.get<any>(`${environment.apiUrl}/Properties/${id}`)
-    );
-    Promise.all(requests.map((r: any) => r.toPromise()))
+  loadUnits() {
+    const allIds = this.allUnitIds();
+    if (!allIds.length) return;
+    this.unitsLoading.set(true);
+
+    const fetchUnit = (id: number) =>
+      this.http.get<any>(`${environment.apiUrl}/Properties/${id}`).toPromise();
+
+    Promise.all(allIds.map(fetchUnit))
       .then(results => {
-        target.set(results.filter(Boolean));
-        loadingFlag.set(false);
+        const all = results.filter(Boolean);
+        const primaryIds = this.primaryUnitIds();
+        const resaleIds = this.resaleUnitIds();
+        const rentIds = this.rentUnitIds();
+
+        this.primaryUnits.set(all.filter(u => primaryIds.includes(u.id)));
+        this.resaleUnits.set(all.filter(u => resaleIds.includes(u.id)));
+        this.rentUnits.set(all.filter(u => rentIds.includes(u.id)));
+        // fallback للقديم
+        this.units.set(all);
+        this.unitsLoading.set(false);
       })
-      .catch(() => loadingFlag.set(false));
+      .catch(() => this.unitsLoading.set(false));
   }
 
   // Main slider controls
@@ -131,8 +150,7 @@ export class BlogDetailComponent implements OnInit {
 
   getAdminPhone(type: 'tel' | 'wa'): string {
     if (type === 'tel') return `tel:${this.ADMIN_PHONE}`;
-    // كود مصر هو 20 - بنشيل الصفر الأول ونحط 20 قبله
-    const cleaned = '20' + this.ADMIN_PHONE.replace(/^0+/, '');
+    const cleaned = '2' + this.ADMIN_PHONE.replace(/^0+/, '');
     return `https://wa.me/${cleaned}`;
   }
 
@@ -140,13 +158,10 @@ export class BlogDetailComponent implements OnInit {
   getBrokerWhatsAppLink(phone: string, unitCode?: string): string {
     if (!phone) return '#';
     let cleaned = phone.replace(/\D/g, '');
-    // لو الرقم بيبدأ بـ 0 نشيله ونحط كود مصر 20
-    if (cleaned.startsWith('0')) cleaned = '20' + cleaned.substring(1);
-    // بنشتق الـ base URL من الـ apiUrl (بنشيل /api من الآخر)
-    const baseUrl = environment.apiUrl.replace(/\/api$/, '');
-    const pageUrl = baseUrl + window.location.pathname;
+    
+    const currentUrl = window.location.href;
     const msg = encodeURIComponent(
-      `Hello, I'm interested in property: #${unitCode || ''}\nLink: ${pageUrl}`
+      `Hello, I'm interested in property: #${unitCode || ''}\nLink: ${currentUrl}`
     );
     return `https://wa.me/${cleaned}?text=${msg}`;
   }
@@ -166,5 +181,14 @@ export class BlogDetailComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/blog']);
+  }
+
+  formatNumber(value: any): string {
+    if (!value && value !== 0) return '';
+    const num = typeof value === 'string'
+      ? parseFloat(value.replace(/,/g, ''))
+      : Number(value);
+    if (isNaN(num)) return value;
+    return num.toLocaleString('en-US');
   }
 }

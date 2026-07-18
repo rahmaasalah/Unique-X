@@ -2217,6 +2217,7 @@
          formControlName="pricePerMeterPrimary" placeholder="e.g. 120,000"
          (input)="formatPrice($event)">
 </div>
+            
           </div>
 
           <hr class="my-3">
@@ -2267,55 +2268,45 @@
               <div class="card border-0 bg-light rounded-3 p-3 mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <span class="fw-semibold small">Plan {{ i + 1 }}</span>
-                  <button class="btn btn-
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  sm btn-outline-danger rounded-pill px-2 py-0"
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0"
                           (click)="removePaymentPlan(i)">Remove</button>
                 </div>
                 <div class="row g-2">
+                  <!-- Plan Name -->
                   <div class="col-12">
                     <input type="text" class="form-control form-control-sm rounded-3 border-0"
                            placeholder="Plan name (e.g. 5 Years)" [(ngModel)]="plan.name" [ngModelOptions]="{standalone:true}">
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small text-muted mb-1">Avg of Down Payment</label>
+                  <!-- Down Payment % -->
+                  <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1">Down Payment %</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control rounded-start-3 border-0 bg-white" min="0" max="100"
+                             placeholder="e.g. 10" [(ngModel)]="plan.downPaymentPercentage" [ngModelOptions]="{standalone:true}">
+                      <span class="input-group-text bg-white border-0 fw-bold text-danger rounded-end-3">%</span>
+                    </div>
+                  </div>
+                  <!-- Avg Down Payment -->
+                  <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1">Avg Down Payment</label>
                     <input type="text" class="form-control form-control-sm rounded-3 border-0"
                            placeholder="e.g. 500,000" [(ngModel)]="plan.avgDownPayment" [ngModelOptions]="{standalone:true}"
-                           (input)="formatPrice($event)">
+                           (input)="formatPlanField($event, plan, 'avgDownPayment')">
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label small text-muted mb-1">Avg of Installment</label>
+                  <!-- Avg Installment -->
+                  <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1">Avg Quarterly Installment</label>
                     <input type="text" class="form-control form-control-sm rounded-3 border-0"
                            placeholder="e.g. 25,000" [(ngModel)]="plan.avgInstallment" [ngModelOptions]="{standalone:true}"
-                           (input)="formatPrice($event)">
+                           (input)="formatPlanField($event, plan, 'avgInstallment')">
                   </div>
-                  <div class="col-md-4">
+                  <!-- Years -->
+                  <div class="col-md-3">
                     <label class="form-label small text-muted mb-1">Number of Years</label>
                     <input type="text" class="form-control form-control-sm rounded-3 border-0"
-                           placeholder="e.g. 8" [(ngModel)]="plan.years" [ngModelOptions]="{standalone:true}"
-                           (input)="formatPrice($event)">
+                           placeholder="e.g. 8" [(ngModel)]="plan.years" [ngModelOptions]="{standalone:true}">
                   </div>
+                  <!-- Note -->
                   <div class="col-md-12">
                     <input type="text" class="form-control form-control-sm rounded-3 border-0"
                            placeholder="Note (optional)" [(ngModel)]="plan.note" [ngModelOptions]="{standalone:true}">
@@ -2435,6 +2426,56 @@
               <small class="text-muted mt-1 d-block">{{ selectedPrimaryUnits().length }} units selected</small>
             } @else {
               <small class="text-muted">Search and select property units from the system</small>
+            }
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 9c: Rent Units ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-key me-2"></i>Rent Units</h6>
+          <div class="mb-4">
+            <div class="position-relative">
+              <input type="text" class="form-control rounded-3 bg-light border-0"
+                     placeholder="Search by property code or title..."
+                     [ngModel]="rentUnitSearchText()"
+                     (ngModelChange)="rentUnitSearchText.set($event); isRentUnitDropdownOpen.set(true)"
+                     (focus)="isRentUnitDropdownOpen.set(true)"
+                     (blur)="closeRentUnitDropdown()"
+                     [ngModelOptions]="{standalone:true}">
+              <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+                  [class.show]="isRentUnitDropdownOpen() && filteredRentUnitOptions().length > 0"
+                  style="max-height: 220px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1060;">
+                @for (prop of filteredRentUnitOptions(); track prop.id) {
+                  <li>
+                    <button class="dropdown-item py-2 border-bottom border-light d-flex align-items-center justify-content-between"
+                            (mousedown)="addRentUnitId(prop)">
+                      <span>
+                        <span class="badge bg-light text-dark border me-2">{{ prop.code }}</span>
+                        <span class="small text-muted">{{ prop.title }}</span>
+                      </span>
+                      @if (isRentUnitSelected(prop.id)) {
+                        <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                      }
+                    </button>
+                  </li>
+                } @empty {
+                  <li><span class="dropdown-item text-muted small py-2">No properties found.</span></li>
+                }
+              </ul>
+            </div>
+            @if (selectedRentUnits().length > 0) {
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                @for (unit of selectedRentUnits(); track unit.id) {
+                  <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-2 d-flex align-items-center gap-1" style="font-size:0.8rem;">
+                    <span class="fw-bold">{{ unit.code }}</span>
+                    <span class="text-muted small">- {{ unit.title | slice:0:20 }}{{ unit.title?.length > 20 ? '...' : '' }}</span>
+                    <button class="btn-close btn-close-sm ms-1" style="font-size:0.6rem;" (mousedown)="removeRentUnitId(unit.id)"></button>
+                  </span>
+                }
+              </div>
+              <small class="text-muted mt-1 d-block">{{ selectedRentUnits().length }} units selected</small>
+            } @else {
+              <small class="text-muted">Search and select rent units from the system</small>
             }
           </div>
 
