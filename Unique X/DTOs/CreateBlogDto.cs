@@ -27,6 +27,11 @@
         // كانت اسمها UnitIdsJson
         public string? ResaleUnitIdsJson { get; set; }
         public string? PrimaryUnitIdsJson { get; set; }
+        public string? RentUnitIdsJson { get; set; }
+
+        // Down Payment
+        public decimal? DownPaymentPercentage { get; set; }
+        public decimal? AvgDownPayment { get; set; }
 
         public string? ArticleSectionsJson { get; set; }
         public string? FaqsJson { get; set; }

@@ -61,6 +61,8 @@ namespace Unique_X.Controllers
                 IsPublished = dto.IsPublished,
                 PricePerMeterResale = dto.PricePerMeterResale,
                 PricePerMeterPrimary = dto.PricePerMeterPrimary,
+                DownPaymentPercentage = dto.DownPaymentPercentage,
+                AvgDownPayment = dto.AvgDownPayment,
                 Button1Label = dto.Button1Label,
                 Button2Label = dto.Button2Label,
                 Button3Label = dto.Button3Label,
@@ -69,6 +71,7 @@ namespace Unique_X.Controllers
                 PaymentPlansJson = dto.PaymentPlansJson,
                 ResaleUnitIdsJson = dto.ResaleUnitIdsJson,
                 PrimaryUnitIdsJson = dto.PrimaryUnitIdsJson,
+                RentUnitIdsJson = dto.RentUnitIdsJson,
                 ArticleSectionsJson = dto.ArticleSectionsJson,
                 FaqsJson = dto.FaqsJson,
                 AdminPhone = dto.AdminPhone,
@@ -120,6 +123,8 @@ namespace Unique_X.Controllers
             blog.IsPublished = dto.IsPublished;
             blog.PricePerMeterResale = dto.PricePerMeterResale;
             blog.PricePerMeterPrimary = dto.PricePerMeterPrimary;
+            blog.DownPaymentPercentage = dto.DownPaymentPercentage;
+            blog.AvgDownPayment = dto.AvgDownPayment;
             blog.Button1Label = dto.Button1Label;
             blog.Button2Label = dto.Button2Label;
             blog.Button3Label = dto.Button3Label;
@@ -128,6 +133,7 @@ namespace Unique_X.Controllers
             blog.PaymentPlansJson = dto.PaymentPlansJson;
             blog.ResaleUnitIdsJson = dto.ResaleUnitIdsJson;
             blog.PrimaryUnitIdsJson = dto.PrimaryUnitIdsJson;
+            blog.RentUnitIdsJson = dto.RentUnitIdsJson;
             blog.ArticleSectionsJson = dto.ArticleSectionsJson;
             blog.FaqsJson = dto.FaqsJson;
             blog.AdminPhone = dto.AdminPhone;

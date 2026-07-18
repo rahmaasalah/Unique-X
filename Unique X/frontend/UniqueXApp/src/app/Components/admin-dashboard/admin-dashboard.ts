@@ -1442,6 +1442,41 @@ closePrimaryUnitDropdown() {
   setTimeout(() => this.isPrimaryUnitDropdownOpen.set(false), 150);
 }
 
+// --- Rent Units ---
+rentUnitSearchText = signal<string>('');
+isRentUnitDropdownOpen = signal<boolean>(false);
+selectedRentUnits = signal<any[]>([]);
+
+filteredRentUnitOptions = computed(() => {
+  const search = this.rentUnitSearchText().toLowerCase();
+  return this.properties()
+    .filter(p =>
+      (p.code && p.code.toLowerCase().includes(search)) ||
+      (p.title && p.title.toLowerCase().includes(search))
+    )
+    .slice(0, 50);
+});
+
+isRentUnitSelected(id: number): boolean {
+  return this.selectedRentUnits().some(u => u.id === id);
+}
+
+addRentUnitId(prop: any) {
+  if (!this.isRentUnitSelected(prop.id)) {
+    this.selectedRentUnits.update(list => [...list, { id: prop.id, code: prop.code, title: prop.title }]);
+  }
+  this.rentUnitSearchText.set('');
+  this.isRentUnitDropdownOpen.set(false);
+}
+
+removeRentUnitId(id: number) {
+  this.selectedRentUnits.update(list => list.filter(u => u.id !== id));
+}
+
+closeRentUnitDropdown() {
+  setTimeout(() => this.isRentUnitDropdownOpen.set(false), 150);
+}
+
 // --- Slider preview ---
 sliderPreviewUrls = signal<string[]>([]);
 
@@ -1468,6 +1503,8 @@ initBlogForm(blog?: any) {
     isPublished:          [true],
     pricePerMeterResale:  [null],
     pricePerMeterPrimary: [null],
+    downPaymentPercentage: [null],
+    avgDownPayment: [null],
     projectDetails:       [''],
     mapEmbedUrl:          [''],
   });
@@ -1482,6 +1519,8 @@ initBlogForm(blog?: any) {
       isPublished:          blog.isPublished,
       pricePerMeterResale:  blog.pricePerMeterResale,
       pricePerMeterPrimary: blog.pricePerMeterPrimary,
+      downPaymentPercentage: blog.downPaymentPercentage,
+      avgDownPayment: blog.avgDownPayment,
       projectDetails:       blog.projectDetails || '',
       mapEmbedUrl:          blog.mapEmbedUrl || '',
     });
@@ -1524,6 +1563,8 @@ openAddBlog() {
   this.resaleUnitSearchText.set('');
   this.selectedPrimaryUnits.set([]);
   this.primaryUnitSearchText.set('');
+  this.selectedRentUnits.set([]);
+  this.rentUnitSearchText.set('');
   this.mainExistingImageUrl.set(null);
   this.mainNewImageIndex.set(null);
   this.initBlogForm();
@@ -1539,8 +1580,9 @@ openEditBlog(blog: any) {
   this.blogButtonFiles = { 1: null, 2: null, 3: null };
   this.resaleUnitSearchText.set('');
   this.primaryUnitSearchText.set('');
+  this.rentUnitSearchText.set('');
 
-  // ملء selectedResaleUnits / selectedPrimaryUnits من الـ blog الموجود
+  // ملء selectedResaleUnits / selectedPrimaryUnits / selectedRentUnits من الـ blog الموجود
   const resaleIds: number[] = this.parseJson(blog.resaleUnitIdsJson);
   this.selectedResaleUnits.set(
     resaleIds
@@ -1552,6 +1594,14 @@ openEditBlog(blog: any) {
   const primaryIds: number[] = this.parseJson(blog.primaryUnitIdsJson);
   this.selectedPrimaryUnits.set(
     primaryIds
+      .map(id => this.properties().find(p => p.id === id))
+      .filter(p => !!p)
+      .map(p => ({ id: p.id, code: p.code, title: p.title }))
+  );
+
+  const rentIds: number[] = this.parseJson(blog.rentUnitIdsJson);
+  this.selectedRentUnits.set(
+    rentIds
       .map(id => this.properties().find(p => p.id === id))
       .filter(p => !!p)
       .map(p => ({ id: p.id, code: p.code, title: p.title }))
@@ -1624,6 +1674,7 @@ submitBlog() {
   // Parse unit IDs from selected signals (unlimited)
   const resaleUnitIds = this.selectedResaleUnits().map(u => u.id);
   const primaryUnitIds = this.selectedPrimaryUnits().map(u => u.id);
+  const rentUnitIds = this.selectedRentUnits().map(u => u.id);
 
   const fd = new FormData();
   fd.append('Title',                f.title);
@@ -1634,7 +1685,9 @@ submitBlog() {
   fd.append('IsPublished',          f.isPublished ? 'true' : 'false');
   fd.append('PricePerMeterResale',  f.pricePerMeterResale?.toString() || '');
   fd.append('PricePerMeterPrimary', f.pricePerMeterPrimary?.toString() || '');
-  fd.append('AdminPhone',           '01509064020'); // رقم الادمن ثابت
+  fd.append('DownPaymentPercentage', f.downPaymentPercentage?.toString() || '');
+  fd.append('AvgDownPayment',       f.avgDownPayment?.toString() || '');
+  fd.append('AdminPhone',           '01509064020');
   fd.append('Button1Label',         'Gallery');
   fd.append('Button2Label',         'View on Map');
   fd.append('Button3Label',         'Master Plan');
@@ -1643,6 +1696,7 @@ submitBlog() {
   fd.append('PaymentPlansJson',     JSON.stringify(this.paymentPlans()));
   fd.append('ResaleUnitIdsJson',    JSON.stringify(resaleUnitIds));
   fd.append('PrimaryUnitIdsJson',   JSON.stringify(primaryUnitIds));
+  fd.append('RentUnitIdsJson',      JSON.stringify(rentUnitIds));
   fd.append('ArticleSectionsJson',  JSON.stringify(this.articleSections()));
   fd.append('FaqsJson',             JSON.stringify(this.faqs()));
 
@@ -1697,5 +1751,13 @@ formatPrice(event: any) {
   const input = event.target;
   const raw = input.value.replace(/[^0-9]/g, '');
   input.value = raw ? Number(raw).toLocaleString('en-US') : '';
+}
+
+formatPlanField(event: any, plan: any, field: string) {
+  const input = event.target;
+  const raw = input.value.replace(/[^0-9]/g, '');
+  const formatted = raw ? Number(raw).toLocaleString('en-US') : '';
+  input.value = formatted;
+  plan[field] = formatted;
 }
 }

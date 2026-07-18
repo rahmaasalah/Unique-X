@@ -88,29 +88,34 @@
       <div class="container py-3">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
 
-          <!-- Title + Zone -->
+          <!-- Title + Category -->
           <div>
-            <h5 class="fw-bold mb-0" style="color:#1a1a2e;">{{ blog().title }}</h5>
-            <div class="d-flex gap-2 flex-wrap mt-1">
+            <h5 class="fw-bold mb-1" style="color:#1a1a2e;">{{ blog().title }}</h5>
+            <div class="d-flex flex-wrap gap-2 align-items-center mt-1">
               @if (blog().zone) {
-                <span class="badge rounded-pill px-3 py-1"
-                      style="background:#f0f4ff;color:#1a1a2e;font-size:0.75rem;">
-                  {{ blog().zone }}
-                </span>
-              }
-              @if (blog().developerName) {
-                <span class="badge rounded-pill px-3 py-1"
-                      style="background:#f0f4ff;color:#1a1a2e;font-size:0.75rem;">
-                  {{ blog().developerName }}
+                <span class="d-flex align-items-center gap-1 text-muted small">
+                  <i class="bi bi-geo-alt-fill text-danger"></i>{{ blog().zone }}
                 </span>
               }
               @if (blog().projectName) {
-                <span class="badge rounded-pill px-3 py-1"
-                      style="background:#f0f4ff;color:#1a1a2e;font-size:0.75rem;">
-                  {{ blog().projectName }}
+                <span class="text-muted small">•</span>
+                <span class="d-flex align-items-center gap-1 text-muted small">
+                  <i class="bi bi-building text-danger"></i>{{ blog().projectName }}
+                </span>
+              }
+              @if (blog().developerName) {
+                <span class="text-muted small">•</span>
+                <span class="d-flex align-items-center gap-1 text-muted small">
+                  <i class="bi bi-person-workspace text-danger"></i>{{ blog().developerName }}
                 </span>
               }
             </div>
+            @if (blog().category) {
+              <span class="badge rounded-pill px-3 py-1 mt-1"
+                    style="background:#f0f4ff;color:#1a1a2e;font-size:0.75rem;">
+                {{ blog().category }}
+              </span>
+            }
           </div>
 
           <!-- Prices -->
@@ -167,240 +172,266 @@
           </button>
 
           <!-- ===== 3 BUTTONS (Gallery / View on Map / Master Plan) ===== -->
-          <div class="mb-4">
-            <h5 class="fw-bold mb-3" style="color:#1a1a2e;">Details</h5>
-            <div class="d-flex gap-3 flex-wrap">
+          @if (sliderImages().length > 0 || blog().mapEmbedUrl || blog().button3ImageUrl) {
+            <div class="mb-4">
+              <h5 class="fw-bold mb-3" style="color:#1a1a2e;">Details</h5>
+              <div class="d-flex gap-3 flex-wrap">
 
-              <!-- Gallery → يفتح الـ lightbox -->
-              <button class="btn rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
-                      style="min-width:120px;min-height:90px;padding:16px;"
-                      [class.btn-outline-secondary]="sliderImages().length > 0"
-                      [class.btn-outline-light]="sliderImages().length === 0"
-                      [style.opacity]="sliderImages().length === 0 ? '0.4' : '1'"
-                      [disabled]="sliderImages().length === 0"
-                      (click)="sliderImages().length > 0 && openGallery(0)">
-                <i class="bi bi-images fs-3" style="color:#1a1a2e;"></i>
-                <span class="small text-dark">Gallery</span>
-              </button>
+                <!-- Gallery → يفتح الـ lightbox -->
+                @if (sliderImages().length > 0) {
+                  <button class="btn btn-outline-secondary rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
+                          style="min-width:120px;min-height:90px;padding:16px;"
+                          (click)="openGallery(0)">
+                    <i class="bi bi-images fs-3" style="color:#1a1a2e;"></i>
+                    <span class="small text-dark">Gallery</span>
+                  </button>
+                }
 
-              <!-- View on Map → يفتح modal جوا الموقع -->
-              <button class="btn rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
-                      style="min-width:120px;min-height:90px;padding:16px;"
-                      [class.btn-outline-secondary]="blog().mapEmbedUrl"
-                      [class.btn-outline-light]="!blog().mapEmbedUrl"
-                      [style.opacity]="!blog().mapEmbedUrl ? '0.4' : '1'"
-                      [disabled]="!blog().mapEmbedUrl"
-                      (click)="blog().mapEmbedUrl && mapModalOpen.set(true)">
-                <i class="bi bi-map fs-3" style="color:#1a1a2e;"></i>
-                <span class="small text-dark">View on Map</span>
-              </button>
+                <!-- View on Map → يفتح modal جوا الموقع -->
+                @if (blog().mapEmbedUrl) {
+                  <button class="btn btn-outline-secondary rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
+                          style="min-width:120px;min-height:90px;padding:16px;"
+                          (click)="mapModalOpen.set(true)">
+                    <i class="bi bi-map fs-3" style="color:#1a1a2e;"></i>
+                    <span class="small text-dark">View on Map</span>
+                  </button>
+                }
 
-              <!-- Master Plan → يفتح الصورة في modal -->
-              <button class="btn rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
-                      style="min-width:120px;min-height:90px;padding:16px;"
-                      [class.btn-outline-secondary]="blog().masterPlanImageUrl"
-                      [class.btn-outline-light]="!blog().masterPlanImageUrl"
-                      [style.opacity]="!blog().masterPlanImageUrl ? '0.4' : '1'"
-                      [disabled]="!blog().masterPlanImageUrl"
-                      (click)="blog().masterPlanImageUrl && openImageModal(blogService.getImageUrl(blog().masterPlanImageUrl))">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#1a1a2e" viewBox="0 0 24 24">
-                  <path d="M3 3h8v8H3zm2 2v4h4V5zm8-2h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zm8-2h8v8h-8zm2 2v4h4v-4z"/>
-                </svg>
-                <span class="small text-dark">Master Plan</span>
-              </button>
+                <!-- Master Plan → يفتح الصورة في modal -->
+                @if (blog().button3ImageUrl) {
+                  <button class="btn btn-outline-secondary rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
+                          style="min-width:120px;min-height:90px;padding:16px;"
+                          (click)="openImageModal(blogService.getImageUrl(blog().button3ImageUrl))">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#1a1a2e" viewBox="0 0 24 24">
+                      <path d="M3 3h8v8H3zm2 2v4h4V5zm8-2h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zm8-2h8v8h-8zm2 2v4h4v-4z"/>
+                    </svg>
+                    <span class="small text-dark">Master Plan</span>
+                  </button>
+                }
 
+              </div>
             </div>
-          </div>
+          }
 
           <!-- ===== PAYMENT PLANS ===== -->
-          @if (paymentPlans().length > 0) {
+          @if (paymentPlans().length > 0 || blog().downPaymentPercentage || blog().avgDownPayment) {
             <div class="mb-5">
               <h5 class="fw-bold mb-3" style="color:#1a1a2e;">Payment Plans</h5>
-              <div class="d-flex gap-3 flex-wrap">
-                @for (plan of paymentPlans(); track $index) {
-                  <div class="card border rounded-3 p-3" style="min-width:200px;flex:1;">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                      <i class="bi bi-credit-card text-danger"></i>
-                      <span class="fw-bold text-danger small">{{ plan.name || 'Plan ' + ($index+1) }}</span>
-                    </div>
-                    @if (plan.avgDownPayment) {
-                      <div class="mb-1">
-                        <span class="fw-bold fs-5">{{ plan.avgDownPayment }}</span>
-                        <span class="text-muted small ms-1">Avg. Down Payment</span>
+
+              <!-- Down Payment Overview -->
+              @if (blog().downPaymentPercentage || blog().avgDownPayment) {
+                <div class="d-flex gap-3 mb-4 flex-wrap">
+                  @if (blog().downPaymentPercentage) {
+                    <div class="card border-0 bg-danger-subtle rounded-3 p-3 d-flex flex-row align-items-center gap-3" style="min-width:180px;">
+                      <i class="bi bi-percent fs-3 text-danger"></i>
+                      <div>
+                        <div class="text-muted small">Down Payment</div>
+                        <div><span class="fw-bold fs-5">{{ formatNumber(blog().downPaymentPercentage) }}</span><span class="text-muted ms-1">%</span></div>
                       </div>
-                    }
-                    @if (plan.years) {
-                      <div class="text-muted small fw-semibold">{{ plan.years }} Years</div>
-                    }
-                    @if (plan.avgInstallment) {
-                      <div class="text-muted small mt-1">{{ plan.avgInstallment }} / installment</div>
-                    }
-                    @if (plan.note) {
-                      <div class="text-muted small mt-1 fst-italic">{{ plan.note }}</div>
-                    }
-                  </div>
-                }
-              </div>
+                    </div>
+                  }
+                  @if (blog().avgDownPayment) {
+                    <div class="card border-0 bg-light rounded-3 p-3 d-flex flex-row align-items-center gap-3" style="min-width:180px;">
+                      <i class="bi bi-cash-stack fs-3 text-success"></i>
+                      <div>
+                        <div class="text-muted small">Avg. Down Payment</div>
+                        <div><span class="fw-bold fs-5">{{ formatNumber(blog().avgDownPayment) }}</span><span class="text-muted ms-1 small">EGP</span></div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Plans -->
+              @if (paymentPlans().length > 0) {
+                <div class="d-flex gap-3 flex-wrap">
+                  @for (plan of paymentPlans(); track $index) {
+                    <div class="card border rounded-3 p-3" style="min-width:220px;flex:1;">
+                      <!-- Plan Name -->
+                      <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-credit-card text-danger"></i>
+                        <span class="fw-bold text-danger">{{ plan.name || 'Plan ' + ($index+1) }}</span>
+                      </div>
+
+                      <!-- Down Payment % -->
+                      @if (plan.downPaymentPercentage) {
+                        <div class="mb-2 d-flex align-items-baseline gap-1">
+                          <span class="fw-bold fs-5">{{ plan.downPaymentPercentage }}</span>
+                          <span class="text-muted small">% Down Payment</span>
+                        </div>
+                      }
+
+                      <!-- Avg Down Payment -->
+                      @if (plan.avgDownPayment) {
+                        <div class="mb-2 d-flex align-items-baseline gap-1">
+                          <span class="fw-bold fs-5">{{ formatNumber(plan.avgDownPayment) }}</span>
+                          <span class="text-muted small">Avg. Down Payment</span>
+                        </div>
+                      }
+
+                      <!-- fallback: old downPayment field -->
+                      @if (!plan.avgDownPayment && plan.downPayment) {
+                        <div class="mb-2 d-flex align-items-baseline gap-1">
+                          <span class="fw-bold fs-5">{{ formatNumber(plan.downPayment) }}</span>
+                          <span class="text-muted small">Down Payment</span>
+                        </div>
+                      }
+
+                      <!-- Years -->
+                      @if (plan.years) {
+                        <div class="text-muted small fw-semibold mb-1">{{ plan.years }} Years</div>
+                      }
+
+                      <!-- Avg Installment -->
+                      @if (plan.avgInstallment) {
+                        <div class="text-muted small mt-1">
+                          <span class="fw-bold text-dark">{{ formatNumber(plan.avgInstallment) }}</span>
+                          <span class="ms-1">/ quarterly installment</span>
+                        </div>
+                      }
+
+                      <!-- fallback: old installment field -->
+                      @if (!plan.avgInstallment && plan.installment) {
+                        <div class="text-muted small mt-1">
+                          <span class="fw-bold text-dark">{{ formatNumber(plan.installment) }}</span>
+                          <span class="ms-1">/ quarterly installment</span>
+                        </div>
+                      }
+
+                      @if (plan.note) {
+                        <div class="text-muted small mt-2 fst-italic border-top pt-2">{{ plan.note }}</div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
             </div>
           }
 
-          <!-- ===== RESALE UNITS ===== -->
-          @if (resaleUnitIds().length > 0) {
+          <!-- ===== UNITS ===== -->
+          @if (allUnitIds().length > 0) {
             <div class="mb-5">
               <div class="d-flex align-items-center justify-content-between mb-3">
                 <h5 class="fw-bold mb-0" style="color:#1a1a2e;">
-                  Resale Units In {{ blog().title }}
+                  Explore Properties In {{ blog().title }}
                 </h5>
-                @if (resaleUnits().length > 0) {
-                  <span class="text-muted small">{{ resaleUnits().length }} Results Available</span>
+                @if (units().length > 0) {
+                  <span class="text-muted small">{{ units().length }} Results Available</span>
                 }
               </div>
-              @if (resaleUnitsLoading()) {
+              @if (unitsLoading()) {
                 <div class="text-center py-3">
                   <div class="spinner-border text-danger spinner-border-sm"></div>
                 </div>
               }
-              <div class="row g-3">
-                @for (unit of resaleUnits(); track unit.id) {
-                  <div class="col-md-6">
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-                      <!-- صورة الوحدة — clickable للصفحة التفاصيل -->
-                      <div class="position-relative" style="cursor:pointer;"
-                           [routerLink]="['/property-details', unit.id]">
-                        @if (unit.photos?.[0]?.url) {
-                          <img [src]="unit.photos[0].url" class="w-100"
-                               style="height:190px;object-fit:cover;" alt="unit">
-                        } @else {
-                          <div class="bg-light d-flex align-items-center justify-content-center"
-                               style="height:190px;">
-                            <i class="bi bi-house text-muted fs-1 opacity-25"></i>
-                          </div>
-                        }
-                        @if (unit.listingType !== undefined) {
-                          <span class="badge position-absolute top-0 start-0 m-2 rounded-pill"
-                                style="background:rgba(239,51,65,0.9);font-size:0.7rem;">
-                            {{ unit.listingType === 0 ? 'Resale' : unit.listingType === 1 ? 'Rent' : 'Primary' }}
-                          </span>
-                        }
-                      </div>
 
-                      <div class="card-body p-3">
-                        <h6 class="fw-bold mb-1 text-truncate" style="cursor:pointer;"
-                            [routerLink]="['/property-details', unit.id]">{{ unit.title }}</h6>
-                        <div class="d-flex gap-3 text-muted small mb-2">
-                          @if (unit.bedrooms) { <span><i class="bi bi-door-open me-1"></i>{{ unit.bedrooms }} Beds</span> }
-                          @if (unit.bathrooms) { <span><i class="bi bi-droplet me-1"></i>{{ unit.bathrooms }} Baths</span> }
-                          @if (unit.area) { <span><i class="bi bi-aspect-ratio me-1"></i>{{ unit.area }} m²</span> }
-                        </div>
-                        <div class="d-flex align-items-center justify-content-between">
-                          <div class="fw-bold text-danger fs-6">{{ unit.price | number }} EGP</div>
-                          <!-- WhatsApp + Call للبروكر صاحب الوحدة -->
-                          @if (unit.brokerPhone) {
-                            <div class="d-flex gap-2">
-                              <a [href]="'tel:' + unit.brokerPhone"
-                                 class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center border"
-                                 style="width:36px;height:36px;background:#f8f9fa;"
-                                 (click)="$event.stopPropagation()"
-                                 title="Call broker">
-                                <i class="bi bi-telephone-fill text-dark" style="font-size:0.85rem;"></i>
-                              </a>
-                              <a [href]="getBrokerWhatsAppLink(unit.brokerPhone, unit.code)"
-                                 target="_blank"
-                                 class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
-                                 style="width:36px;height:36px;background:#25D366;"
-                                 (click)="$event.stopPropagation()"
-                                 title="WhatsApp broker">
-                                <i class="bi bi-whatsapp text-white" style="font-size:0.85rem;"></i>
-                              </a>
-                            </div>
-                          }
-                        </div>
-                      </div>
+              <!-- Primary Units -->
+              @if (primaryUnits().length > 0) {
+                <h6 class="fw-bold text-dark mb-3 mt-2">
+                  <i class="bi bi-stars text-danger me-1"></i> Primary
+                </h6>
+                <div class="row g-3 mb-4">
+                  @for (unit of primaryUnits(); track unit.id) {
+                    <div class="col-md-6">
+                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
                     </div>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-
-          <!-- ===== PRIMARY UNITS ===== -->
-          @if (primaryUnitIds().length > 0) {
-            <div class="mb-5">
-              <div class="d-flex align-items-center justify-content-between mb-3">
-                <h5 class="fw-bold mb-0" style="color:#1a1a2e;">
-                  Primary Units In {{ blog().title }}
-                </h5>
-                @if (primaryUnits().length > 0) {
-                  <span class="text-muted small">{{ primaryUnits().length }} Results Available</span>
-                }
-              </div>
-              @if (primaryUnitsLoading()) {
-                <div class="text-center py-3">
-                  <div class="spinner-border text-danger spinner-border-sm"></div>
+                  }
                 </div>
               }
-              <div class="row g-3">
-                @for (unit of primaryUnits(); track unit.id) {
-                  <div class="col-md-6">
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-                      <!-- صورة الوحدة — clickable للصفحة التفاصيل -->
-                      <div class="position-relative" style="cursor:pointer;"
-                           [routerLink]="['/property-details', unit.id]">
-                        @if (unit.photos?.[0]?.url) {
-                          <img [src]="unit.photos[0].url" class="w-100"
-                               style="height:190px;object-fit:cover;" alt="unit">
-                        } @else {
-                          <div class="bg-light d-flex align-items-center justify-content-center"
-                               style="height:190px;">
-                            <i class="bi bi-house text-muted fs-1 opacity-25"></i>
-                          </div>
-                        }
-                        @if (unit.listingType !== undefined) {
-                          <span class="badge position-absolute top-0 start-0 m-2 rounded-pill"
-                                style="background:rgba(239,51,65,0.9);font-size:0.7rem;">
-                            {{ unit.listingType === 0 ? 'Resale' : unit.listingType === 1 ? 'Rent' : 'Primary' }}
-                          </span>
-                        }
-                      </div>
 
-                      <div class="card-body p-3">
-                        <h6 class="fw-bold mb-1 text-truncate" style="cursor:pointer;"
-                            [routerLink]="['/property-details', unit.id]">{{ unit.title }}</h6>
-                        <div class="d-flex gap-3 text-muted small mb-2">
-                          @if (unit.bedrooms) { <span><i class="bi bi-door-open me-1"></i>{{ unit.bedrooms }} Beds</span> }
-                          @if (unit.bathrooms) { <span><i class="bi bi-droplet me-1"></i>{{ unit.bathrooms }} Baths</span> }
-                          @if (unit.area) { <span><i class="bi bi-aspect-ratio me-1"></i>{{ unit.area }} m²</span> }
-                        </div>
-                        <div class="d-flex align-items-center justify-content-between">
-                          <div class="fw-bold text-danger fs-6">{{ unit.price | number }} EGP</div>
-                          <!-- WhatsApp + Call للبروكر صاحب الوحدة -->
-                          @if (unit.brokerPhone) {
-                            <div class="d-flex gap-2">
-                              <a [href]="'tel:' + unit.brokerPhone"
-                                 class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center border"
-                                 style="width:36px;height:36px;background:#f8f9fa;"
-                                 (click)="$event.stopPropagation()"
-                                 title="Call broker">
-                                <i class="bi bi-telephone-fill text-dark" style="font-size:0.85rem;"></i>
-                              </a>
-                              <a [href]="getBrokerWhatsAppLink(unit.brokerPhone, unit.code)"
-                                 target="_blank"
-                                 class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
-                                 style="width:36px;height:36px;background:#25D366;"
-                                 (click)="$event.stopPropagation()"
-                                 title="WhatsApp broker">
-                                <i class="bi bi-whatsapp text-white" style="font-size:0.85rem;"></i>
-                              </a>
-                            </div>
-                          }
-                        </div>
-                      </div>
+              <!-- Resale Units -->
+              @if (resaleUnits().length > 0) {
+                <h6 class="fw-bold text-dark mb-3 mt-2">
+                  <i class="bi bi-house-door text-danger me-1"></i> Resale
+                </h6>
+                <div class="row g-3 mb-4">
+                  @for (unit of resaleUnits(); track unit.id) {
+                    <div class="col-md-6">
+                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
                     </div>
-                  </div>
-                }
-              </div>
+                  }
+                </div>
+              }
+
+              <!-- Rent Units -->
+              @if (rentUnits().length > 0) {
+                <h6 class="fw-bold text-dark mb-3 mt-2">
+                  <i class="bi bi-key text-danger me-1"></i> For Rent
+                </h6>
+                <div class="row g-3 mb-4">
+                  @for (unit of rentUnits(); track unit.id) {
+                    <div class="col-md-6">
+                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Fallback: old unitIdsJson (no category) -->
+              @if (primaryUnits().length === 0 && resaleUnits().length === 0 && rentUnits().length === 0) {
+                <div class="row g-3">
+                  @for (unit of units(); track unit.id) {
+                    <div class="col-md-6">
+                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
+                    </div>
+                  }
+                </div>
+              }
             </div>
           }
+
+          <!-- Unit Card Template -->
+          <ng-template #unitCard let-unit="unit">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+              <div class="position-relative" style="cursor:pointer;"
+                   [routerLink]="['/property-details', unit.id]">
+                @if (unit.photos?.[0]?.url) {
+                  <img [src]="unit.photos[0].url" class="w-100"
+                       style="height:190px;object-fit:cover;" alt="unit">
+                } @else {
+                  <div class="bg-light d-flex align-items-center justify-content-center"
+                       style="height:190px;">
+                    <i class="bi bi-house text-muted fs-1 opacity-25"></i>
+                  </div>
+                }
+                @if (unit.listingType !== undefined) {
+                  <span class="badge position-absolute top-0 start-0 m-2 rounded-pill"
+                        style="background:rgba(239,51,65,0.9);font-size:0.7rem;">
+                    {{ unit.listingType === 0 ? 'Resale' : unit.listingType === 1 ? 'Rent' : 'Primary' }}
+                  </span>
+                }
+              </div>
+              <div class="card-body p-3">
+                <h6 class="fw-bold mb-1 text-truncate" style="cursor:pointer;"
+                    [routerLink]="['/property-details', unit.id]">{{ unit.title }}</h6>
+                <div class="d-flex gap-3 text-muted small mb-2">
+                  @if (unit.bedrooms) { <span><i class="bi bi-door-open me-1"></i>{{ unit.bedrooms }} Beds</span> }
+                  @if (unit.bathrooms) { <span><i class="bi bi-droplet me-1"></i>{{ unit.bathrooms }} Baths</span> }
+                  @if (unit.area) { <span><i class="bi bi-aspect-ratio me-1"></i>{{ unit.area }} m²</span> }
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="fw-bold text-danger fs-6">{{ unit.price | number }} EGP</div>
+                  @if (unit.brokerPhone) {
+                    <div class="d-flex gap-2">
+                      <a [href]="'tel:' + unit.brokerPhone"
+                         class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center border"
+                         style="width:36px;height:36px;background:#f8f9fa;"
+                         (click)="$event.stopPropagation()" title="Call broker">
+                        <i class="bi bi-telephone-fill text-dark" style="font-size:0.85rem;"></i>
+                      </a>
+                      <a [href]="getBrokerWhatsAppLink(unit.brokerPhone, unit.code)"
+                         target="_blank"
+                         class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:36px;height:36px;background:#25D366;"
+                         (click)="$event.stopPropagation()" title="WhatsApp broker">
+                        <i class="bi bi-whatsapp text-white" style="font-size:0.85rem;"></i>
+                      </a>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </ng-template>
 
           <!-- ===== PROJECT DETAILS ===== -->
           @if (blog().projectDetails) {
