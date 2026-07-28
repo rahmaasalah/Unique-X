@@ -1,5 +1,6 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
@@ -10,12 +11,13 @@ import { GoogleAnalyticsService } from 'ngx-google-analytics';
 import { AlertService } from '../../Services/alert';
 import { Chart, registerables } from 'chart.js';
 import { CrmService } from '../../Services/crm.services';
+import { ReviewService } from '../../Services/review.service';
 Chart.register(...registerables);
 
 @Component({
   selector: 'app-property-details',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './property-details.html',
   styleUrl: './property-details.css'
 })
@@ -38,7 +40,16 @@ export class PropertyDetailsComponent implements OnInit {
 
 
   private crmService = inject(CrmService);
+  private reviewService = inject(ReviewService);
   propertyId: number = 123; // (أكيد المتغير ده عندك بياخد رقم العقار الحالي)
+
+  // Reviews
+  reviews = signal<any[]>([]);
+  reviewsLoading = signal(false);
+  showReviewForm = signal(false);
+  newRating = signal(0);
+  newComment = '';
+  myReview = computed(() => this.reviews().find(r => r.isOwn) || null);
 
   // الدالة دي هتتنفذ لما العميل يدوس على واتساب أو اتصال
   onContactClick(method: 'whatsapp' | 'call', brokerPhone: string) {
@@ -100,6 +111,8 @@ export class PropertyDetailsComponent implements OnInit {
         // تحديث اللينك في المتصفح
         const baseUrl = this.router.url.split('/')[1]; 
         this.location.replaceState(`/${baseUrl}/${data.id}/${slug}`);
+
+        this.loadReviews(data.id);
 
         if (data.code) {
           this.propertyService.getFinancialHistory(data.code).subscribe({
@@ -224,7 +237,7 @@ handleContact(event: Event, method: 'call' | 'whatsapp', brokerPhone: string) {
 
   let cleanedPhone = phone.replace(/\D/g, '');
   if (cleanedPhone.startsWith('0')) {
-    cleanedPhone = '20' + cleanedPhone;
+    cleanedPhone = '20' + cleanedPhone.replace(/^0+/, '');
   }
   const currentUrl = window.location.href;
 
@@ -326,6 +339,55 @@ startCompare() {
     this.alertService.success('Link copied successfully!');
   }).catch(err => {
     console.error('Failed to copy text: ', err);
+  });
+}
+
+// ===================== Reviews =====================
+
+loadReviews(propertyId: number) {
+  this.reviewsLoading.set(true);
+  this.reviewService.getReviews(propertyId).subscribe({
+    next: (data) => { this.reviews.set(data); this.reviewsLoading.set(false); },
+    error: () => this.reviewsLoading.set(false)
+  });
+}
+
+toggleReviewForm() {
+  const existing = this.myReview();
+  if (existing && !this.showReviewForm()) {
+    // فتح الفورم بقيم الريفيو الحالي بتاع اليوزر عشان يعدله
+    this.newRating.set(existing.rating);
+    this.newComment = existing.comment;
+  }
+  if (this.showReviewForm()) {
+    this.newRating.set(0);
+    this.newComment = '';
+  }
+  this.showReviewForm.update(v => !v);
+}
+
+submitReview() {
+  const prop = this.property();
+  if (!prop || this.newRating() === 0 || !this.newComment) return;
+
+  this.reviewService.addReview(prop.id, { rating: this.newRating(), comment: this.newComment }).subscribe({
+    next: () => {
+      this.alertService.success('Review submitted successfully!');
+      this.showReviewForm.set(false);
+      this.newRating.set(0);
+      this.newComment = '';
+      this.loadReviews(prop.id);
+    },
+    error: () => this.alertService.error('Failed to submit review.')
+  });
+}
+
+deleteReview(reviewId: number) {
+  const prop = this.property();
+  if (!prop) return;
+  this.reviewService.deleteReview(prop.id, reviewId).subscribe({
+    next: () => this.loadReviews(prop.id),
+    error: () => this.alertService.error('Failed to delete review.')
   });
 }
 

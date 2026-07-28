@@ -54,4 +54,22 @@ export class BlogService {
   getPrimaryUnitIds(blog: any): number[] {
     return this.parseJson(blog?.primaryUnitIdsJson);
   }
+
+  // نفس منطق generateSlug بتاع صفحة الوحدة: بنحول العنوان للينك إنجليزي نضيف
+  generateSlug(text: string): string {
+    if (!text) return '';
+    return text
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9\-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  // بيبني لينك البلوج بالعنوان بدل الاعتماد على الـ id لوحده (زي /blog/12/grand-view)
+  getBlogLink(blog: any, origin: string = window.location.origin): string {
+    const slug = this.generateSlug(blog?.title);
+    return slug ? `${origin}/blog/${blog.id}/${slug}` : `${origin}/blog/${blog.id}`;
+  }
 }
