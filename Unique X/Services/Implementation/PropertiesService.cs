@@ -49,7 +49,7 @@ namespace Unique_X.Services.Implementation
             {"Jewar", "JR"}, {"Soly vie", "SV"}, {"San Stefano royals", "SSR"}, {"Cleopatra Plaza", "CP"},
             {"Malaaz", "MZ"}, {"Smouha Gate", "SMG"}, {"Amwaj", "AM"}, {"Antoniades City", "AC"},
             {"Oria City", "OC"}, {"Elite City", "EC"}, {"Ouruba Royals", "OR"}, {"Saraya Gardens", "SG"},
-            {"Alsafwa City", "AS"}, {"The Island", "TI"}, {"Telal", "TE"},
+            {"Alsafwa City", "AS"}, {"The Island", "TI"}, {"Telal", "TE"}, {"Creeks", "CK"},
 
             {"Ramla", "RA"}, {"Azha", "AZ"}, {"Naia Bay", "NA"}, {"El Masyaf", "EL"}, {"Fouka Bay", "FO"},
             {"Remal", "RE"}, {"Hacienda West", "HA"}, {"Seashore", "SE"}, {"Ogami", "OG"}, {"Seashell Playa", "SEA"},
