@@ -150,7 +150,7 @@ export class BlogDetailComponent implements OnInit {
 
   getAdminPhone(type: 'tel' | 'wa'): string {
     if (type === 'tel') return `tel:${this.ADMIN_PHONE}`;
-    const cleaned = '2' + this.ADMIN_PHONE.replace(/^0+/, '');
+    const cleaned = '20' + this.ADMIN_PHONE.replace(/^0+/, '');
     return `https://wa.me/${cleaned}`;
   }
 
@@ -166,12 +166,15 @@ export class BlogDetailComponent implements OnInit {
     return `https://wa.me/${cleaned}?text=${msg}`;
   }
 
-  // Contact form → بيروح WhatsApp الأدمن مباشرة
+  // Contact form → بيروح WhatsApp الأدمن مباشرة مع لينك الصفحة والصورة الرئيسية
   submitContact() {
     if (!this.contactName || !this.contactPhone) return;
     const adminWa = this.getAdminPhone('wa');
+    const blogTitle = this.blog()?.title || '';
+    const blogLink = window.location.href;
+    const mainImage = this.blogService.getImageUrl(this.blogService.getCoverImage(this.blog()));
     const msg = encodeURIComponent(
-      `New inquiry for: ${this.blog()?.title}\nName: ${this.contactName}\nPhone: ${this.contactPhone}\nMessage: ${this.contactMessage || 'N/A'}`
+      `New inquiry for: ${blogTitle}\nName: ${this.contactName}\nPhone: ${this.contactPhone}\nMessage: ${this.contactMessage || 'N/A'}\nLink: ${blogLink}\nImage: ${mainImage}`
     );
     window.open(`${adminWa}?text=${msg}`, '_blank');
     this.contactName = '';

@@ -224,7 +224,7 @@ handleContact(event: Event, method: 'call' | 'whatsapp', brokerPhone: string) {
 
   let cleanedPhone = phone.replace(/\D/g, '');
   if (cleanedPhone.startsWith('0')) {
-    cleanedPhone = '2' + cleanedPhone;
+    cleanedPhone = '20' + cleanedPhone;
   }
   const currentUrl = window.location.href;
 
