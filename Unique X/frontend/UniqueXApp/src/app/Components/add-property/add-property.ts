@@ -79,7 +79,7 @@ projectsMapping: any = {
       'Grand view', 'Twin towers', 'Valore smouha', 'Valore Antoniadis', 'East towers', 
       'Saraya gardens', 'Veranda', 'Jackranda', 'Oria city', 'Elite City',
       'Alsafwa City', 'Vida', 'Abha hayat', 'Jewar', 'Ouruba royals', 
-      'Soly vie', 'San Stefano royals', 'Malaaz', 'Cleopatra Plaza','Smouha Gate', 'Antoniades City'
+      'Soly vie', 'San Stefano royals', 'Malaaz', 'Cleopatra Plaza','Smouha Gate', 'Antoniades City', 'Creeks'
     ]
   },
   3: { // North Coast
@@ -209,7 +209,7 @@ primaryProjectCodes: any = {
     "The Med": "TH", "Gaia": "GA", "June": "JU", "Direction White": "DI", "Cali Coast": "CAL",
     "Hacienda Waters": "HAC", "Mar Bay": "MA", "Jefaira": "JE", "Sea View": "SV", "Safia": "SAF",
     "Salt": "SAL", "Azzar Islands": "AZZ", "Saada North Coast": "SAA", "Katamya Coast": "KA",
-    "Soul": "SOU", "Lvls": "LV", "Ras Al-Hekma": "RH", "Hacienda Ras Al-Hekma": "HCR", "Youd": "YD",
+    "Soul": "SOU", "Lvls": "LV", "Ras Al-Hekma": "RH", "Hacienda Ras Al-Hekma": "HCR", "Youd": "YD", "Creeks": "CK",
 
     // 🏖️ الساحل الشمالي (Al-Dabaa)
     "Dose": "DO", "The Water Way": "THE", "Seazen": "SZ", "La Vista Bay": "LAV", 
