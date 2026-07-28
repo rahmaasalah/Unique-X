@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -19,6 +19,7 @@ export class BlogDetailComponent implements OnInit {
   private router = inject(Router);
   private http = inject(HttpClient);
   private sanitizer = inject(DomSanitizer);
+  private location = inject(Location);
 
   blog = signal<any>(null);
   isLoading = signal(true);
@@ -75,6 +76,11 @@ export class BlogDetailComponent implements OnInit {
         this.blog.set(data);
         this.isLoading.set(false);
         this.loadUnits();
+
+        // تحديث اللينك في المتصفح ليشمل اسم المشروع بدل الاعتماد على الـ id لوحده
+        const slug = this.blogService.generateSlug(data.title);
+        const newPath = slug ? `/blog/${data.id}/${slug}` : `/blog/${data.id}`;
+        this.location.replaceState(newPath);
       },
       error: () => this.isLoading.set(false)
     });
@@ -166,15 +172,14 @@ export class BlogDetailComponent implements OnInit {
     return `https://wa.me/${cleaned}?text=${msg}`;
   }
 
-  // Contact form → بيروح WhatsApp الأدمن مباشرة مع لينك الصفحة والصورة الرئيسية
+  // Contact form → بيروح WhatsApp الأدمن مباشرة مع لينك الصفحة (بيعمل بريفيو تلقائي)
   submitContact() {
     if (!this.contactName || !this.contactPhone) return;
     const adminWa = this.getAdminPhone('wa');
     const blogTitle = this.blog()?.title || '';
     const blogLink = window.location.href;
-    const mainImage = this.blogService.getImageUrl(this.blogService.getCoverImage(this.blog()));
     const msg = encodeURIComponent(
-      `New inquiry for: ${blogTitle}\nName: ${this.contactName}\nPhone: ${this.contactPhone}\nMessage: ${this.contactMessage || 'N/A'}\nLink: ${blogLink}\nImage: ${mainImage}`
+      `New inquiry for: ${blogTitle}\nName: ${this.contactName}\nPhone: ${this.contactPhone}\nMessage: ${this.contactMessage || 'N/A'}\n${blogLink}`
     );
     window.open(`${adminWa}?text=${msg}`, '_blank');
     this.contactName = '';
