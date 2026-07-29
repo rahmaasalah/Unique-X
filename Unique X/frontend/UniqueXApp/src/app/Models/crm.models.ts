@@ -69,6 +69,16 @@ export interface WebsiteInquiryDto {
   message?: string;
 }
 
+// "Visit Now" في كارت الوحدة - العميل بيحدد ميعاد بنفسه
+export interface RequestVisitDto {
+  propertyId: number;
+  clientName: string;
+  clientPhone: string;
+  clientEmail?: string;
+  visitDate: Date | string;
+  notes?: string;
+}
+
 export interface VisitResponseDto {
   id: number;
   leadId: number;
@@ -81,6 +91,7 @@ export interface VisitResponseDto {
   status: string;
   isCompleted: boolean;
   notes: string;
+  isClientInitiated?: boolean;
 }
 
 export interface BrokerProfileDataDto {

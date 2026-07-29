@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { CreateLeadDto, LeadResponseDto, AdminDashboardDto, BrokerDashboardDto, WebsiteInquiryDto, BrokerProfileDataDto } from '../Models/crm.models';
+import { CreateLeadDto, LeadResponseDto, AdminDashboardDto, BrokerDashboardDto, WebsiteInquiryDto, BrokerProfileDataDto, RequestVisitDto } from '../Models/crm.models';
 import { environment } from '../../environments/environment'; // تأكدي إن المسار ده صح حسب مكان ملف الـ environment عندك
 
 @Injectable({
@@ -70,6 +70,11 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
     return this.http.post(`${this.apiUrl}/leads/website-inquiry`, inquiry);
   }
 
+  // زرار "Visit Now" في كارت الوحدة - العميل بيحدد ميعاد بنفسه
+  requestVisit(dto: RequestVisitDto): Observable<any> {
+    return this.http.post(`${this.apiUrl}/leads/website-visit-request`, dto);
+  }
+
   // جلب داتا بروفايل البروكر
   getBrokerProfileData(brokerId: string): Observable<BrokerProfileDataDto> {
     return this.http.get<BrokerProfileDataDto>(`${this.apiUrl}/dashboard/broker-profile/${brokerId}`);
@@ -129,6 +134,14 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
   }
   rescheduleActivity(id: number, newDate: string): Observable<any> {
     return this.http.put(`${this.apiUrl}/activities/${id}/reschedule`, `"${newDate}"`, { headers: { 'Content-Type': 'application/json' }});
+  }
+
+  // تعديل كامل لزيارة/مهمة لسه Pending (مش بس تأجيل الميعاد)
+  updateVisit(id: number, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/visits/${id}`, data);
+  }
+  updateActivity(id: number, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/activities/${id}`, data);
   }
 
   addGeneralNote(leadId: number, brokerId: string, note: string): Observable<any> {

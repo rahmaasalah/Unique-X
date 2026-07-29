@@ -8,6 +8,8 @@
         public DateTime DueDate { get; set; }
         public string AssignedToId { get; set; }
         public string? Notes { get; set; }
+        public string? Status { get; set; }
+        public string? Feedback { get; set; }
 
         public string? PropertyCode { get; set; }
         public string? PropertyName { get; set; }

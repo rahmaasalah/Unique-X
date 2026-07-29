@@ -225,6 +225,13 @@
       style="font-size: 0.7rem;">
   <i class="bi bi-person-badge-fill me-1"></i> By Admin
 </span>
+
+  <!-- 🟢 العميل نفسه اللي حدد الميعاد ده من زرار Visit Now على الموقع -->
+  <span *ngIf="item._type === 'visit' && item.isClientInitiated" 
+      class="badge bg-primary-subtle text-primary border border-primary-subtle"
+      style="font-size: 0.7rem;">
+  <i class="bi bi-person-check-fill me-1"></i> Client-booked
+</span>
 </div>
               
               <!-- البادجات -->
@@ -308,6 +315,13 @@
                 <option value="Cancelled" class="bg-white text-danger">Cancelled</option>
               </select>
 
+              <!-- 🟢 زرار Edit يظهر بس للمهام لسه Pending -->
+              <button *ngIf="item.status === 'Pending' || !item.status"
+                      class="btn btn-sm btn-outline-dark rounded-pill mt-2 fw-bold"
+                      (click)="openEditModal(item)">
+                <i class="bi bi-pencil"></i> Edit
+              </button>
+
               <!-- 🟢 زرار Add Feedback يظهر فقط لو المهمة Completed ومفيش فيدباك متسجل -->
               <button *ngIf="item.status === 'Completed' && !item._feedback"
                       class="btn btn-sm btn-outline-danger rounded-pill mt-2 fw-bold" 
@@ -388,8 +402,7 @@
             <!-- 1. الوقت والعنوان -->
             <div class="col-md-4">
               <label class="form-label small fw-bold text-muted">Visit Date & Time *</label>
-              <input type="datetime-local" class="form-control bg-light border-0 rounded-3" formControlName="visitDate" [min]="minDateTime">
-              <div *ngIf="visitForm.get('visitDate')?.hasError('pastDate')" class="text-danger small mt-1">Please select a future date.</div>
+              <input type="datetime-local" class="form-control bg-light border-0 rounded-3" formControlName="visitDate">
             </div>
             <div class="col-md-4">
               <label class="form-label small fw-bold text-muted">Location*</label>
@@ -403,6 +416,22 @@
                 <option value="Client">Client</option>
                 <option value="Broker">Broker</option>
               </select>
+            </div>
+
+            <!-- 🟢 لو الميعاد فات، لازم تختار الـ Stage -->
+            <div class="col-md-6 animate__animated animate__fadeIn" *ngIf="isVisitDatePast">
+              <label class="form-label small fw-bold text-dark">Stage (past visit) *</label>
+              <select class="form-select bg-light border-0 rounded-3 fw-bold" formControlName="status">
+                <option value="">-- Select Stage --</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+                <option value="Rescheduled">Rescheduled</option>
+              </select>
+            </div>
+            <!-- 🟢 لو الـ Stage = Completed، الفيدباك بقى إجباري -->
+            <div class="col-md-6 animate__animated animate__fadeIn" *ngIf="isVisitDatePast && visitForm.get('status')?.value === 'Completed'">
+              <label class="form-label small fw-bold text-dark">Feedback *</label>
+              <textarea class="form-control bg-light border-0 rounded-3" formControlName="feedback" rows="1" placeholder="What happened during the visit..."></textarea>
             </div>
 
             <hr class="my-2 text-muted">
@@ -483,7 +512,7 @@
             <!-- زرار الحفظ -->
             <div class="col-12 mt-4 text-end">
               <button type="submit" class="btn btn-danger px-5 rounded-pill fw-bold shadow-sm" [disabled]="visitForm.invalid">
-                <i class="bi bi-calendar-check me-1"></i> Save Visit
+                <i class="bi bi-calendar-check me-1"></i> {{ isEditing() ? 'Update Visit' : 'Save Visit' }}
               </button>
             </div>
 
@@ -522,8 +551,23 @@
             </div>
             <div class="col-md-4">
               <label class="form-label small fw-bold text-muted">Due Date & Time *</label>
-              <input type="datetime-local" class="form-control bg-light border-0 rounded-3" formControlName="dueDate" [min]="minDateTime">
-              <div *ngIf="activityForm.get('dueDate')?.hasError('pastDate')" class="text-danger small mt-1">Select a future date.</div>
+              <input type="datetime-local" class="form-control bg-light border-0 rounded-3" formControlName="dueDate">
+            </div>
+
+            <!-- 🟢 لو الميعاد فات، لازم تختار الـ Stage -->
+            <div class="col-md-4 animate__animated animate__fadeIn" *ngIf="isActivityDatePast">
+              <label class="form-label small fw-bold text-dark">Stage (past) *</label>
+              <select class="form-select bg-light border-0 rounded-3 fw-bold" formControlName="status">
+                <option value="">-- Select Stage --</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+                <option value="Rescheduled">Rescheduled</option>
+              </select>
+            </div>
+            <!-- 🟢 لو الـ Stage = Completed، الفيدباك بقى إجباري -->
+            <div class="col-12 animate__animated animate__fadeIn" *ngIf="isActivityDatePast && activityForm.get('status')?.value === 'Completed'">
+              <label class="form-label small fw-bold text-dark">Feedback *</label>
+              <textarea class="form-control bg-light border-0 rounded-3" formControlName="feedback" rows="2" placeholder="What happened on the call..."></textarea>
             </div>
 
             <!-- <hr class="my-2 text-muted">
@@ -584,7 +628,7 @@
             <!-- زرار الحفظ -->
             <div class="col-12 mt-4 text-end">
               <button type="submit" class="btn btn-dark px-5 rounded-pill fw-bold shadow-sm" [disabled]="activityForm.invalid">
-                <i class="bi bi-telephone-plus me-1"></i> Save Activity
+                <i class="bi bi-telephone-plus me-1"></i> {{ isEditing() ? 'Update Activity' : 'Save Activity' }}
               </button>
             </div>
 

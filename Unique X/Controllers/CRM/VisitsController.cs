@@ -23,6 +23,9 @@ namespace Unique_X.Controllers.CRM
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            // لو الميعاد فات، الفرونت إند بيبعت Status (Completed/Cancelled/Rescheduled) بدل ما تفضل Pending
+            var status = !string.IsNullOrWhiteSpace(dto.Status) ? dto.Status : "Pending";
+
             var visit = new Visit
             {
                 LeadId = dto.LeadId,
@@ -30,7 +33,8 @@ namespace Unique_X.Controllers.CRM
                 VisitDate = dto.VisitDate,
                 Location = dto.Location,
                 IsCompleted = false,
-                Feedback = "", // لسه مفيش فيدباك لأن الزيارة لسه هتحصل
+                Status = status,
+                Feedback = (status == "Completed" && !string.IsNullOrWhiteSpace(dto.Feedback)) ? dto.Feedback : "",
                 PropertyCode = dto.PropertyCode,
                 PropertyName = dto.PropertyName,
                 BrokerPhone = dto.BrokerPhone,
@@ -49,6 +53,45 @@ namespace Unique_X.Controllers.CRM
             if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; lead.LastActionBy = "broker"; await _context.SaveChangesAsync(); }
 
             return Ok(new { message = "Visit scheduled successfully!", visitId = visit.Id });
+        }
+
+        // 1.b تعديل كامل لزيارة لسه Pending (مش مجرد تأجيل الميعاد زي reschedule)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateVisit(int id, [FromBody] CreateVisitDto dto)
+        {
+            var visit = await _context.Visits.FindAsync(id);
+            if (visit == null) return NotFound("Visit not found");
+
+            if (visit.Status != "Pending")
+                return BadRequest("Only pending visits can be edited.");
+
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            visit.VisitDate = dto.VisitDate;
+            visit.Location = dto.Location;
+            visit.PropertyCode = dto.PropertyCode;
+            visit.PropertyName = dto.PropertyName;
+            visit.BrokerPhone = dto.BrokerPhone;
+            visit.ZoneId = dto.ZoneId;
+            visit.ListingType = dto.ListingType;
+            visit.Region = dto.Region;
+            visit.Notes = dto.Notes;
+            visit.Project = dto.Project;
+            visit.VisitType = dto.VisitType;
+
+            var newStatus = !string.IsNullOrWhiteSpace(dto.Status) ? dto.Status : "Pending";
+            visit.Status = newStatus;
+            if (newStatus == "Completed" && !string.IsNullOrWhiteSpace(dto.Feedback))
+            {
+                visit.Feedback = dto.Feedback;
+            }
+
+            await _context.SaveChangesAsync();
+
+            var lead = await _context.Leads.FindAsync(visit.LeadId);
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; lead.LastActionBy = "broker"; await _context.SaveChangesAsync(); }
+
+            return Ok(new { message = "Visit updated successfully!" });
         }
 
         // 2. جلب كل الزيارات الخاصة ببروكر معين[

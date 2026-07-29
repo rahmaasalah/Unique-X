@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Property } from '../../Models/property.model';
 import { RouterModule } from '@angular/router';
 import { PropertyService } from '../../Services/property';
@@ -13,7 +14,7 @@ import { CrmService } from '../../Services/crm.services';
 @Component({
   selector: 'app-property-card',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './property-card.html',
   styleUrl: './property-card.css'
 })
@@ -24,6 +25,11 @@ export class PropertyCardComponent {
   isLiked: boolean = false;
   isShortlisted: boolean = false;
   isVisitListed: boolean = false;
+
+  // "Visit Now" modal state
+  visitDateValue: string = '';
+  visitNotes: string = '';
+  isSubmittingVisit = signal(false);
 
   private propertyService = inject(PropertyService);
   private alertService = inject(AlertService);
@@ -70,7 +76,7 @@ export class PropertyCardComponent {
     if (!phone) return '#';
     let cleanedPhone = phone.replace(/\D/g, '');
     if (cleanedPhone.startsWith('0')) {
-      cleanedPhone = '2' + cleanedPhone;
+      cleanedPhone = '20' + cleanedPhone.replace(/^0+/, '');
     }
     const propertyUrl = `${window.location.origin}/property-details/${this.property.id}`;
     const message = encodeURIComponent(`Hello, I'm interested in property code: #${code}\nLink: ${propertyUrl}`);
@@ -116,6 +122,58 @@ export class PropertyCardComponent {
     } else {
       window.open(this.getWhatsAppLink(phone, this.property.code, this.property.id), '_blank');
     }
+  }
+
+  // 🟢 زرار "Visit Now" - بيفتح مودال بسيط لاختيار الميعاد (لكلاينت أو بروكر، لازم يكون مسجل دخول)
+  openVisitModal(event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    if (!this.authService.loggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.visitDateValue = '';
+    this.visitNotes = '';
+
+    const bootstrap = (window as any).bootstrap;
+    const modalEl = document.getElementById(`visitNowModal-${this.property.id}`);
+    if (modalEl && bootstrap) {
+      new bootstrap.Modal(modalEl).show();
+    }
+  }
+
+  submitVisitRequest(event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    if (!this.visitDateValue) return;
+
+    const userString = localStorage.getItem('user');
+    if (!userString) { this.router.navigate(['/login']); return; }
+    const userData = JSON.parse(userString);
+
+    this.isSubmittingVisit.set(true);
+
+    this.crmService.requestVisit({
+      propertyId: this.property.id,
+      clientName: userData.username || userData.firstName + ' ' + userData.lastName || 'Website Client',
+      clientPhone: userData.phoneNumber || '0000000000',
+      clientEmail: userData.email,
+      visitDate: this.visitDateValue,
+      notes: this.visitNotes
+    }).subscribe({
+      next: () => {
+        this.isSubmittingVisit.set(false);
+        this.alertService.success('Visit request sent! The broker will confirm it with you soon.');
+        document.getElementById(`closeVisitNowModal-${this.property.id}`)?.click();
+      },
+      error: () => {
+        this.isSubmittingVisit.set(false);
+        this.alertService.error('Failed to send visit request. Please try again.');
+      }
+    });
   }
 
   onToggleWishlist(event: Event) {
