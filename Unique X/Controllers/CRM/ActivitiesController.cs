@@ -23,6 +23,15 @@ namespace Unique_X.Controllers.CRM
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            // لو الميعاد فات، الفرونت إند بيبعت Status (Completed/Cancelled/Rescheduled) بدل ما تفضل Pending
+            var status = !string.IsNullOrWhiteSpace(dto.Status) ? dto.Status : "Pending";
+            var notes = dto.Notes;
+            if (status == "Completed" && !string.IsNullOrWhiteSpace(dto.Feedback))
+            {
+                // نفس فكرة AddActivityFeedback: الفيدباك بيتحط جوه الـ Notes بعلامة [Feedback]
+                notes = string.IsNullOrEmpty(notes) ? $"[Feedback]: {dto.Feedback}" : $"{notes}\n\n[Feedback]: {dto.Feedback}";
+            }
+
             var activity = new LeadActivity
             {
                 LeadId = dto.LeadId,
@@ -30,8 +39,9 @@ namespace Unique_X.Controllers.CRM
                 Summary = dto.Summary,
                 DueDate = dto.DueDate,
                 AssignedToId = dto.AssignedToId,
-                Notes = dto.Notes,
+                Notes = notes,
                 IsDone = false,
+                Status = status,
                 PropertyCode = dto.PropertyCode,
                 PropertyName = dto.PropertyName,
                 BrokerPhone = dto.BrokerPhone,
@@ -48,6 +58,42 @@ namespace Unique_X.Controllers.CRM
             if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; lead.LastActionBy = "broker"; await _context.SaveChangesAsync(); }
 
             return Ok(new { message = "Activity scheduled successfully!", activityId = activity.Id });
+        }
+
+        // 1.b تعديل كامل لمهمة لسه Pending
+        // ملحوظة: مودال التعديل بيجمع بس Type/Summary/DueDate/Notes/Status/Feedback،
+        // فمش بنلمس Zone/ListingType/Region/Project/PropertyCode/PropertyName/BrokerPhone خالص هنا
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateActivity(int id, [FromBody] UpdateActivityDto dto)
+        {
+            var activity = await _context.LeadActivities.FindAsync(id);
+            if (activity == null) return NotFound("Activity not found");
+
+            if (activity.Status != "Pending")
+                return BadRequest("Only pending activities can be edited.");
+
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            activity.ActivityType = dto.ActivityType;
+            activity.Summary = dto.Summary;
+            activity.DueDate = dto.DueDate;
+
+            var notes = dto.Notes;
+            var newStatus = !string.IsNullOrWhiteSpace(dto.Status) ? dto.Status : "Pending";
+            activity.Status = newStatus;
+
+            if (newStatus == "Completed" && !string.IsNullOrWhiteSpace(dto.Feedback))
+            {
+                notes = string.IsNullOrEmpty(notes) ? $"[Feedback]: {dto.Feedback}" : $"{notes}\n\n[Feedback]: {dto.Feedback}";
+            }
+            activity.Notes = notes;
+
+            await _context.SaveChangesAsync();
+
+            var lead = await _context.Leads.FindAsync(activity.LeadId);
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; lead.LastActionBy = "broker"; await _context.SaveChangesAsync(); }
+
+            return Ok(new { message = "Activity updated successfully!" });
         }
 
         // 2. تحديث المهمة إنها خلصت (Mark Done)

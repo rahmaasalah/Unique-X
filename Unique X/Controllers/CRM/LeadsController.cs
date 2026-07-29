@@ -284,6 +284,103 @@ namespace Unique_X.Controllers.CRM
             return Ok(new { message = "Inquiry received and assigned to broker successfully." });
         }
 
+        // 🟢 Endpoint: زرار "Visit Now" في كارت الوحدة — العميل بيحدد ميعاد بنفسه من الموقع
+        // نفس منطق website-inquiry بالظبط (نفس الـ Lead لو موجود برقمه وكود الوحدة)، وبالإضافة كمان بيعمل Visit فعلية
+        [HttpPost("website-visit-request")]
+        public async Task<IActionResult> RequestVisitFromWebsite([FromBody] RequestVisitDto dto)
+        {
+            var property = await _context.Properties.FindAsync(dto.PropertyId);
+            if (property == null) return NotFound("Property not found");
+
+            var existingLead = await _context.Leads.FirstOrDefaultAsync(l =>
+                l.PhoneNumber == dto.ClientPhone && l.CampaignName == property.Code);
+
+            int leadId;
+            bool isNewLead = existingLead == null;
+
+            if (isNewLead)
+            {
+                var newLead = new Lead
+                {
+                    FullName = dto.ClientName,
+                    PhoneNumber = dto.ClientPhone,
+                    Email = dto.ClientEmail,
+                    BrokerId = property.BrokerId, // تعيين للبروكر صاحب العقار
+                    LeadStatusId = 1,
+                    CampaignSource = "Website",
+                    CampaignName = property.Code,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Leads.Add(newLead);
+                await _context.SaveChangesAsync();
+                leadId = newLead.Id;
+
+                _context.LeadStatusHistories.Add(new LeadStatusHistory
+                {
+                    LeadId = leadId,
+                    OldStatusId = 0,
+                    NewStatusId = 1,
+                    ChangedById = property.BrokerId,
+                    Notes = "Lead created automatically from a website visit request",
+                    ChangedAt = DateTime.UtcNow
+                });
+            }
+            else
+            {
+                leadId = existingLead.Id;
+                if (string.IsNullOrEmpty(existingLead.CampaignSource))
+                {
+                    existingLead.CampaignSource = "Website";
+                    existingLead.CampaignName = property.Code;
+                }
+                existingLead.UpdatedAt = DateTime.UtcNow;
+                existingLead.LastActionBy = "broker";
+            }
+
+            // نسجل طلب الوحدة دي (زي website-inquiry بالظبط)
+            var request = new LeadRequest
+            {
+                LeadId = leadId,
+                PropertyType = property.PropertyType.ToString(),
+                TotalAmount = property.Price,
+                Purpose = property.ListingType.ToString(),
+                PaymentMethod = "",
+                PreferredLocation = "",
+                Notes = $"Client requested a visit for Property Code: {property.Code ?? property.Id.ToString()}." +
+                         (string.IsNullOrWhiteSpace(dto.Notes) ? "" : $" Notes: {dto.Notes}")
+            };
+            _context.LeadRequests.Add(request);
+
+            // 🟢 الزيارة الفعلية بالميعاد اللي العميل اختاره بنفسه
+            var visit = new Visit
+            {
+                LeadId = leadId,
+                BrokerId = property.BrokerId,
+                VisitDate = dto.VisitDate,
+                Location = !string.IsNullOrWhiteSpace(property.Address) ? property.Address : (property.Region ?? ""),
+                Status = "Pending",
+                IsCompleted = false,
+                Feedback = "",
+                PropertyCode = property.Code,
+                PropertyName = property.ProjectName ?? property.Title,
+                ZoneId = (int)property.City,
+                ListingType = property.ListingType.ToString(),
+                Region = property.Region,
+                Project = property.ProjectName,
+                Notes = dto.Notes,
+                VisitType = "Client",
+                IsClientInitiated = true // 👈 عشان البروكر/الأدمن يعرفوا إن العميل هو اللي حدد الميعاد ده مش البروكر
+            };
+            _context.Visits.Add(visit);
+
+            var lead = await _context.Leads.FindAsync(leadId);
+            if (lead != null) { lead.UpdatedAt = DateTime.UtcNow; lead.LastActionBy = "broker"; }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Visit request received successfully!", leadId, visitId = visit.Id });
+        }
+
         // 5. Endpoint: جلب كل تفاصيل العميل (Lead Details)
         // GET: api/crm/leads/{id}
         [HttpGet("{id}")]

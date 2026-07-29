@@ -9,6 +9,8 @@
         public string? PropertyCode { get; set; }
         public string? PropertyName { get; set; }
         public string? BrokerPhone { get; set; }
+        public string? Status { get; set; }
+        public string? Feedback { get; set; }
         public int ZoneId { get; set; }
         public string? Notes { get; set; }
         public string ListingType { get; set; }

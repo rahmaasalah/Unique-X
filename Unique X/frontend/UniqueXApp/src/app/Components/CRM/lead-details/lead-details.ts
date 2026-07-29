@@ -57,6 +57,11 @@ export class LeadDetailsComponent implements OnInit {
   rescheduleId = signal<number | null>(null);
   rescheduleType = signal<'visit' | 'activity' | null>(null);
 
+  // متغيرات الـ Edit الكامل (بس للـ Pending)
+  isEditing = signal<boolean>(false);
+  editId = signal<number | null>(null);
+  editType = signal<'visit' | 'activity' | null>(null);
+
   recommendations = signal<any[]>([]); // لتخزين العقارات المرشحة
 
   // الفورمز
@@ -205,10 +210,12 @@ export class LeadDetailsComponent implements OnInit {
       listingType:['', Validators.required],
       region: [''], // اختياري مبدئياً وهيتغير برمجياً
       project: [''], // اختياري مبدئياً وهيتغير برمجياً
-      visitDate: ['',[Validators.required, futureDateValidator()]],
+      visitDate: ['', Validators.required],
       location: ['', Validators.required],
       visitType: ['', Validators.required],
-      notes:['']
+      notes:[''],
+      status: [''],   // بيتفعل لو الميعاد فات
+      feedback: ['']  // بيتفعل لو الـ status = Completed
     });
 
     // فورم الملاحظة العمومية
@@ -226,14 +233,49 @@ export class LeadDetailsComponent implements OnInit {
       assignedToId: [this.currentBrokerId],
       activityType:['Call', Validators.required],
       summary: ['', Validators.required],
-      dueDate: ['',[Validators.required, futureDateValidator()]],
-      notes: ['']
+      dueDate: ['', Validators.required],
+      notes: [''],
+      status: [''],   // بيتفعل لو الميعاد فات
+      feedback: ['']  // بيتفعل لو الـ status = Completed
     });
 
-    this.setupVisitDynamicFields(); 
+    this.setupVisitDynamicFields();
+    this.setupPastDateStageLogic(this.visitForm, 'visitDate');
+    this.setupPastDateStageLogic(this.activityForm, 'dueDate');
   }
 
-  
+  // 👇 بتراقب تاريخ الزيارة/المهمة: لو فات، الـ status بيبقى إجباري (بدون Pending)
+  // ولو الـ status اتحط Completed، الـ feedback بيبقى إجباري كمان
+  setupPastDateStageLogic(form: FormGroup, dateField: string) {
+    const dateCtrl = form.get(dateField);
+    const statusCtrl = form.get('status');
+    const feedbackCtrl = form.get('feedback');
+
+    dateCtrl?.valueChanges.subscribe((value) => {
+      const isPast = value ? new Date(value).getTime() <= Date.now() : false;
+
+      if (isPast) {
+        statusCtrl?.setValidators(Validators.required);
+      } else {
+        statusCtrl?.clearValidators();
+        statusCtrl?.setValue('', { emitEvent: false });
+        feedbackCtrl?.clearValidators();
+        feedbackCtrl?.setValue('', { emitEvent: false });
+      }
+      statusCtrl?.updateValueAndValidity({ emitEvent: false });
+      feedbackCtrl?.updateValueAndValidity({ emitEvent: false });
+    });
+
+    statusCtrl?.valueChanges.subscribe((status) => {
+      if (status === 'Completed') {
+        feedbackCtrl?.setValidators(Validators.required);
+      } else {
+        feedbackCtrl?.clearValidators();
+      }
+      feedbackCtrl?.updateValueAndValidity({ emitEvent: false });
+    });
+  }
+
   setupVisitDynamicFields() {
     // لما الـ Zone تتغير
     this.visitForm.get('zoneId')?.valueChanges.subscribe(zoneId => {
@@ -296,6 +338,16 @@ export class LeadDetailsComponent implements OnInit {
   get showVisitProject() {
     const type = this.visitForm.get('listingType')?.value;
     return ['Primary', 'Resale Project', 'Rent'].includes(type);
+  }
+
+  get isVisitDatePast(): boolean {
+    const val = this.visitForm.get('visitDate')?.value;
+    return val ? new Date(val).getTime() <= Date.now() : false;
+  }
+
+  get isActivityDatePast(): boolean {
+    const val = this.activityForm.get('dueDate')?.value;
+    return val ? new Date(val).getTime() <= Date.now() : false;
   }
 
   isTimePassed(dateValue: any): boolean {
@@ -401,7 +453,29 @@ export class LeadDetailsComponent implements OnInit {
           }
         });
       } 
-      // 🟢 2. لو إحنا في وضع "إنشاء زيارة جديدة"
+      // 🟢 2.b لو إحنا في وضع "تعديل زيارة Pending" (تعديل كامل مش مجرد تأجيل)
+      else if (this.isEditing() && this.editId()) {
+        const submitData = { ...this.visitForm.getRawValue() };
+        submitData.zoneId = submitData.zoneId ? Number(submitData.zoneId) : 0;
+
+        this.crmService.updateVisit(this.editId()!, submitData).subscribe({
+          next: () => {
+            this.alertService.close();
+            this.alertService.success('Visit updated successfully!');
+            this.isEditing.set(false);
+            this.editId.set(null);
+            this.visitForm.reset({ leadId: this.leadId, brokerId: this.currentBrokerId });
+            this.loadLeadData(this.leadId);
+            document.getElementById('closeVisitModal')?.click();
+          },
+          error: (err) => {
+            console.error(err);
+            this.alertService.close();
+            this.alertService.error('Error updating visit.');
+          }
+        });
+      }
+      // 🟢 2.c لو إحنا في وضع "إنشاء زيارة جديدة"
       else {
         const submitData = { ...this.visitForm.getRawValue() }; 
         
@@ -464,6 +538,25 @@ export class LeadDetailsComponent implements OnInit {
             this.alertService.error('Error rescheduling activity.');
           }
         });
+      } else if (this.isEditing() && this.editId()) {
+        const submitData = { ...this.activityForm.getRawValue() };
+
+        this.crmService.updateActivity(this.editId()!, submitData).subscribe({
+          next: () => {
+            this.alertService.close();
+            this.alertService.success('Activity updated successfully!');
+            this.isEditing.set(false);
+            this.editId.set(null);
+            this.activityForm.reset({ leadId: this.leadId, assignedToId: this.currentBrokerId, activityType: 'Call' });
+            this.loadLeadData(this.leadId);
+            document.getElementById('closeActivityModal')?.click();
+          },
+          error: (err) => {
+            console.error(err);
+            this.alertService.close();
+            this.alertService.error('Error updating activity.');
+          }
+        });
       } else {
         // إنشاء مهمة جديدة
         const submitData = { ...this.activityForm.getRawValue() };
@@ -520,6 +613,7 @@ export class LeadDetailsComponent implements OnInit {
   // 👇 2. دالة فتح مودال التأجيل (بتقفل كل الخانات وتفتح التاريخ بس)
   openRescheduleModal(item: any) {
     this.isRescheduling.set(true);
+    this.isEditing.set(false);
     this.rescheduleId.set(item.id);
     this.rescheduleType.set(item._type);
 
@@ -540,6 +634,7 @@ export class LeadDetailsComponent implements OnInit {
   // 👇 3. دالة فتح المودال لإضافة جديدة (عشان نلغي وضع التأجيل ونفتح الخانات)
   openNewModal(type: 'visit' | 'activity') {
   this.isRescheduling.set(false);
+  this.isEditing.set(false);
   if (type === 'visit') {
     this.visitForm.enable();
     this.visitForm.reset({ 
@@ -558,6 +653,25 @@ export class LeadDetailsComponent implements OnInit {
     });
   }
 }
+
+  // 👇 4. تعديل كامل لزيارة/مهمة لسه Pending (بيفتح المودال بكل الحقول متاحة، مش التاريخ بس)
+  openEditModal(item: any) {
+    this.isRescheduling.set(false);
+    this.isEditing.set(true);
+    this.editId.set(item.id);
+    this.editType.set(item._type);
+
+    const bootstrap = (window as any).bootstrap;
+    if (item._type === 'visit') {
+      this.visitForm.enable();
+      this.visitForm.patchValue(item);
+      new bootstrap.Modal(document.getElementById('visitModal')).show();
+    } else {
+      this.activityForm.enable();
+      this.activityForm.patchValue(item);
+      new bootstrap.Modal(document.getElementById('activityModal')).show();
+    }
+  }
 
   // متغيرات عشان نعرف احنا بنعمل فيدباك لأنهي أكشن
   feedbackActionId = signal<number | null>(null);
