@@ -26,9 +26,13 @@ export class BlogService {
 
   deleteSliderImage(blogId: number, imageUrl: string) {
     return this.http.delete(`${this.base}/${blogId}/slider-image`, {
-      body: imageUrl,
+      body: JSON.stringify(imageUrl),
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+
+  reorderSliderImages(blogId: number, orderedImageUrls: string[]) {
+    return this.http.put(`${this.base}/${blogId}/reorder-slider-images`, orderedImageUrls);
   }
 
   parseJson(json: string | null | undefined): any[] {

@@ -477,4 +477,25 @@ getBlogThumbnail(blog: any): string {
   }
   return '';
 }
+
+goToBlog(id: number) {
+  this.router.navigate(['/blog', id]);
+}
+
+// رقم الأدمن ثابت في السيستم (نفس الرقم المستخدم في صفحة تفاصيل المشروع)
+private readonly BLOG_ADMIN_PHONE = '01509064020';
+
+// Download Brochure → بيفتح واتساب الأدمن باستفسار عن المشروع + لينكه
+sendBlogInquiry(blog: any, event: Event): void {
+  event.stopPropagation(); // منع فتح صفحة البلوج لما يدوس على الزرار
+
+  const cleaned = '20' + this.BLOG_ADMIN_PHONE.replace(/^0+/, '');
+  const blogLink = this.blogService.getBlogLink(blog);
+
+  const msg = encodeURIComponent(
+    `Interested in project: ${blog.title}\n${blogLink}`
+  );
+
+  window.open(`https://wa.me/${cleaned}?text=${msg}`, '_blank');
+}
 }

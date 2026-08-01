@@ -70,6 +70,10 @@ getFinancialHistory(code: string): Observable<any[]> {
    deletePhoto(propertyId: number, photoId: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/${propertyId}/photos/${photoId}`);
   }
+
+  reorderPhotos(propertyId: number, orderedPhotoIds: number[]): Observable<any> {
+    return this.http.put(`${this.baseUrl}/${propertyId}/photos/reorder`, orderedPhotoIds);
+  }
   getHotDeals() {
   return this.http.get<any[]>(`${this.baseUrl}/hot-deals`);
 }

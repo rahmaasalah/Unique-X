@@ -72,14 +72,6 @@
             <span class="small fw-bold">Download Photos</span>
           </button>
           }
-
-          <!-- زر Visit Now - نفس منطق كارت الوحدة بالظبط -->
-          <button class="btn btn-danger border-0 rounded-pill shadow-sm px-3 py-1 d-flex align-items-center gap-2" 
-                  (click)="openVisitModal($event)" 
-                  title="Schedule a Visit">
-            <i class="bi bi-calendar-check fs-5"></i> 
-            <span class="small fw-bold">Visit Now</span>
-          </button>
         </div>
         
          <div class="d-flex align-items-center gap-3 mb-3">
@@ -493,6 +485,13 @@
          class="btn btn-success btn-lg w-100 rounded-pill fw-bold py-2 small shadow">
          <i class="bi bi-whatsapp me-2"></i> WhatsApp
       </a>
+
+      <!-- زر Visit Now - نفس منطق كارت الوحدة بالظبط -->
+      <button class="btn btn-danger btn-lg w-100 rounded-pill fw-bold py-2 small shadow mt-3" 
+              (click)="openVisitModal($event)" 
+              title="Schedule a Visit">
+        <i class="bi bi-calendar-check me-2"></i> Visit Now
+      </button>
     </div>
   </div>
 </div>

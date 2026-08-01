@@ -612,9 +612,17 @@
 </div>
 
             <!-- معاينة الصور -->
+            <p class="text-muted small mb-2"><i class="bi bi-arrows-move me-1"></i>Drag photos to reorder how they'll appear in the gallery</p>
             <div class="row g-2 mb-4">
               @for (photo of selectedPhotos(); track $index) {
-                <div class="col-md-2 col-4">
+                <div class="col-md-2 col-4"
+                     draggable="true"
+                     (dragstart)="onPhotoDragStart($index)"
+                     (dragover)="onPhotoDragOver($event)"
+                     (drop)="onPhotoDrop($index)"
+                     (dragend)="onPhotoDragEnd()"
+                     [style.opacity]="draggedPhotoIndex === $index ? 0.4 : 1"
+                     style="cursor:grab;">
                   <!-- كارت الصورة -->
                   <div class="position-relative rounded-3 overflow-hidden border shadow-sm cursor-pointer mb-1"[class.border-danger]="mainPhotoIndex === $index" (click)="setMainPhoto($index)">
                     <img [src]="photo.preview" class="w-100 object-fit-cover" style="height: 100px;">
@@ -622,6 +630,9 @@
                     @if (mainPhotoIndex === $index) {
                       <span class="badge bg-danger position-absolute top-0 start-0 m-1" style="font-size: 0.6rem;">MAIN</span>
                     }
+                    <span class="position-absolute top-0 end-0 m-1 badge bg-dark bg-opacity-75" style="font-size: 0.55rem;">
+                      <i class="bi bi-arrows-move"></i> {{ $index + 1 }}
+                    </span>
                     <button type="button" class="btn-remove-photo" (click)="removePhoto($index); $event.stopPropagation()">
                       <i class="bi bi-x-circle-fill text-white fs-5"></i>
                     </button>

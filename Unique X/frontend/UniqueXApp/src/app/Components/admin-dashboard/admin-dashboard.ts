@@ -1693,13 +1693,21 @@ closeRentUnitDropdown() {
 // --- Slider preview ---
 sliderPreviewUrls = signal<string[]>([]);
 
-removeNewSliderImage(index: number) {
+removeNewSliderImage(index: number, inputEl?: HTMLInputElement) {
   const current = [...this.blogSliderFiles()];
   current.splice(index, 1);
   this.blogSliderFiles.set(current);
   // إعادة بناء الـ preview URLs
   const urls = current.map(f => URL.createObjectURL(f));
   this.sliderPreviewUrls.set(urls);
+
+  // 👈 المتصفح بيعرض عدد الملفات ("N files") من الـ FileList الأصلية بتاعة الـ <input> نفسه،
+  // فلازم نعيد بناء الـ FileList دي بعد الحذف عشان العدد الظاهر يتحدث صح
+  if (inputEl) {
+    const dt = new DataTransfer();
+    current.forEach(f => dt.items.add(f));
+    inputEl.files = dt.files;
+  }
 }
 
 getSliderPreviewUrl(index: number): string {
@@ -1863,8 +1871,91 @@ removeSliderImage(filename: string) {
       const imgs = this.getSliderImagesArray(blog).filter(i => i !== filename);
       this.editingBlog.set({ ...blog, sliderImages: imgs.join('|') });
       this.loadBlogs();
-    }
+    },
+    error: () => this.alertService.error('Failed to delete image. Please try again.')
   });
+}
+
+// ===================== Drag & Drop reordering - Existing (already uploaded) slider images =====================
+draggedExistingSliderIndex: number | null = null;
+
+onExistingSliderDragStart(index: number) {
+  this.draggedExistingSliderIndex = index;
+}
+
+onExistingSliderDragOver(event: DragEvent) {
+  event.preventDefault();
+}
+
+onExistingSliderDrop(targetIndex: number) {
+  const blog = this.editingBlog();
+  if (!blog || this.draggedExistingSliderIndex === null || this.draggedExistingSliderIndex === targetIndex) {
+    this.draggedExistingSliderIndex = null;
+    return;
+  }
+
+  const imgs = this.getSliderImagesArray(blog);
+  const [moved] = imgs.splice(this.draggedExistingSliderIndex, 1);
+  imgs.splice(targetIndex, 0, moved);
+
+  this.editingBlog.set({ ...blog, sliderImages: imgs.join('|') });
+  this.draggedExistingSliderIndex = null;
+
+  // 👈 بنحفظ الترتيب الجديد فورًا في الداتابيز
+  this.blogService.reorderSliderImages(blog.id, imgs).subscribe({
+    error: () => this.alertService.error('Failed to save the new image order. Please try again.')
+  });
+}
+
+onExistingSliderDragEnd() {
+  this.draggedExistingSliderIndex = null;
+}
+
+// ===================== Drag & Drop reordering - New (not-yet-uploaded) slider images =====================
+draggedNewSliderIndex: number | null = null;
+
+onNewSliderDragStart(index: number) {
+  this.draggedNewSliderIndex = index;
+}
+
+onNewSliderDragOver(event: DragEvent) {
+  event.preventDefault();
+}
+
+onNewSliderDrop(targetIndex: number, inputEl?: HTMLInputElement) {
+  if (this.draggedNewSliderIndex === null || this.draggedNewSliderIndex === targetIndex) {
+    this.draggedNewSliderIndex = null;
+    return;
+  }
+
+  const currentMainFile = this.mainNewImageIndex() !== null ? this.blogSliderFiles()[this.mainNewImageIndex()!] : null;
+
+  const files = [...this.blogSliderFiles()];
+  const [moved] = files.splice(this.draggedNewSliderIndex, 1);
+  files.splice(targetIndex, 0, moved);
+  this.blogSliderFiles.set(files);
+
+  // إعادة بناء الـ preview URLs بنفس الترتيب الجديد
+  const urls = files.map(f => URL.createObjectURL(f));
+  this.sliderPreviewUrls.set(urls);
+
+  if (currentMainFile) {
+    const newIndex = files.indexOf(currentMainFile);
+    this.mainNewImageIndex.set(newIndex >= 0 ? newIndex : null);
+  }
+
+  // نعيد بناء الـ FileList بتاعة الـ input نفسه عشان العداد الطبيعي للمتصفح يفضل متطابق
+  if (inputEl) {
+    const dt = new DataTransfer();
+    files.forEach(f => dt.items.add(f));
+    inputEl.files = dt.files;
+  }
+
+  this.draggedNewSliderIndex = null;
+}
+
+onNewSliderDragEnd() {
+  this.draggedNewSliderIndex = null;
 }
 
 // Payment Plans
