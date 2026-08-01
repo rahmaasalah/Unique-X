@@ -247,5 +247,29 @@ namespace Unique_X.Controllers
 
             return Ok(new { message = "Meeting request received successfully!", meetingId = meeting.Id });
         }
+
+        // 🟢 حفظ ترتيب صور الـ Photo Slider بعد الـ drag & drop في الأدمن
+        [HttpPut("{id}/reorder-slider-images")]
+        public async Task<IActionResult> ReorderSliderImages(int id, [FromBody] List<string> orderedImageUrls)
+        {
+            var blog = await _context.Blogs.FindAsync(id);
+            if (blog == null) return NotFound("Project not found");
+
+            var currentImages = string.IsNullOrEmpty(blog.SliderImages)
+                ? new List<string>()
+                : blog.SliderImages.Split('|').ToList();
+
+            // نتأكد إن الترتيب الجديد بيحتوي على نفس الصور بالظبط (مفيش صورة اتضافت أو اتشالت من هنا)
+            if (orderedImageUrls == null || orderedImageUrls.Count != currentImages.Count ||
+                !orderedImageUrls.All(currentImages.Contains))
+            {
+                return BadRequest("The provided order doesn't match the current set of images.");
+            }
+
+            blog.SliderImages = string.Join("|", orderedImageUrls);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Image order updated successfully!" });
+        }
     }
 }

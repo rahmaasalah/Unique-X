@@ -228,7 +228,8 @@ namespace Unique_X.Services.Implementation
                         {
                             Url = result.SecureUrl.AbsoluteUri,
                             PublicId = result.PublicId,
-                            IsMain = (i == dto.MainPhotoIndex)
+                            IsMain = (i == dto.MainPhotoIndex),
+                            DisplayOrder = i
                         });
                     }
                 }
@@ -568,6 +569,9 @@ namespace Unique_X.Services.Implementation
                     foreach (var p in property.Photos) p.IsMain = false;
                 }
 
+                // الصور الجديدة بتتضاف بعد القديمة، فبنكمل الترقيم من أعلى DisplayOrder موجود
+                int nextOrder = property.Photos.Any() ? property.Photos.Max(p => p.DisplayOrder) + 1 : 0;
+
                 for (int i = 0; i < dto.Photos.Count; i++)
                 {
                     var result = await _photoService.AddPhotoAsync(dto.Photos[i]);
@@ -577,7 +581,8 @@ namespace Unique_X.Services.Implementation
                         {
                             Url = result.SecureUrl.AbsoluteUri,
                             PublicId = result.PublicId,
-                            IsMain = (i == dto.MainPhotoIndex)
+                            IsMain = (i == dto.MainPhotoIndex),
+                            DisplayOrder = nextOrder + i
                         });
                     }
                 }
@@ -782,11 +787,13 @@ namespace Unique_X.Services.Implementation
 
                 Photos = property.Photos?
                    .OrderByDescending(p => p.IsMain)
+                   .ThenBy(p => p.DisplayOrder)
                    .Select(p => new PhotoResponseDto
                    {
                        Id = p.Id,
                        Url = p.Url,
-                       IsMain = p.IsMain
+                       IsMain = p.IsMain,
+                       DisplayOrder = p.DisplayOrder
                    }).ToList() ?? new List<PhotoResponseDto>()
             };
 

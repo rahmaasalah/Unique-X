@@ -928,6 +928,76 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
     this.selectedPhotos.update(p => { const n = [...p]; n.splice(i, 1); return n; });
   }
 
+  // ===================== Drag & Drop reordering - New (not-yet-uploaded) photos =====================
+  draggedNewPhotoIndex: number | null = null;
+
+  onNewPhotoDragStart(index: number) {
+    this.draggedNewPhotoIndex = index;
+  }
+
+  onNewPhotoDragOver(event: DragEvent) {
+    event.preventDefault();
+  }
+
+  onNewPhotoDrop(targetIndex: number) {
+    if (this.draggedNewPhotoIndex === null || this.draggedNewPhotoIndex === targetIndex) {
+      this.draggedNewPhotoIndex = null;
+      return;
+    }
+
+    const currentMainPhoto = this.newMainPhotoIndex !== null ? this.selectedPhotos()[this.newMainPhotoIndex] : null;
+
+    const photos = [...this.selectedPhotos()];
+    const [moved] = photos.splice(this.draggedNewPhotoIndex, 1);
+    photos.splice(targetIndex, 0, moved);
+    this.selectedPhotos.set(photos);
+
+    if (currentMainPhoto) {
+      const newIndex = photos.indexOf(currentMainPhoto);
+      this.newMainPhotoIndex = newIndex >= 0 ? newIndex : null;
+    }
+
+    this.draggedNewPhotoIndex = null;
+  }
+
+  onNewPhotoDragEnd() {
+    this.draggedNewPhotoIndex = null;
+  }
+
+  // ===================== Drag & Drop reordering - Existing (already uploaded) photos =====================
+  draggedExistingPhotoIndex: number | null = null;
+
+  onExistingPhotoDragStart(index: number) {
+    this.draggedExistingPhotoIndex = index;
+  }
+
+  onExistingPhotoDragOver(event: DragEvent) {
+    event.preventDefault();
+  }
+
+  onExistingPhotoDrop(targetIndex: number) {
+    if (this.draggedExistingPhotoIndex === null || this.draggedExistingPhotoIndex === targetIndex) {
+      this.draggedExistingPhotoIndex = null;
+      return;
+    }
+
+    const photos = [...this.existingPhotos()];
+    const [moved] = photos.splice(this.draggedExistingPhotoIndex, 1);
+    photos.splice(targetIndex, 0, moved);
+    this.existingPhotos.set(photos);
+    this.draggedExistingPhotoIndex = null;
+
+    // 👈 بنبعت الترتيب الجديد للباك إند عشان يتخزن، فيظهر بنفس الترتيب في جاليري الوحدة
+    // ملحوظة: propertyService.reorderPhotos() endpoint ده لسه محتاج يتضاف على الباك إند
+    this.propertyService.reorderPhotos(this.propertyId, photos.map(p => p.id)).subscribe({
+      error: () => this.alertService.error('Failed to save the new photo order. Please try again.')
+    });
+  }
+
+  onExistingPhotoDragEnd() {
+    this.draggedExistingPhotoIndex = null;
+  }
+
   isRent() { return Number(this.editForm.get('listingType')?.value) === 1; }
   isProject() { const t = Number(this.editForm.get('listingType')?.value); return t === 2 || t === 3; }
   isInstallment() { return this.editForm.get('paymentMethod')?.value === 'Installment'; }

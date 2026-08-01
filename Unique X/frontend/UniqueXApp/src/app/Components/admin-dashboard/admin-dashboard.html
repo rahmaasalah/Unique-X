@@ -2404,16 +2404,24 @@
             <!-- صور موجودة على السيرفر (عند التعديل) -->
             @if (editingBlog()?.sliderImages) {
               <div class="mt-3">
-                <small class="text-muted fw-semibold d-block mb-2">Existing Images:</small>
+                <small class="text-muted fw-semibold d-block mb-2"><i class="bi bi-arrows-move me-1"></i>Existing Images (drag to reorder):</small>
                 <div class="d-flex flex-wrap gap-2">
-                  @for (img of getSliderImagesArray(editingBlog()); track img) {
-                    <div class="position-relative" style="cursor:pointer;" (click)="setMainExistingImage(img)">
+                  @for (img of getSliderImagesArray(editingBlog()); track img; let i = $index) {
+                    <div class="position-relative" style="cursor:grab;"
+                         draggable="true"
+                         (dragstart)="onExistingSliderDragStart(i)"
+                         (dragover)="onExistingSliderDragOver($event)"
+                         (drop)="onExistingSliderDrop(i)"
+                         (dragend)="onExistingSliderDragEnd()"
+                         [style.opacity]="draggedExistingSliderIndex === i ? 0.4 : 1"
+                         (click)="setMainExistingImage(img)">
                       <img [src]="getBlogImageUrl(img)"
                            style="width:80px;height:60px;object-fit:cover;border-radius:8px;"
                            [style.border]="isMainExistingImage(img) ? '3px solid #ef3341' : '3px solid transparent'" alt="">
                       @if (isMainExistingImage(img)) {
                         <span class="position-absolute bottom-0 start-0 badge bg-danger" style="font-size:8px;border-radius:0 0 0 6px;">MAIN</span>
                       }
+                      <span class="position-absolute top-0 start-0 badge bg-dark bg-opacity-75" style="font-size:8px;border-radius:8px 0 6px 0;">{{ i + 1 }}</span>
                       <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0"
                               style="width:18px;height:18px;font-size:10px;line-height:1;"
                               (click)="$event.stopPropagation(); removeSliderImage(img)">×</button>
@@ -2426,10 +2434,17 @@
             <!-- صور تم اختيارها حديثاً (Preview قبل الرفع) -->
             @if (blogSliderFiles().length > 0) {
               <div class="mt-3">
-                <small class="text-muted fw-semibold d-block mb-2">New Images Selected ({{ blogSliderFiles().length }}):</small>
+                <small class="text-muted fw-semibold d-block mb-2"><i class="bi bi-arrows-move me-1"></i>New Images Selected ({{ blogSliderFiles().length }}) — drag to reorder:</small>
                 <div class="d-flex flex-wrap gap-2">
                   @for (file of blogSliderFiles(); track $index; let i = $index) {
-                    <div class="position-relative" style="cursor:pointer;" (click)="setMainNewImage(i)">
+                    <div class="position-relative" style="cursor:grab;"
+                         draggable="true"
+                         (dragstart)="onNewSliderDragStart(i)"
+                         (dragover)="onNewSliderDragOver($event)"
+                         (drop)="onNewSliderDrop(i, sliderInput)"
+                         (dragend)="onNewSliderDragEnd()"
+                         [style.opacity]="draggedNewSliderIndex === i ? 0.4 : 1"
+                         (click)="setMainNewImage(i)">
                       <img [src]="getSliderPreviewUrl(i)"
                            style="width:80px;height:60px;object-fit:cover;border-radius:8px;"
                            [style.border]="isMainNewImage(i) ? '3px solid #ef3341' : '2px solid #ef3341'"
@@ -2439,9 +2454,10 @@
                       } @else {
                         <span class="position-absolute bottom-0 start-0 badge bg-secondary" style="font-size:8px;border-radius:0 0 0 6px;">NEW</span>
                       }
+                      <span class="position-absolute top-0 start-0 badge bg-dark bg-opacity-75" style="font-size:8px;border-radius:8px 0 6px 0;">{{ i + 1 }}</span>
                       <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0"
                               style="width:18px;height:18px;font-size:10px;line-height:1;"
-                              (mousedown)="$event.stopPropagation(); removeNewSliderImage(i)">×</button>
+                              (mousedown)="$event.stopPropagation(); removeNewSliderImage(i, sliderInput)">×</button>
                     </div>
                   }
                 </div>

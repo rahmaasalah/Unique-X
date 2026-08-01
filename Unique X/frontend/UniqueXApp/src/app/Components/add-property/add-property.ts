@@ -916,6 +916,41 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
     if (this.mainPhotoIndex === index) this.mainPhotoIndex = 0;
   }
 
+  // ===================== Drag & Drop reordering =====================
+  draggedPhotoIndex: number | null = null;
+
+  onPhotoDragStart(index: number) {
+    this.draggedPhotoIndex = index;
+  }
+
+  onPhotoDragOver(event: DragEvent) {
+    event.preventDefault(); // لازم نمنع الافتراضي عشان الـ drop يشتغل
+  }
+
+  onPhotoDrop(targetIndex: number) {
+    if (this.draggedPhotoIndex === null || this.draggedPhotoIndex === targetIndex) {
+      this.draggedPhotoIndex = null;
+      return;
+    }
+
+    // بنحتفظ بمرجع الصورة اللي كانت معلّمة "Main" عشان لو مكانها اتغير، العلامة تفضل عليها هي مش على الرقم القديم
+    const currentMainPhoto = this.selectedPhotos()[this.mainPhotoIndex];
+
+    const photos = [...this.selectedPhotos()];
+    const [moved] = photos.splice(this.draggedPhotoIndex, 1);
+    photos.splice(targetIndex, 0, moved);
+    this.selectedPhotos.set(photos);
+
+    const newMainIndex = photos.indexOf(currentMainPhoto);
+    this.mainPhotoIndex = newMainIndex >= 0 ? newMainIndex : 0;
+
+    this.draggedPhotoIndex = null;
+  }
+
+  onPhotoDragEnd() {
+    this.draggedPhotoIndex = null;
+  }
+
   onSubmit() {
     if (this.isSubmitting) return;
 

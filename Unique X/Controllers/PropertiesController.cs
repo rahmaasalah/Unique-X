@@ -241,6 +241,40 @@ namespace Unique_X.Controllers
             return Ok(new { message = "Photo deleted successfully" });
         }
 
+        // 🟢 حفظ ترتيب الصور بعد الـ drag & drop في فورم تعديل الوحدة
+        [HttpPut("{propertyId}/photos/reorder")]
+        [Authorize]
+        public async Task<IActionResult> ReorderPhotos(int propertyId, [FromBody] List<int> orderedPhotoIds, [FromServices] AppDbContext context)
+        {
+            var brokerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (brokerId == null) return Unauthorized();
+
+            var property = await context.Properties
+                .Include(p => p.Photos)
+                .FirstOrDefaultAsync(p => p.Id == propertyId && p.BrokerId == brokerId);
+
+            if (property == null)
+                return NotFound("Property not found or unauthorized.");
+
+            var propertyPhotoIds = property.Photos.Select(p => p.Id).ToList();
+
+            // نتأكد إن الترتيب الجديد بيحتوي على نفس صور الوحدة بالظبط (مفيش صورة اتضافت أو اتشالت من هنا)
+            if (orderedPhotoIds == null || orderedPhotoIds.Count != propertyPhotoIds.Count ||
+                !orderedPhotoIds.All(propertyPhotoIds.Contains))
+            {
+                return BadRequest("The provided order doesn't match this property's current photos.");
+            }
+
+            for (int i = 0; i < orderedPhotoIds.Count; i++)
+            {
+                var photo = property.Photos.First(p => p.Id == orderedPhotoIds[i]);
+                photo.DisplayOrder = i;
+            }
+
+            await context.SaveChangesAsync();
+            return Ok(new { message = "Photo order updated successfully!" });
+        }
+
         [HttpGet("hot-deals")]
         [AllowAnonymous]
         public async Task<IActionResult> GetHotDeals()

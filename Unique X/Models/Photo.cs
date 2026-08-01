@@ -13,6 +13,8 @@ namespace Unique_X.Models
         public string PublicId { get; set; } // ID الصورة عند Cloudinary (للحذف لاحقاً)
 
         public bool IsMain { get; set; } // هل هي الصورة الرئيسية للغلاف؟
+        // ترتيب ظهور الصورة في الجاليري (الأصغر يظهر الأول) - بيتحدد بالـ drag & drop في فورم التعديل
+        public int DisplayOrder { get; set; } = 0;
 
         public int PropertyId { get; set; }
         [JsonIgnore]
