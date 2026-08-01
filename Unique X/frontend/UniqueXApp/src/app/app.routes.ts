@@ -21,6 +21,7 @@ export const routes: Routes = [
 
   // ===== Auth Required =====
   { path: 'add-property', loadComponent: () => import('./Components/add-property/add-property').then(m => m.AddPropertyComponent), canActivate: [authGuard] },
+  { path: 'add-your-property', loadComponent: () => import('./Components/add-property/add-property').then(m => m.AddPropertyComponent), canActivate: [authGuard], data: { ownerMode: true } },
   { path: 'my-properties', loadComponent: () => import('./Components/my-properties/my-properties').then(m => m.MyPropertiesComponent), canActivate: [authGuard] },
   { path: 'edit-property/:id', loadComponent: () => import('./Components/edit-property/edit-property').then(m => m.EditPropertyComponent), canActivate: [authGuard] },
   { path: 'wishlist', loadComponent: () => import('./Components/wishlist/wishlist').then(m => m.WishlistComponent), canActivate: [authGuard] },

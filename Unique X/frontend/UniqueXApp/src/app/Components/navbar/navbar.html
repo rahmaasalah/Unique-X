@@ -11,11 +11,11 @@
     </button>
 
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center flex-nowrap">
   
     <!-- Resale (0) -->
     <li class="nav-item">
-      <a class="nav-link px-2 fw-semibold custom-link" 
+      <a class="nav-link px-2 fw-semibold custom-link text-nowrap" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 0 }"
          [class.active-tab]="activeType() === '0'"
@@ -25,7 +25,7 @@
     
     <!-- Rent (1) -->
     <li class="nav-item">
-      <a class="nav-link px-2 fw-semibold custom-link" 
+      <a class="nav-link px-2 fw-semibold custom-link text-nowrap" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 1 }"
          [class.active-tab]="activeType() === '1'"
@@ -34,7 +34,7 @@
 
     <!-- Primary (2) -->
     <li class="nav-item">
-      <a class="nav-link px-2 fw-semibold custom-link" 
+      <a class="nav-link px-2 fw-semibold custom-link text-nowrap" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 2 }"
          [class.active-tab]="activeType() === '2'"
@@ -43,7 +43,7 @@
 
     <!-- Resale Project (3) -->
     <li class="nav-item">
-      <a class="nav-link px-2 fw-semibold custom-link" 
+      <a class="nav-link px-2 fw-semibold custom-link text-nowrap" 
          [routerLink]="['/home']" 
          [queryParams]="{ listingType: 3 }"
          [class.active-tab]="activeType() === '3'"
@@ -51,14 +51,14 @@
     </li>
 
     <li class="nav-item ">
-      <a class="nav-link custom-link px-3 fw-semibold" 
+      <a class="nav-link custom-link px-3 fw-semibold text-nowrap" 
          routerLink="/find-agent"
          routerLinkActive="active-tab"
          (click)="closeMenu()">Agents</a>
     </li>
 
     <li class="nav-item">
-      <a class="nav-link px-2 fw-semibold custom-link"
+      <a class="nav-link px-2 fw-semibold custom-link text-nowrap"
          routerLink="/blog"
          routerLinkActive="active-tab"
          (click)="closeMenu()">Projects</a>
@@ -66,7 +66,7 @@
 
     @if (!authService.loggedIn() || authService.getUserType() === 0) {
   <li class="nav-item">
-    <a class="nav-link px-3 fw-bold" 
+    <a class="nav-link px-3 fw-bold text-nowrap" 
        style="color: #c0392b;"
        routerLink="/join-our-team"
        (click)="closeMenu()">
@@ -74,16 +74,26 @@
     </a>
   </li>
 }
+
+    <!-- 🟢 Add Your Property: ظاهر دايمًا؛ لو مش مسجل دخول الـ authGuard على المسار هيوجهه لصفحة اللوجين الأول -->
+    <li class="nav-item">
+  <a class="nav-link px-3 fw-bold text-nowrap" 
+     style="color: #c0392b;"
+     routerLink="/add-your-property"
+     (click)="closeMenu()">
+    Add Your Property
+  </a>
+</li>
     
         <!-- خيارات البروكر فقط -->
         @if (authService.loggedIn() && authService.getUserType() === 1) {
           <li class="nav-item ms-lg-3">
-            <a class="nav-link text-danger fw-bold d-flex align-items-center" routerLink="/add-property" (click)="closeMenu()">
+            <a class="nav-link text-danger fw-bold d-flex align-items-center text-nowrap" routerLink="/add-property" (click)="closeMenu()">
               <i class="bi bi-plus-circle-fill me-2 fs-5"></i> Add Property
             </a>
           </li>
           <li class="nav-item ms-lg-2">
-            <a class="nav-link text-danger fw-bold d-flex align-items-center" routerLink="/my-properties" (click)="closeMenu()">
+            <a class="nav-link text-danger fw-bold d-flex align-items-center text-nowrap" routerLink="/my-properties" (click)="closeMenu()">
               <i class="bi bi-speedometer2 me-2"></i> My Dashboard
             </a>
           </li>

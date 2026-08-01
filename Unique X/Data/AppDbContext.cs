@@ -32,6 +32,7 @@ namespace Unique_X.Data
         public DbSet<Shortlist> Shortlists { get; set; }
         public DbSet<VisitList> VisitLists { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<ProjectMeetingRequest> ProjectMeetingRequests { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)

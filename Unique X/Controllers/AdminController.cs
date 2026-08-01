@@ -720,6 +720,56 @@ namespace Unique_X.Controllers
             return Ok(new { message = "Broker code cleared." });
         }
 
+        // ===================== Projects Meetings (تاب "Projects Meetings" بالأدمن) =====================
+
+        // GET: api/admin/project-meetings
+        [HttpGet("project-meetings")]
+        public async Task<IActionResult> GetProjectMeetings()
+        {
+            var meetings = await _context.ProjectMeetingRequests
+                .OrderByDescending(m => m.CreatedAt)
+                .Select(m => new ProjectMeetingResponseDto
+                {
+                    Id = m.Id,
+                    BlogId = m.BlogId,
+                    ProjectName = m.ProjectName,
+                    FullName = m.FullName,
+                    Phone = m.Phone,
+                    MeetingDate = m.MeetingDate,
+                    Notes = m.Notes,
+                    IsContacted = m.IsContacted,
+                    CreatedAt = m.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(meetings);
+        }
+
+        // PATCH: api/admin/project-meetings/{id}/toggle-contacted
+        [HttpPatch("project-meetings/{id}/toggle-contacted")]
+        public async Task<IActionResult> ToggleProjectMeetingContacted(int id)
+        {
+            var meeting = await _context.ProjectMeetingRequests.FindAsync(id);
+            if (meeting == null) return NotFound("Meeting request not found");
+
+            meeting.IsContacted = !meeting.IsContacted;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Updated successfully!", isContacted = meeting.IsContacted });
+        }
+
+        // DELETE: api/admin/project-meetings/{id}
+        [HttpDelete("project-meetings/{id}")]
+        public async Task<IActionResult> DeleteProjectMeeting(int id)
+        {
+            var meeting = await _context.ProjectMeetingRequests.FindAsync(id);
+            if (meeting == null) return NotFound("Meeting request not found");
+
+            _context.ProjectMeetingRequests.Remove(meeting);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Meeting request deleted." });
+        }
 
     }
 }

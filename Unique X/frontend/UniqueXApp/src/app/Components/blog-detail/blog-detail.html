@@ -141,7 +141,7 @@
           </div>
 
           <!-- Call + WhatsApp (admin — ثابت دايماً) -->
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2 flex-wrap">
             <a [href]="getAdminPhone('tel')"
                class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2">
               <i class="bi bi-telephone-fill"></i> Call Us
@@ -152,6 +152,11 @@
                style="background:#25D366;color:#fff;">
               <i class="bi bi-whatsapp"></i> Whatsapp
             </a>
+            <button type="button"
+                    class="btn btn-danger fw-semibold rounded-pill px-4 py-2 d-flex align-items-center gap-2"
+                    (click)="openMeetingModal()">
+              <i class="bi bi-calendar-check"></i> Schedule Meeting
+            </button>
           </div>
 
         </div>
@@ -544,6 +549,76 @@
     </div>
   }
 </div>
+
+<!-- ===== MEETING SUCCESS TOAST ===== -->
+@if (meetingSuccessMessage()) {
+  <div class="position-fixed top-0 start-50 translate-middle-x mt-3 alert alert-success shadow-lg rounded-4 px-4 py-3 d-flex align-items-center gap-2"
+       style="z-index:10000;">
+    <i class="bi bi-check-circle-fill fs-5"></i> {{ meetingSuccessMessage() }}
+  </div>
+}
+
+<!-- ===== SCHEDULE MEETING MODAL ===== -->
+@if (meetingModalOpen()) {
+  <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+       style="background:rgba(0,0,0,0.85);z-index:9999;" (click)="closeMeetingModal()">
+    <div class="position-relative bg-white rounded-4 shadow-lg overflow-hidden"
+         style="width:92vw;max-width:480px;"
+         (click)="$event.stopPropagation()">
+
+      <div class="p-4 text-white" style="background:#1a1a2e;">
+        <h5 class="fw-bold mb-0"><i class="bi bi-calendar-check me-2"></i>Schedule a Meeting</h5>
+      </div>
+      <button class="btn btn-light position-absolute top-0 end-0 m-3 rounded-circle"
+              style="width:36px;height:36px;padding:0;" (click)="closeMeetingModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+
+      <div class="p-4">
+        <p class="text-muted small mb-3">Pick a date and time, and one of our consultants will confirm it with you.</p>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-muted">Full Name *</label>
+          <input type="text" class="form-control bg-light border-0 rounded-3"
+                 [(ngModel)]="meetingName" placeholder="Your name">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-muted">Phone Number *</label>
+          <input type="tel" class="form-control bg-light border-0 rounded-3"
+                 [(ngModel)]="meetingPhone" placeholder="e.g. 01012345678">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-muted">Meeting Date & Time *</label>
+          <input type="datetime-local" class="form-control bg-light border-0 rounded-3"
+                 [(ngModel)]="meetingDate" [min]="minMeetingDate">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-muted">Notes (optional)</label>
+          <textarea class="form-control bg-light border-0 rounded-3" rows="2"
+                    [(ngModel)]="meetingNotes" placeholder="Any question you'd like us to know about..."></textarea>
+        </div>
+
+        @if (meetingErrorMessage()) {
+          <div class="alert alert-danger small py-2">{{ meetingErrorMessage() }}</div>
+        }
+
+        <button type="button"
+                class="btn btn-danger w-100 rounded-pill fw-bold py-2 shadow-sm"
+                [disabled]="!meetingName || !meetingPhone || !meetingDate || isSubmittingMeeting()"
+                (click)="submitMeetingRequest()">
+          @if (isSubmittingMeeting()) {
+            <span class="spinner-border spinner-border-sm me-2"></span> Sending...
+          } @else {
+            <i class="bi bi-calendar-check me-1"></i> Confirm Meeting Request
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- ===== MAP MODAL ===== -->
 @if (mapModalOpen()) {

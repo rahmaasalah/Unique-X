@@ -148,6 +148,7 @@ namespace Unique_X.Controllers.CRM
                     PropertyCode = v.PropertyCode,
                     PropertyName = v.PropertyName,
                     BrokerPhone = v.BrokerPhone,
+                    ContactPhone = v.ContactPhone,
                     ZoneId = v.ZoneId,
                     ListingType = v.ListingType,
                     Region = v.Region,

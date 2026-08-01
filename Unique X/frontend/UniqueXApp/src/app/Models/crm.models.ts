@@ -73,9 +73,11 @@ export interface WebsiteInquiryDto {
 export interface RequestVisitDto {
   propertyId: number;
   clientName: string;
-  clientPhone: string;
+  clientPhone: string; // 👈 رقم الحساب المسجل بيه اليوزر - ده اللي بيتحدد بيه هل العميل موجود كـ Lead قبل كده ولا لأ
+  contactPhone?: string; // 👈 الرقم اللي كتبه في المودال - رقم تواصل بس لزيارة دي تحديدًا، مالوش علاقة بتحديد هوية العميل
   clientEmail?: string;
   visitDate: Date | string;
+  visitType: string; // 'Broker' أو 'Client'
   notes?: string;
 }
 

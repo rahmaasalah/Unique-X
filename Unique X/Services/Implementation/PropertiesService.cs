@@ -212,6 +212,7 @@ namespace Unique_X.Services.Implementation
                 IsActive = false,
                 IsApproved = false,
                 RejectionReason = null,
+                IsOwnerSubmitted = dto.IsOwnerSubmitted ?? false,
                 Photos = new List<Photo>()
             };
 
@@ -440,7 +441,9 @@ namespace Unique_X.Services.Implementation
             var properties = await _context.Properties
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
-                .Where(p => p.BrokerId == brokerId)
+                // لو الوحدة اتقدمت من "Add Your Property" ولسه ماتوافقش عليها الأدمن، متظهرش في داشبورد أي بروكر
+                // (حتى لو BrokerId لسه شايل ID البروكر اللي قدمها بنفسه كـ placeholder مؤقت)
+                .Where(p => p.BrokerId == brokerId && (!p.IsOwnerSubmitted || p.IsApproved))
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 

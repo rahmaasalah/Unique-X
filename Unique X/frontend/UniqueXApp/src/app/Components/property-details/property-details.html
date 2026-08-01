@@ -72,6 +72,14 @@
             <span class="small fw-bold">Download Photos</span>
           </button>
           }
+
+          <!-- زر Visit Now - نفس منطق كارت الوحدة بالظبط -->
+          <button class="btn btn-danger border-0 rounded-pill shadow-sm px-3 py-1 d-flex align-items-center gap-2" 
+                  (click)="openVisitModal($event)" 
+                  title="Schedule a Visit">
+            <i class="bi bi-calendar-check fs-5"></i> 
+            <span class="small fw-bold">Visit Now</span>
+          </button>
         </div>
         
          <div class="d-flex align-items-center gap-3 mb-3">
@@ -624,6 +632,47 @@
     }
   }
 </div>
+
+  <!-- Modal: Visit Now -->
+  <div class="modal fade" id="visitNowModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-0 bg-dark text-white rounded-top-4 p-4">
+          <h5 class="modal-title fw-bold"><i class="bi bi-calendar-check me-2"></i>Schedule Your Visit</h5>
+          <button type="button" class="btn-close btn-close-white" id="closeVisitNowModal" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="text-muted small mb-3">Pick a date and time that works for you. The broker will confirm it with you.</p>
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-muted">Visit Type *</label>
+            <select class="form-select bg-light border-0 rounded-3" [(ngModel)]="visitType">
+              <option value="" disabled selected>-- Select Visit Type --</option>
+              <option value="Broker">Broker Visit</option>
+              <option value="Client">Client Visit</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-muted">Phone Number *</label>
+            <input type="tel" class="form-control bg-light border-0 rounded-3" [(ngModel)]="visitPhone" placeholder="e.g. 01012345678">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-muted">Visit Date & Time *</label>
+            <input type="datetime-local" class="form-control bg-light border-0 rounded-3" [(ngModel)]="visitDateValue" [min]="minVisitDate">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-muted">Notes (optional)</label>
+            <textarea class="form-control bg-light border-0 rounded-3" rows="2" [(ngModel)]="visitNotes" placeholder="Anything the broker should know..."></textarea>
+          </div>
+          <button type="button"
+                  class="btn btn-danger w-100 rounded-pill fw-bold py-2 shadow-sm"
+                  [disabled]="!visitDateValue || !visitType || !visitPhone || isSubmittingVisit()"
+                  (click)="submitVisitRequest($event)">
+            <i class="bi bi-calendar-check me-1"></i> Confirm Visit Request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- المودال (الذي يفتح المعرض الكامل) -->
   <div class="modal fade" id="fullGalleryModal" tabindex="-1" aria-hidden="true">

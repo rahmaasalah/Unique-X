@@ -34,7 +34,7 @@
     <div class="row g-2 mb-3">
       <!-- خانة البحث (لو مفيش مشروع تاخد 6 أعمدة، لو فيه مشروع تصغر لـ 3) -->
 
-<div [class]="(currentListingType === '2' || currentListingType === '3') ? 'col-md-2' : 'col-md-4'">
+<div [class]="(currentListingType === '2' || currentListingType === '3') ? 'col-md-2' : 'col-md-3'">
   <label class="form-label x-small-bold mb-1 text-dark">Keyword</label>
   <div class="input-group input-group-sm shadow-sm border rounded-2 bg-white">
     <span class="input-group-text bg-white border-0"><i class="bi bi-search text-danger"></i></span>
@@ -43,9 +43,9 @@
 </div>
 
    <div class="col-md-2">
-  <label class="form-label x-small-bold mb-1 text-dark">Property Type</label>
+  <label class="form-label x-small-bold mb-1 text-dark">Listing Type</label>
   <select class="form-select form-select-sm border shadow-sm rounded-2" #propertyType>
-  <option value="">All Types</option>
+  <option value="">All Categories</option>
   <option value="Primary">Primary</option>
   <option value="ResaleProject">Resale Project</option>
   <option value="Resale">Resale</option>
@@ -53,7 +53,20 @@
 </select>
 </div>
 
-      <div class="col-md-3">
+   <div class="col-md-2">
+  <label class="form-label x-small-bold mb-1 text-dark">Property Type</label>
+  <select class="form-select form-select-sm border shadow-sm rounded-2" #propType>
+  <option value="">All Types</option>
+  <option value="Apartment">Apartment</option>
+  <option value="Villa">Villa</option>
+  <option value="Shop">Shop</option>
+  <option value="Office">Office</option>
+  <option value="Chalet">Chalet</option>
+  <option value="FullFloor">Full Floor</option>
+</select>
+</div>
+
+      <div class="col-md-2">
         <label class="form-label x-small-bold mb-1 text-dark">Property Code</label>
         <input type="text" class="form-control form-control-sm border shadow-sm rounded-2" #code>
       </div>
@@ -151,7 +164,7 @@
             (click)="onSearch({
               searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: projectName.value,
               code: code.value, minPrice: minPrice.value, maxPrice: maxPrice.value,
-              listingType: propertyType.value,
+              listingType: propertyType.value, propertyType: propType.value,
               minFloor: minFloor.value, maxFloor: maxFloor.value,
               minRooms: minRooms.value, maxRooms: maxRooms.value,
               minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value

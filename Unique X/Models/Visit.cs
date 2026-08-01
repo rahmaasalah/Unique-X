@@ -10,6 +10,8 @@
         public string? PropertyCode { get; set; }
         public string? PropertyName { get; set; }
         public string? BrokerPhone { get; set; }
+        public string? ContactPhone { get; set; } // رقم تواصل خاص بالزيارة دي بس (ممكن يختلف عن رقم حساب العميل)
+
         public int ZoneId { get; set; }
         public string ListingType { get; set; }
         public string? VisitType { get; set; }

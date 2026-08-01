@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { PropertyService } from '../../Services/property';
 import { AlertService } from '../../Services/alert';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 function minAmountValidator(min: number): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -34,6 +34,11 @@ isSubmitting = false;
 currentYear = new Date().getFullYear(); 
 
 currentPrefix: string = '';
+
+// 🟢 لو داخل من زرار "Add Your Property" في الناف بار (بدل فورم البروكر العادي)
+// الوحدة هتروح لتاب "Owners Properties" عند الأدمن، والبروكر بيتحدد بعدين وقت الموافقة
+private route = inject(ActivatedRoute);
+ownerMode: boolean = false;
 
 
 
@@ -286,6 +291,8 @@ filteredProjects: string[] = [];
   private router = inject(Router);
 
   ngOnInit(): void {
+    this.ownerMode = this.route.snapshot.data['ownerMode'] === true;
+
     this.propertyForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
       description: ['', Validators.required],
@@ -1036,13 +1043,19 @@ formData.append('LandArea', cleanNum(f.landArea));
     }
 
     formData.append('MainPhotoIndex', this.mainPhotoIndex.toString());
+    formData.append('IsOwnerSubmitted', this.ownerMode.toString());
     this.selectedPhotos().forEach(p => formData.append('Photos', p.file));
 
     this.propertyService.addProperty(formData).subscribe({
       next: () => { 
           this.alertService.close(); 
-          this.alertService.warning('Submitted successfully! Waiting for admin approval.', 'Pending Review'); 
-          this.router.navigate(['/my-properties']); 
+          if (this.ownerMode) {
+            this.alertService.warning('Thank you for your cooperation with Betk! Your property is now awaiting admin review.', 'Pending Review');
+            this.router.navigate(['/home']);
+          } else {
+            this.alertService.warning('Submitted successfully! Waiting for admin approval.', 'Pending Review'); 
+            this.router.navigate(['/my-properties']); 
+          }
         },
       error: (err) => {
         this.alertService.close();
