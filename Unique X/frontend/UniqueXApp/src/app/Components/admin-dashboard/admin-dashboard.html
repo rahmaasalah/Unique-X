@@ -46,8 +46,8 @@
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center justify-content-between py-2"
                   [class.active]="activeTab() === 'pending'" (click)="switchTab('pending')">
             <span><i class="bi bi-hourglass-split me-3 fs-6"></i> Pending Approval</span>
-            @if (pendingProperties().length > 0) {
-              <span class="badge bg-warning text-dark rounded-pill">{{ pendingProperties().length }}</span>
+            @if (brokerPendingProperties().length > 0) {
+              <span class="badge bg-warning text-dark rounded-pill">{{ brokerPendingProperties().length }}</span>
             }
           </button>
         </li>
@@ -165,7 +165,7 @@
         <div class="col-md-3" (click)="switchTab('pending')" style="cursor: pointer;">
           <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-warning border-5 rounded-4">
             <small class="text-muted fw-bold text-uppercase">Pending Review</small>
-            <h2 class="fw-bold mb-0 text-warning">{{ pendingProperties().length }}</h2>
+            <h2 class="fw-bold mb-0 text-warning">{{ brokerPendingProperties().length }}</h2>
           </div>
         </div>
         <div class="col-md-3" (click)="switchTab('suspUsers')" style="cursor: pointer;">
@@ -631,11 +631,11 @@
             <i class="bi bi-hourglass-split text-warning me-2"></i>Pending Approval
           </h4>
           <span class="badge bg-warning text-dark rounded-pill px-3 fs-6">
-            {{ pendingProperties().length }} Listings
+            {{ brokerPendingProperties().length }} Listings
           </span>
         </div>
  
-        @if (pendingProperties().length === 0) {
+        @if (brokerPendingProperties().length === 0) {
           <div class="text-center py-5 bg-white rounded-4 shadow-sm border">
             <i class="bi bi-check-circle-fill fs-1 text-success d-block mb-3"></i>
             <h5 class="fw-bold text-dark">All caught up!</h5>
@@ -656,7 +656,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                @for (prop of pendingProperties(); track prop.id) {
+                @for (prop of brokerPendingProperties(); track prop.id) {
                   <tr>
                     <td class="ps-4 py-3">
                       <div class="d-flex align-items-center gap-3">
@@ -744,7 +744,7 @@
                   <tr>
                     <td class="ps-4 py-3">
                       <div class="d-flex align-items-center gap-3">
-                        <img [src]="prop.mainPhotoUrl" class="rounded-3 border shadow-sm"
+                        <img [src]="prop.photos?.[0]?.url" class="rounded-3 border shadow-sm"
                              style="width:55px;height:55px;object-fit:cover">
                         <div>
                           <div class="fw-bold text-dark">{{ prop.title }}</div>
@@ -773,6 +773,10 @@
                     </td>
                     <td class="text-center pe-4">
                       <div class="d-flex justify-content-center gap-2">
+                        <button class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold"
+                                (click)="viewPropertyDetails(prop)">
+                          View
+                        </button>
                         @if (prop.rejectionReason) {
                           <button class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm"
                                   (click)="onApproveOwnerProperty(prop)">

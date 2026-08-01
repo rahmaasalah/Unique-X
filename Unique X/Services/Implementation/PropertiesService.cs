@@ -761,6 +761,7 @@ namespace Unique_X.Services.Implementation
                 IsApproved = property.IsApproved,
                 IsActive = property.IsActive,
                 RejectionReason = property.RejectionReason,
+                IsOwnerSubmitted = property.IsOwnerSubmitted,
                 PendingDeletion = property.PendingDeletion,
                 DeletionRejectionReason = property.DeletionRejectionReason,
                 BrokerName = property.Broker != null ? $"{property.Broker.FirstName} {property.Broker.LastName}" : "System Agent",
