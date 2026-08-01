@@ -32,13 +32,15 @@ namespace Unique_X.Controllers
         public async Task<IActionResult> GetAll() =>
             Ok(await _context.Blogs
                 .Where(b => b.IsPublished)
-                .OrderByDescending(b => b.CreatedAt)
+                .OrderBy(b => b.DisplayOrder)
+                .ThenByDescending(b => b.CreatedAt)
                 .ToListAsync());
 
         [HttpGet("all")]
         public async Task<IActionResult> GetAllAdmin() =>
             Ok(await _context.Blogs
-                .OrderByDescending(b => b.CreatedAt)
+                .OrderBy(b => b.DisplayOrder)
+                .ThenByDescending(b => b.CreatedAt)
                 .ToListAsync());
 
         [HttpGet("{id}")]
@@ -177,6 +179,23 @@ namespace Unique_X.Controllers
             return Ok(blog);
         }
 
+        // ترتيب الظهور بالـ drag & drop - الفرونت إند بيبعت الليستة كلها مرتبة كل مرة
+        [HttpPut("reorder")]
+        public async Task<IActionResult> Reorder([FromBody] List<int> orderedIds)
+        {
+            if (orderedIds == null || orderedIds.Count == 0) return BadRequest("No order provided");
+
+            var blogs = await _context.Blogs.Where(b => orderedIds.Contains(b.Id)).ToListAsync();
+            for (int i = 0; i < orderedIds.Count; i++)
+            {
+                var blog = blogs.FirstOrDefault(b => b.Id == orderedIds[i]);
+                if (blog != null) blog.DisplayOrder = i;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Order updated successfully" });
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -202,6 +221,31 @@ namespace Unique_X.Controllers
             blog.SliderImages = string.Join("|", images);
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        // 🟢 زرار "Schedule Meeting" في صفحة تفاصيل المشروع - متاح لأي زائر (مسجل دخول أو لأ)
+        [HttpPost("{id}/schedule-meeting")]
+        public async Task<IActionResult> ScheduleMeeting(int id, [FromBody] ScheduleMeetingDto dto)
+        {
+            var blog = await _context.Blogs.FindAsync(id);
+            if (blog == null) return NotFound("Project not found");
+
+            var meeting = new ProjectMeetingRequest
+            {
+                BlogId = blog.Id,
+                ProjectName = blog.ProjectName ?? blog.Title,
+                FullName = dto.FullName,
+                Phone = dto.Phone,
+                MeetingDate = dto.MeetingDate,
+                Notes = dto.Notes,
+                IsContacted = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.ProjectMeetingRequests.Add(meeting);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Meeting request received successfully!", meetingId = meeting.Id });
         }
     }
 }

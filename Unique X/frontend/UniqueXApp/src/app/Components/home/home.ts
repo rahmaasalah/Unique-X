@@ -372,8 +372,20 @@ getSmartSearchTerm(term: string): string {
     'ResaleProject': 3
   };
 
+  const propertyTypeMap: any = {
+    'Apartment': 0,
+    'Villa': 1,
+    'Shop': 2,
+    'Office': 3,
+    'Chalet': 4,
+    'FullFloor': 5
+  };
+
   const rawType = params.listingType;
   const resolvedType = rawType ? (listingTypeMap[rawType] ?? rawType) : null;
+
+  const rawPropertyType = params.propertyType;
+  const resolvedPropertyType = rawPropertyType ? (propertyTypeMap[rawPropertyType] ?? rawPropertyType) : null;
 
   const filters = {
     searchTerm: params.searchTerm || null,
@@ -381,6 +393,7 @@ getSmartSearchTerm(term: string): string {
     minPrice: params.minPrice ? params.minPrice.replace(/,/g, '') : null,
     maxPrice: params.maxPrice ? params.maxPrice.replace(/,/g, '') : null,
     listingType: resolvedType,
+    propertyType: resolvedPropertyType,
     projectName: params.projectName || null,
     code: params.code || null,
     area: params.area || null,

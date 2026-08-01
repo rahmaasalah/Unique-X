@@ -368,8 +368,12 @@ namespace Unique_X.Controllers.CRM
                 Region = property.Region,
                 Project = property.ProjectName,
                 Notes = dto.Notes,
-                VisitType = "Client",
-                IsClientInitiated = true // 👈 عشان البروكر/الأدمن يعرفوا إن العميل هو اللي حدد الميعاد ده مش البروكر
+                ContactPhone = string.IsNullOrWhiteSpace(dto.ContactPhone) ? dto.ClientPhone : dto.ContactPhone,
+                VisitType = string.IsNullOrWhiteSpace(dto.VisitType) ? "Client" : dto.VisitType,
+                // 👇 البادج "Client-booked" في صفحة lead-details بيعتمد على القيمة دي بالظبط
+                // لو اختارت "Client" من المودال -> true (يظهر إنه العميل هو اللي حجز)
+                // لو اختارت "Broker" -> false (يبقى زي أي زيارة بيسجلها البروكر بنفسه)
+                IsClientInitiated = dto.VisitType == "Client"
             };
             _context.Visits.Add(visit);
 

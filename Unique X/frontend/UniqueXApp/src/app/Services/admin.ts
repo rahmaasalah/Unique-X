@@ -214,4 +214,19 @@ setBrokerCode(userId: string, code: string): Observable<any> {
 clearBrokerCode(userId: string): Observable<any> {
   return this.http.delete(`${this.baseUrl}/clear-broker-code/${userId}`);
 }
+
+// --- Owner Properties (اللي اتقدمت من "Add Your Property") ---
+private ownerPropsUrl = environment.apiUrl + '/owner-properties';
+
+getOwnerProperties(): Observable<any[]> {
+  return this.http.get<any[]>(this.ownerPropsUrl);
+}
+
+approveOwnerProperty(id: number, brokerId: string): Observable<any> {
+  return this.http.patch(`${this.ownerPropsUrl}/${id}/approve`, { brokerId });
+}
+
+rejectOwnerProperty(id: number, reason: string): Observable<any> {
+  return this.http.patch(`${this.ownerPropsUrl}/${id}/reject`, { reason });
+}
 }

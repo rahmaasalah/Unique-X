@@ -92,6 +92,10 @@ namespace Unique_X.Models
         public bool HasGarden { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        // اتقدمت من "Add Your Property" في الناف بار(كلاينت أو بروكر) مش من فورم البروكر العادي
+        // البروكر مش بيتحدد وقت التقديم، الأدمن هو اللي بيختاره وقت الموافقة
+        public bool IsOwnerSubmitted { get; set; } = false;
+
         // Foreign Key for Broker (User)
         public string BrokerId { get; set; }
         public ApplicantUser Broker { get; set; }

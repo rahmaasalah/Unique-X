@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Unique_X.Data;
 
@@ -11,9 +12,11 @@ using Unique_X.Data;
 namespace Unique_X.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260730105415_AddOrdertoBlogs")]
+    partial class AddOrdertoBlogs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1014,47 +1017,6 @@ namespace Unique_X.Migrations
                     b.ToTable("Photos");
                 });
 
-            modelBuilder.Entity("Unique_X.Models.ProjectMeetingRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BlogId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsContacted")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("MeetingDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProjectName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BlogId");
-
-                    b.ToTable("ProjectMeetingRequests");
-                });
-
             modelBuilder.Entity("Unique_X.Models.Property", b =>
                 {
                     b.Property<int>("Id")
@@ -1202,9 +1164,6 @@ namespace Unique_X.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsLicensed")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsOwnerSubmitted")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsSold")
@@ -1372,9 +1331,6 @@ namespace Unique_X.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BrokerPhone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ContactPhone")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Feedback")
@@ -1652,17 +1608,6 @@ namespace Unique_X.Migrations
                         .IsRequired();
 
                     b.Navigation("Property");
-                });
-
-            modelBuilder.Entity("Unique_X.Models.ProjectMeetingRequest", b =>
-                {
-                    b.HasOne("Unique_X.Models.Blog", "Blog")
-                        .WithMany()
-                        .HasForeignKey("BlogId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Blog");
                 });
 
             modelBuilder.Entity("Unique_X.Models.Property", b =>

@@ -109,6 +109,28 @@
     }
   </button>
 </li>
+
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'ownerProps'"
+          (click)="activeTab.set('ownerProps'); loadOwnerProperties()">
+    <i class="bi bi-person-vcard me-3 fs-6"></i> Owners Properties
+    @if (ownerPropertiesPendingCount() > 0) {
+      <span class="badge bg-danger ms-2">{{ ownerPropertiesPendingCount() }}</span>
+    }
+  </button>
+</li>
+
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'projectMeetings'"
+          (click)="activeTab.set('projectMeetings'); loadProjectMeetings()">
+    <i class="bi bi-calendar-check me-3 fs-6"></i> Projects Meetings
+    @if (uncontactedMeetingsCount() > 0) {
+      <span class="badge bg-danger ms-2">{{ uncontactedMeetingsCount() }}</span>
+    }
+  </button>
+</li>
         
       </ul>
     </nav>
@@ -467,6 +489,28 @@
                      [ngModel]="propDateFilter()" (ngModelChange)="propDateFilter.set($event)" title="Filter by creation date">
             </div>
           </div>
+
+          <!-- السطر الثالث: المنطقة والميزانية -->
+          <div class="row g-2 mt-0">
+            <div class="col-md-4">
+              <select class="form-select bg-light border-0" [ngModel]="propZoneFilter()" (ngModelChange)="propZoneFilter.set($event)">
+                <option value="">All Zones</option>
+                <option value="Cairo">Cairo</option>
+                <option value="Alexandria">Alexandria</option>
+                <option value="NorthCoast">North Coast</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <input type="text" inputmode="numeric" class="form-control bg-light border-0"
+                     placeholder="Min Budget (EGP)" [value]="propMinBudget() !== null ? propMinBudget()!.toLocaleString('en-US') : ''"
+                     (input)="onBudgetInput($event, 'min')">
+            </div>
+            <div class="col-md-4">
+              <input type="text" inputmode="numeric" class="form-control bg-light border-0"
+                     placeholder="Max Budget (EGP)" [value]="propMaxBudget() !== null ? propMaxBudget()!.toLocaleString('en-US') : ''"
+                     (input)="onBudgetInput($event, 'max')">
+            </div>
+          </div>
         </div>
 
 
@@ -474,11 +518,12 @@
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
           <div class="table-responsive">
             <!-- كبرنا min-width عشان عمود التاريخ الجديد -->
-            <table class="table table-hover align-middle mb-0" style="min-width: 1250px;">
+            <table class="table table-hover align-middle mb-0" style="min-width: 1350px;">
               <thead class="table-light text-nowrap">
                 <tr>
                   <th class="ps-4 py-3" style="width: 25%;">PROPERTY DETAILS</th>
                   <th style="width: 10%;">CODE</th>
+                  <th style="width: 9%;">ZONE</th>
                   <th style="width: 10%;">TYPE</th>
                   <th style="width: 13%;">PRICE</th>
                   <!-- 🟢 عمود التاريخ -->
@@ -523,6 +568,7 @@
                     </td>
 
                     <td><span class="badge bg-light text-dark border px-2 py-1">{{ prop.code }}</span></td>
+                    <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 small">{{ formatZone(prop.city) }}</span></td>
                     <td>
                       <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 small">
                         {{ prop.propertyType }}
@@ -649,6 +695,101 @@
                                 (click)="onRejectProperty(prop.id)">
                           <i></i>Reject
                         </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- 🟢 تبويب Owners Properties: وحدات اتقدمت من زرار "Add Your Property" في الناف بار -->
+    @if (activeTab() === 'ownerProps') {
+      <section class="animate__animated animate__fadeIn">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4 class="fw-bold mb-0">
+            <i class="bi bi-person-vcard text-danger me-2"></i>Owners Properties
+          </h4>
+          <span class="badge bg-dark rounded-pill px-3 fs-6">
+            {{ ownerProperties().length }} Submissions
+          </span>
+        </div>
+
+        @if (ownerProperties().length === 0) {
+          <div class="text-center py-5 bg-white rounded-4 shadow-sm border">
+            <i class="bi bi-inbox fs-1 text-muted d-block mb-3 opacity-50"></i>
+            <h5 class="fw-bold text-dark">No submissions yet</h5>
+            <p class="text-muted">Properties submitted via "Add Your Property" will show up here.</p>
+          </div>
+        } @else {
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0" style="min-width: 900px;">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-4 py-3" style="width: 30%">PROPERTY</th>
+                    <th style="width: 18%">SUBMITTED BY</th>
+                    <th style="width: 13%">PRICE</th>
+                    <th style="width: 10%">ZONE</th>
+                    <th style="width: 12%">STATUS</th>
+                    <th class="text-center pe-4" style="width: 17%">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                @for (prop of ownerProperties(); track prop.id) {
+                  <tr>
+                    <td class="ps-4 py-3">
+                      <div class="d-flex align-items-center gap-3">
+                        <img [src]="prop.mainPhotoUrl" class="rounded-3 border shadow-sm"
+                             style="width:55px;height:55px;object-fit:cover">
+                        <div>
+                          <div class="fw-bold text-dark">{{ prop.title }}</div>
+                          <small class="text-muted">{{ prop.region }} · <span class="fw-bold">#{{ prop.code }}</span></small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="fw-semibold text-dark">{{ prop.ownerName }}</div>
+                      <small class="text-muted"><i class="bi bi-phone me-1"></i>{{ prop.ownerPhone }}</small>
+                    </td>
+                    <td class="fw-bold text-danger">EGP {{ prop.price | number }}</td>
+                    <td>
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle small">
+                        {{ prop.city === 'NorthCoast' ? 'North Coast' : prop.city }}
+                      </span>
+                    </td>
+                    <td>
+                      @if (prop.rejectionReason) {
+                        <span class="badge bg-danger rounded-pill px-3" [title]="prop.rejectionReason">Rejected</span>
+                      } @else if (prop.isApproved) {
+                        <span class="badge bg-success rounded-pill px-3">Approved</span>
+                      } @else {
+                        <span class="badge bg-warning text-dark rounded-pill px-3">Pending</span>
+                      }
+                    </td>
+                    <td class="text-center pe-4">
+                      <div class="d-flex justify-content-center gap-2">
+                        @if (prop.rejectionReason) {
+                          <button class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm"
+                                  (click)="onApproveOwnerProperty(prop)">
+                            Approve Again
+                          </button>
+                        } @else if (!prop.isApproved) {
+                          <button class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm"
+                                  (click)="onApproveOwnerProperty(prop)">
+                            Approve
+                          </button>
+                          <button class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm"
+                                  (click)="onRejectOwnerProperty(prop)">
+                            Reject
+                          </button>
+                        } @else {
+                          <span class="text-muted small">—</span>
+                        }
                       </div>
                     </td>
                   </tr>
@@ -823,6 +964,87 @@
       </section>
     }
 
+
+@if (activeTab() === 'projectMeetings') {
+  <section class="animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold mb-0"><i class="bi bi-calendar-check me-2 text-danger"></i>Projects Meetings</h4>
+      <span class="badge bg-danger rounded-pill px-3">{{ filteredProjectMeetings().length }} Requests</span>
+    </div>
+
+    <!-- فلاتر -->
+    <div class="row g-2 mb-3">
+      <div class="col-md-4">
+        <input type="text" class="form-control border-0 shadow-sm rounded-3" placeholder="Search by name or project..."
+               [ngModel]="meetingSearchText()" (ngModelChange)="meetingSearchText.set($event)">
+      </div>
+      <div class="col-md-4">
+        <select class="form-select border-0 shadow-sm rounded-3"
+                [ngModel]="meetingContactedFilter()" (ngModelChange)="meetingContactedFilter.set($event)">
+          <option value="all">All Requests</option>
+          <option value="pending">Not Contacted Yet</option>
+          <option value="contacted">Contacted</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden border-top border-danger border-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4">Project</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Meeting Date</th>
+              <th>Notes</th>
+              <th>Requested At</th>
+              <th>Status</th>
+              <th class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of filteredProjectMeetings(); track m.id) {
+              <tr>
+                <td class="ps-4 fw-bold">{{ m.projectName || '—' }}</td>
+                <td>{{ m.fullName }}</td>
+                <td>
+                  <a [href]="'tel:' + m.phone" class="text-dark text-decoration-none">
+                    <i class="bi bi-telephone-fill text-muted me-1"></i>{{ m.phone }}
+                  </a>
+                </td>
+                <td>{{ m.meetingDate | date:'d MMM y, h:mm a' }}</td>
+                <td class="text-muted small" style="max-width:220px;">{{ m.notes || '—' }}</td>
+                <td class="text-muted small">{{ m.createdAt | date:'d MMM y' }}</td>
+                <td>
+                  @if (m.isContacted) {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Contacted</span>
+                  } @else {
+                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Pending</span>
+                  }
+                </td>
+                <td class="text-end pe-4">
+                  <button class="btn btn-sm btn-outline-success rounded-pill me-1"
+                          title="Toggle contacted status"
+                          (click)="toggleMeetingContacted(m)">
+                    <i class="bi bi-check2-circle"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill"
+                          title="Delete"
+                          (click)="deleteProjectMeeting(m)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="8" class="text-center py-4 text-muted">No meeting requests yet.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+}
 
 @if (activeTab() === 'sold') {
   <section class="animate__animated animate__fadeIn">
@@ -2016,10 +2238,25 @@
     <!-- Header -->
     <div class="d-flex align-items-center justify-content-between mb-4">
       <h4 class="fw-bold mb-0"><i class="bi bi-buildings me-2 text-danger"></i>Projects</h4>
-      <button class="btn btn-danger rounded-pill fw-bold px-4 shadow-sm" (click)="openAddBlog()">
-        <i class="bi bi-plus-lg me-2"></i>Add New Project
-      </button>
+      <div class="d-flex gap-2">
+        @if (blogOrderChanged()) {
+          <button class="btn btn-dark rounded-pill fw-bold px-4 shadow-sm animate__animated animate__fadeIn"
+                  [disabled]="savingBlogOrder()"
+                  (click)="saveBlogOrder()">
+            <i class="bi bi-check-lg me-2"></i>{{ savingBlogOrder() ? 'Saving...' : 'Save Order' }}
+          </button>
+        }
+        <button class="btn btn-danger rounded-pill fw-bold px-4 shadow-sm" (click)="openAddBlog()">
+          <i class="bi bi-plus-lg me-2"></i>Add New Project
+        </button>
+      </div>
     </div>
+
+    @if (blogs().length > 1) {
+      <p class="text-muted small mb-3">
+        <i class="bi bi-arrows-move me-1"></i>Drag a card to reorder how projects appear on the Home page and Projects list.
+      </p>
+    }
 
     @if (blogs().length === 0) {
       <div class="text-center text-muted py-5">
@@ -2028,9 +2265,17 @@
       </div>
     } @else {
       <div class="row g-4">
-        @for (blog of blogs(); track blog.id) {
-          <div class="col-md-6 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+        @for (blog of blogs(); track blog.id; let i = $index) {
+          <div class="col-md-6 col-xl-4"
+               draggable="true"
+               (dragstart)="onBlogDragStart(i)"
+               (dragover)="onBlogDragOver($event)"
+               (drop)="onBlogDrop(i)"
+               style="cursor: grab;">
+            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden position-relative">
+              <span class="position-absolute top-0 start-0 m-2 badge bg-dark bg-opacity-75 rounded-pill" style="z-index:2;">
+                <i class="bi bi-arrows-move me-1"></i>#{{ i + 1 }}
+              </span>
               @if (getBlogCoverImage(blog)) {
                 <img [src]="getBlogImageUrl(getBlogCoverImage(blog))" class="card-img-top"
                      style="height:180px;object-fit:cover;" alt="cover">

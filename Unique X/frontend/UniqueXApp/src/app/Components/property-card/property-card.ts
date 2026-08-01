@@ -29,7 +29,16 @@ export class PropertyCardComponent {
   // "Visit Now" modal state
   visitDateValue: string = '';
   visitNotes: string = '';
+  visitType: string = '';
+  visitPhone: string = '';
   isSubmittingVisit = signal(false);
+
+  // بيرجع تاريخ ووقت اللحظة الحالية بصيغة datetime-local عشان نمنع اختيار تاريخ فات
+  get minVisitDate(): string {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  }
 
   private propertyService = inject(PropertyService);
   private alertService = inject(AlertService);
@@ -136,6 +145,8 @@ export class PropertyCardComponent {
 
     this.visitDateValue = '';
     this.visitNotes = '';
+    this.visitType = '';
+    this.visitPhone = '';
 
     const bootstrap = (window as any).bootstrap;
     const modalEl = document.getElementById(`visitNowModal-${this.property.id}`);
@@ -148,20 +159,33 @@ export class PropertyCardComponent {
     event.stopPropagation();
     event.preventDefault();
 
-    if (!this.visitDateValue) return;
+    if (!this.visitDateValue || !this.visitType || !this.visitPhone) return;
+
+    // تأكيد إضافي إن التاريخ المختار في المستقبل (حتى لو حصل تلاعب في الـ input)
+    const selectedDate = new Date(this.visitDateValue);
+    if (selectedDate.getTime() < Date.now()) {
+      this.alertService.error('Please select a future date and time for the visit.');
+      return;
+    }
 
     const userString = localStorage.getItem('user');
     if (!userString) { this.router.navigate(['/login']); return; }
     const userData = JSON.parse(userString);
+
+    // 👈 رقم الحساب المسجل هو اللي بيتحدد بيه هل العميل موجود كـ Lead قبل كده ولا لأ
+    // (مش الرقم اللي كتبته في خانة الموبايل بالمودال، ده رقم تواصل بس لزيارة دي)
+    const accountPhone = userData.phoneNumber || this.visitPhone;
 
     this.isSubmittingVisit.set(true);
 
     this.crmService.requestVisit({
       propertyId: this.property.id,
       clientName: userData.username || userData.firstName + ' ' + userData.lastName || 'Website Client',
-      clientPhone: userData.phoneNumber || '0000000000',
+      clientPhone: accountPhone,
+      contactPhone: this.visitPhone,
       clientEmail: userData.email,
       visitDate: this.visitDateValue,
+      visitType: this.visitType,
       notes: this.visitNotes
     }).subscribe({
       next: () => {

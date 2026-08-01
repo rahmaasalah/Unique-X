@@ -45,6 +45,23 @@ export class BlogDetailComponent implements OnInit {
   contactPhone = '';
   contactMessage = '';
 
+  // "Schedule Meeting" modal state
+  meetingModalOpen = signal(false);
+  meetingName: string = '';
+  meetingPhone: string = '';
+  meetingDate: string = '';
+  meetingNotes: string = '';
+  isSubmittingMeeting = signal(false);
+  meetingErrorMessage = signal<string>('');
+  meetingSuccessMessage = signal<string>('');
+
+  // بيرجع تاريخ ووقت اللحظة الحالية بصيغة datetime-local عشان نمنع اختيار ميعاد فات
+  get minMeetingDate(): string {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  }
+
   sliderImages = computed(() => this.blogService.getSliderImages(this.blog()));
   paymentPlans = computed(() => this.blogService.parseJson(this.blog()?.paymentPlansJson));
   articleSections = computed(() => this.blogService.parseJson(this.blog()?.articleSectionsJson));
@@ -189,6 +206,54 @@ export class BlogDetailComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/blog']);
+  }
+
+  // ===================== Schedule Meeting =====================
+
+  openMeetingModal() {
+    this.meetingName = '';
+    this.meetingPhone = '';
+    this.meetingDate = '';
+    this.meetingNotes = '';
+    this.meetingErrorMessage.set('');
+    this.meetingModalOpen.set(true);
+  }
+
+  closeMeetingModal() {
+    this.meetingModalOpen.set(false);
+  }
+
+  submitMeetingRequest() {
+    const blog = this.blog();
+    if (!blog || !this.meetingName || !this.meetingPhone || !this.meetingDate) return;
+
+    // تأكيد إضافي إن الميعاد في المستقبل (حتى لو حصل تلاعب في الـ input)
+    const selectedDate = new Date(this.meetingDate);
+    if (selectedDate.getTime() < Date.now()) {
+      this.meetingErrorMessage.set('Please select a future date and time for the meeting.');
+      return;
+    }
+
+    this.meetingErrorMessage.set('');
+    this.isSubmittingMeeting.set(true);
+
+    this.http.post(`${environment.apiUrl}/Blogs/${blog.id}/schedule-meeting`, {
+      fullName: this.meetingName,
+      phone: this.meetingPhone,
+      meetingDate: this.meetingDate,
+      notes: this.meetingNotes
+    }).subscribe({
+      next: () => {
+        this.isSubmittingMeeting.set(false);
+        this.meetingModalOpen.set(false);
+        this.meetingSuccessMessage.set('Meeting request sent! Our team will confirm it with you soon.');
+        setTimeout(() => this.meetingSuccessMessage.set(''), 4000);
+      },
+      error: () => {
+        this.isSubmittingMeeting.set(false);
+        this.meetingErrorMessage.set('Failed to send meeting request. Please try again.');
+      }
+    });
   }
 
   formatNumber(value: any): string {

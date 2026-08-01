@@ -13,6 +13,7 @@
         public string? PropertyCode { get; set; }
         public string? PropertyName { get; set; }
         public string? BrokerPhone { get; set; }
+        public string? ContactPhone { get; set; }
         public int ZoneId { get; set; }
         public string? VisitType { get; set; }
         public string? Notes { get; set; }

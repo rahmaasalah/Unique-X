@@ -14,6 +14,9 @@
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
+        // ترتيب الظهور اللي الأدمن بيحدده بالـ drag & drop (الأصغر يظهر الأول)
+        public int DisplayOrder { get; set; } = 0;
+
         // Photo Slider — مفصولة بـ |
         public string? SliderImages { get; set; }
 

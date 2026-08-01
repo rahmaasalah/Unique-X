@@ -52,6 +52,9 @@ export class AdminDashboardComponent implements OnInit {
   propProjectFilter = signal('');
   propStatusFilter = signal('');
   propDateFilter = signal('');
+  propZoneFilter = signal(''); // 🟢 فلتر المنطقة (Cairo/Alexandria/North Coast)
+  propMinBudget = signal<number | null>(null); // 🟢 فلتر أقل سعر
+  propMaxBudget = signal<number | null>(null); // 🟢 فلتر أعلى سعر
   
   soldSearchCode = signal(''); // فلتر الكود في Sold
   soldBrokerFilter = signal(''); // فلتر البروكر في Sold
@@ -72,7 +75,7 @@ export class AdminDashboardComponent implements OnInit {
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
   homeBanners = signal<any[]>([]);
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings'>('users');
 
   detailData = signal<any[]>([]);
 
@@ -83,6 +86,8 @@ export class AdminDashboardComponent implements OnInit {
   userTypeFilter = signal(''); 
   userDateFilter = signal('');
   pendingProperties = signal<any[]>([]);// الكل، بروكر، أو كلاينت
+  ownerProperties = signal<any[]>([]); // اتقدمت من زرار "Add Your Property" في الناف بار
+  ownerPropertiesPendingCount = computed(() => this.ownerProperties().filter(p => !p.isApproved && !p.rejectionReason).length);
   
   propSearchText = signal('');
   propListingFilter = signal('');
@@ -282,12 +287,41 @@ export class AdminDashboardComponent implements OnInit {
         matchesDate = propDate === this.propDateFilter();
       }
 
-      return matchesTitle && matchesListing && matchesType && matchesOwner && matchesDev && matchesBroker && matchesProject && matchesStatus && matchesDate;
+      // 🟢 فلتر المنطقة
+      const matchesZone = this.propZoneFilter() === '' || p.city === this.propZoneFilter();
+
+      // 🟢 فلتر الميزانية (Min/Max)
+      let matchesBudget = true;
+      const minBudget = this.propMinBudget();
+      const maxBudget = this.propMaxBudget();
+      if (minBudget !== null) matchesBudget = matchesBudget && p.price >= minBudget;
+      if (maxBudget !== null) matchesBudget = matchesBudget && p.price <= maxBudget;
+
+      return matchesTitle && matchesListing && matchesType && matchesOwner && matchesDev && matchesBroker && matchesProject && matchesStatus && matchesDate && matchesZone && matchesBudget;
     });
 
     // 🟢 الترتيب: من الأحدث للأقدم
     return result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   });
+
+  // 🟢 بتنضف أي حرف أو رقم سالب من حقول الـ Budget، وترفض غير الأرقام تمامًا
+  onBudgetInput(event: Event, which: 'min' | 'max') {
+    const input = event.target as HTMLInputElement;
+    const digitsOnly = input.value.replace(/[^0-9]/g, '');
+    const num = digitsOnly === '' ? null : Number(digitsOnly);
+
+    // 🟢 نعرض الرقم بفواصل الآلاف تلقائيًا وهو بيكتب (12000000 → 12,000,000)
+    input.value = num !== null ? num.toLocaleString('en-US') : '';
+
+    if (which === 'min') this.propMinBudget.set(num);
+    else this.propMaxBudget.set(num);
+  }
+
+  // 🟢 عشان "NorthCoast" تتعرض "North Coast" في الجدول
+  formatZone(city: string): string {
+    if (!city) return '';
+    return city === 'NorthCoast' ? 'North Coast' : city;
+  }
 
   filteredSoldData = computed(() => {
     const codeSearch = this.soldSearchCode().toLowerCase().trim();
@@ -355,6 +389,7 @@ export class AdminDashboardComponent implements OnInit {
     this.loadAllData();
     this.loadAdminProfile();
     this.loadPendingProperties();
+    this.loadOwnerProperties();
     this.loadPendingDeletions();
     this.initBlogForm(); // initialize blog form on load
   }
@@ -780,6 +815,86 @@ loadHotDeals() {
     this.pendingProperties.set(data)
   );
 }
+
+  loadOwnerProperties() {
+    this.adminService.getOwnerProperties().subscribe(data =>
+      this.ownerProperties.set(data)
+    );
+  }
+
+  // 🟢 الأدمن لازم يختار البروكر وقت الموافقة (نفس الفورم بتاع duplicateProperty بالظبط)
+  onApproveOwnerProperty(prop: any) {
+    const brokerOptions: any = {};
+    this.brokersList().forEach(b => {
+      brokerOptions[b.id] = `${b.firstName} ${b.lastName} (${b.phoneNumber})`;
+    });
+
+    const swal = (window as any).Swal;
+    swal.fire({
+      title: 'Approve Property',
+      text: `Select the broker to assign "${prop.title}" to`,
+      input: 'select',
+      inputOptions: brokerOptions,
+      inputPlaceholder: '--- Select a Broker ---',
+      showCancelButton: true,
+      confirmButtonColor: '#198754',
+      confirmButtonText: '<i class="bi bi-check-lg"></i> Approve & Assign',
+      inputValidator: (value: string) => {
+        return new Promise((resolve) => {
+          if (value) resolve(null);
+          else resolve('You need to select a broker!');
+        });
+      }
+    }).then((result: any) => {
+      if (result.isConfirmed) {
+        const selectedBrokerId = result.value;
+        this.alertService.showLoading('Approving...');
+        this.adminService.approveOwnerProperty(prop.id, selectedBrokerId).subscribe({
+          next: () => {
+            this.alertService.close();
+            this.alertService.success('Property approved and assigned to broker!');
+            this.loadOwnerProperties();
+          },
+          error: () => {
+            this.alertService.close();
+            this.alertService.error('Failed to approve property.');
+          }
+        });
+      }
+    });
+  }
+
+  onRejectOwnerProperty(prop: any) {
+    const swal = (window as any).Swal;
+    swal.fire({
+      title: 'Reject Property',
+      input: 'textarea',
+      inputLabel: 'Reason for rejection',
+      inputPlaceholder: 'Enter the reason...',
+      showCancelButton: true,
+      confirmButtonColor: '#ef3341',
+      confirmButtonText: 'Reject',
+      inputValidator: (value: string) => {
+        if (!value) return 'Please enter a reason!';
+        return null;
+      }
+    }).then((result: any) => {
+      if (result.isConfirmed) {
+        this.alertService.showLoading('Rejecting...');
+        this.adminService.rejectOwnerProperty(prop.id, result.value).subscribe({
+          next: () => {
+            this.alertService.close();
+            this.alertService.success('Property rejected.');
+            this.loadOwnerProperties();
+          },
+          error: () => {
+            this.alertService.close();
+            this.alertService.error('Failed to reject property.');
+          }
+        });
+      }
+    });
+  }
 
 onApproveProperty(id: number) {
   this.alertService.confirm('Approve this property and publish it?', () => {
@@ -1302,6 +1417,102 @@ blogMasterPlanFile = signal<File | null>(null);
 blogSliderFiles = signal<File[]>([]);
 blogButtonFiles: { [key: number]: File | null } = { 1: null, 2: null, 3: null };
 blogSubmitting = signal(false);
+
+// ================== Projects Meetings ==================
+projectMeetings = signal<any[]>([]);
+meetingSearchText = signal('');
+meetingContactedFilter = signal('all');
+
+uncontactedMeetingsCount = computed(() =>
+  this.projectMeetings().filter(m => !m.isContacted).length
+);
+
+filteredProjectMeetings = computed(() => {
+  const search = this.meetingSearchText().toLowerCase().trim();
+  const statusFilter = this.meetingContactedFilter();
+
+  return this.projectMeetings().filter(m => {
+    const matchesSearch = !search ||
+      (m.fullName || '').toLowerCase().includes(search) ||
+      (m.projectName || '').toLowerCase().includes(search);
+
+    const matchesStatus = statusFilter === 'all' ||
+      (statusFilter === 'contacted' && m.isContacted) ||
+      (statusFilter === 'pending' && !m.isContacted);
+
+    return matchesSearch && matchesStatus;
+  });
+});
+
+loadProjectMeetings() {
+  this.http.get<any[]>(`${environment.apiUrl}/admin/project-meetings`).subscribe({
+    next: (data) => this.projectMeetings.set(data),
+    error: () => this.alertService.error('Failed to load projects meetings.')
+  });
+}
+
+toggleMeetingContacted(meeting: any) {
+  this.http.patch<any>(`${environment.apiUrl}/admin/project-meetings/${meeting.id}/toggle-contacted`, {}).subscribe({
+    next: (res) => {
+      meeting.isContacted = res.isContacted;
+      this.projectMeetings.update(list => [...list]);
+    },
+    error: () => this.alertService.error('Failed to update meeting status.')
+  });
+}
+
+deleteProjectMeeting(meeting: any) {
+  this.http.delete(`${environment.apiUrl}/admin/project-meetings/${meeting.id}`).subscribe({
+    next: () => {
+      this.projectMeetings.update(list => list.filter(m => m.id !== meeting.id));
+      this.alertService.success('Meeting request deleted.');
+    },
+    error: () => this.alertService.error('Failed to delete meeting request.')
+  });
+}
+
+
+// ترتيب الظهور بالـ drag & drop
+draggedBlogIndex: number | null = null;
+blogOrderChanged = signal(false);
+savingBlogOrder = signal(false);
+
+onBlogDragStart(index: number) {
+  this.draggedBlogIndex = index;
+}
+
+onBlogDragOver(event: DragEvent) {
+  event.preventDefault(); // لازم عشان الـ drop يشتغل
+}
+
+onBlogDrop(index: number) {
+  if (this.draggedBlogIndex === null || this.draggedBlogIndex === index) return;
+
+  const current = [...this.blogs()];
+  const [moved] = current.splice(this.draggedBlogIndex, 1);
+  current.splice(index, 0, moved);
+
+  this.blogs.set(current);
+  this.draggedBlogIndex = null;
+  this.blogOrderChanged.set(true);
+}
+
+saveBlogOrder() {
+  const orderedIds = this.blogs().map(b => b.id);
+  this.savingBlogOrder.set(true);
+
+  this.blogService.reorder(orderedIds).subscribe({
+    next: () => {
+      this.savingBlogOrder.set(false);
+      this.blogOrderChanged.set(false);
+      this.alertService.success('Order saved successfully!');
+    },
+    error: () => {
+      this.savingBlogOrder.set(false);
+      this.alertService.error('Failed to save order.');
+    }
+  });
+}
 paymentPlans = signal<any[]>([]);
 articleSections = signal<any[]>([]);
 faqs = signal<any[]>([]);

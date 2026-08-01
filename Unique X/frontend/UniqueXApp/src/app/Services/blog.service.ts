@@ -13,6 +13,7 @@ export class BlogService {
   create(fd: FormData)                  { return this.http.post<any>(this.base, fd); }
   update(id: number, fd: FormData)      { return this.http.put<any>(`${this.base}/${id}`, fd); }
   delete(id: number)                    { return this.http.delete(`${this.base}/${id}`); }
+  reorder(orderedIds: number[])         { return this.http.put(`${this.base}/reorder`, orderedIds); }
 
   // دلوقتي الـ URLs بتيجي من Cloudinary مباشرة — مش محتاجين نبني URL
   getImageUrl(url: string): string {

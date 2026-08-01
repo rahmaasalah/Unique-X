@@ -96,6 +96,9 @@ namespace Unique_X.DTOs
         public int? PropertyType { get; set; }
         public int MainPhotoIndex { get; set; } = 0;
 
+        // اتبعتت من زرار "Add Your Property" (كلاينت أو بروكر) لا من فورم البروكر العادي
+        public bool? IsOwnerSubmitted { get; set; }
+
         public List<IFormFile>? Photos { get; set; }
     }
 }
