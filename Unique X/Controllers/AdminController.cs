@@ -394,7 +394,7 @@ namespace Unique_X.Controllers
                 .Include(p => p.Broker)
                 .Include(p => p.Photos)
                 .Include(p => p.PaymentPlans)
-                .Where(p => !p.IsApproved && p.RejectionReason == null)
+                .Where(p => !p.IsApproved && p.RejectionReason == null && !p.IsOwnerSubmitted)
                 .OrderByDescending(p => p.CreatedAt)
                 .Select(p => new
                 {
@@ -412,6 +412,7 @@ namespace Unique_X.Controllers
                     p.RejectionReason,
                     p.IsActive,
                     p.IsSold,
+                    p.IsOwnerSubmitted,
                     p.Area,
                     p.Rooms,
                     p.Bathrooms,

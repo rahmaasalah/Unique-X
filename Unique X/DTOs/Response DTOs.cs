@@ -109,6 +109,9 @@ namespace Unique_X.DTOs
         public bool IsActive { get; set; }
         public string? RejectionReason { get; set; }
 
+        // اتقدمت من "Add Your Property" في الناف بار (كلاينت أو بروكر) لا من فورم البروكر العادي
+        public bool IsOwnerSubmitted { get; set; }
+
         public bool PendingDeletion { get; set; } = false;
         public string? DeletionRejectionReason { get; set; }
     }

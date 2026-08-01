@@ -88,6 +88,8 @@ export class AdminDashboardComponent implements OnInit {
   pendingProperties = signal<any[]>([]);// الكل، بروكر، أو كلاينت
   ownerProperties = signal<any[]>([]); // اتقدمت من زرار "Add Your Property" في الناف بار
   ownerPropertiesPendingCount = computed(() => this.ownerProperties().filter(p => !p.isApproved && !p.rejectionReason).length);
+  // 🟢 بنستثني وحدات "Add Your Property" من تاب Pending Review العادي عشان تفضل في تاب Owners Properties بس
+  brokerPendingProperties = computed(() => this.pendingProperties().filter(p => !p.isOwnerSubmitted));
   
   propSearchText = signal('');
   propListingFilter = signal('');
@@ -221,7 +223,7 @@ export class AdminDashboardComponent implements OnInit {
   suspendedPropertiesCount = computed(() => this.properties().filter(p => !p.isActive && p.isApproved).length);
   soldPropertiesCount = computed(() => this.properties().filter(p => p.isSold).length);
   rejectedPropertiesCount = computed(() => this.properties().filter(p => !p.isApproved && p.rejectionReason).length);
-  rejectedPropertiesList = computed(() => this.properties().filter(p => !p.isApproved && p.rejectionReason));
+  rejectedPropertiesList = computed(() => this.properties().filter(p => !p.isApproved && p.rejectionReason && !p.isOwnerSubmitted));
 
   brokersList = computed(() => this.users().filter(u => u.userType === 1));
 
