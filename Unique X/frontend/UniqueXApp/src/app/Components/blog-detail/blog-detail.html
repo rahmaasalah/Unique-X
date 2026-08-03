@@ -124,8 +124,7 @@
               <div class="border-end pe-4">
                 <div class="text-muted small">Developer Price / m²</div>
                 <div class="fw-bold fs-5" style="color:#1a1a2e;">
-                  {{ blog().pricePerMeterPrimary | number }}
-                  <span class="small fw-normal text-muted">EGP</span>
+                  {{ currencyService.format(blog().pricePerMeterPrimary) }}
                 </div>
               </div>
             }
@@ -133,8 +132,7 @@
               <div>
                 <div class="text-muted small">Resale Price / m²</div>
                 <div class="fw-bold fs-5 text-danger">
-                  {{ blog().pricePerMeterResale | number }}
-                  <span class="small fw-normal text-muted">EGP</span>
+                  {{ currencyService.format(blog().pricePerMeterResale) }}
                 </div>
               </div>
             }
@@ -240,7 +238,7 @@
                       <i class="bi bi-cash-stack fs-3 text-success"></i>
                       <div>
                         <div class="text-muted small">Avg. Down Payment</div>
-                        <div><span class="fw-bold fs-5">{{ formatNumber(blog().avgDownPayment) }}</span><span class="text-muted ms-1 small">EGP</span></div>
+                        <div><span class="fw-bold fs-5">{{ currencyService.format(blog().avgDownPayment) }}</span></div>
                       </div>
                     </div>
                   }
@@ -269,7 +267,7 @@
                       <!-- Avg Down Payment -->
                       @if (plan.avgDownPayment) {
                         <div class="mb-2 d-flex align-items-baseline gap-1">
-                          <span class="fw-bold fs-5">{{ formatNumber(plan.avgDownPayment) }}</span>
+                          <span class="fw-bold fs-5">{{ currencyService.format(plan.avgDownPayment) }}</span>
                           <span class="text-muted small">Avg. Down Payment</span>
                         </div>
                       }
@@ -277,7 +275,7 @@
                       <!-- fallback: old downPayment field -->
                       @if (!plan.avgDownPayment && plan.downPayment) {
                         <div class="mb-2 d-flex align-items-baseline gap-1">
-                          <span class="fw-bold fs-5">{{ formatNumber(plan.downPayment) }}</span>
+                          <span class="fw-bold fs-5">{{ currencyService.format(plan.downPayment) }}</span>
                           <span class="text-muted small">Down Payment</span>
                         </div>
                       }
@@ -290,7 +288,7 @@
                       <!-- Avg Installment -->
                       @if (plan.avgInstallment) {
                         <div class="text-muted small mt-1">
-                          <span class="fw-bold text-dark">{{ formatNumber(plan.avgInstallment) }}</span>
+                          <span class="fw-bold text-dark">{{ currencyService.format(plan.avgInstallment) }}</span>
                           <span class="ms-1">/ quarterly installment</span>
                         </div>
                       }
@@ -298,7 +296,7 @@
                       <!-- fallback: old installment field -->
                       @if (!plan.avgInstallment && plan.installment) {
                         <div class="text-muted small mt-1">
-                          <span class="fw-bold text-dark">{{ formatNumber(plan.installment) }}</span>
+                          <span class="fw-bold text-dark">{{ currencyService.format(plan.installment) }}</span>
                           <span class="ms-1">/ quarterly installment</span>
                         </div>
                       }
@@ -415,7 +413,7 @@
                   @if (unit.area) { <span><i class="bi bi-aspect-ratio me-1"></i>{{ unit.area }} m²</span> }
                 </div>
                 <div class="d-flex align-items-center justify-content-between">
-                  <div class="fw-bold text-danger fs-6">{{ unit.price | number }} EGP</div>
+                  <div class="fw-bold text-danger fs-6">{{ currencyService.format(unit.price) }}</div>
                   @if (unit.brokerPhone) {
                     <div class="d-flex gap-2">
                       <a [href]="'tel:' + unit.brokerPhone"

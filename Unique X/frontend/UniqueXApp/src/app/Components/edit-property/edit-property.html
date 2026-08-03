@@ -163,6 +163,8 @@
                   </div>
                   @if (editForm.get('pricePerMeter')?.touched && editForm.get('pricePerMeter')?.errors?.['required']) {
                     <small class="text-danger d-block mt-1">Price per meter is required</small>
+                  } @else if (convertedPreview(editForm.get('pricePerMeter')?.value)) {
+                    <small class="text-muted d-block mt-1">{{ convertedPreview(editForm.get('pricePerMeter')?.value) }}</small>
                   }
                 </div>
               }
@@ -180,6 +182,8 @@
                   <small class="text-danger d-block mt-1">Total price is required</small>
                 } @else if (editForm.get('price')?.touched && editForm.get('price')?.errors?.['min']) {
                   <small class="text-danger d-block mt-1">Price must be at least {{ isRent() ? '1' : '1,000,000' }} EGP</small>
+                } @else if (convertedPreview(editForm.get('price')?.value)) {
+                  <small class="text-muted d-block mt-1">{{ convertedPreview(editForm.get('price')?.value) }}</small>
                 }
               </div>
 
@@ -366,10 +370,16 @@
       <label class="small fw-bold">Monthly Rent Amount <span class="text-danger">*</span></label>
       <input type="text" (input)="formatFinancial($event, 'monthlyRent')" formControlName="monthlyRent" class="form-control shadow-sm border-danger" min="0">
       <small class="text-danger" style="font-size: 0.7rem;">This should match the total price field above</small>
+      @if (convertedPreview(editForm.get('monthlyRent')?.value)) {
+        <small class="text-muted d-block mt-1">{{ convertedPreview(editForm.get('monthlyRent')?.value) }}</small>
+      }
     </div>
     <div class="col-md-6 animate__animated animate__fadeIn">
       <label class="small fw-bold">Security Deposit <span class="text-danger">*</span></label>
       <input type="text" (input)="formatFinancial($event, 'securityDeposit')" formControlName="securityDeposit" class="form-control shadow-sm border-danger" min="0">
+      @if (convertedPreview(editForm.get('securityDeposit')?.value)) {
+        <small class="text-muted d-block mt-1">{{ convertedPreview(editForm.get('securityDeposit')?.value) }}</small>
+      }
     </div>
   } @else {
     <div class="col-md-3">
@@ -422,6 +432,9 @@
                 <span class="input-group-text bg-white text-dark">EGP</span>
                 <input type="text" (input)="formatFinancialArray($event, 'downPayment', i); onAmountChange(i)" formControlName="downPayment" class="form-control shadow-sm">
               </div>
+              @if (convertedPreview(plan.get('downPayment')?.value)) {
+                <small class="text-muted d-block mt-1">{{ convertedPreview(plan.get('downPayment')?.value) }}</small>
+              }
             </div>
 
             
@@ -432,6 +445,9 @@
          placeholder="Auto-calculated"
          readonly>
 </div>
+@if (convertedPreview(plan.get('installmentAmount')?.value)) {
+  <small class="text-muted d-block mt-1">{{ convertedPreview(plan.get('installmentAmount')?.value) }}</small>
+}
 <small class="text-muted">
   @if (plan.get('frequency')?.value === 'Quarterly') { Quarterly installment }
   @else if (plan.get('frequency')?.value === 'Semi-Annual') { Semi-annual installment }

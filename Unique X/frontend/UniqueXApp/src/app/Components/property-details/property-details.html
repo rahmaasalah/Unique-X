@@ -77,14 +77,14 @@
          <div class="d-flex align-items-center gap-3 mb-3">
   <div>
     @if (prop.listingType === 'Rent') {
-      <h3 class="fw-bold text-danger mb-0">EGP {{ prop.monthlyRent | number }} <small class="fs-6 text-muted fw-normal">/ month</small></h3>
+      <h3 class="fw-bold text-danger mb-0">{{ currencyService.format(prop.monthlyRent) }} <small class="fs-6 text-muted fw-normal">/ month</small></h3>
     } @else {
-      <h3 class="fw-bold text-danger mb-0">EGP {{ prop.price | number }}</h3>
+      <h3 class="fw-bold text-danger mb-0">{{ currencyService.format(prop.price) }}</h3>
       
       <!-- 🟢 تأكدي من هذا الجزء بالظبط -->
      @if (prop.pricePerMeter > 0 || (prop.price > 0 && prop.area > 0)) {
    <small class="text-muted fw-bold d-block" style="font-size: 0.9rem;">
-     {{ (prop.pricePerMeter > 0 ? prop.pricePerMeter : (prop.price / prop.area)) | number:'1.0-0' }} EGP / m²
+     {{ currencyService.format(prop.pricePerMeter > 0 ? prop.pricePerMeter : (prop.price / prop.area)) }} / m²
    </small>
 }
     }
@@ -289,7 +289,7 @@
             <div>
               @if (prop.listingType === 'Rent') {
                 <h6 class="mb-0 fw-bold">Rental Terms</h6>
-                @if (prop.securityDeposit > 0) { <small class="text-danger fw-bold">Security Deposit: EGP {{ prop.securityDeposit | number }}</small> }
+                @if (prop.securityDeposit > 0) { <small class="text-danger fw-bold">Security Deposit: {{ currencyService.format(prop.securityDeposit) }}</small> }
               } @else {
                 <h6 class="mb-2 fw-bold">Payment Plan: {{ prop.paymentMethod }}</h6>
                 
@@ -303,7 +303,7 @@
                            <div class="row g-2 mt-1">
                              <div class="col-6">
                                <small class="d-block text-dark fw-bold" style="font-size: 0.65rem;">DOWN PAYMENT</small>
-                               <span class="text-dark fs-6">EGP {{ plan.downPayment | number }}</span>
+                               <span class="text-dark fs-6">{{ currencyService.format(plan.downPayment) }}</span>
                              </div>
                              <div class="col-6">
                                <small class="d-block text-muted fw-bold" style="font-size: 0.65rem;">DURATION</small>
@@ -311,7 +311,7 @@
                              </div>
                              <div class="col-12 mt-2 pt-2 border-top">
                                <small class="d-block text-success fw-bold" style="font-size: 0.65rem;">QUARTERLY INSTALLMENT</small>
-                               <span class="text-success fs-6">EGP {{ plan.quarterInstallment | number }}</span>
+                               <span class="text-success fs-6">{{ currencyService.format(plan.quarterInstallment) }}</span>
                              </div>
                            </div>
                         </div>

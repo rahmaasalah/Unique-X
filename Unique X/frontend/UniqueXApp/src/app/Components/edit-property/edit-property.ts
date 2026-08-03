@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup,FormArray, Validators, Abst
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { PropertyService } from '../../Services/property';
 import { AlertService } from '../../Services/alert';
+import { CurrencyService } from '../../Services/currency.service';
 
 function minAmountValidator(min: number): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -280,6 +281,16 @@ filteredProjects: string[] = [];
   private router = inject(Router);
   private propertyService = inject(PropertyService);
   private alertService = inject(AlertService);
+  currencyService = inject(CurrencyService);
+
+  // 🟢 السعر بيتخزن بالجنيه المصري دايمًا زي ما هو مكتوب؛ ده بس بيدي معاينة بالعملة المختارة تحت الحقل
+  convertedPreview(rawValue: any): string {
+    if (!rawValue) return '';
+    if (this.currencyService.selectedCurrency() === 'EGP') return '';
+    const num = parseFloat(String(rawValue).replace(/,/g, ''));
+    if (isNaN(num) || num <= 0) return '';
+    return `≈ ${this.currencyService.format(num)}`;
+  }
 
   originalCode: string = '';
   originalCodeTriggers: any = {};

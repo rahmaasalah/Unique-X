@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { BlogService } from '../../Services/blog.service';
+import { CurrencyService } from '../../Services/currency.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -15,6 +16,7 @@ import { environment } from '../../../environments/environment';
 })
 export class BlogDetailComponent implements OnInit {
   blogService = inject(BlogService);
+  currencyService = inject(CurrencyService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private http = inject(HttpClient);

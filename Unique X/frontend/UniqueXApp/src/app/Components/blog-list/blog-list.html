@@ -82,13 +82,13 @@
                       @if (blog.pricePerMeterResale) {
                         <div class="text-center bg-danger-subtle rounded-3 px-3 py-2 flex-fill">
                           <div class="small text-muted">Resale/m²</div>
-                          <div class="fw-bold text-danger">{{ blog.pricePerMeterResale | number }} EGP</div>
+                          <div class="fw-bold text-danger">{{ currencyService.format(blog.pricePerMeterResale) }}</div>
                         </div>
                       }
                       @if (blog.pricePerMeterPrimary) {
                         <div class="text-center bg-light rounded-3 px-3 py-2 flex-fill">
                           <div class="small text-muted">Primary/m²</div>
-                          <div class="fw-bold text-dark">{{ blog.pricePerMeterPrimary | number }} EGP</div>
+                          <div class="fw-bold text-dark">{{ currencyService.format(blog.pricePerMeterPrimary) }}</div>
                         </div>
                       }
                     </div>
