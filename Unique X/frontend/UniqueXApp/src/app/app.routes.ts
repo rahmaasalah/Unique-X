@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './Guards/auth-guard';
 import { guestGuard } from './Guards/guest-guard';
 import { adminGuard } from './Guards/admin-guard';
+import { InvestmentCalculatorComponent } from './Components/investment-calculator/investment-calculator';
 
 export const routes: Routes = [
   // ===== Public =====
@@ -32,7 +33,7 @@ export const routes: Routes = [
 
   // ===== Admin =====
   { path: 'admin', loadComponent: () => import('./Components/admin-dashboard/admin-dashboard').then(m => m.AdminDashboardComponent), canActivate: [adminGuard] },
-
+  { path: 'investment-calculator', component: InvestmentCalculatorComponent },
   // ===== CRM =====
   { path: 'crm/leads', loadComponent: () => import('./Components/CRM/leads-dashboard/leads-dashboard').then(m => m.LeadsDashboardComponent) },
   { path: 'crm/leads/:id', loadComponent: () => import('./Components/CRM/lead-details/lead-details').then(m => m.LeadDetailsComponent) },

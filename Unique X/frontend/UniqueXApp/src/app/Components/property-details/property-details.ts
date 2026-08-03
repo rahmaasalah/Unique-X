@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -12,6 +12,7 @@ import { AlertService } from '../../Services/alert';
 import { Chart, registerables } from 'chart.js';
 import { CrmService } from '../../Services/crm.services';
 import { ReviewService } from '../../Services/review.service';
+import { CurrencyService } from '../../Services/currency.service';
 Chart.register(...registerables);
 
 @Component({
@@ -41,6 +42,20 @@ export class PropertyDetailsComponent implements OnInit {
 
   private crmService = inject(CrmService);
   private reviewService = inject(ReviewService);
+  currencyService = inject(CurrencyService);
+
+  // بنحتفظ بآخر بيانات اتحملت عشان لو العملة اتغيرت بعد ما الرسمة اتعملت، نرسمها تاني بالعملة الجديدة
+  private lastFinancialHistory: any[] = [];
+  private lastListingType: string = '';
+
+  constructor() {
+    effect(() => {
+      this.currencyService.selectedCurrency(); // بمجرد ما تتغير، الـ effect ده بيتنفذ تاني
+      if (this.lastFinancialHistory.length > 0) {
+        this.renderChart(this.lastFinancialHistory, this.lastListingType);
+      }
+    });
+  }
   propertyId: number = 123; // (أكيد المتغير ده عندك بياخد رقم العقار الحالي)
 
   // Reviews
@@ -135,6 +150,8 @@ export class PropertyDetailsComponent implements OnInit {
                 // ترتيب السنين من الأقدم للأحدث
                 history.sort((a, b) => a.year - b.year);
                 this.financialHistory.set(history);
+                this.lastFinancialHistory = history;
+                this.lastListingType = data.listingType;
                 
                 // تأخير بسيط للسماح للـ HTML برسم الـ Canvas أولاً
                 setTimeout(() => this.renderChart(history, data.listingType), 200);
@@ -306,8 +323,10 @@ startCompare() {
     if (this.chart) this.chart.destroy(); // مسح الرسمة القديمة لو موجودة
 
     const years = history.map(h => h.year);
-    const prices = history.map(h => h.price);
-    const labelTitle = listingType === 'Rent' ? 'Rental Price Trend (EGP)' : 'Property Value Trend (EGP)';
+    // 🟢 البيانات نفسها متخزنة بالجنيه المصري دايمًا، وبنحولها بصريًا بس للعملة المختارة حاليًا
+    const prices = history.map(h => this.currencyService.convert(h.price));
+    const currencyLabel = this.currencyService.selectedCurrency();
+    const labelTitle = listingType === 'Rent' ? `Rental Price Trend (${currencyLabel})` : `Property Value Trend (${currencyLabel})`;
 
     this.chart = new Chart(ctx, {
       type: 'line',
@@ -334,9 +353,7 @@ startCompare() {
           legend: { position: 'top' },
           tooltip: {
             callbacks: {
-              label: function(context) {
-                return ' EGP ' + context.parsed.y.toLocaleString('en-US');
-              }
+              label: (context) => this.currencyService.format(history[context.dataIndex].price)
             }
           }
         },

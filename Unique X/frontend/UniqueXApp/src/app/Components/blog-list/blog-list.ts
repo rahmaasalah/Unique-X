@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BlogService } from '../../Services/blog.service';
+import { CurrencyService } from '../../Services/currency.service';
 
 @Component({
   selector: 'app-blog-list',
@@ -11,6 +12,7 @@ import { BlogService } from '../../Services/blog.service';
 })
 export class BlogListComponent implements OnInit {
   blogService = inject(BlogService);
+  currencyService = inject(CurrencyService);
   private router = inject(Router);
 
   blogs = signal<any[]>([]);

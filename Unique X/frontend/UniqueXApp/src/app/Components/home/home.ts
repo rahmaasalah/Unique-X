@@ -9,6 +9,7 @@ import { AuthService } from '../../Services/auth';
 import { AdminService } from '../../Services/admin';
 import { BlogService } from '../../Services/blog.service';
 import { GoogleAnalyticsService } from 'ngx-google-analytics';
+import { CurrencyService } from '../../Services/currency.service';
 
 
 
@@ -28,6 +29,7 @@ export class HomeComponent implements OnInit {
   adminPhone = signal<string>('');
   private gaService = inject(GoogleAnalyticsService);
   private blogService = inject(BlogService);
+  currencyService = inject(CurrencyService);
 
   resaleProps = computed(() => this.properties().filter(p => p.listingType === 'Resale'));
   resaleProjectProps = computed(() => this.properties().filter(p => p.listingType === 'ResaleProject'));

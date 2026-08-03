@@ -1,0 +1,287 @@
+<section class="py-5" style="background:#f8f9fa;min-height:100vh;">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="text-center mb-5">
+      <a routerLink="/home" class="text-muted small d-inline-block mb-3 text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i> Back to Home
+      </a>
+      <h2 class="fw-bold" style="color:#1a1a2e;">Real Estate Investment ROI Calculator</h2>
+      <p class="text-muted">Calculate every real estate investment ratio across 3 scenarios, in seconds.</p>
+      <div style="width:60px;height:4px;background:#ef3341;margin:0 auto;border-radius:2px;"></div>
+    </div>
+
+    <!-- ============ Inputs Card ============ -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+
+      <h6 class="fw-bold mb-3" style="color:#1a1a2e;"><i class="bi bi-building text-danger me-1"></i> Unit Type</h6>
+      <div class="d-flex gap-2 flex-wrap mb-4">
+        @for (t of unitTypes; track t.key) {
+          <button type="button" class="btn rounded-pill px-4 fw-semibold"
+                  [class.btn-danger]="selectedUnitType().key === t.key"
+                  [class.btn-outline-secondary]="selectedUnitType().key !== t.key"
+                  (click)="selectUnitType(t)">
+            {{ t.icon }} {{ t.label }} — CAP Rate {{ t.capRate }}%
+          </button>
+        }
+      </div>
+
+      <h6 class="fw-bold mb-3" style="color:#1a1a2e;"><i class="bi bi-sliders text-danger me-1"></i> Unit Details</h6>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label small fw-bold text-muted">Total Unit Price (EGP)</label>
+          <input type="text" inputmode="numeric" class="form-control bg-light border-0 rounded-3 py-2"
+                 [value]="unitPriceDisplay" (input)="onUnitPriceInput($event)" placeholder="e.g. 5,000,000">
+          @if (unitPricePreview()) {
+            <small class="text-muted d-block mt-1">{{ unitPricePreview() }}</small>
+          }
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label small fw-bold text-muted">Years to Deliver</label>
+          <input type="number" min="0" class="form-control bg-light border-0 rounded-3 py-2"
+                 [(ngModel)]="yearsToDeliver" (keydown)="blockNegativeKeys($event)" (input)="clampNonNegative('yearsToDeliver')"
+                 placeholder="e.g. 3">
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label small fw-bold text-muted">Instalment Years</label>
+          <input type="number" min="0" class="form-control bg-light border-0 rounded-3 py-2"
+                 [(ngModel)]="installmentYears" (keydown)="blockNegativeKeys($event)" (input)="clampNonNegative('installmentYears')"
+                 placeholder="e.g. 8">
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <label class="form-label small fw-bold text-muted">Delivery %</label>
+          <input type="number" min="0" max="100" class="form-control bg-light border-0 rounded-3 py-2"
+                 [(ngModel)]="deliveryPercent" (keydown)="blockNegativeKeys($event)" (input)="clampNonNegative('deliveryPercent')"
+                 placeholder="e.g. 40">
+        </div>
+      </div>
+
+      <p class="text-muted small mb-3">
+        <i class="bi bi-lightbulb me-1 text-warning"></i>
+        The remaining variables (price appreciation · discount rate) are calculated automatically for each scenario — the CAP Rate is set by the unit type.
+      </p>
+
+      @if (errorMessage()) {
+        <div class="alert alert-danger small py-2">{{ errorMessage() }}</div>
+      }
+
+      <button type="button" class="btn btn-danger rounded-pill fw-bold py-2 px-4" (click)="calculate()">
+        <i class="bi bi-calculator me-1"></i> Calculate 3 Scenarios
+      </button>
+    </div>
+
+    <!-- ============ Results ============ -->
+    @if (results()) {
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0" style="color:#1a1a2e;">Investment Results — 3 Scenarios</h4>
+          <button class="btn btn-outline-secondary btn-sm rounded-pill" (click)="reset()">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Recalculate
+          </button>
+        </div>
+
+        <!-- Scenario Tabs -->
+        <div class="d-flex gap-2 flex-wrap mb-4">
+          @for (r of results(); track r.config.key) {
+            <button type="button" class="btn rounded-pill px-4 fw-semibold flex-fill"
+                    [class.btn-danger]="selectedScenarioKey() === r.config.key"
+                    [class.btn-outline-secondary]="selectedScenarioKey() !== r.config.key"
+                    (click)="selectedScenarioKey.set(r.config.key)">
+              {{ r.config.icon }} {{ r.config.label }}
+            </button>
+          }
+        </div>
+
+        @if (selectedResult(); as res) {
+          <!-- Summary Cards -->
+          <div class="row g-3 mb-4">
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="card border-0 shadow-sm rounded-3 text-center p-3 h-100">
+                <div class="small text-muted mb-1">ROI</div>
+                <div class="fw-bold text-danger fs-5">{{ formatPercent(res.roi) }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="card border-0 shadow-sm rounded-3 text-center p-3 h-100">
+                <div class="small text-muted mb-1">ROE</div>
+                <div class="fw-bold text-danger fs-5">{{ formatPercent(res.roe) }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="card border-0 shadow-sm rounded-3 text-center p-3 h-100">
+                <div class="small text-muted mb-1">IRR (annual)</div>
+                <div class="fw-bold fs-5" style="color:#1a1a2e;">{{ formatPercent(res.irr) }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="card border-0 shadow-sm rounded-3 text-center p-3 h-100">
+                <div class="small text-muted mb-1">Leverage</div>
+                <div class="fw-bold fs-5" style="color:#1a1a2e;">{{ res.leverage | number:'1.1-1' }}x</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="card border-0 shadow-sm rounded-3 text-center p-3 h-100">
+                <div class="small text-muted mb-1">Payback Period</div>
+                <div class="fw-bold fs-5" style="color:#1a1a2e;">{{ res.paybackYears ? (res.paybackYears | number:'1.1-1') + ' yrs' : '—' }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="card border-0 shadow-sm rounded-3 text-center p-3 h-100">
+                <div class="small text-muted mb-1">Net Cash</div>
+                <div class="fw-bold text-success fs-6">{{ formatNumber(res.netCash) }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NPV metrics row -->
+          <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+              <div class="card border-0 shadow-sm rounded-3 text-center p-3 h-100 bg-light">
+                <div class="small text-muted mb-1">ROI – NPV</div>
+                <div class="fw-bold" style="color:#1a1a2e;">{{ formatPercent(res.roiNPV) }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card border-0 shadow-sm rounded-3 text-center p-3 h-100 bg-light">
+                <div class="small text-muted mb-1">ROE – NPV</div>
+                <div class="fw-bold" style="color:#1a1a2e;">{{ formatPercent(res.roeNPV) }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card border-0 shadow-sm rounded-3 text-center p-3 h-100 bg-light">
+                <div class="small text-muted mb-1">Unit PV at Purchasing</div>
+                <div class="fw-bold" style="color:#1a1a2e;">{{ formatNumber(res.unitPVAtPurchasing) }}</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card border-0 shadow-sm rounded-3 text-center p-3 h-100 bg-light">
+                <div class="small text-muted mb-1">Unit PV after Instalment</div>
+                <div class="fw-bold" style="color:#1a1a2e;">{{ formatNumber(res.unitPVAfterInstallment) }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- View toggle: Chart / Table -->
+          <div class="d-flex gap-2 mb-3">
+            <button type="button" class="btn btn-sm rounded-pill px-3"
+                    [class.btn-dark]="activeView() === 'chart'"
+                    [class.btn-outline-dark]="activeView() !== 'chart'"
+                    (click)="activeView.set('chart')">
+              <i class="bi bi-graph-up me-1"></i> Chart
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3"
+                    [class.btn-dark]="activeView() === 'table'"
+                    [class.btn-outline-dark]="activeView() !== 'table'"
+                    (click)="activeView.set('table')">
+              <i class="bi bi-table me-1"></i> Yearly Table
+            </button>
+          </div>
+
+          <!-- Chart -->
+          @if (activeView() === 'chart') {
+            <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+              <p class="small text-muted mb-2">Investment value growth year by year — {{ res.config.label }}</p>
+              <svg viewBox="0 0 640 260" style="width:100%;height:auto;">
+                <!-- Property Value line -->
+                <polyline [attr.points]="chartPoints('propertyValue')" fill="none" stroke="#ef3341" stroke-width="2.5"></polyline>
+                <!-- Total Paid line -->
+                <polyline [attr.points]="chartPoints('totalPaid')" fill="none" stroke="#1a1a2e" stroke-width="2.5" stroke-dasharray="4,3"></polyline>
+                <!-- Cumulative Rent line -->
+                <polyline [attr.points]="chartPoints('cumulativeRent')" fill="none" stroke="#28a745" stroke-width="2.5"></polyline>
+              </svg>
+              <div class="d-flex gap-4 justify-content-center small mt-2 flex-wrap">
+                <span><span class="d-inline-block me-1" style="width:12px;height:3px;background:#ef3341;"></span>Estimated Property Value</span>
+                <span><span class="d-inline-block me-1" style="width:12px;height:3px;background:#1a1a2e;"></span>Total Paid</span>
+                <span><span class="d-inline-block me-1" style="width:12px;height:3px;background:#28a745;"></span>Cumulative Rent</span>
+              </div>
+            </div>
+          }
+
+          <!-- Yearly Table -->
+          @if (activeView() === 'table') {
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="ps-3">Year</th>
+                      <th>Property Value</th>
+                      <th>Monthly Rent</th>
+                      <th>Cumulative Rent</th>
+                      <th>Total Paid</th>
+                      <th>Net Worth</th>
+                      <th>ROI</th>
+                      <th class="pe-3">ROE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of res.yearlyTable; track row.year) {
+                      <tr>
+                        <td class="ps-3 fw-bold">{{ row.year }}</td>
+                        <td>{{ formatNumber(row.propertyValue) }}</td>
+                        <td>{{ formatNumber(row.monthlyRent) }}</td>
+                        <td>{{ formatNumber(row.cumulativeRent) }}</td>
+                        <td>{{ formatNumber(row.totalPaid) }}</td>
+                        <td class="fw-bold" [class.text-success]="row.netWorth >= 0" [class.text-danger]="row.netWorth < 0">
+                          {{ formatNumber(row.netWorth) }}
+                        </td>
+                        <td>{{ formatPercent(row.roi) }}</td>
+                        <td class="pe-3">{{ row.roe !== null ? formatPercent(row.roe) : '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    }
+
+    <!-- ============ Glossary ============ -->
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+      <h5 class="fw-bold mb-3" style="color:#1a1a2e;"><i class="bi bi-book me-2 text-danger"></i>Glossary</h5>
+      <div class="accordion" id="glossaryAccordion">
+        @for (item of [
+          {term: 'Unit Price @ Delivery', descAr: 'سعر الوحدة المتوقع وقت الاستلام، بعد تطبيق نسبة التقدير السنوية على سنوات ما قبل الاستلام.', descEn: 'The expected unit price at delivery time, after applying the annual appreciation rate over the pre-delivery years.'},
+          {term: 'Unit Price After Instalment Years', descAr: 'سعر الوحدة المتوقع في نهاية فترة التقسيط الكاملة، بعد التقدير في مرحلتي ما قبل وما بعد الاستلام.', descEn: 'The expected unit price at the end of the full instalment period, after appreciation across both the pre- and post-delivery phases.'},
+          {term: 'Amount Paid @ Delivery', descAr: 'إجمالي المبالغ المدفوعة من بداية الشراء حتى تاريخ استلام الوحدة (المقدم + الأقساط قبل الاستلام).', descEn: 'Total amounts paid from purchase until the unit delivery date (down payment + pre-delivery instalments).'},
+          {term: 'Amount Paid After Delivery', descAr: 'إجمالي الأقساط المتبقية التي تُدفع بعد استلام الوحدة حتى نهاية فترة التقسيط.', descEn: 'Total remaining instalments paid after the unit is delivered, until the end of the instalment period.'},
+          {term: 'Total Rent after Delivery', descAr: 'إجمالي الإيجار المتوقع تحصيله على مدار سنوات ما بعد الاستلام، محسوباً على أساس CAP Rate × سعر الوحدة عند الاستلام.', descEn: 'Total expected rent collected over the post-delivery years, calculated as CAP Rate × Unit Price at Delivery.'},
+          {term: 'Net Rent – Instalment After Delivery', descAr: 'الإيجار الصافي بعد خصم الأقساط المدفوعة بعد الاستلام — يمثل التدفق النقدي الفعلي في جيبك من الإيجار.', descEn: 'Net rent after deducting the instalments paid after delivery — represents the actual cash flow in your pocket from rent.'},
+          {term: 'Total Revenue', descAr: 'إجمالي العائد = سعر البيع النهائي للوحدة + صافي الإيجار بعد خصم الأقساط.', descEn: 'Total return = final unit sale price + net rent after deducting instalments.'},
+          {term: 'Net Cash', descAr: 'صافي الربح الحقيقي = إجمالي العائد ناقص المبلغ المدفوع عند الاستلام (حقوق الملكية).', descEn: 'Real net profit = Total Revenue minus the amount paid at delivery (equity).'},
+          {term: 'Total Equity Paid', descAr: 'إجمالي ما دفعته كمستثمر حتى الاستلام — هو نفسه Amount Paid @ Delivery، وهو رأس المال الحقيقي في المخاطرة.', descEn: 'Total amount you paid as an investor up to delivery — same as Amount Paid @ Delivery, and the real capital at risk.'},
+          {term: 'ROI — Return on Investment', descAr: 'نسبة العائد على إجمالي سعر الوحدة. مثال: ROI 1000% يعني ربحت 10 أضعاف قيمة الوحدة الأصلية.', descEn: 'Return relative to the total unit price. Example: ROI 1000% means you profited 10x the original unit value.'},
+          {term: 'ROE — Return on Equity', descAr: 'نسبة العائد على الأموال اللي دفعتها فعلاً (حقوق الملكية). أهم من ROI لأنه بيعكس الرفع المالي الحقيقي.', descEn: 'Return relative to the money you actually paid (equity). More important than ROI because it reflects real financial leverage.'},
+          {term: 'IRR — Internal Rate of Return', descAr: 'معدل العائد السنوي المبسّط = ROE ÷ عدد سنوات الاستثمار. يعطيك فكرة عن كفاءة الاستثمار على مدار الزمن.', descEn: 'Simplified annual rate of return = ROE ÷ number of investment years. Gives a sense of investment efficiency over time.'},
+          {term: 'Leverage', descAr: 'مضاعف التحكم في الأصل. Leverage 2x يعني إنك بـ 50% من قيمة الوحدة بتتحكم في 100% من الأصل والتقدير.', descEn: 'The asset-control multiplier. Leverage 2x means that with 50% of the unit value, you control 100% of the asset and its appreciation.'},
+          {term: 'Payback Period', descAr: 'عدد السنوات اللازمة لاسترداد سعر الوحدة الأصلي من الإيجار فقط — بدون احتساب التقدير في السعر.', descEn: 'Number of years needed to recover the original unit price from rent alone — excluding price appreciation.'},
+          {term: 'CAP Rate — Capitalization Rate', descAr: 'نسبة الإيجار السنوي إلى سعر الوحدة عند الاستلام. سكني 5% · تجاري 6% · ساحلي 8%.', descEn: 'Ratio of annual rent to the unit price at delivery. Residential 5% · Commercial 6% · Coastal 8%.'},
+          {term: 'Discount Rate', descAr: 'معدل الخصم المستخدم في حسابات NPV — يعكس تكلفة الفرصة البديلة وتأثير التضخم على قيمة الأموال.', descEn: 'The discount rate used in NPV calculations — reflects opportunity cost and the effect of inflation on the value of money.'},
+          {term: 'Unit PV after Instalment', descAr: 'القيمة الحالية للوحدة في نهاية فترة التقسيط، بعد خصمها بمعدل الـ Discount Rate — يمثل قيمة بيعك بعيون اليوم.', descEn: 'The present value of the unit at the end of the instalment period, discounted at the Discount Rate — represents its resale value in today\'s terms.'},
+          {term: 'Unit PV at Purchasing', descAr: 'القيمة الحالية لكل مدفوعاتك (المقدم + الأقساط) مخصومة لليوم — التكلفة الحقيقية بعيون الزمن.', descEn: 'The present value of all your payments (down payment + instalments), discounted to today — the real cost in today\'s terms.'},
+          {term: 'Equity PV at Purchasing', descAr: 'القيمة الحالية للمدفوعات حتى الاستلام فقط (حقوق الملكية) مخصومة — أساس حساب ROE-NPV.', descEn: 'The present value of payments made up to delivery only (equity), discounted — the basis for ROE-NPV.'},
+          {term: 'ROI – NPV', descAr: 'العائد على الاستثمار معدَّلاً بالقيمة الزمنية للنقود — أدق من ROI العادي لأنه يأخذ التضخم والفرصة البديلة في الاعتبار.', descEn: 'Return on investment adjusted for the time value of money — more accurate than plain ROI as it accounts for inflation and opportunity cost.'},
+          {term: 'ROE – NPV', descAr: 'العائد على حقوق الملكية معدَّلاً بالقيمة الزمنية — أقوى مقياس للعائد الحقيقي مُعدَّل للتضخم والزمن معاً.', descEn: 'Return on equity adjusted for the time value of money — the strongest measure of real return, adjusted for both inflation and time.'}
+        ]; track item.term; let i = $index) {
+          <div class="accordion-item border-0 border-bottom">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed fw-semibold" type="button"
+                      data-bs-toggle="collapse" [attr.data-bs-target]="'#gloss' + i">
+                {{ item.term }}
+              </button>
+            </h2>
+            <div [id]="'gloss' + i" class="accordion-collapse collapse" data-bs-parent="#glossaryAccordion">
+              <div class="accordion-body text-muted small">
+                <div class="mb-2" dir="rtl">{{ item.descAr }}</div>
+                <div class="pt-2 border-top" dir="ltr">{{ item.descEn }}</div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+</section>
