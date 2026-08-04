@@ -310,8 +310,8 @@
                                <span class="fw-bold text-dark fs-6">{{ plan.installmentYears }} Years</span>
                              </div>
                              <div class="col-12 mt-2 pt-2 border-top">
-                               <small class="d-block text-success fw-bold" style="font-size: 0.65rem;">QUARTERLY INSTALLMENT</small>
-                               <span class="text-success fs-6">{{ currencyService.format(plan.quarterInstallment) }}</span>
+                               <small class="d-block text-success fw-bold text-uppercase" style="font-size: 0.65rem;">{{ plan.frequency || 'Quarterly' }} Installment</small>
+                               <span class="text-success fs-6">{{ currencyService.format(plan.installmentAmount) }}</span>
                              </div>
                            </div>
                         </div>

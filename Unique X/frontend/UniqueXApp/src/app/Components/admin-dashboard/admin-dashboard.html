@@ -2927,7 +2927,7 @@
                            <div class="p-2 border rounded-3 bg-light mb-2 small d-flex flex-wrap gap-3 align-items-center">
                              <span class="badge bg-danger">Plan {{ i + 1 }}</span>
                              <span><b>Down Payment:</b> EGP {{ plan.downPayment | number }}</span>
-                             <span><b>Quarterly:</b> EGP {{ plan.quarterInstallment | number }}</span>
+                             <span><b>{{ plan.frequency || 'Quarterly' }}:</b> EGP {{ plan.quarterInstallment | number }}</span>
                              <span><b>Duration:</b> {{ plan.installmentYears }} Years</span>
                            </div>
                          }
