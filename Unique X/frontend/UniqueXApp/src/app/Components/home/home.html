@@ -9,6 +9,46 @@
   }
   .quick-links-row::-webkit-scrollbar { display: none; }
   .quick-links-row .quick-link-item { flex-shrink: 0; }
+
+  /* 🟢 سكرول أفقي بأسهم يمين وشمال — لأقسام Projects / Launches / Hot Deals / الوحدات */
+  /* بادينج على الجانبين عشان الأسهم تقعد برا الكارد خالص من غير ما تغطي عليه */
+  .h-scroll-wrap { position: relative; padding: 0 46px; }
+  .h-scroll {
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* سناب: يوقف السكرول دايمًا عند بداية كارت كامل، مش نص كارت */
+    scroll-snap-type: x mandatory;
+    /* الكروت كلها بنفس طول أطول كارت في الصف، والزراير بتترصّ في نفس المستوى */
+    align-items: stretch;
+  }
+  .h-scroll::-webkit-scrollbar { display: none; }
+  .h-scroll-item { flex: 0 0 auto; scroll-snap-align: start; }
+  .h-scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.08);
+    box-shadow: 0 4px 14px rgba(0,0,0,.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef3341;
+    cursor: pointer;
+  }
+  .h-scroll-arrow:hover { background: #ef3341; color: #fff; }
+  .h-scroll-arrow.left { left: 0; }
+  .h-scroll-arrow.right { right: 0; }
+  @media (max-width: 767.98px) {
+    .h-scroll-arrow { display: none; } /* على الموبايل السكرول باللمس كفاية */
+    .h-scroll-wrap { padding: 0; } /* من غير أسهم مفيش داعي للبادينج */
+  }
 </style>
 <div class="container py-5">
 
@@ -288,15 +328,17 @@
       </a>
     }
 
-    <!-- 🟢 Add Your Property: ظاهر دايمًا؛ لو مش مسجل دخول الـ authGuard على المسار هيوجهه لصفحة اللوجين الأول -->
-    <a class="text-decoration-none d-flex flex-column align-items-center quick-link-item" style="width:80px;"
-       routerLink="/add-your-property" title="Add Your Property">
-      <div class="rounded-circle bg-danger-subtle d-flex align-items-center justify-content-center mb-1 shadow-sm text-danger"
-           style="width:60px;height:60px;">
-        <i class="bi bi-plus-square-fill fs-4"></i>
-      </div>
-      <span class="small fw-bold text-danger text-center" style="font-size:0.75rem;">Add Your Property</span>
-    </a>
+    <!-- 🟢 Add Your Property: مخفي للبروكرز؛ لو مش مسجل دخول الـ authGuard على المسار هيوجهه لصفحة اللوجين الأول -->
+    @if (!(authService.loggedIn() && authService.getUserType() === 1)) {
+      <a class="text-decoration-none d-flex flex-column align-items-center quick-link-item" style="width:80px;"
+         routerLink="/add-your-property" title="Add Your Property">
+        <div class="rounded-circle bg-danger-subtle d-flex align-items-center justify-content-center mb-1 shadow-sm text-danger"
+             style="width:60px;height:60px;">
+          <i class="bi bi-plus-square-fill fs-4"></i>
+        </div>
+        <span class="small fw-bold text-danger text-center" style="font-size:0.75rem;">Add Your Property</span>
+      </a>
+    }
 
     <!-- خيارات البروكر فقط -->
     @if (authService.loggedIn() && authService.getUserType() === 1) {
@@ -361,12 +403,20 @@
     @if (filteredHotDeals().length > 0) {
       <div class="container my-5 animate__animated animate__fadeIn">
         <h3 class="fw-bold text-danger mb-4"><i class="bi bi-fire"></i> Hot Deals</h3>
-        <div class="row g-4">
-          @for (prop of filteredHotDeals(); track prop.id) {
-            <div class="col-md-6 col-lg-3">
-              <app-property-card [property]="prop" class="hot-deal-card"></app-property-card>
-            </div>
-          }
+        <div class="h-scroll-wrap">
+          <button class="h-scroll-arrow left" (click)="scrollH(hotDealsScroll, -1)" aria-label="Scroll left">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <div class="d-flex h-scroll gap-4 pb-2" #hotDealsScroll>
+            @for (prop of filteredHotDeals(); track prop.id) {
+              <div class="h-scroll-item" style="width:320px;">
+                <app-property-card [property]="prop" class="hot-deal-card"></app-property-card>
+              </div>
+            }
+          </div>
+          <button class="h-scroll-arrow right" (click)="scrollH(hotDealsScroll, 1)" aria-label="Scroll right">
+            <i class="bi bi-chevron-right"></i>
+          </button>
         </div>
       </div>
     }
@@ -398,9 +448,13 @@
             <i class="bi bi-journal-richtext text-danger me-2"></i>Projects
           </h3>
         </div>
-        <div class="row g-4">
+        <div class="h-scroll-wrap">
+          <button class="h-scroll-arrow left" (click)="scrollH(projectsScroll, -1)" aria-label="Scroll left">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <div class="d-flex h-scroll gap-4 pb-2" #projectsScroll>
           @for (blog of blogs(); track blog.id) {
-            <div class="col-md-6 col-lg-4">
+            <div class="h-scroll-item" style="width:320px;">
               <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden"
                    style="cursor:pointer;transition:transform .2s,box-shadow .2s;"
                    (click)="goToBlog(blog.id)"
@@ -470,6 +524,10 @@
               </div>
             </div>
           }
+          </div>
+          <button class="h-scroll-arrow right" (click)="scrollH(projectsScroll, 1)" aria-label="Scroll right">
+            <i class="bi bi-chevron-right"></i>
+          </button>
         </div>
       </div>
     }
@@ -482,9 +540,13 @@
             <i class="bi bi-rocket-takeoff text-danger me-2"></i>Launches
           </h3>
         </div>
-        <div class="row g-4">
+        <div class="h-scroll-wrap">
+          <button class="h-scroll-arrow left" (click)="scrollH(launchesScroll, -1)" aria-label="Scroll left">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <div class="d-flex h-scroll gap-4 pb-2" #launchesScroll>
           @for (launch of launches(); track launch.id) {
-            <div class="col-md-6 col-lg-4">
+            <div class="h-scroll-item" style="width:320px;">
               <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden"
                    style="cursor:pointer;transition:transform .2s,box-shadow .2s;"
                    (click)="goToLaunch(launch.id)"
@@ -556,6 +618,10 @@
               </div>
             </div>
           }
+          </div>
+          <button class="h-scroll-arrow right" (click)="scrollH(launchesScroll, 1)" aria-label="Scroll right">
+            <i class="bi bi-chevron-right"></i>
+          </button>
         </div>
       </div>
     }
@@ -601,12 +667,20 @@
           <div class="d-flex align-items-center mb-4">
             <h3 class="fw-bold text-dark mb-0"><i class="bi bi-house-door text-danger me-2"></i>Resale Properties</h3>
           </div>
-          <div class="row g-4">
-            @for (prop of resaleProps(); track prop.id) {
-              <div class="col-md-6 col-lg-4">
-                <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
-              </div>
-            }
+          <div class="h-scroll-wrap">
+            <button class="h-scroll-arrow left" (click)="scrollH(resaleScroll, -1)" aria-label="Scroll left">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="d-flex h-scroll gap-4 pb-2" #resaleScroll>
+              @for (prop of resaleProps(); track prop.id) {
+                <div class="h-scroll-item" style="width:320px;">
+                  <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
+                </div>
+              }
+            </div>
+            <button class="h-scroll-arrow right" (click)="scrollH(resaleScroll, 1)" aria-label="Scroll right">
+              <i class="bi bi-chevron-right"></i>
+            </button>
           </div>
         </div>
       }
@@ -617,12 +691,20 @@
           <div class="d-flex align-items-center mb-4">
             <h3 class="fw-bold text-dark mb-0"><i class="bi bi-building text-danger me-2"></i>Resale Projects</h3>
           </div>
-          <div class="row g-4">
-            @for (prop of resaleProjectProps(); track prop.id) {
-              <div class="col-md-6 col-lg-4">
-                <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
-              </div>
-            }
+          <div class="h-scroll-wrap">
+            <button class="h-scroll-arrow left" (click)="scrollH(resaleProjectScroll, -1)" aria-label="Scroll left">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="d-flex h-scroll gap-4 pb-2" #resaleProjectScroll>
+              @for (prop of resaleProjectProps(); track prop.id) {
+                <div class="h-scroll-item" style="width:320px;">
+                  <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
+                </div>
+              }
+            </div>
+            <button class="h-scroll-arrow right" (click)="scrollH(resaleProjectScroll, 1)" aria-label="Scroll right">
+              <i class="bi bi-chevron-right"></i>
+            </button>
           </div>
         </div>
       }
@@ -633,12 +715,20 @@
           <div class="d-flex align-items-center mb-4">
             <h3 class="fw-bold text-dark mb-0"><i class="bi bi-stars text-danger me-2"></i>Primary Properties</h3>
           </div>
-          <div class="row g-4">
-            @for (prop of primaryProps(); track prop.id) {
-              <div class="col-md-6 col-lg-4">
-                <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
-              </div>
-            }
+          <div class="h-scroll-wrap">
+            <button class="h-scroll-arrow left" (click)="scrollH(primaryScroll, -1)" aria-label="Scroll left">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="d-flex h-scroll gap-4 pb-2" #primaryScroll>
+              @for (prop of primaryProps(); track prop.id) {
+                <div class="h-scroll-item" style="width:320px;">
+                  <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
+                </div>
+              }
+            </div>
+            <button class="h-scroll-arrow right" (click)="scrollH(primaryScroll, 1)" aria-label="Scroll right">
+              <i class="bi bi-chevron-right"></i>
+            </button>
           </div>
         </div>
       }
@@ -649,12 +739,20 @@
           <div class="d-flex align-items-center mb-4">
             <h3 class="fw-bold text-dark mb-0"><i class="bi bi-key text-danger me-2"></i>Properties for Rent</h3>
           </div>
-          <div class="row g-4">
-            @for (prop of rentProps(); track prop.id) {
-              <div class="col-md-6 col-lg-4">
-                <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
-              </div>
-            }
+          <div class="h-scroll-wrap">
+            <button class="h-scroll-arrow left" (click)="scrollH(rentScroll, -1)" aria-label="Scroll left">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="d-flex h-scroll gap-4 pb-2" #rentScroll>
+              @for (prop of rentProps(); track prop.id) {
+                <div class="h-scroll-item" style="width:320px;">
+                  <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
+                </div>
+              }
+            </div>
+            <button class="h-scroll-arrow right" (click)="scrollH(rentScroll, 1)" aria-label="Scroll right">
+              <i class="bi bi-chevron-right"></i>
+            </button>
           </div>
         </div>
       }

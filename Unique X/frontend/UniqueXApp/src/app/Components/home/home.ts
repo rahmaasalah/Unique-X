@@ -594,6 +594,13 @@ goToLaunch(id: number) {
   this.router.navigate(['/launch', id]);
 }
 
+// 🟢 سكرول أفقي بأسهم يمين وشمال لأقسام Projects / Launches / Hot Deals / الوحدات
+scrollH(container: HTMLElement, dir: number) {
+  if (!container) return;
+  const amount = container.clientWidth * 0.8 * dir;
+  container.scrollBy({ left: amount, behavior: 'smooth' });
+}
+
 // رقم الأدمن ثابت في السيستم (نفس الرقم المستخدم في صفحة تفاصيل اللانش)
 private readonly LAUNCH_ADMIN_PHONE = '01509064020';
 

@@ -16,10 +16,8 @@ export class ExploreHomeComponent implements OnInit {
   properties = signal<Property[]>([]);
   isLoading = signal<boolean>(true);
 
-  resaleProps = computed(() => this.properties().filter(p => p.listingType === 'Resale'));
+  // 🟢 الصفحة دلوقتي بتعرض وحدات Resale Project بس
   resaleProjectProps = computed(() => this.properties().filter(p => p.listingType === 'ResaleProject'));
-  primaryProps = computed(() => this.properties().filter(p => p.listingType === 'Primary'));
-  rentProps = computed(() => this.properties().filter(p => p.listingType === 'Rent'));
 
   constructor(private propertyService: PropertyService) {}
 
@@ -27,7 +25,7 @@ export class ExploreHomeComponent implements OnInit {
     this.loadProperties();
   }
 
-  // بنجيب كل الوحدات من غير أي فلتر — نفس ترتيب أقسام الهوم بالظبط
+  // بنجيب كل الوحدات من غير أي فلتر وبعدين بنفلتر Resale Project بس في الـ computed
   loadProperties() {
     this.isLoading.set(true);
     this.propertyService.getProperties({}).subscribe({
@@ -41,5 +39,12 @@ export class ExploreHomeComponent implements OnInit {
         console.error(err);
       }
     });
+  }
+
+  // 🟢 سكرول أفقي بأسهم يمين وشمال (زي شريط الأيقونات في الهوم)
+  scrollH(container: HTMLElement, dir: number) {
+    if (!container) return;
+    const amount = container.clientWidth * 0.8 * dir;
+    container.scrollBy({ left: amount, behavior: 'smooth' });
   }
 }

@@ -100,23 +100,22 @@
        {{ property.region }}, {{ property.city }}
     </p>
 
-    <div class="d-flex justify-content-between border-top pt-3 text-muted small mb-3">
+    <div class="d-flex justify-content-between border-top pt-3 text-muted small mb-2">
       @if (displayRooms > 0) {
         <span><i class="bi bi-door-open me-1"></i> {{ displayRooms }} Beds</span>
       }
       @if (displayBaths > 0) {
         <span><i class="bi bi-droplet me-1"></i> {{ displayBaths }} Baths</span>
       }
-      <span class="d-flex flex-column align-items-center">
-        <i class="bi bi-aspect-ratio mb-1"></i> 
-        {{ property.area }} m²
-        @if(property.propertyType === 'Villa' && property.builtUpArea > 0) {
-          <small class="text-danger fw-bold" style="font-size: 0.65rem;">
-            B.U.A: {{ property.builtUpArea }} m²
-          </small>
-        }
-      </span>
+      <span><i class="bi bi-aspect-ratio me-1"></i> {{ property.area }} m²</span>
     </div>
+    @if(property.propertyType === 'Villa' && property.builtUpArea > 0) {
+      <div class="text-end mb-2">
+        <small class="text-danger fw-bold" style="font-size: 0.65rem;">
+          B.U.A: {{ property.builtUpArea }} m²
+        </small>
+      </div>
+    }
 
     <div class="mt-auto pt-2">
       <a href="javascript:void(0)" 
