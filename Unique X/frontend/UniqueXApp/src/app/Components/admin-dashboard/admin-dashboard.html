@@ -65,6 +65,12 @@
         </li>
         <li class="mb-1">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
+                  [class.active]="activeTab() === 'homeSectionBanners'" (click)="switchTab('homeSectionBanners'); loadHomeSectionBanners()">
+            <i class="bi bi-images me-3 fs-6"></i> Load Banners
+          </button>
+        </li>
+        <li class="mb-1">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
                   [class.active]="activeTab() === 'financial'" (click)="switchTab('financial')">
             <i class="bi bi-bar-chart-fill me-3 fs-6"></i> Financial Charts
           </button>
@@ -129,6 +135,36 @@
     @if (uncontactedMeetingsCount() > 0) {
       <span class="badge bg-danger ms-2">{{ uncontactedMeetingsCount() }}</span>
     }
+  </button>
+</li>
+
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'launches'"
+          (click)="activeTab.set('launches'); loadLaunches()">
+    <i class="bi bi-rocket-takeoff me-3 fs-6"></i> Launches
+    @if (launches().length > 0) {
+      <span class="badge bg-danger ms-2">{{ launches().length }}</span>
+    }
+  </button>
+</li>
+
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'launchMeetings'"
+          (click)="activeTab.set('launchMeetings'); loadLaunchMeetings()">
+    <i class="bi bi-calendar-check me-3 fs-6"></i> Launch Meetings
+    @if (uncontactedLaunchMeetingsCount() > 0) {
+      <span class="badge bg-danger ms-2">{{ uncontactedLaunchMeetingsCount() }}</span>
+    }
+  </button>
+</li>
+
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'lookups'"
+          (click)="switchTab('lookups')">
+    <i class="bi bi-diagram-3 me-3 fs-6"></i> Developers &amp; Projects
   </button>
 </li>
         
@@ -268,6 +304,252 @@
     </div>
   </section>
 }
+
+@if (activeTab() === 'lookups') {
+  <section class="animate__animated animate__fadeIn">
+    <h4 class="fw-bold mb-4"><i class="bi bi-diagram-3 me-2"></i>Developers &amp; Projects</h4>
+
+    <!-- Sub tabs -->
+    <ul class="nav nav-pills mb-4">
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="lookupsSubTab() === 'developers'" (click)="lookupsSubTab.set('developers')">Developers</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="lookupsSubTab() === 'primaryProjects'" (click)="lookupsSubTab.set('primaryProjects')">Primary Projects</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="lookupsSubTab() === 'resaleProjects'" (click)="lookupsSubTab.set('resaleProjects')">Resale Projects</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="lookupsSubTab() === 'regions'" (click)="lookupsSubTab.set('regions')">Regions</button>
+      </li>
+    </ul>
+
+    <!-- City filter - بيتحكم في المشاريع والمناطق (مش المطورين، لأن المطور مش مرتبط بمدينة) -->
+    @if (lookupsSubTab() !== 'developers') {
+      <div class="mb-3" style="max-width: 260px;">
+        <label class="small fw-bold text-muted">City</label>
+        <select class="form-select bg-light border-0 shadow-sm" [ngModel]="lookupCityFilter()" (ngModelChange)="onLookupCityChange(+$event)">
+          <option [value]="1">Cairo</option>
+          <option [value]="2">Alexandria</option>
+          <option [value]="3">North Coast</option>
+        </select>
+      </div>
+    }
+
+    <!-- ===== Developers ===== -->
+    @if (lookupsSubTab() === 'developers') {
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-6">
+            <label class="small fw-bold text-muted">Developer Name</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Palm Hills"
+                   [ngModel]="newDeveloperName()" (ngModelChange)="newDeveloperName.set($event)">
+          </div>
+          <div class="col-md-4">
+            <label class="small fw-bold text-muted">Code</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. PH"
+                   [ngModel]="newDeveloperCode()" (ngModelChange)="newDeveloperCode.set($event)">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddDeveloper()"
+                    [disabled]="!newDeveloperName().trim() || !newDeveloperCode().trim()">
+              <i class="bi bi-plus-lg me-1"></i> Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        @for (dev of lookupDevelopers(); track dev.id) {
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark">{{ dev.name }}</div>
+                <span class="badge bg-light text-dark border">{{ dev.code }}</span>
+              </div>
+              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteDeveloper(dev.id)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-muted">No developers yet.</p>
+        }
+      </div>
+    }
+
+    <!-- ===== Primary Projects ===== -->
+    @if (lookupsSubTab() === 'primaryProjects') {
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="small fw-bold text-muted">Project Name</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Village West"
+                   [ngModel]="newProjectName()" (ngModelChange)="newProjectName.set($event)">
+          </div>
+          <div class="col-md-2">
+            <label class="small fw-bold text-muted">Code</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. VW"
+                   [ngModel]="newProjectCode()" (ngModelChange)="newProjectCode.set($event)">
+          </div>
+          <div class="col-md-3">
+            <label class="small fw-bold text-muted">
+              Region @if (lookupCityFilter() !== 2) { <span class="text-danger">*</span> }
+            </label>
+            @if (lookupCityFilter() === 2) {
+              <input type="text" class="form-control bg-light border-0" value="Alexandria (no region needed)" disabled>
+            } @else {
+              <select class="form-select bg-light border-0" [class.border-danger]="!newProjectRegion()"
+                      [ngModel]="newProjectRegion()" (ngModelChange)="newProjectRegion.set($event)">
+                <option value="">-- Select Region --</option>
+                @for (reg of lookupRegions(); track reg.id) {
+                  <option [value]="reg.name">{{ reg.name }}</option>
+                }
+              </select>
+            }
+          </div>
+          <div class="col-md-2">
+            <label class="small fw-bold text-muted">Developer</label>
+            <select class="form-select bg-light border-0" [ngModel]="newProjectDeveloperId()" (ngModelChange)="newProjectDeveloperId.set($event)">
+              <option value="">—</option>
+              @for (dev of lookupDevelopers(); track dev.id) {
+                <option [value]="dev.id">{{ dev.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-1">
+            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddProject(0)"
+                    [disabled]="!newProjectName().trim() || !newProjectCode().trim() || (lookupCityFilter() !== 2 && !newProjectRegion())">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        @for (proj of lookupPrimaryProjects(); track proj.id) {
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark">{{ proj.name }}</div>
+                <span class="badge bg-light text-dark border me-1">{{ proj.code }}</span>
+                @if (proj.region) { <span class="small text-muted">{{ proj.region }}</span> }
+              </div>
+              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteProject(proj.id)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-muted">No primary projects for this city yet.</p>
+        }
+      </div>
+    }
+
+    <!-- ===== Resale Projects ===== -->
+    @if (lookupsSubTab() === 'resaleProjects') {
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="small fw-bold text-muted">Project Name</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Sawari"
+                   [ngModel]="newProjectName()" (ngModelChange)="newProjectName.set($event)">
+          </div>
+          <div class="col-md-3">
+            <label class="small fw-bold text-muted">Project ID / Code</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. 27"
+                   [ngModel]="newProjectCode()" (ngModelChange)="newProjectCode.set($event)">
+          </div>
+          <div class="col-md-3">
+            <label class="small fw-bold text-muted">
+              Region @if (lookupCityFilter() !== 2) { <span class="text-danger">*</span> }
+            </label>
+            @if (lookupCityFilter() === 2) {
+              <input type="text" class="form-control bg-light border-0" value="Alexandria (no region needed)" disabled>
+            } @else {
+              <select class="form-select bg-light border-0"
+                      [ngModel]="newProjectRegion()" (ngModelChange)="newProjectRegion.set($event)">
+                <option value="">-- Select Region --</option>
+                @for (reg of lookupRegions(); track reg.id) {
+                  <option [value]="reg.name">{{ reg.name }}</option>
+                }
+              </select>
+            }
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddProject(1)"
+                    [disabled]="!newProjectName().trim() || !newProjectCode().trim() || (lookupCityFilter() !== 2 && !newProjectRegion())">
+              <i class="bi bi-plus-lg me-1"></i> Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        @for (proj of lookupResaleProjects(); track proj.id) {
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark">{{ proj.name }}</div>
+                <span class="badge bg-light text-dark border me-1">ID {{ proj.code }}</span>
+                @if (proj.region) { <span class="small text-muted">{{ proj.region }}</span> }
+              </div>
+              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteProject(proj.id)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-muted">No resale projects for this city yet.</p>
+        }
+      </div>
+    }
+
+    <!-- ===== Regions ===== -->
+    @if (lookupsSubTab() === 'regions') {
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-6">
+            <label class="small fw-bold text-muted">Region Name</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Smouha"
+                   [ngModel]="newRegionName()" (ngModelChange)="newRegionName.set($event)">
+          </div>
+          <div class="col-md-4">
+            <label class="small fw-bold text-muted">Zone Code (optional)</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. 63"
+                   [ngModel]="newRegionZoneCode()" (ngModelChange)="newRegionZoneCode.set($event)">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddRegion()"
+                    [disabled]="!newRegionName().trim()">
+              <i class="bi bi-plus-lg me-1"></i> Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        @for (reg of lookupRegions(); track reg.id) {
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark">{{ reg.name }}</div>
+                @if (reg.zoneCode) { <span class="badge bg-light text-dark border">{{ reg.zoneCode }}</span> }
+              </div>
+              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteRegion(reg.id)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-muted">No regions for this city yet.</p>
+        }
+      </div>
+    }
+  </section>
+}
+
     <!-- تبويب إدارة المستخدمين -->
     @if (activeTab() === 'users') {
       <section class="animate__animated animate__fadeIn">
@@ -921,6 +1203,71 @@
   </section>
 }
 
+@if (activeTab() === 'homeSectionBanners') {
+  <section class="animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold mb-0"><i class="bi bi-images me-2"></i>Load Banners</h4>
+      <small class="text-muted">Home page — between Launches &amp; Hot Deals</small>
+    </div>
+
+    <div class="row g-4">
+
+      <!-- Explore Home Banner -->
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+          <h6 class="fw-bold mb-1"><i class="bi bi-house-heart text-danger me-2"></i>Explore Home Banner</h6>
+          <p class="text-muted small mb-3">The left banner — opens the "Explore Your Dream Home" page.</p>
+
+          @if (exploreHomeBannerUrl()) {
+            <img [src]="exploreHomeBannerUrl()" class="w-100 rounded-3 mb-3" style="height:160px;object-fit:cover;">
+            <button class="btn btn-outline-danger rounded-3 fw-bold w-100"
+                    [disabled]="homeSectionBannerSaving() === 'explore-home'"
+                    (click)="onDeleteHomeSectionBanner('explore-home')">
+              <i class="bi bi-trash me-1"></i>
+              {{ homeSectionBannerSaving() === 'explore-home' ? 'Deleting...' : 'Delete' }}
+            </button>
+          } @else {
+            <input #exploreHomeFile type="file" accept="image/*" class="form-control bg-light border-0 rounded-3 mb-3">
+            <button class="btn btn-danger rounded-3 fw-bold w-100"
+                    [disabled]="homeSectionBannerSaving() === 'explore-home'"
+                    (click)="onUploadHomeSectionBanner('explore-home', exploreHomeFile)">
+              <i class="bi bi-upload me-1"></i>
+              {{ homeSectionBannerSaving() === 'explore-home' ? 'Uploading...' : 'Upload' }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Add Property Banner -->
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+          <h6 class="fw-bold mb-1"><i class="bi bi-plus-square text-danger me-2"></i>Add Property Banner</h6>
+          <p class="text-muted small mb-3">The right banner — opens the "Add Your Property" page.</p>
+
+          @if (addPropertyBannerUrl()) {
+            <img [src]="addPropertyBannerUrl()" class="w-100 rounded-3 mb-3" style="height:160px;object-fit:cover;">
+            <button class="btn btn-outline-danger rounded-3 fw-bold w-100"
+                    [disabled]="homeSectionBannerSaving() === 'add-property'"
+                    (click)="onDeleteHomeSectionBanner('add-property')">
+              <i class="bi bi-trash me-1"></i>
+              {{ homeSectionBannerSaving() === 'add-property' ? 'Deleting...' : 'Delete' }}
+            </button>
+          } @else {
+            <input #addPropertyFile type="file" accept="image/*" class="form-control bg-light border-0 rounded-3 mb-3">
+            <button class="btn btn-danger rounded-3 fw-bold w-100"
+                    [disabled]="homeSectionBannerSaving() === 'add-property'"
+                    (click)="onUploadHomeSectionBanner('add-property', addPropertyFile)">
+              <i class="bi bi-upload me-1"></i>
+              {{ homeSectionBannerSaving() === 'add-property' ? 'Uploading...' : 'Upload' }}
+            </button>
+          }
+        </div>
+      </div>
+
+    </div>
+  </section>
+}
+
 @if (activeTab() === 'financial') {
       <section class="animate__animated animate__fadeIn">
         <h4 class="fw-bold mb-4">Financial Data Source</h4>
@@ -1036,6 +1383,87 @@
                   <button class="btn btn-sm btn-outline-danger rounded-pill"
                           title="Delete"
                           (click)="deleteProjectMeeting(m)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="8" class="text-center py-4 text-muted">No meeting requests yet.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+}
+
+@if (activeTab() === 'launchMeetings') {
+  <section class="animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold mb-0"><i class="bi bi-calendar-check me-2 text-danger"></i>Launches Meetings</h4>
+      <span class="badge bg-danger rounded-pill px-3">{{ filteredLaunchMeetings().length }} Requests</span>
+    </div>
+
+    <!-- فلاتر -->
+    <div class="row g-2 mb-3">
+      <div class="col-md-4">
+        <input type="text" class="form-control border-0 shadow-sm rounded-3" placeholder="Search by name or project..."
+               [ngModel]="launchMeetingSearchText()" (ngModelChange)="launchMeetingSearchText.set($event)">
+      </div>
+      <div class="col-md-4">
+        <select class="form-select border-0 shadow-sm rounded-3"
+                [ngModel]="launchMeetingContactedFilter()" (ngModelChange)="launchMeetingContactedFilter.set($event)">
+          <option value="all">All Requests</option>
+          <option value="pending">Not Contacted Yet</option>
+          <option value="contacted">Contacted</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden border-top border-danger border-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4">Project</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Meeting Date</th>
+              <th>Notes</th>
+              <th>Requested At</th>
+              <th>Status</th>
+              <th class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of filteredLaunchMeetings(); track m.id) {
+              <tr>
+                <td class="ps-4 fw-bold">{{ m.projectName || '—' }}</td>
+                <td>{{ m.fullName }}</td>
+                <td>
+                  <a [href]="'tel:' + m.phone" class="text-dark text-decoration-none">
+                    <i class="bi bi-telephone-fill text-muted me-1"></i>{{ m.phone }}
+                  </a>
+                </td>
+                <td>{{ m.meetingDate | date:'d MMM y, h:mm a' }}</td>
+                <td class="text-muted small" style="max-width:220px;">{{ m.notes || '—' }}</td>
+                <td class="text-muted small">{{ m.createdAt | date:'d MMM y' }}</td>
+                <td>
+                  @if (m.isContacted) {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Contacted</span>
+                  } @else {
+                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Pending</span>
+                  }
+                </td>
+                <td class="text-end pe-4">
+                  <button class="btn btn-sm btn-outline-success rounded-pill me-1"
+                          title="Toggle contacted status"
+                          (click)="toggleLaunchMeetingContacted(m)">
+                    <i class="bi bi-check2-circle"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill"
+                          title="Delete"
+                          (click)="deleteLaunchMeeting(m)">
                     <i class="bi bi-trash"></i>
                   </button>
                 </td>
@@ -2801,6 +3229,591 @@
               <span class="spinner-border spinner-border-sm me-2"></span>Saving...
             } @else {
               <i class="bi bi-check-lg me-2"></i>{{ editingBlog() ? 'Update Project' : 'Publish Project' }}
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (activeTab() === 'launches') {
+  <div class="animate__animated animate__fadeIn">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <h4 class="fw-bold mb-0"><i class="bi bi-buildings me-2 text-danger"></i>Launches</h4>
+      <div class="d-flex gap-2">
+        @if (launchOrderChanged()) {
+          <button class="btn btn-dark rounded-pill fw-bold px-4 shadow-sm animate__animated animate__fadeIn"
+                  [disabled]="savingLaunchOrder()"
+                  (click)="saveLaunchOrder()">
+            <i class="bi bi-check-lg me-2"></i>{{ savingLaunchOrder() ? 'Saving...' : 'Save Order' }}
+          </button>
+        }
+        <button class="btn btn-danger rounded-pill fw-bold px-4 shadow-sm" (click)="openAddLaunch()">
+          <i class="bi bi-plus-lg me-2"></i>Add New Launch
+        </button>
+      </div>
+    </div>
+
+    @if (launches().length > 1) {
+      <p class="text-muted small mb-3">
+        <i class="bi bi-arrows-move me-1"></i>Drag a card to reorder how projects appear on the Home page and Projects list.
+      </p>
+    }
+
+    @if (launches().length === 0) {
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-buildings fs-1 d-block mb-3 opacity-25"></i>
+        No launches yet. Click "Add New Launch" to get started.
+      </div>
+    } @else {
+      <div class="row g-4">
+        @for (launch of launches(); track launch.id; let i = $index) {
+          <div class="col-md-6 col-xl-4"
+               draggable="true"
+               (dragstart)="onLaunchDragStart(i)"
+               (dragover)="onLaunchDragOver($event)"
+               (drop)="onLaunchDrop(i)"
+               style="cursor: grab;">
+            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden position-relative">
+              <span class="position-absolute top-0 start-0 m-2 badge bg-dark bg-opacity-75 rounded-pill" style="z-index:2;">
+                <i class="bi bi-arrows-move me-1"></i>#{{ i + 1 }}
+              </span>
+              @if (getLaunchCoverImage(launch)) {
+                <img [src]="getLaunchImageUrl(getLaunchCoverImage(launch))" class="card-img-top"
+                     style="height:180px;object-fit:cover;" alt="cover">
+              } @else {
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height:180px;">
+                  <i class="bi bi-buildings text-muted fs-1 opacity-25"></i>
+                </div>
+              }
+              <div class="card-body d-flex flex-column p-3">
+                <div class="d-flex gap-2 mb-2 flex-wrap">
+                  @if (launch.zone) {
+                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3">{{ launch.zone }}</span>
+                  }
+                  @if (launch.developerName) {
+                    <span class="badge bg-dark-subtle text-dark rounded-pill px-3">{{ launch.developerName }}</span>
+                  }
+                  @if (!launch.isPublished) {
+                    <span class="badge bg-secondary rounded-pill px-3">Draft</span>
+                  }
+                  @if (launch.deliveryDate) {
+                    <span class="badge bg-dark rounded-pill px-3"><i class="bi bi-clock-history me-1"></i>{{ launch.deliveryDate | date:'y' }}</span>
+                  }
+                </div>
+                <h6 class="fw-bold mb-1">{{ launch.title }}</h6>
+                <p class="text-muted small mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                  {{ launch.excerpt }}
+                </p>
+                @if (launch.pricePerMeterResale || launch.pricePerMeterPrimary) {
+                  <div class="d-flex gap-2 mb-3">
+                    @if (launch.pricePerMeterResale) {
+                      <span class="badge bg-danger-subtle text-danger">Resale: {{ launch.pricePerMeterResale | number }} EGP/m²</span>
+                    }
+                    @if (launch.pricePerMeterPrimary) {
+                      <span class="badge bg-dark text-white">Primary: {{ launch.pricePerMeterPrimary | number }} EGP/m²</span>
+                    }
+                  </div>
+                }
+                <div class="mt-auto d-flex gap-2 justify-content-end">
+                  <button class="btn btn-sm btn-outline-primary rounded-pill px-3" (click)="openEditLaunch(launch)">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3" (click)="deleteLaunch(launch.id)">
+                    <i class="bi bi-trash me-1"></i>Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Modal: Add/Edit Launch -->
+  <div class="modal fade" id="launchFormModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-buildings me-2"></i>
+            {{ editingLaunch() ? 'Edit Launch' : 'Add New Launch' }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body p-4" [formGroup]="launchForm">
+
+          <!-- ── Section 1: Basic Info ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-info-circle me-2"></i>Basic Info</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Project Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control rounded-3 bg-light border-0"
+                     formControlName="title" placeholder="e.g. Mountain View 4 October">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Zone</label>
+              <select class="form-select rounded-3 bg-light border-0" formControlName="zone">
+                <option value="">No Zone</option>
+                <option value="Alexandria">Alexandria</option>
+                <option value="Cairo">Cairo</option>
+                <option value="North Coast">North Coast</option>
+              </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="launchPublished" formControlName="isPublished">
+                <label class="form-check-label fw-semibold" for="launchPublished">Published</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Project <span class="text-muted small">(optional)</span></label>
+              <select class="form-select rounded-3 bg-light border-0" formControlName="projectName">
+                <option value="">No Project</option>
+                @for (proj of launchProjectOptions(); track proj) {
+                  <option [value]="proj">{{ proj }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Developer <span class="text-muted small">(optional)</span></label>
+              <select class="form-select rounded-3 bg-light border-0" formControlName="developerName">
+                <option value="">No Developer</option>
+                @for (dev of uniqueDevelopers(); track dev.code) {
+                  <option [value]="dev.name">{{ dev.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Delivery Year <span class="text-muted small">(year the project will be handed over)</span></label>
+              <input type="number" class="form-control rounded-3 bg-light border-0"
+                     formControlName="deliveryYear" [min]="currentYear" [max]="currentYear + 30"
+                     step="1" [placeholder]="currentYear" (keydown)="blockNonDigitKeys($event)">
+              @if (launchForm.get('deliveryYear')?.value && launchForm.get('deliveryYear')?.invalid) {
+                <small class="text-danger">Delivery year must be {{ currentYear }} or later.</small>
+              }
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Short Description <span class="text-danger">*</span></label>
+              <textarea class="form-control rounded-3 bg-light border-0" rows="2"
+                        formControlName="excerpt" placeholder="Brief summary shown on the project card..."></textarea>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 2: Photo Slider ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-images me-2"></i>Photo Slider</h6>
+          <div class="mb-4">
+            <input type="file" class="form-control rounded-3 bg-light border-0"
+                   accept="image/*" multiple (change)="onLaunchSliderImagesChange($event)" #sliderInput>
+            <small class="text-muted">Select multiple images for the slider — click an image to set it as the main/cover photo</small>
+
+            <!-- صور موجودة على السيرفر (عند التعديل) -->
+            @if (editingLaunch()?.sliderImages) {
+              <div class="mt-3">
+                <small class="text-muted fw-semibold d-block mb-2"><i class="bi bi-arrows-move me-1"></i>Existing Images (drag to reorder):</small>
+                <div class="d-flex flex-wrap gap-2">
+                  @for (img of getSliderImagesArray(editingLaunch()); track img; let i = $index) {
+                    <div class="position-relative" style="cursor:grab;"
+                         draggable="true"
+                         (dragstart)="onExistingLaunchSliderDragStart(i)"
+                         (dragover)="onExistingLaunchSliderDragOver($event)"
+                         (drop)="onExistingLaunchSliderDrop(i)"
+                         (dragend)="onExistingLaunchSliderDragEnd()"
+                         [style.opacity]="draggedExistingLaunchSliderIndex === i ? 0.4 : 1"
+                         (click)="setLaunchMainExistingImage(img)">
+                      <img [src]="getLaunchImageUrl(img)"
+                           style="width:80px;height:60px;object-fit:cover;border-radius:8px;"
+                           [style.border]="isLaunchMainExistingImage(img) ? '3px solid #ef3341' : '3px solid transparent'" alt="">
+                      @if (isLaunchMainExistingImage(img)) {
+                        <span class="position-absolute bottom-0 start-0 badge bg-danger" style="font-size:8px;border-radius:0 0 0 6px;">MAIN</span>
+                      }
+                      <span class="position-absolute top-0 start-0 badge bg-dark bg-opacity-75" style="font-size:8px;border-radius:8px 0 6px 0;">{{ i + 1 }}</span>
+                      <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0"
+                              style="width:18px;height:18px;font-size:10px;line-height:1;"
+                              (click)="$event.stopPropagation(); removeLaunchSliderImage(img)">×</button>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- صور تم اختيارها حديثاً (Preview قبل الرفع) -->
+            @if (launchSliderFiles().length > 0) {
+              <div class="mt-3">
+                <small class="text-muted fw-semibold d-block mb-2"><i class="bi bi-arrows-move me-1"></i>New Images Selected ({{ launchSliderFiles().length }}) — drag to reorder:</small>
+                <div class="d-flex flex-wrap gap-2">
+                  @for (file of launchSliderFiles(); track $index; let i = $index) {
+                    <div class="position-relative" style="cursor:grab;"
+                         draggable="true"
+                         (dragstart)="onNewLaunchSliderDragStart(i)"
+                         (dragover)="onNewLaunchSliderDragOver($event)"
+                         (drop)="onNewLaunchSliderDrop(i, sliderInput)"
+                         (dragend)="onNewLaunchSliderDragEnd()"
+                         [style.opacity]="draggedNewLaunchSliderIndex === i ? 0.4 : 1"
+                         (click)="setLaunchMainNewImage(i)">
+                      <img [src]="getLaunchSliderPreviewUrl(i)"
+                           style="width:80px;height:60px;object-fit:cover;border-radius:8px;"
+                           [style.border]="isLaunchMainNewImage(i) ? '3px solid #ef3341' : '2px solid #ef3341'"
+                           [style.opacity]="isLaunchMainNewImage(i) ? '1' : '0.85'" alt="">
+                      @if (isLaunchMainNewImage(i)) {
+                        <span class="position-absolute bottom-0 start-0 badge bg-danger" style="font-size:8px;border-radius:0 0 0 6px;">MAIN</span>
+                      } @else {
+                        <span class="position-absolute bottom-0 start-0 badge bg-secondary" style="font-size:8px;border-radius:0 0 0 6px;">NEW</span>
+                      }
+                      <span class="position-absolute top-0 start-0 badge bg-dark bg-opacity-75" style="font-size:8px;border-radius:8px 0 6px 0;">{{ i + 1 }}</span>
+                      <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0"
+                              style="width:18px;height:18px;font-size:10px;line-height:1;"
+                              (mousedown)="$event.stopPropagation(); removeNewLaunchSliderImage(i, sliderInput)">×</button>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 3: Price per Meter ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-currency-dollar me-2"></i>Price per Meter</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+  <label class="form-label fw-semibold">Resale Price / m²</label>
+  <input type="text" class="form-control rounded-3 bg-light border-0"
+         formControlName="pricePerMeterResale" placeholder="e.g. 85,000"
+         (input)="formatPrice($event)">
+</div>
+<div class="col-md-6">
+  <label class="form-label fw-semibold">Developer (Primary) Price / m²</label>
+  <input type="text" class="form-control rounded-3 bg-light border-0"
+         formControlName="pricePerMeterPrimary" placeholder="e.g. 120,000"
+         (input)="formatPrice($event)">
+</div>
+            
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 4: Quick View Buttons (أسماء ثابتة) ── -->
+          
+
+          <hr class="my-3">
+
+          <!-- ── Section 5: Project Details ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-file-text me-2"></i>Project Details</h6>
+          <div class="mb-4">
+            <textarea class="form-control rounded-3 bg-light border-0" rows="5"
+                      formControlName="projectDetails"
+                      placeholder="Full project details..."></textarea>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 6: Map ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-geo-alt me-2"></i>Location Map</h6>
+          <div class="mb-4">
+            <input type="text" class="form-control rounded-3 bg-light border-0"
+                   formControlName="mapEmbedUrl"
+                   placeholder="Google Maps embed URL">
+            <small class="text-muted">From Google Maps: Share → Embed a map → copy the src URL</small>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 7: Master Plan ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-map me-2"></i>Master Plan</h6>
+          <div class="mb-4">
+            <input type="file" class="form-control rounded-3 bg-light border-0"
+                   accept="image/*" (change)="onLaunchMasterPlanChange($event)">
+            @if (editingLaunch()?.masterPlanImageUrl && !launchMasterPlanFile()) {
+              <img [src]="getLaunchImageUrl(editingLaunch().masterPlanImageUrl)"
+                   class="mt-2 rounded-3" style="height:100px;object-fit:contain;" alt="master plan">
+            }
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 8: Payment Plans ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-credit-card me-2"></i>Payment Plans</h6>
+          <div class="mb-4">
+            @for (plan of launchPaymentPlans(); track $index; let i = $index) {
+              <div class="card border-0 bg-light rounded-3 p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="fw-semibold small">Plan {{ i + 1 }}</span>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0"
+                          (click)="removeLaunchPaymentPlan(i)">Remove</button>
+                </div>
+                <div class="row g-2">
+                  <!-- Plan Name -->
+                  <div class="col-12">
+                    <input type="text" class="form-control form-control-sm rounded-3 border-0"
+                           placeholder="Plan name (e.g. 5 Years)" [(ngModel)]="plan.name" [ngModelOptions]="{standalone:true}">
+                  </div>
+                  <!-- Down Payment % -->
+                  <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1">Down Payment %</label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control rounded-start-3 border-0 bg-white" min="0" max="100"
+                             placeholder="e.g. 10" [(ngModel)]="plan.downPaymentPercentage" [ngModelOptions]="{standalone:true}">
+                      <span class="input-group-text bg-white border-0 fw-bold text-danger rounded-end-3">%</span>
+                    </div>
+                  </div>
+                  <!-- Avg Down Payment -->
+                  <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1">Avg Down Payment</label>
+                    <input type="text" class="form-control form-control-sm rounded-3 border-0"
+                           placeholder="e.g. 500,000" [(ngModel)]="plan.avgDownPayment" [ngModelOptions]="{standalone:true}"
+                           (input)="formatPlanField($event, plan, 'avgDownPayment')">
+                  </div>
+                  <!-- Avg Installment -->
+                  <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1">Avg Quarterly Installment</label>
+                    <input type="text" class="form-control form-control-sm rounded-3 border-0"
+                           placeholder="e.g. 25,000" [(ngModel)]="plan.avgInstallment" [ngModelOptions]="{standalone:true}"
+                           (input)="formatPlanField($event, plan, 'avgInstallment')">
+                  </div>
+                  <!-- Years -->
+                  <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1">Number of Years</label>
+                    <input type="text" class="form-control form-control-sm rounded-3 border-0"
+                           placeholder="e.g. 8" [(ngModel)]="plan.years" [ngModelOptions]="{standalone:true}">
+                  </div>
+                  <!-- Note -->
+                  <div class="col-md-12">
+                    <input type="text" class="form-control form-control-sm rounded-3 border-0"
+                           placeholder="Note (optional)" [(ngModel)]="plan.note" [ngModelOptions]="{standalone:true}">
+                  </div>
+                </div>
+              </div>
+            }
+            <button class="btn btn-outline-danger btn-sm rounded-pill px-3" (click)="addLaunchPaymentPlan()">
+              <i class="bi bi-plus me-1"></i>Add Payment Plan
+            </button>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 9: Resale Units ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-house me-2"></i>Resale Units</h6>
+          <div class="mb-4">
+            <!-- Searchable unit selector -->
+            <div class="position-relative">
+              <input type="text" class="form-control rounded-3 bg-light border-0"
+                     placeholder="Search by property code or title..."
+                     [ngModel]="launchResaleUnitSearchText()"
+                     (ngModelChange)="launchResaleUnitSearchText.set($event); isLaunchResaleUnitDropdownOpen.set(true)"
+                     (focus)="isLaunchResaleUnitDropdownOpen.set(true)"
+                     (blur)="closeLaunchResaleUnitDropdown()"
+                     [ngModelOptions]="{standalone:true}">
+
+              <!-- Dropdown list -->
+              <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+                  [class.show]="isLaunchResaleUnitDropdownOpen() && filteredLaunchResaleUnitOptions().length > 0"
+                  style="max-height: 220px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1060;">
+                @for (prop of filteredLaunchResaleUnitOptions(); track prop.id) {
+                  <li>
+                    <button class="dropdown-item py-2 border-bottom border-light d-flex align-items-center justify-content-between"
+                            (mousedown)="addLaunchResaleUnitId(prop)">
+                      <span>
+                        <span class="badge bg-light text-dark border me-2">{{ prop.code }}</span>
+                        <span class="small text-muted">{{ prop.title }}</span>
+                      </span>
+                      @if (isLaunchResaleUnitSelected(prop.id)) {
+                        <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                      }
+                    </button>
+                  </li>
+                } @empty {
+                  <li><span class="dropdown-item text-muted small py-2">No properties found.</span></li>
+                }
+              </ul>
+            </div>
+
+            <!-- Selected Units Tags -->
+            @if (selectedLaunchResaleUnits().length > 0) {
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                @for (unit of selectedLaunchResaleUnits(); track unit.id) {
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 d-flex align-items-center gap-1" style="font-size:0.8rem;">
+                    <span class="fw-bold">{{ unit.code }}</span>
+                    <span class="text-muted small">- {{ unit.title | slice:0:20 }}{{ unit.title?.length > 20 ? '...' : '' }}</span>
+                    <button class="btn-close btn-close-sm ms-1" style="font-size:0.6rem;" (mousedown)="removeLaunchResaleUnitId(unit.id)"></button>
+                  </span>
+                }
+              </div>
+              <small class="text-muted mt-1 d-block">{{ selectedLaunchResaleUnits().length }} units selected</small>
+            } @else {
+              <small class="text-muted">Search and select property units from the system</small>
+            }
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 9b: Primary Units ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-house-check me-2"></i>Primary Units</h6>
+          <div class="mb-4">
+            <!-- Searchable unit selector -->
+            <div class="position-relative">
+              <input type="text" class="form-control rounded-3 bg-light border-0"
+                     placeholder="Search by property code or title..."
+                     [ngModel]="launchPrimaryUnitSearchText()"
+                     (ngModelChange)="launchPrimaryUnitSearchText.set($event); isLaunchPrimaryUnitDropdownOpen.set(true)"
+                     (focus)="isLaunchPrimaryUnitDropdownOpen.set(true)"
+                     (blur)="closeLaunchPrimaryUnitDropdown()"
+                     [ngModelOptions]="{standalone:true}">
+
+              <!-- Dropdown list -->
+              <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+                  [class.show]="isLaunchPrimaryUnitDropdownOpen() && filteredLaunchPrimaryUnitOptions().length > 0"
+                  style="max-height: 220px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1060;">
+                @for (prop of filteredLaunchPrimaryUnitOptions(); track prop.id) {
+                  <li>
+                    <button class="dropdown-item py-2 border-bottom border-light d-flex align-items-center justify-content-between"
+                            (mousedown)="addLaunchPrimaryUnitId(prop)">
+                      <span>
+                        <span class="badge bg-light text-dark border me-2">{{ prop.code }}</span>
+                        <span class="small text-muted">{{ prop.title }}</span>
+                      </span>
+                      @if (isLaunchPrimaryUnitSelected(prop.id)) {
+                        <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                      }
+                    </button>
+                  </li>
+                } @empty {
+                  <li><span class="dropdown-item text-muted small py-2">No properties found.</span></li>
+                }
+              </ul>
+            </div>
+
+            <!-- Selected Units Tags -->
+            @if (selectedLaunchPrimaryUnits().length > 0) {
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                @for (unit of selectedLaunchPrimaryUnits(); track unit.id) {
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 d-flex align-items-center gap-1" style="font-size:0.8rem;">
+                    <span class="fw-bold">{{ unit.code }}</span>
+                    <span class="text-muted small">- {{ unit.title | slice:0:20 }}{{ unit.title?.length > 20 ? '...' : '' }}</span>
+                    <button class="btn-close btn-close-sm ms-1" style="font-size:0.6rem;" (mousedown)="removeLaunchPrimaryUnitId(unit.id)"></button>
+                  </span>
+                }
+              </div>
+              <small class="text-muted mt-1 d-block">{{ selectedLaunchPrimaryUnits().length }} units selected</small>
+            } @else {
+              <small class="text-muted">Search and select property units from the system</small>
+            }
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 9c: Rent Units ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-key me-2"></i>Rent Units</h6>
+          <div class="mb-4">
+            <div class="position-relative">
+              <input type="text" class="form-control rounded-3 bg-light border-0"
+                     placeholder="Search by property code or title..."
+                     [ngModel]="launchRentUnitSearchText()"
+                     (ngModelChange)="launchRentUnitSearchText.set($event); isLaunchRentUnitDropdownOpen.set(true)"
+                     (focus)="isLaunchRentUnitDropdownOpen.set(true)"
+                     (blur)="closeLaunchRentUnitDropdown()"
+                     [ngModelOptions]="{standalone:true}">
+              <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+                  [class.show]="isLaunchRentUnitDropdownOpen() && filteredLaunchRentUnitOptions().length > 0"
+                  style="max-height: 220px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1060;">
+                @for (prop of filteredLaunchRentUnitOptions(); track prop.id) {
+                  <li>
+                    <button class="dropdown-item py-2 border-bottom border-light d-flex align-items-center justify-content-between"
+                            (mousedown)="addLaunchRentUnitId(prop)">
+                      <span>
+                        <span class="badge bg-light text-dark border me-2">{{ prop.code }}</span>
+                        <span class="small text-muted">{{ prop.title }}</span>
+                      </span>
+                      @if (isLaunchRentUnitSelected(prop.id)) {
+                        <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                      }
+                    </button>
+                  </li>
+                } @empty {
+                  <li><span class="dropdown-item text-muted small py-2">No properties found.</span></li>
+                }
+              </ul>
+            </div>
+            @if (selectedLaunchRentUnits().length > 0) {
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                @for (unit of selectedLaunchRentUnits(); track unit.id) {
+                  <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-2 d-flex align-items-center gap-1" style="font-size:0.8rem;">
+                    <span class="fw-bold">{{ unit.code }}</span>
+                    <span class="text-muted small">- {{ unit.title | slice:0:20 }}{{ unit.title?.length > 20 ? '...' : '' }}</span>
+                    <button class="btn-close btn-close-sm ms-1" style="font-size:0.6rem;" (mousedown)="removeLaunchRentUnitId(unit.id)"></button>
+                  </span>
+                }
+              </div>
+              <small class="text-muted mt-1 d-block">{{ selectedLaunchRentUnits().length }} units selected</small>
+            } @else {
+              <small class="text-muted">Search and select rent units from the system</small>
+            }
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 10: Article Sections ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-newspaper me-2"></i>Article Sections</h6>
+          <div class="mb-4">
+            @for (section of launchArticleSections(); track $index; let i = $index) {
+              <div class="card border-0 bg-light rounded-3 p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="fw-semibold small">Section {{ i + 1 }}</span>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0"
+                          (click)="removeLaunchArticleSection(i)">Remove</button>
+                </div>
+                <input type="text" class="form-control form-control-sm rounded-3 border-0 mb-2"
+                       placeholder="Headline" [(ngModel)]="section.headline" [ngModelOptions]="{standalone:true}">
+                <textarea class="form-control form-control-sm rounded-3 border-0" rows="3"
+                          placeholder="Text content"
+                          [(ngModel)]="section.text" [ngModelOptions]="{standalone:true}"></textarea>
+              </div>
+            }
+            <button class="btn btn-outline-danger btn-sm rounded-pill px-3" (click)="addLaunchArticleSection()">
+              <i class="bi bi-plus me-1"></i>Add Section
+            </button>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 11: FAQs ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-question-circle me-2"></i>FAQs</h6>
+          <div class="mb-2">
+            @for (faq of launchFaqs(); track $index; let i = $index) {
+              <div class="card border-0 bg-light rounded-3 p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="fw-semibold small">FAQ {{ i + 1 }}</span>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0"
+                          (click)="removeLaunchFaq(i)">Remove</button>
+                </div>
+                <input type="text" class="form-control form-control-sm rounded-3 border-0 mb-2"
+                       placeholder="Question" [(ngModel)]="faq.question" [ngModelOptions]="{standalone:true}">
+                <textarea class="form-control form-control-sm rounded-3 border-0" rows="2"
+                          placeholder="Answer" [(ngModel)]="faq.answer" [ngModelOptions]="{standalone:true}"></textarea>
+              </div>
+            }
+            <button class="btn btn-outline-danger btn-sm rounded-pill px-3" (click)="addLaunchFaq()">
+              <i class="bi bi-plus me-1"></i>Add FAQ
+            </button>
+          </div>
+
+        </div>
+
+        <div class="modal-footer border-0 px-4 pb-4">
+          <button class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger rounded-pill fw-bold px-5"
+                  [disabled]="launchSubmitting()" (click)="submitLaunch()">
+            @if (launchSubmitting()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>Saving...
+            } @else {
+              <i class="bi bi-check-lg me-2"></i>{{ editingLaunch() ? 'Update Launch' : 'Publish Launch' }}
             }
           </button>
         </div>

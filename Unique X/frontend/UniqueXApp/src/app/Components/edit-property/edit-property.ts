@@ -298,6 +298,7 @@ filteredProjects: string[] = [];
   originalCodeTriggers: any = {};
 
   ngOnInit(): void {
+    this.loadDynamicLookups();
     this.editForm = this.fb.group({
       title: ['',[Validators.required, Validators.maxLength(200)]],
       description: ['', Validators.required],
@@ -790,6 +791,93 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
 }
 
   isInstallmentSelected(): boolean { return this.editForm.get('paymentMethod')?.value === 'Installment'; }
+
+  // 🟢 بتجيب أي Developer/Project/Region جديد أضافه الأدمن من صفحة "Developers & Projects"
+  // وبتضيفه فوق الليستات الحالية (من غير ما تشيل/تلمس أي حاجة موجودة أصلاً)
+  loadDynamicLookups(): void {
+    this.propertyService.getDevelopersList().subscribe({
+      next: (list) => {
+        list.forEach((d: any) => {
+          if (!this.dummyDevelopers.some(x => x.name.toLowerCase() === d.name.toLowerCase())) {
+            this.dummyDevelopers.push({ code: d.code, name: d.name });
+          }
+        });
+      },
+      error: () => {}
+    });
+
+    this.propertyService.getRegionsList().subscribe({
+      next: (list) => {
+        list.forEach((r: any) => {
+          const cityId = r.city;
+          if (!this.regionsMapping[cityId]) this.regionsMapping[cityId] = [];
+          if (!this.regionsMapping[cityId].includes(r.name)) this.regionsMapping[cityId].push(r.name);
+          if (r.zoneCode && !(r.name in this.resaleZoneIds)) this.resaleZoneIds[r.name] = r.zoneCode;
+        });
+        this.refreshFilteredListsSilently();
+      },
+      error: () => {}
+    });
+
+    // مشاريع Primary
+    this.propertyService.getProjectsList(0).subscribe({
+      next: (list) => {
+        list.forEach((p: any) => {
+          if (p.city === 2) {
+            if (!this.projectsMapping[2]) this.projectsMapping[2] = {};
+            if (!this.projectsMapping[2]['any']) this.projectsMapping[2]['any'] = [];
+            if (!this.projectsMapping[2]['any'].includes(p.name)) this.projectsMapping[2]['any'].push(p.name);
+          } else {
+            const region = p.region || 'any';
+            if (!this.projectsMapping[p.city]) this.projectsMapping[p.city] = {};
+            if (!this.projectsMapping[p.city][region]) this.projectsMapping[p.city][region] = [];
+            if (!this.projectsMapping[p.city][region].includes(p.name)) this.projectsMapping[p.city][region].push(p.name);
+          }
+          if (!(p.name in this.primaryProjectCodes)) this.primaryProjectCodes[p.name] = p.code;
+        });
+        this.refreshFilteredListsSilently();
+      },
+      error: () => {}
+    });
+
+    // مشاريع Resale
+    this.propertyService.getProjectsList(1).subscribe({
+      next: (list) => {
+        list.forEach((p: any) => {
+          if (p.city === 2) {
+            if (!this.projectsMapping[2]) this.projectsMapping[2] = {};
+            if (!this.projectsMapping[2]['any']) this.projectsMapping[2]['any'] = [];
+            if (!this.projectsMapping[2]['any'].includes(p.name)) this.projectsMapping[2]['any'].push(p.name);
+          } else {
+            const region = p.region || 'any';
+            if (!this.projectsMapping[p.city]) this.projectsMapping[p.city] = {};
+            if (!this.projectsMapping[p.city][region]) this.projectsMapping[p.city][region] = [];
+            if (!this.projectsMapping[p.city][region].includes(p.name)) this.projectsMapping[p.city][region].push(p.name);
+          }
+          if (!(p.name in this.resaleProjectIds)) this.resaleProjectIds[p.name] = p.code;
+        });
+        this.refreshFilteredListsSilently();
+      },
+      error: () => {}
+    });
+  }
+
+  // 🟢 بتحدث الليستات الظاهرة (Regions/Projects) من غير ما تمسح اختيار المستخدم -
+  // مستخدمة بس لما بيانات جديدة توصل من الأدمن بعد ما الصفحة تكون فاتحة بالفعل
+  private refreshFilteredListsSilently(): void {
+    const cityId = Number(this.editForm.get('city')?.value);
+    const region = this.editForm.get('region')?.value;
+
+    this.filteredRegions = this.regionsMapping[cityId] || [];
+
+    if (cityId === 1 || cityId === 3) {
+      this.filteredProjects = this.projectsMapping[cityId]?.[region] || [];
+    } else if (cityId === 2) {
+      this.filteredProjects = this.projectsMapping[cityId]?.['any'] || [];
+    } else {
+      this.filteredProjects = [];
+    }
+  }
 
   updateProjectsList(cId?: number, rName?: string) {
     const id = cId || Number(this.editForm.get('city')?.value);

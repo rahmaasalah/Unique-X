@@ -3,6 +3,8 @@ import { authGuard } from './Guards/auth-guard';
 import { guestGuard } from './Guards/guest-guard';
 import { adminGuard } from './Guards/admin-guard';
 import { InvestmentCalculatorComponent } from './Components/investment-calculator/investment-calculator';
+import { LaunchDetailComponent } from './Components/launch-detail/launch-detail';
+import { LaunchListComponent } from './Components/launch-list/launch-list';
 
 export const routes: Routes = [
   // ===== Public =====
@@ -19,6 +21,7 @@ export const routes: Routes = [
   { path: 'join-our-team', loadComponent: () => import('./Components/join-our-team/join-our-team').then(m => m.JoinOurTeamComponent) },
   { path: 'blog', loadComponent: () => import('./Components/blog-list/blog-list').then(m => m.BlogListComponent) },
   { path: 'blog/:id', loadComponent: () => import('./Components/blog-detail/blog-detail').then(m => m.BlogDetailComponent) },
+  { path: 'explore-home', loadComponent: () => import('./Components/explore-home/explore-home').then(m => m.ExploreHomeComponent) },
 
   // ===== Auth Required =====
   { path: 'add-property', loadComponent: () => import('./Components/add-property/add-property').then(m => m.AddPropertyComponent), canActivate: [authGuard] },
@@ -34,6 +37,9 @@ export const routes: Routes = [
   // ===== Admin =====
   { path: 'admin', loadComponent: () => import('./Components/admin-dashboard/admin-dashboard').then(m => m.AdminDashboardComponent), canActivate: [adminGuard] },
   { path: 'investment-calculator', component: InvestmentCalculatorComponent },
+  { path: 'launch', component: LaunchListComponent },
+{ path: 'launch/:id', component: LaunchDetailComponent },
+{ path: 'launch/:id/:slug', component: LaunchDetailComponent },
   // ===== CRM =====
   { path: 'crm/leads', loadComponent: () => import('./Components/CRM/leads-dashboard/leads-dashboard').then(m => m.LeadsDashboardComponent) },
   { path: 'crm/leads/:id', loadComponent: () => import('./Components/CRM/lead-details/lead-details').then(m => m.LeadDetailsComponent) },

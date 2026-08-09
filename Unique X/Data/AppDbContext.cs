@@ -33,6 +33,12 @@ namespace Unique_X.Data
         public DbSet<VisitList> VisitLists { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<ProjectMeetingRequest> ProjectMeetingRequests { get; set; }
+        public DbSet<Launch> Launches { get; set; }
+        public DbSet<LaunchMeetingRequest> LaunchMeetingRequests { get; set; }
+        public DbSet<HomeSectionBanner> HomeSectionBanners { get; set; }
+        public DbSet<Developer> Developers { get; set; }
+        public DbSet<Project> Projects { get; set; }
+        public DbSet<Region> Regions { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)

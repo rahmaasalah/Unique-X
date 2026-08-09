@@ -1,0 +1,101 @@
+<section class="py-5" style="background:#f8f9fa;min-height:100vh;">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="text-center mb-5">
+      <h2 class="fw-bold" style="color:#1a1a2e;">Explore Your Dream Home</h2>
+      <p class="text-muted">Browse every listing we have — Resale, Resale Projects, Primary and Rent — all in one place.</p>
+      <div style="width:60px;height:4px;background:#ef3341;margin:0 auto;border-radius:2px;"></div>
+    </div>
+
+    <div class="row g-4">
+
+      @if (isLoading()) {
+        <div class="col-12 text-center py-5">
+          <div class="spinner-border text-danger" style="width: 3rem; height: 3rem;" role="status"></div>
+          <p class="mt-3 text-muted fw-bold">Loading properties...</p>
+        </div>
+      }
+      @else if (properties().length > 0) {
+
+        <!-- 1. قسم Resale -->
+        @if (resaleProps().length > 0) {
+          <div class="col-12 mb-5 animate__animated animate__fadeInUp">
+            <div class="d-flex align-items-center mb-4">
+              <h3 class="fw-bold text-dark mb-0"><i class="bi bi-house-door text-danger me-2"></i>Resale Properties</h3>
+            </div>
+            <div class="row g-4">
+              @for (prop of resaleProps(); track prop.id) {
+                <div class="col-md-6 col-lg-4">
+                  <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- 2. قسم Resale Project -->
+        @if (resaleProjectProps().length > 0) {
+          <div class="col-12 mb-5 animate__animated animate__fadeInUp">
+            <div class="d-flex align-items-center mb-4">
+              <h3 class="fw-bold text-dark mb-0"><i class="bi bi-building text-danger me-2"></i>Resale Projects</h3>
+            </div>
+            <div class="row g-4">
+              @for (prop of resaleProjectProps(); track prop.id) {
+                <div class="col-md-6 col-lg-4">
+                  <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- 3. قسم Primary -->
+        @if (primaryProps().length > 0) {
+          <div class="col-12 mb-5 animate__animated animate__fadeInUp">
+            <div class="d-flex align-items-center mb-4">
+              <h3 class="fw-bold text-dark mb-0"><i class="bi bi-stars text-danger me-2"></i>Primary Properties</h3>
+            </div>
+            <div class="row g-4">
+              @for (prop of primaryProps(); track prop.id) {
+                <div class="col-md-6 col-lg-4">
+                  <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- 4. قسم Rent -->
+        @if (rentProps().length > 0) {
+          <div class="col-12 mb-5 animate__animated animate__fadeInUp">
+            <div class="d-flex align-items-center mb-4">
+              <h3 class="fw-bold text-dark mb-0"><i class="bi bi-key text-danger me-2"></i>Properties for Rent</h3>
+            </div>
+            <div class="row g-4">
+              @for (prop of rentProps(); track prop.id) {
+                <div class="col-md-6 col-lg-4">
+                  <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+      }
+      @else {
+        <div class="col-12 d-flex justify-content-center align-items-center" style="min-height: 400px;">
+          <div class="text-center shadow-lg rounded-5 bg-white border-0 p-5">
+            <div class="icon-circle-large bg-danger-subtle text-danger mx-auto mb-4 shadow-sm d-flex align-items-center justify-content-center"
+                 style="width:90px;height:90px;border-radius:50%;">
+              <i class="bi bi-house-x-fill" style="font-size: 3rem;"></i>
+            </div>
+            <h2 class="fw-bold text-dark mb-3">No Properties Found</h2>
+            <p class="text-muted mb-0 px-md-5 fs-6">Check back soon — new listings are added regularly.</p>
+          </div>
+        </div>
+      }
+
+    </div>
+  </div>
+</section>

@@ -8,6 +8,7 @@ import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDrag, CdkDragPlaceholder,
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms'; // 1. حل مشكلة formGroup
 import { CrmService } from '../../Services/crm.services';
 import { BlogService } from '../../Services/blog.service';
+import { LaunchService } from '../../Services/launch.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
@@ -28,6 +29,7 @@ export class AdminDashboardComponent implements OnInit {
   private router = inject(Router);
   private crmService = inject(CrmService);
   private blogService = inject(BlogService);
+  private launchService = inject(LaunchService);
   private http = inject(HttpClient);
   adminLeadForm!: FormGroup;
 
@@ -75,7 +77,34 @@ export class AdminDashboardComponent implements OnInit {
   // 2. حل مشكلة 'settings' type mismatch
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
   homeBanners = signal<any[]>([]);
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings'>('users');
+
+  // 🟢 بانرات ثابتة لصفحة الهوم (بين Launches و Hot Deals): Explore Home + Add Property
+  exploreHomeBannerUrl = signal<string>('');
+  addPropertyBannerUrl = signal<string>('');
+  // بيحمل الـ key ('explore-home' | 'add-property') وقت الرفع/المسح عشان نعطل الزرار بتاعه بس
+  homeSectionBannerSaving = signal<string>('');
+
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'homeSectionBanners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings' | 'launches' | 'launchMeetings' | 'lookups'>('users');
+
+  // --- Lookups: Developers / Primary Projects / Resale Projects / Regions ---
+  lookupsSubTab = signal<'developers' | 'primaryProjects' | 'resaleProjects' | 'regions'>('developers');
+  lookupCityFilter = signal<number>(1); // 1 Cairo, 2 Alexandria, 3 North Coast
+
+  lookupDevelopers = signal<any[]>([]);
+  lookupPrimaryProjects = signal<any[]>([]);
+  lookupResaleProjects = signal<any[]>([]);
+  lookupRegions = signal<any[]>([]);
+
+  newDeveloperName = signal<string>('');
+  newDeveloperCode = signal<string>('');
+
+  newProjectName = signal<string>('');
+  newProjectCode = signal<string>('');
+  newProjectRegion = signal<string>('');
+  newProjectDeveloperId = signal<string>('');
+
+  newRegionName = signal<string>('');
+  newRegionZoneCode = signal<string>('');
 
   detailData = signal<any[]>([]);
 
@@ -394,6 +423,7 @@ export class AdminDashboardComponent implements OnInit {
     this.loadOwnerProperties();
     this.loadPendingDeletions();
     this.initBlogForm(); // initialize blog form on load
+    this.initLaunchForm(); // initialize launch form on load
   }
 
   loadPendingDeletions() {
@@ -492,6 +522,55 @@ onRejectDeletion(id: number) {
   loadBanners() {
     this.adminService.getBanners().subscribe((data: any[]) => { // إضافة :any[] ✅
         this.homeBanners.set(data);
+    });
+  }
+
+  // 🟢 تحميل البانرين الثابتين بتوع الهوم (Explore Home + Add Property)
+  loadHomeSectionBanners() {
+    this.adminService.getHomeSectionBanners().subscribe({
+      next: (data: any) => {
+        this.exploreHomeBannerUrl.set(data?.exploreHomeBannerUrl || '');
+        this.addPropertyBannerUrl.set(data?.addPropertyBannerUrl || '');
+      },
+      error: (err: any) => console.error('Home section banners error:', err)
+    });
+  }
+
+  onUploadHomeSectionBanner(key: string, fileInput: any) {
+    const file = fileInput.files[0];
+    if (!file) {
+      this.alertService.error('Please select an image first.');
+      return;
+    }
+
+    this.homeSectionBannerSaving.set(key);
+    this.adminService.uploadHomeSectionBanner(key, file).subscribe({
+      next: () => {
+        this.homeSectionBannerSaving.set('');
+        this.alertService.success('Banner uploaded successfully!');
+        this.loadHomeSectionBanners();
+        fileInput.value = '';
+      },
+      error: () => {
+        this.homeSectionBannerSaving.set('');
+        this.alertService.error('Failed to upload the banner. Please try again.');
+      }
+    });
+  }
+
+  onDeleteHomeSectionBanner(key: string) {
+    this.alertService.confirm('Delete this banner from the homepage?', () => {
+      this.homeSectionBannerSaving.set(key);
+      this.adminService.deleteHomeSectionBanner(key).subscribe({
+        next: () => {
+          this.homeSectionBannerSaving.set('');
+          this.loadHomeSectionBanners();
+        },
+        error: () => {
+          this.homeSectionBannerSaving.set('');
+          this.alertService.error('Failed to delete the banner. Please try again.');
+        }
+      });
     });
   }
 
@@ -596,6 +675,9 @@ onRejectDeletion(id: number) {
   else if (tab === 'hotDeals') {
   this.adminService.getHotDeals().subscribe(data => this.hotDeals.set(data));
 }
+  else if (tab === 'lookups') {
+    this.loadLookups();
+  }
 
   else if (tab === 'suspUsers') {
     this.adminService.getSuspendedUsers().subscribe(data => this.detailData.set(data));
@@ -658,6 +740,125 @@ onRemoveHotDeal(id: number) {
 }
 loadHotDeals() {
   this.adminService.getHotDeals().subscribe(data => this.hotDeals.set(data));
+}
+
+// ===================== Lookups: Developers / Projects / Regions =====================
+
+loadLookups() {
+  this.adminService.getDevelopers().subscribe(data => this.lookupDevelopers.set(data));
+  this.reloadProjectsAndRegions();
+}
+
+// بيتعاد استدعاؤها كل ما الفلتر بتاع المدينة يتغير
+reloadProjectsAndRegions() {
+  const city = this.lookupCityFilter();
+  this.adminService.getProjects(0, city).subscribe(data => this.lookupPrimaryProjects.set(data)); // 0 = Primary
+  this.adminService.getProjects(1, city).subscribe(data => this.lookupResaleProjects.set(data));   // 1 = Resale
+  this.adminService.getRegions(city).subscribe(data => this.lookupRegions.set(data));
+}
+
+onLookupCityChange(city: number) {
+  this.lookupCityFilter.set(city);
+  this.reloadProjectsAndRegions();
+}
+
+onAddDeveloper() {
+  const name = this.newDeveloperName().trim();
+  const code = this.newDeveloperCode().trim();
+  if (!name || !code) return;
+
+  this.alertService.showLoading('Adding...');
+  this.adminService.addDeveloper(name, code).subscribe({
+    next: () => {
+      this.alertService.close();
+      this.alertService.success('Developer added');
+      this.newDeveloperName.set('');
+      this.newDeveloperCode.set('');
+      this.adminService.getDevelopers().subscribe(data => this.lookupDevelopers.set(data));
+    },
+    error: (err) => {
+      this.alertService.close();
+      this.alertService.error(err.error || 'Failed to add developer.');
+    }
+  });
+}
+
+onDeleteDeveloper(id: number) {
+  this.alertService.confirm('Delete this developer?', () => {
+    this.adminService.deleteDeveloper(id).subscribe(() => {
+      this.alertService.success('Deleted');
+      this.adminService.getDevelopers().subscribe(data => this.lookupDevelopers.set(data));
+    });
+  });
+}
+
+// type: 0 = Primary, 1 = Resale
+onAddProject(type: number) {
+  const name = this.newProjectName().trim();
+  const code = this.newProjectCode().trim();
+  if (!name || !code) return;
+
+  const city = this.lookupCityFilter();
+  const region = this.newProjectRegion().trim();
+  const devId = this.newProjectDeveloperId() ? Number(this.newProjectDeveloperId()) : undefined;
+
+  this.alertService.showLoading('Adding...');
+  this.adminService.addProject(name, code, type, city, region, devId).subscribe({
+    next: () => {
+      this.alertService.close();
+      this.alertService.success('Project added');
+      this.newProjectName.set('');
+      this.newProjectCode.set('');
+      this.newProjectRegion.set('');
+      this.newProjectDeveloperId.set('');
+      this.reloadProjectsAndRegions();
+    },
+    error: (err) => {
+      this.alertService.close();
+      this.alertService.error(err.error || 'Failed to add project.');
+    }
+  });
+}
+
+onDeleteProject(id: number) {
+  this.alertService.confirm('Delete this project?', () => {
+    this.adminService.deleteProject(id).subscribe(() => {
+      this.alertService.success('Deleted');
+      this.reloadProjectsAndRegions();
+    });
+  });
+}
+
+onAddRegion() {
+  const name = this.newRegionName().trim();
+  if (!name) return;
+
+  const city = this.lookupCityFilter();
+  const zoneCode = this.newRegionZoneCode().trim();
+
+  this.alertService.showLoading('Adding...');
+  this.adminService.addRegion(name, city, zoneCode).subscribe({
+    next: () => {
+      this.alertService.close();
+      this.alertService.success('Region added');
+      this.newRegionName.set('');
+      this.newRegionZoneCode.set('');
+      this.reloadProjectsAndRegions();
+    },
+    error: (err) => {
+      this.alertService.close();
+      this.alertService.error(err.error || 'Failed to add region.');
+    }
+  });
+}
+
+onDeleteRegion(id: number) {
+  this.alertService.confirm('Delete this region?', () => {
+    this.adminService.deleteRegion(id).subscribe(() => {
+      this.alertService.success('Deleted');
+      this.reloadProjectsAndRegions();
+    });
+  });
 }
 
   toggleProperty(propId: number, currentStatus: boolean) {
@@ -2063,5 +2264,626 @@ formatPlanField(event: any, plan: any, field: string) {
   const formatted = raw ? Number(raw).toLocaleString('en-US') : '';
   input.value = formatted;
   plan[field] = formatted;
+}
+
+// ================== Launches ==================
+launches = signal<any[]>([]);
+launchForm!: FormGroup;
+editingLaunch = signal<any>(null);
+launchCoverFile = signal<File | null>(null);
+launchMasterPlanFile = signal<File | null>(null);
+launchSliderFiles = signal<File[]>([]);
+launchButtonFiles: { [key: number]: File | null } = { 1: null, 2: null, 3: null };
+launchSubmitting = signal(false);
+
+// ================== Projects Meetings ==================
+launchMeetings = signal<any[]>([]);
+launchMeetingSearchText = signal('');
+launchMeetingContactedFilter = signal('all');
+
+uncontactedLaunchMeetingsCount = computed(() =>
+  this.launchMeetings().filter(m => !m.isContacted).length
+);
+
+filteredLaunchMeetings = computed(() => {
+  const search = this.launchMeetingSearchText().toLowerCase().trim();
+  const statusFilter = this.launchMeetingContactedFilter();
+
+  return this.launchMeetings().filter(m => {
+    const matchesSearch = !search ||
+      (m.fullName || '').toLowerCase().includes(search) ||
+      (m.projectName || '').toLowerCase().includes(search);
+
+    const matchesStatus = statusFilter === 'all' ||
+      (statusFilter === 'contacted' && m.isContacted) ||
+      (statusFilter === 'pending' && !m.isContacted);
+
+    return matchesSearch && matchesStatus;
+  });
+});
+
+loadLaunchMeetings() {
+  this.http.get<any[]>(`${environment.apiUrl}/Launches/meetings`).subscribe({
+    next: (data) => this.launchMeetings.set(data),
+    error: () => this.alertService.error('Failed to load projects meetings.')
+  });
+}
+
+toggleLaunchMeetingContacted(meeting: any) {
+  this.http.patch<any>(`${environment.apiUrl}/Launches/meetings/${meeting.id}/toggle-contacted`, {}).subscribe({
+    next: (res) => {
+      meeting.isContacted = res.isContacted;
+      this.launchMeetings.update(list => [...list]);
+    },
+    error: () => this.alertService.error('Failed to update meeting status.')
+  });
+}
+
+deleteLaunchMeeting(meeting: any) {
+  this.http.delete(`${environment.apiUrl}/Launches/meetings/${meeting.id}`).subscribe({
+    next: () => {
+      this.launchMeetings.update(list => list.filter(m => m.id !== meeting.id));
+      this.alertService.success('Meeting request deleted.');
+    },
+    error: () => this.alertService.error('Failed to delete meeting request.')
+  });
+}
+
+
+// ترتيب الظهور بالـ drag & drop
+draggedLaunchIndex: number | null = null;
+launchOrderChanged = signal(false);
+savingLaunchOrder = signal(false);
+
+onLaunchDragStart(index: number) {
+  this.draggedLaunchIndex = index;
+}
+
+onLaunchDragOver(event: DragEvent) {
+  event.preventDefault(); // لازم عشان الـ drop يشتغل
+}
+
+onLaunchDrop(index: number) {
+  if (this.draggedLaunchIndex === null || this.draggedLaunchIndex === index) return;
+
+  const current = [...this.launches()];
+  const [moved] = current.splice(this.draggedLaunchIndex, 1);
+  current.splice(index, 0, moved);
+
+  this.launches.set(current);
+  this.draggedLaunchIndex = null;
+  this.launchOrderChanged.set(true);
+}
+
+saveLaunchOrder() {
+  const orderedIds = this.launches().map(b => b.id);
+  this.savingLaunchOrder.set(true);
+
+  this.launchService.reorder(orderedIds).subscribe({
+    next: () => {
+      this.savingLaunchOrder.set(false);
+      this.launchOrderChanged.set(false);
+      this.alertService.success('Order saved successfully!');
+    },
+    error: () => {
+      this.savingLaunchOrder.set(false);
+      this.alertService.error('Failed to save order.');
+    }
+  });
+}
+launchPaymentPlans = signal<any[]>([]);
+launchArticleSections = signal<any[]>([]);
+launchFaqs = signal<any[]>([]);
+
+// --- Zone / Project / Developer ---
+launchZone = signal<string>('');
+
+launchProjectOptions = computed(() => {
+  const zone = this.launchZone();
+  const zoneKey = this.zoneNameToKey[zone];
+  if (!zoneKey || !this.projectsMapping[zoneKey]) return [];
+  const areas: any = this.projectsMapping[zoneKey];
+  const all: string[] = Object.values(areas).flat() as string[];
+  return [...new Set(all)].sort();
+});
+
+// --- Main/Cover image selection ---
+launchMainExistingImageUrl = signal<string | null>(null);
+launchMainNewImageIndex = signal<number | null>(null);
+
+setLaunchMainExistingImage(url: string) {
+  this.launchMainExistingImageUrl.set(url);
+  this.launchMainNewImageIndex.set(null);
+}
+isLaunchMainExistingImage(url: string): boolean {
+  return this.launchMainExistingImageUrl() === url;
+}
+setLaunchMainNewImage(index: number) {
+  this.launchMainNewImageIndex.set(index);
+  this.launchMainExistingImageUrl.set(null);
+}
+isLaunchMainNewImage(index: number): boolean {
+  return this.launchMainNewImageIndex() === index;
+}
+
+// --- Resale Units selector signals ---
+launchResaleUnitSearchText = signal<string>('');
+isLaunchResaleUnitDropdownOpen = signal<boolean>(false);
+selectedLaunchResaleUnits = signal<any[]>([]);
+
+filteredLaunchResaleUnitOptions = computed(() => {
+  const search = this.launchResaleUnitSearchText().toLowerCase();
+  return this.properties()
+    .filter(p =>
+      (p.code && p.code.toLowerCase().includes(search)) ||
+      (p.title && p.title.toLowerCase().includes(search))
+    )
+    .slice(0, 50);
+});
+
+isLaunchResaleUnitSelected(id: number): boolean {
+  return this.selectedLaunchResaleUnits().some(u => u.id === id);
+}
+
+addLaunchResaleUnitId(prop: any) {
+  if (!this.isLaunchResaleUnitSelected(prop.id)) {
+    this.selectedLaunchResaleUnits.update(list => [...list, { id: prop.id, code: prop.code, title: prop.title }]);
+  }
+  this.launchResaleUnitSearchText.set('');
+  this.isLaunchResaleUnitDropdownOpen.set(false);
+}
+
+removeLaunchResaleUnitId(id: number) {
+  this.selectedLaunchResaleUnits.update(list => list.filter(u => u.id !== id));
+}
+
+closeLaunchResaleUnitDropdown() {
+  setTimeout(() => this.isLaunchResaleUnitDropdownOpen.set(false), 150);
+}
+
+// --- Primary Units selector signals ---
+launchPrimaryUnitSearchText = signal<string>('');
+isLaunchPrimaryUnitDropdownOpen = signal<boolean>(false);
+selectedLaunchPrimaryUnits = signal<any[]>([]);
+
+filteredLaunchPrimaryUnitOptions = computed(() => {
+  const search = this.launchPrimaryUnitSearchText().toLowerCase();
+  return this.properties()
+    .filter(p =>
+      (p.code && p.code.toLowerCase().includes(search)) ||
+      (p.title && p.title.toLowerCase().includes(search))
+    )
+    .slice(0, 50);
+});
+
+isLaunchPrimaryUnitSelected(id: number): boolean {
+  return this.selectedLaunchPrimaryUnits().some(u => u.id === id);
+}
+
+addLaunchPrimaryUnitId(prop: any) {
+  if (!this.isLaunchPrimaryUnitSelected(prop.id)) {
+    this.selectedLaunchPrimaryUnits.update(list => [...list, { id: prop.id, code: prop.code, title: prop.title }]);
+  }
+  this.launchPrimaryUnitSearchText.set('');
+  this.isLaunchPrimaryUnitDropdownOpen.set(false);
+}
+
+removeLaunchPrimaryUnitId(id: number) {
+  this.selectedLaunchPrimaryUnits.update(list => list.filter(u => u.id !== id));
+}
+
+closeLaunchPrimaryUnitDropdown() {
+  setTimeout(() => this.isLaunchPrimaryUnitDropdownOpen.set(false), 150);
+}
+
+// --- Rent Units ---
+launchRentUnitSearchText = signal<string>('');
+isLaunchRentUnitDropdownOpen = signal<boolean>(false);
+selectedLaunchRentUnits = signal<any[]>([]);
+
+filteredLaunchRentUnitOptions = computed(() => {
+  const search = this.launchRentUnitSearchText().toLowerCase();
+  return this.properties()
+    .filter(p =>
+      (p.code && p.code.toLowerCase().includes(search)) ||
+      (p.title && p.title.toLowerCase().includes(search))
+    )
+    .slice(0, 50);
+});
+
+isLaunchRentUnitSelected(id: number): boolean {
+  return this.selectedLaunchRentUnits().some(u => u.id === id);
+}
+
+addLaunchRentUnitId(prop: any) {
+  if (!this.isLaunchRentUnitSelected(prop.id)) {
+    this.selectedLaunchRentUnits.update(list => [...list, { id: prop.id, code: prop.code, title: prop.title }]);
+  }
+  this.launchRentUnitSearchText.set('');
+  this.isLaunchRentUnitDropdownOpen.set(false);
+}
+
+removeLaunchRentUnitId(id: number) {
+  this.selectedLaunchRentUnits.update(list => list.filter(u => u.id !== id));
+}
+
+closeLaunchRentUnitDropdown() {
+  setTimeout(() => this.isLaunchRentUnitDropdownOpen.set(false), 150);
+}
+
+// --- Slider preview ---
+launchSliderPreviewUrls = signal<string[]>([]);
+
+removeNewLaunchSliderImage(index: number, inputEl?: HTMLInputElement) {
+  const current = [...this.launchSliderFiles()];
+  current.splice(index, 1);
+  this.launchSliderFiles.set(current);
+  // إعادة بناء الـ preview URLs
+  const urls = current.map(f => URL.createObjectURL(f));
+  this.launchSliderPreviewUrls.set(urls);
+
+  // 👈 المتصفح بيعرض عدد الملفات ("N files") من الـ FileList الأصلية بتاعة الـ <input> نفسه،
+  // فلازم نعيد بناء الـ FileList دي بعد الحذف عشان العدد الظاهر يتحدث صح
+  if (inputEl) {
+    const dt = new DataTransfer();
+    current.forEach(f => dt.items.add(f));
+    inputEl.files = dt.files;
+  }
+}
+
+getLaunchSliderPreviewUrl(index: number): string {
+  return this.launchSliderPreviewUrls()[index] || '';
+}
+
+// أول سنة مسموح بيها في حقل Delivery Year = السنة الحالية (متجددة تلقائيًا كل سنة)
+get currentYear(): number {
+  return new Date().getFullYear();
+}
+
+// يمنع كتابة أي حاجة غير أرقام في حقل Delivery Year (زي -, +, e, .)
+blockNonDigitKeys(event: KeyboardEvent) {
+  const blocked = ['-', '+', 'e', 'E', '.', ','];
+  if (blocked.includes(event.key)) {
+    event.preventDefault();
+  }
+}
+
+initLaunchForm(launch?: any) {
+  this.launchForm = this.fb.group({
+    title:                [''],
+    excerpt:              [''],
+    zone:                 [''],
+    projectName:          [''],
+    developerName:        [''],
+    isPublished:          [true],
+    pricePerMeterResale:  [null],
+    pricePerMeterPrimary: [null],
+    downPaymentPercentage: [null],
+    avgDownPayment: [null],
+    projectDetails:       [''],
+    mapEmbedUrl:          [''],
+    deliveryYear:         ['', [Validators.min(this.currentYear)]],
+  });
+  this.launchForm.get('zone')!.valueChanges.subscribe(v => this.launchZone.set(v || ''));
+  if (launch) {
+    this.launchForm.patchValue({
+      title:                launch.title || '',
+      excerpt:              launch.excerpt || '',
+      zone:                 launch.zone || '',
+      projectName:          launch.projectName || '',
+      developerName:        launch.developerName || '',
+      isPublished:          launch.isPublished,
+      pricePerMeterResale:  launch.pricePerMeterResale,
+      pricePerMeterPrimary: launch.pricePerMeterPrimary,
+      downPaymentPercentage: launch.downPaymentPercentage,
+      avgDownPayment: launch.avgDownPayment,
+      projectDetails:       launch.projectDetails || '',
+      mapEmbedUrl:          launch.mapEmbedUrl || '',
+      deliveryYear:         launch.deliveryDate ? new Date(launch.deliveryDate).getFullYear() : '',
+    });
+    this.launchZone.set(launch.zone || '');
+    this.launchPaymentPlans.set(this.parseJson(launch.paymentPlansJson));
+    this.launchArticleSections.set(this.parseJson(launch.articleSectionsJson));
+    this.launchFaqs.set(this.parseJson(launch.faqsJson));
+  } else {
+    this.launchZone.set('');
+    this.launchPaymentPlans.set([]);
+    this.launchArticleSections.set([]);
+    this.launchFaqs.set([]);
+  }
+}
+
+loadLaunches() {
+  this.launchService.getAll().subscribe({
+    next: (data) => this.launches.set(data),
+    error: () => this.alertService.error('Failed to load launches.')
+  });
+}
+
+openAddLaunch() {
+  this.editingLaunch.set(null);
+  this.launchSliderFiles.set([]);
+  this.launchSliderPreviewUrls.set([]);
+  this.launchMasterPlanFile.set(null);
+  this.launchButtonFiles = { 1: null, 2: null, 3: null };
+  this.selectedLaunchResaleUnits.set([]);
+  this.launchResaleUnitSearchText.set('');
+  this.selectedLaunchPrimaryUnits.set([]);
+  this.launchPrimaryUnitSearchText.set('');
+  this.selectedLaunchRentUnits.set([]);
+  this.launchRentUnitSearchText.set('');
+  this.launchMainExistingImageUrl.set(null);
+  this.launchMainNewImageIndex.set(null);
+  this.initLaunchForm();
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('launchFormModal'));
+  modal.show();
+}
+
+openEditLaunch(launch: any) {
+  this.editingLaunch.set(launch);
+  this.launchSliderFiles.set([]);
+  this.launchSliderPreviewUrls.set([]);
+  this.launchMasterPlanFile.set(null);
+  this.launchButtonFiles = { 1: null, 2: null, 3: null };
+  this.launchResaleUnitSearchText.set('');
+  this.launchPrimaryUnitSearchText.set('');
+  this.launchRentUnitSearchText.set('');
+
+  // ملء selectedLaunchResaleUnits / selectedLaunchPrimaryUnits / selectedLaunchRentUnits من الـ launch الموجود
+  const resaleIds: number[] = this.parseJson(launch.resaleUnitIdsJson);
+  this.selectedLaunchResaleUnits.set(
+    resaleIds
+      .map(id => this.properties().find(p => p.id === id))
+      .filter(p => !!p)
+      .map(p => ({ id: p.id, code: p.code, title: p.title }))
+  );
+
+  const primaryIds: number[] = this.parseJson(launch.primaryUnitIdsJson);
+  this.selectedLaunchPrimaryUnits.set(
+    primaryIds
+      .map(id => this.properties().find(p => p.id === id))
+      .filter(p => !!p)
+      .map(p => ({ id: p.id, code: p.code, title: p.title }))
+  );
+
+  const rentIds: number[] = this.parseJson(launch.rentUnitIdsJson);
+  this.selectedLaunchRentUnits.set(
+    rentIds
+      .map(id => this.properties().find(p => p.id === id))
+      .filter(p => !!p)
+      .map(p => ({ id: p.id, code: p.code, title: p.title }))
+  );
+
+  // main/cover image: لو ال cover موجود ضمن صور السلايدر الحالية نعلّمه
+  this.launchMainNewImageIndex.set(null);
+  const sliderImgs = this.getSliderImagesArray(launch);
+  this.launchMainExistingImageUrl.set(
+    launch.coverImageUrl && sliderImgs.includes(launch.coverImageUrl) ? launch.coverImageUrl : null
+  );
+
+  this.initLaunchForm(launch);
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('launchFormModal'));
+  modal.show();
+}
+
+onLaunchSliderImagesChange(event: any) {
+  const files = Array.from(event.target.files) as File[];
+  this.launchSliderFiles.set(files);
+  // بناء preview URLs للصور الجديدة
+  const urls = files.map(f => URL.createObjectURL(f));
+  this.launchSliderPreviewUrls.set(urls);
+}
+
+onLaunchMasterPlanChange(event: any) {
+  const file = event.target.files[0];
+  if (file) this.launchMasterPlanFile.set(file);
+}
+
+onLaunchButtonImageChange(event: any, btn: number) {
+  const file = event.target.files[0];
+  if (file) this.launchButtonFiles[btn] = file;
+}
+
+onLaunchCoverChange(event: any) {
+  const file = event.target.files[0];
+  if (file) this.launchCoverFile.set(file);
+}
+
+removeLaunchSliderImage(filename: string) {
+  const launch = this.editingLaunch();
+  if (!launch) return;
+  this.launchService.deleteSliderImage(launch.id, filename).subscribe({
+    next: () => {
+      const imgs = this.getSliderImagesArray(launch).filter(i => i !== filename);
+      this.editingLaunch.set({ ...launch, sliderImages: imgs.join('|') });
+      this.loadLaunches();
+    },
+    error: () => this.alertService.error('Failed to delete image. Please try again.')
+  });
+}
+
+// ===================== Drag & Drop reordering - Existing (already uploaded) slider images =====================
+draggedExistingLaunchSliderIndex: number | null = null;
+
+onExistingLaunchSliderDragStart(index: number) {
+  this.draggedExistingLaunchSliderIndex = index;
+}
+
+onExistingLaunchSliderDragOver(event: DragEvent) {
+  event.preventDefault();
+}
+
+onExistingLaunchSliderDrop(targetIndex: number) {
+  const launch = this.editingLaunch();
+  if (!launch || this.draggedExistingLaunchSliderIndex === null || this.draggedExistingLaunchSliderIndex === targetIndex) {
+    this.draggedExistingLaunchSliderIndex = null;
+    return;
+  }
+
+  const imgs = this.getSliderImagesArray(launch);
+  const [moved] = imgs.splice(this.draggedExistingLaunchSliderIndex, 1);
+  imgs.splice(targetIndex, 0, moved);
+
+  this.editingLaunch.set({ ...launch, sliderImages: imgs.join('|') });
+  this.draggedExistingLaunchSliderIndex = null;
+
+  // 👈 بنحفظ الترتيب الجديد فورًا في الداتابيز
+  this.launchService.reorderSliderImages(launch.id, imgs).subscribe({
+    error: () => this.alertService.error('Failed to save the new image order. Please try again.')
+  });
+}
+
+onExistingLaunchSliderDragEnd() {
+  this.draggedExistingLaunchSliderIndex = null;
+}
+
+// ===================== Drag & Drop reordering - New (not-yet-uploaded) slider images =====================
+draggedNewLaunchSliderIndex: number | null = null;
+
+onNewLaunchSliderDragStart(index: number) {
+  this.draggedNewLaunchSliderIndex = index;
+}
+
+onNewLaunchSliderDragOver(event: DragEvent) {
+  event.preventDefault();
+}
+
+onNewLaunchSliderDrop(targetIndex: number, inputEl?: HTMLInputElement) {
+  if (this.draggedNewLaunchSliderIndex === null || this.draggedNewLaunchSliderIndex === targetIndex) {
+    this.draggedNewLaunchSliderIndex = null;
+    return;
+  }
+
+  const currentMainFile = this.launchMainNewImageIndex() !== null ? this.launchSliderFiles()[this.launchMainNewImageIndex()!] : null;
+
+  const files = [...this.launchSliderFiles()];
+  const [moved] = files.splice(this.draggedNewLaunchSliderIndex, 1);
+  files.splice(targetIndex, 0, moved);
+  this.launchSliderFiles.set(files);
+
+  // إعادة بناء الـ preview URLs بنفس الترتيب الجديد
+  const urls = files.map(f => URL.createObjectURL(f));
+  this.launchSliderPreviewUrls.set(urls);
+
+  if (currentMainFile) {
+    const newIndex = files.indexOf(currentMainFile);
+    this.launchMainNewImageIndex.set(newIndex >= 0 ? newIndex : null);
+  }
+
+  // نعيد بناء الـ FileList بتاعة الـ input نفسه عشان العداد الطبيعي للمتصفح يفضل متطابق
+  if (inputEl) {
+    const dt = new DataTransfer();
+    files.forEach(f => dt.items.add(f));
+    inputEl.files = dt.files;
+  }
+
+  this.draggedNewLaunchSliderIndex = null;
+}
+
+onNewLaunchSliderDragEnd() {
+  this.draggedNewLaunchSliderIndex = null;
+}
+
+// Payment Plans
+addLaunchPaymentPlan()         { this.launchPaymentPlans.update(p => [...p, { name: '', avgDownPayment: '', avgInstallment: '', years: '', note: '' }]); }
+removeLaunchPaymentPlan(i: number) { this.launchPaymentPlans.update(p => p.filter((_, idx) => idx !== i)); }
+
+// Article Sections
+addLaunchArticleSection()          { this.launchArticleSections.update(s => [...s, { headline: '', text: '' }]); }
+removeLaunchArticleSection(i: number) { this.launchArticleSections.update(s => s.filter((_, idx) => idx !== i)); }
+
+// FAQs
+addLaunchFaq()       { this.launchFaqs.update(f => [...f, { question: '', answer: '' }]); }
+removeLaunchFaq(i: number) { this.launchFaqs.update(f => f.filter((_, idx) => idx !== i)); }
+
+submitLaunch() {
+  if (!this.launchForm.value.title?.trim()) { this.alertService.error('Please enter a project name.'); return; }
+
+  // ✅ Delivery Year: لازم تكون السنة الحالية أو بعدها
+  const deliveryYearRaw = this.launchForm.value.deliveryYear;
+  const deliveryYear = deliveryYearRaw ? Number(deliveryYearRaw) : null;
+  if (deliveryYear !== null && (isNaN(deliveryYear) || deliveryYear < this.currentYear)) {
+    this.alertService.error(`Delivery year must be ${this.currentYear} or later.`);
+    return;
+  }
+
+  this.launchSubmitting.set(true);
+  const f = this.launchForm.value;
+
+  // Parse unit IDs from selected signals (unlimited)
+  const resaleUnitIds = this.selectedLaunchResaleUnits().map(u => u.id);
+  const primaryUnitIds = this.selectedLaunchPrimaryUnits().map(u => u.id);
+  const rentUnitIds = this.selectedLaunchRentUnits().map(u => u.id);
+
+  const fd = new FormData();
+  fd.append('Title',                f.title);
+  fd.append('Excerpt',              f.excerpt);
+  fd.append('Zone',                 f.zone || '');
+  fd.append('ProjectName',          f.projectName || '');
+  fd.append('DeveloperName',        f.developerName || '');
+  fd.append('IsPublished',          f.isPublished ? 'true' : 'false');
+  fd.append('PricePerMeterResale',  f.pricePerMeterResale?.toString() || '');
+  fd.append('PricePerMeterPrimary', f.pricePerMeterPrimary?.toString() || '');
+  fd.append('DownPaymentPercentage', f.downPaymentPercentage?.toString() || '');
+  fd.append('AvgDownPayment',       f.avgDownPayment?.toString() || '');
+  fd.append('AdminPhone',           '01509064020');
+  fd.append('Button1Label',         'Gallery');
+  fd.append('Button2Label',         'View on Map');
+  fd.append('Button3Label',         'Master Plan');
+  fd.append('ProjectDetails',       f.projectDetails || '');
+  fd.append('MapEmbedUrl',          f.mapEmbedUrl || '');
+  fd.append('DeliveryDate',         deliveryYear ? `${deliveryYear}-01-01` : '');
+  fd.append('PaymentPlansJson',     JSON.stringify(this.launchPaymentPlans()));
+  fd.append('ResaleUnitIdsJson',    JSON.stringify(resaleUnitIds));
+  fd.append('PrimaryUnitIdsJson',   JSON.stringify(primaryUnitIds));
+  fd.append('RentUnitIdsJson',      JSON.stringify(rentUnitIds));
+  fd.append('ArticleSectionsJson',  JSON.stringify(this.launchArticleSections()));
+  fd.append('FaqsJson',             JSON.stringify(this.launchFaqs()));
+
+  // Main/cover image selection
+  if (this.launchMainNewImageIndex() !== null) {
+    fd.append('MainNewImageIndex', this.launchMainNewImageIndex()!.toString());
+  } else if (this.launchMainExistingImageUrl()) {
+    fd.append('CoverImageUrl', this.launchMainExistingImageUrl()!);
+  }
+
+  this.launchSliderFiles().forEach(file => fd.append('SliderImages', file));
+  if (this.launchMasterPlanFile()) fd.append('MasterPlanImage', this.launchMasterPlanFile()!);
+  [1, 2, 3].forEach(btn => {
+    if (this.launchButtonFiles[btn]) fd.append(`Button${btn}Image`, this.launchButtonFiles[btn]!);
+  });
+
+  const editing = this.editingLaunch();
+  const req = editing ? this.launchService.update(editing.id, fd) : this.launchService.create(fd);
+
+  req.subscribe({
+    next: () => {
+      this.launchSubmitting.set(false);
+      this.alertService.success(editing ? 'Launch updated!' : 'Launch created!');
+      this.loadLaunches();
+      const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('launchFormModal'));
+      modal?.hide();
+    },
+    error: () => { this.launchSubmitting.set(false); this.alertService.error('Failed to save launch.'); }
+  });
+}
+
+deleteLaunch(id: number) {
+  this.alertService.confirm('Delete this launch?', () => {
+    this.launchService.delete(id).subscribe({
+      next: () => { this.alertService.success('Launch deleted.'); this.loadLaunches(); },
+      error: () => this.alertService.error('Failed to delete launch.')
+    });
+  });
+}
+
+getLaunchImageUrl(filename: string) { return this.launchService.getImageUrl(filename); }
+getLaunchFirstImage(launch: any): string {
+  const imgs = this.launchService.getSliderImages(launch);
+  return imgs.length > 0 ? imgs[0] : '';
+}
+getLaunchCoverImage(launch: any): string {
+  if (launch?.coverImageUrl) return launch.coverImageUrl;
+  return this.getLaunchFirstImage(launch);
 }
 }

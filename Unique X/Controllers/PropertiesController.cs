@@ -299,6 +299,61 @@ namespace Unique_X.Controllers
             return result != null ? Ok(result) : NotFound("Property not found");
         }
 
+        // 🟢 لسته الـ Developers/Projects/Regions اللي الأدمن بيديرها من صفحة Lookups
+        // متاحة هنا (مش تحت api/Admin) عشان أي بروكر يقدر يجيبها وهو بيضيف/يعدل عقار
+
+        [HttpGet("developers")]
+        public async Task<IActionResult> GetDevelopersList([FromServices] AppDbContext context)
+        {
+            var developers = await context.Developers.OrderBy(d => d.Name).ToListAsync();
+            return Ok(developers);
+        }
+
+        [HttpGet("projects-list")]
+        public async Task<IActionResult> GetProjectsList([FromServices] AppDbContext context, [FromQuery] int? type, [FromQuery] int? city)
+        {
+            var query = context.Projects.AsQueryable();
+            if (type.HasValue) query = query.Where(p => (int)p.Type == type.Value);
+            if (city.HasValue) query = query.Where(p => (int)p.City == city.Value);
+
+            // 🟢 لازم نحول الـ enums لأرقام بشكل صريح هنا (Type/City)، عشان لو عندك أي إعداد
+            // بيسيريلايز الـ enums كنص (زي "Cairo") بدل رقم، الفرونت هيبني الـ Mapping بمفتاح غلط ومش هيلاقيه تاني
+            var projects = await query
+                .OrderBy(p => p.Region)
+                .ThenBy(p => p.Name)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.Code,
+                    Type = (int)p.Type,
+                    City = (int)p.City,
+                    p.Region
+                })
+                .ToListAsync();
+
+            return Ok(projects);
+        }
+
+        [HttpGet("regions-list")]
+        public async Task<IActionResult> GetRegionsList([FromServices] AppDbContext context, [FromQuery] int? city)
+        {
+            var query = context.Regions.AsQueryable();
+            if (city.HasValue) query = query.Where(r => (int)r.City == city.Value);
+
+            var regions = await query
+                .OrderBy(r => r.Name)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.Name,
+                    r.ZoneCode,
+                    City = (int)r.City
+                })
+                .ToListAsync();
+
+            return Ok(regions);
+        }
 
     }
 }
