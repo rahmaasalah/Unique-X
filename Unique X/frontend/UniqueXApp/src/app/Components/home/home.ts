@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal, ChangeDetectorRef, computed  } from '@angular/core';
 import { CommonModule } from '@angular/common'; // مهم جداً للأوامر مثل *ngIf
+import { FormsModule } from '@angular/forms';
 import { PropertyCardComponent } from '../property-card/property-card'; // مهم لكي يتعرف على الكارت
 import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
@@ -8,6 +9,7 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../Services/auth';
 import { AdminService } from '../../Services/admin';
 import { BlogService } from '../../Services/blog.service';
+import { LaunchService } from '../../Services/launch.service';
 import { GoogleAnalyticsService } from 'ngx-google-analytics';
 import { CurrencyService } from '../../Services/currency.service';
 
@@ -16,7 +18,7 @@ import { CurrencyService } from '../../Services/currency.service';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, PropertyCardComponent, RouterModule], 
+  imports: [CommonModule, FormsModule, PropertyCardComponent, RouterModule], 
   templateUrl: './home.html',
   styleUrl: './home.css'
 })
@@ -25,10 +27,17 @@ export class HomeComponent implements OnInit {
   message = signal<string>('');
   ads = signal<any[]>([]);
   blogs = signal<any[]>([]);
+  launches = signal<any[]>([]);
+
+  // 🟢 بانرات ثابتة بين قسمي Launches و Hot Deals
+  exploreHomeBannerUrl = signal<string>('');
+  addPropertyBannerUrl = signal<string>('');
 
   adminPhone = signal<string>('');
+  showAdvancedFilters = signal<boolean>(false);
   private gaService = inject(GoogleAnalyticsService);
   private blogService = inject(BlogService);
+  private launchService = inject(LaunchService);
   currencyService = inject(CurrencyService);
 
   resaleProps = computed(() => this.properties().filter(p => p.listingType === 'Resale'));
@@ -52,6 +61,12 @@ export class HomeComponent implements OnInit {
     );
   });
 
+  // 🟢 نوع الإعلان النشط (Resale/Rent/Primary/Resale Project) — بيتحدد من الـ Query Param، ونستخدمه لتمييز التاب النشط
+  activeType = computed(() => {
+    const q = this.activeQueryParams();
+    return q['listingType'] !== undefined ? q['listingType'].toString() : null;
+  });
+
   // 🟢 3. فلترة الـ Hot Deals بناءً على الناف بار (Listing Type)
   filteredHotDeals = computed(() => {
     const params = this.activeQueryParams(); 
@@ -72,7 +87,7 @@ export class HomeComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef); 
   constructor(private propertyService: PropertyService, 
-  private router: Router, private activatedRoute: ActivatedRoute, private authService: AuthService,
+  private router: Router, private activatedRoute: ActivatedRoute, public authService: AuthService,
   private adminService: AdminService) {}
 
   currentListingType: string | null = null;
@@ -158,6 +173,8 @@ ngOnInit(): void {
   });
 
   this.loadBlogs();
+  this.loadLaunches();
+  this.loadHomeSectionBanners();
 }
 loadHotDeals() {
   // افترضي وجود هذه الدالة في الـ PropertyService
@@ -169,6 +186,27 @@ loadBlogs() {
     next: (data: any[]) => {
       // بنعرض البلوجز المنشورة بس
       this.blogs.set(data.filter(b => b.isPublished));
+    },
+    error: () => {}
+  });
+}
+
+loadLaunches() {
+  this.launchService.getAll().subscribe({
+    next: (data: any[]) => {
+      // بنعرض اللانشز المنشورة بس
+      this.launches.set(data.filter(l => l.isPublished));
+    },
+    error: () => {}
+  });
+}
+
+// 🟢 البانرين الثابتين اللي الأدمن حدهم (Explore Home + Add Property)
+loadHomeSectionBanners() {
+  this.adminService.getHomeSectionBanners().subscribe({
+    next: (data: any) => {
+      this.exploreHomeBannerUrl.set(data?.exploreHomeBannerUrl || '');
+      this.addPropertyBannerUrl.set(data?.addPropertyBannerUrl || '');
     },
     error: () => {}
   });
@@ -424,6 +462,36 @@ getAdminWhatsApp(): string {
   return `https://wa.me/${phone}?text=${msg}`;
 }
 
+// ===== "Need Expert Advice?" form =====
+expertName: string = '';
+expertLocation: string = '';
+expertPhone: string = '';
+expertMessage: string = '';
+expertFormError = signal<string>('');
+
+submitExpertAdvice() {
+  if (!this.expertName.trim() || !this.expertLocation || !this.expertPhone.trim()) {
+    this.expertFormError.set('Please fill in your name, location and phone number.');
+    return;
+  }
+  this.expertFormError.set('');
+
+  if (!this.adminPhone()) return;
+  let phone = this.adminPhone().replace(/\D/g, '');
+  if (phone.startsWith('0')) phone = '2' + phone;
+
+  const msg = encodeURIComponent(
+    `Hello, I need expert advice.\nName: ${this.expertName}\nPreferred Location: ${this.expertLocation}\nPhone: ${this.expertPhone}\nMessage: ${this.expertMessage || 'N/A'}`
+  );
+  window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+
+  // تصفير الفورم بعد الإرسال
+  this.expertName = '';
+  this.expertLocation = '';
+  this.expertPhone = '';
+  this.expertMessage = '';
+}
+
 
 handleAdminContact(event: Event, type: 'whatsapp' | 'call') {
   event.preventDefault(); // منع المتصفح من فتح الرابط تلقائياً
@@ -496,6 +564,48 @@ sendBlogInquiry(blog: any, event: Event): void {
 
   const msg = encodeURIComponent(
     `Interested in project: ${blog.title}\n${blogLink}`
+  );
+
+  window.open(`https://wa.me/${cleaned}?text=${msg}`, '_blank');
+}
+
+getLaunchImageUrl(filename: string): string {
+  if (!filename) return '';
+  return this.launchService.getImageUrl(filename);
+}
+
+getLaunchThumbnail(launch: any): string {
+  // لو في cover image نستخدمه
+  if (launch.coverImageUrl) return this.launchService.getImageUrl(launch.coverImageUrl);
+  // fallback: أول صورة من الـ sliderImages
+  if (launch.sliderImages) {
+    const first = launch.sliderImages.split('|').find((s: string) => s.trim());
+    if (first) return first.trim();
+  }
+  return '';
+}
+
+// "Delivery in {year}" — بتستخدم الـ helper الجاهزة في LaunchService
+getLaunchDeliveryLabel(launch: any): string {
+  return this.launchService.getDeliveryLabel(launch);
+}
+
+goToLaunch(id: number) {
+  this.router.navigate(['/launch', id]);
+}
+
+// رقم الأدمن ثابت في السيستم (نفس الرقم المستخدم في صفحة تفاصيل اللانش)
+private readonly LAUNCH_ADMIN_PHONE = '01509064020';
+
+// Download Brochure → بيفتح واتساب الأدمن باستفسار عن اللانش + لينكه
+sendLaunchInquiry(launch: any, event: Event): void {
+  event.stopPropagation(); // منع فتح صفحة اللانش لما يدوس على الزرار
+
+  const cleaned = '20' + this.LAUNCH_ADMIN_PHONE.replace(/^0+/, '');
+  const launchLink = this.launchService.getLaunchLink(launch);
+
+  const msg = encodeURIComponent(
+    `Interested in launch: ${launch.title}\n${launchLink}`
   );
 
   window.open(`https://wa.me/${cleaned}?text=${msg}`, '_blank');

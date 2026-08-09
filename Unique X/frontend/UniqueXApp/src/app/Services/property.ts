@@ -102,4 +102,26 @@ toggleVisitList(propertyId: number): Observable<any> {
 getMyVisitList(): Observable<any[]> {
   return this.http.get<any[]>(`${environment.apiUrl}/visitlist`);
 }
+
+// --- Lookups: Developers / Projects / Regions (يديرهم الأدمن من صفحة Lookups) ---
+
+getDevelopersList(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/developers`);
+}
+
+// type: 0 = Primary, 1 = Resale
+getProjectsList(type?: number, city?: number): Observable<any[]> {
+  let url = `${this.baseUrl}/projects-list`;
+  const params: string[] = [];
+  if (type !== undefined && type !== null) params.push(`type=${type}`);
+  if (city !== undefined && city !== null) params.push(`city=${city}`);
+  if (params.length) url += `?${params.join('&')}`;
+  return this.http.get<any[]>(url);
+}
+
+getRegionsList(city?: number): Observable<any[]> {
+  let url = `${this.baseUrl}/regions-list`;
+  if (city !== undefined && city !== null) url += `?city=${city}`;
+  return this.http.get<any[]>(url);
+}
 }

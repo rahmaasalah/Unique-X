@@ -9,6 +9,7 @@ using Unique_X.DTOs;
 using Unique_X.Models;
 using Unique_X.Services.Implementation;
 using Unique_X.Services.Interface;
+using static Unique_X.Models.PropEnums;
 
 namespace Unique_X.Controllers
 {
@@ -759,6 +760,61 @@ namespace Unique_X.Controllers
             return Ok(new { message = "Updated successfully!", isContacted = meeting.IsContacted });
         }
 
+        [HttpGet("home-section-banners")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetHomeSectionBanners()
+        {
+            var banners = await _context.HomeSectionBanners.ToListAsync();
+            var explore = banners.FirstOrDefault(b => b.Key == "explore-home");
+            var addProp = banners.FirstOrDefault(b => b.Key == "add-property");
+            return Ok(new
+            {
+                ExploreHomeBannerUrl = explore?.ImageUrl,
+                AddPropertyBannerUrl = addProp?.ImageUrl
+            });
+        }
+
+        [HttpPost("home-section-banners")]
+        public async Task<IActionResult> UploadHomeSectionBanner([FromForm] HomeSectionBannerUploadDto dto)
+        {
+            if (dto.Key != "explore-home" && dto.Key != "add-property")
+                return BadRequest("Invalid banner key.");
+
+            // لو فيه بانر قديم بنفس المكان، بنمسحه الأول (صورة واحدة بس مسموح بيها)
+            var existing = await _context.HomeSectionBanners.FirstOrDefaultAsync(b => b.Key == dto.Key);
+            if (existing != null)
+            {
+                await _photoService.DeletePhotoAsync(existing.PublicId);
+                _context.HomeSectionBanners.Remove(existing);
+            }
+
+            var result = await _photoService.AddPhotoAsync(dto.File);
+            if (result.Error != null) return BadRequest(result.Error.Message);
+
+            var banner = new HomeSectionBanner
+            {
+                Key = dto.Key,
+                ImageUrl = result.SecureUrl.AbsoluteUri,
+                PublicId = result.PublicId
+            };
+
+            _context.HomeSectionBanners.Add(banner);
+            await _context.SaveChangesAsync();
+            return Ok(banner);
+        }
+
+        [HttpDelete("home-section-banners/{key}")]
+        public async Task<IActionResult> DeleteHomeSectionBanner(string key)
+        {
+            var banner = await _context.HomeSectionBanners.FirstOrDefaultAsync(b => b.Key == key);
+            if (banner == null) return NotFound();
+
+            await _photoService.DeletePhotoAsync(banner.PublicId);
+            _context.HomeSectionBanners.Remove(banner);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Deleted" });
+        }
+
         // DELETE: api/admin/project-meetings/{id}
         [HttpDelete("project-meetings/{id}")]
         public async Task<IActionResult> DeleteProjectMeeting(int id)
@@ -770,6 +826,173 @@ namespace Unique_X.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Meeting request deleted." });
+        }
+
+        // ==================================================
+        // 🟢 إدارة المطورين / المشاريع (Primary & Resale) / المناطق
+        // بتحل محل الليستات الهاردكودد في PropertiesService.cs و add-property.ts
+        // ==================================================
+
+        // ---------- Developers ----------
+
+        [HttpGet("developers")]
+        public async Task<IActionResult> GetDevelopers()
+        {
+            var developers = await _context.Developers
+                .OrderBy(d => d.Name)
+                .ToListAsync();
+            return Ok(developers);
+        }
+
+        [HttpPost("developers")]
+        public async Task<IActionResult> AddDeveloper([FromBody] DeveloperDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Name) || string.IsNullOrWhiteSpace(dto.Code))
+                return BadRequest("Name and Code are required.");
+
+            if (await _context.Developers.AnyAsync(d => d.Name.ToLower() == dto.Name.Trim().ToLower()))
+                return BadRequest("This developer already exists.");
+
+            var developer = new Developer { Name = dto.Name.Trim(), Code = dto.Code.Trim().ToUpper() };
+            _context.Developers.Add(developer);
+            await _context.SaveChangesAsync();
+            return Ok(developer);
+        }
+
+        [HttpDelete("developers/{id}")]
+        public async Task<IActionResult> DeleteDeveloper(int id)
+        {
+            var developer = await _context.Developers.FindAsync(id);
+            if (developer == null) return NotFound();
+
+            _context.Developers.Remove(developer);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Deleted" });
+        }
+
+        // ---------- Projects (Primary & Resale) ----------
+
+        // GET api/admin/projects?type=0&city=1
+        [HttpGet("projects")]
+        public async Task<IActionResult> GetProjects([FromQuery] int? type, [FromQuery] int? city)
+        {
+            var query = _context.Projects.Include(p => p.Developer).AsQueryable();
+
+            if (type.HasValue) query = query.Where(p => (int)p.Type == type.Value);
+            if (city.HasValue) query = query.Where(p => (int)p.City == city.Value);
+
+            var projects = await query
+                .OrderBy(p => p.Region)
+                .ThenBy(p => p.Name)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.Code,
+                    Type = (int)p.Type,
+                    City = (int)p.City,
+                    p.Region,
+                    p.DeveloperId,
+                    DeveloperName = p.Developer != null ? p.Developer.Name : null
+                })
+                .ToListAsync();
+
+            return Ok(projects);
+        }
+
+        [HttpPost("projects")]
+        public async Task<IActionResult> AddProject([FromBody] ProjectDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Name) || string.IsNullOrWhiteSpace(dto.Code))
+                return BadRequest("Name and Code are required.");
+
+            var type = (ProjectListingType)dto.Type;
+            var city = (City)dto.City;
+
+            if (await _context.Projects.AnyAsync(p => p.Name.ToLower() == dto.Name.Trim().ToLower() && p.Type == type && p.City == city))
+                return BadRequest("This project already exists.");
+
+            var project = new Project
+            {
+                Name = dto.Name.Trim(),
+                Code = dto.Code.Trim(),
+                Type = type,
+                City = city,
+                Region = string.IsNullOrWhiteSpace(dto.Region) ? null : dto.Region.Trim(),
+                DeveloperId = dto.DeveloperId
+            };
+
+            _context.Projects.Add(project);
+            await _context.SaveChangesAsync();
+            return Ok(project);
+        }
+
+        [HttpDelete("projects/{id}")]
+        public async Task<IActionResult> DeleteProject(int id)
+        {
+            var project = await _context.Projects.FindAsync(id);
+            if (project == null) return NotFound();
+
+            _context.Projects.Remove(project);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Deleted" });
+        }
+
+        // ---------- Regions ----------
+
+        // GET api/admin/regions?city=1
+        [HttpGet("regions")]
+        public async Task<IActionResult> GetRegions([FromQuery] int? city)
+        {
+            var query = _context.Regions.AsQueryable();
+            if (city.HasValue) query = query.Where(r => (int)r.City == city.Value);
+
+            var regions = await query
+                .OrderBy(r => r.Name)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.Name,
+                    r.ZoneCode,
+                    City = (int)r.City
+                })
+                .ToListAsync();
+
+            return Ok(regions);
+        }
+
+        [HttpPost("regions")]
+        public async Task<IActionResult> AddRegion([FromBody] RegionDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Name))
+                return BadRequest("Name is required.");
+
+            var city = (City)dto.City;
+
+            if (await _context.Regions.AnyAsync(r => r.Name.ToLower() == dto.Name.Trim().ToLower() && r.City == city))
+                return BadRequest("This region already exists.");
+
+            var region = new Region
+            {
+                Name = dto.Name.Trim(),
+                ZoneCode = string.IsNullOrWhiteSpace(dto.ZoneCode) ? null : dto.ZoneCode.Trim(),
+                City = city
+            };
+
+            _context.Regions.Add(region);
+            await _context.SaveChangesAsync();
+            return Ok(region);
+        }
+
+        [HttpDelete("regions/{id}")]
+        public async Task<IActionResult> DeleteRegion(int id)
+        {
+            var region = await _context.Regions.FindAsync(id);
+            if (region == null) return NotFound();
+
+            _context.Regions.Remove(region);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Deleted" });
         }
 
     }

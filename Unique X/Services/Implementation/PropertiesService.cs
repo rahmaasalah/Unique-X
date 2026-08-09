@@ -14,96 +14,10 @@ namespace Unique_X.Services.Implementation
         private readonly AppDbContext _context;
         private readonly IPhotoService _photoService;
 
-        private readonly Dictionary<string, string> PrimaryAndDeveloperCodes = new(StringComparer.OrdinalIgnoreCase)
-        {
-            {"Palm hills", "PH"}, {"Elsewhere", "EW"}, {"Orouba", "OR"}, {"Zinnia", "ZN"},
-            {"Tasheed", "TD"}, {"Turkey", "TK"}, {"Add Group", "AG"}, {"Gamal Elghonimy", "CG"},
-            {"Khames Elghonimy", "KG"}, {"Bunyan", "BY"}, {"The rise", "TR"}, {"Baron", "BN"},
-            {"Mimary", "MR"}, {"Abo Zahra", "AZ"}, {"Al maram", "MA"}, {"Ivory", "IV"},
-            {"Alforat", "AF"}, {"Abo Zahra \"Diva\"", "AZ"}, {"Elghonimy \"Saluga Elite\"", "KG"},
-            {"Elghonimy \" Vee Club\"", "KG"}, {"Boulivard", "BV"}, {"Seif water front", "SWF"},
-            {"Saudi Masria", "SM"}, {"Solik", "SK"}, {"First", "FT"}, {"Tabark", "TB"},
-            {"Swag", "SG"}, {"Waf", "W"}, {"Elsedeky", "SD"}, {"Tegan, Eldawlia", "TG"},
-            {"Jeran", "JN"}, {"Alexandria development", "AL"}, {"Darak", "DK"}, {"Saif", "SF"},
-            {"Cleopatra", "CP"}, {"Jedar & Jawiria", "JW"}, {"Marsoum Development", "MS"},
-            {"Marakez", "MAR"}, {"Madar", "MAD"}, {"Naia", "NAI"}, {"M Squared", "MS"},
-            {"Tatweer Misr", "TM"}, {"Mezyan", "MZ"}, {"Hyde Park", "HP"}, {"Sodic", "SOD"},
-            {"G Development", "GD"}, {"La Vista Ras", "LVR"}, {"Mabany Edris", "MBE"},
-            {"Metso", "MET"}, {"Gates", "GAT"}, {"Mountain View", "MV"}, {"Misr Italia", "MI"},
-            {"Hassan Allam", "HA"}, {"People", "PEO"}, {"Ahly Sabbour", "AS"}, {"Ara Bella", "AB"},
-            {"Maven", "MAV"}, {"Marasem", "MAR1"}, {"Inertia", "INE"}, {"Idar", "IDA"},
-            {"Il Cazar", "IC"}, {"Rreedy", "RRE"}, {"He", "HE"}, {"Starlight Development", "SD"},
-            {"Emaar", "EMA"}, {"Akam El Rajhi", "AER"}, {"The Water Way", "TWW"}, {"Alqamzi", "ALQ"},
-            {"Lavista", "LAV"}, {"La Sirena", "LAS"}, {"Tmg", "TMG"}, {"Roua", "ROU"},
-            {"Q Development", "QD"}, {"Developer X", "DX"}, {"Serac", "SER"}, {"Egy Gab", "EG"},
-            {"Location", "LOC"}, {"Memar Elmorshedy", "ME"}, {"LMD", "LMD"}, {"Ghazala Bay", "GB"},
-            {"Modon", "MOD"}, {"New Generation", "NG"}, {"City Edge", "CE"}, {"Aldiwan", "ALD"},
-            {"Hdp", "HDP"}, {"Code", "COD"}, {"Master", "MAS"}, {"J D", "JD"}, {"Mena Group", "MG"},
-            {"Arabia", "ARA"}, {"Toledo", "TOL"}, {"Tharaa", "THA"},{"Farag Amer", "FAG"},{"Housing and Development bank", "HBD"},
-            {"Saudi Egyptian Development", "SED"},
-
-            {"Palm hills Alexandria", "PHA"}, {"The One", "TO"}, {"Skyline", "SL"}, {"East towers", "ET"},
-            {"Alex west", "AW"}, {"Valore Smouha", "VS"}, {"Valore Antoniadis", "VA"}, {"Muruj", "MJ"},
-            {"Sawari", "SW"}, {"Jackranda", "JK"}, {"Vida", "VD"}, {"Alsafwa", "AS"}, {"Abha hayat", "AH"},
-            {"Grand view", "GV"}, {"Crystal towers", "CT"}, {"Twin towers", "TT"}, {"Veranda", "VR"},
-            {"Jewar", "JR"}, {"Soly vie", "SV"}, {"San Stefano royals", "SSR"}, {"Cleopatra Plaza", "CP"},
-            {"Malaaz", "MZ"}, {"Smouha Gate", "SMG"}, {"Amwaj", "AM"}, {"Antoniades City", "AC"},
-            {"Oria City", "OC"}, {"Elite City", "EC"}, {"Ouruba Royals", "OR"}, {"Saraya Gardens", "SG"},
-            {"Alsafwa City", "AS"}, {"The Island", "TI"}, {"Telal", "TE"}, {"Creeks", "CK"}, {"Silver Sands", "SSN"},
-
-            {"Ramla", "RA"}, {"Azha", "AZ"}, {"Naia Bay", "NA"}, {"El Masyaf", "EL"}, {"Fouka Bay", "FO"},
-            {"Remal", "RE"}, {"Hacienda West", "HA"}, {"Seashore", "SE"}, {"Ogami", "OG"}, {"Seashell Playa", "SEA"},
-            {"La Vista Ras El Hikma", "LA"}, {"Caesar", "CA"}, {"Koun", "KO"}, {"Caesar Bay", "CAE"}, {"Lyv", "LY"},
-            {"Mountain View Ras El Hikma", "MO"}, {"Solare", "SO"}, {"Swan Lake", "SW"}, {"Seashell Ras El Hikma", "SA"},
-            {"The Med", "TH"}, {"Gaia", "GA"}, {"June", "JU"}, {"Direction White", "DI"}, {"Cali Coast", "CAL"},
-            {"Hacienda Waters", "HAC"}, {"Mar Bay", "MA"}, {"Jefaira", "JE"}, {"Sea View", "SV"}, {"Safia", "SAF"},
-            {"Salt", "SAL"}, {"Azzar Islands", "AZZ"}, {"Saada North Coast", "SAA"}, {"Katamya Coast", "KA"},
-            {"Soul", "SOU"}, {"Lvls", "LV"}, {"Dose", "DO"}, {"Seazen", "SZ"}, {"La Vista Bay", "LAV"},
-            {"La Vista Bay East", "LI"}, {"Hacienda Blue", "HC"}, {"D bay", "DB"}, {"South Med", "SU"},
-            {"Hacienda Red", "HI"}, {"Hacienda White", "HE"}, {"Q North", "QN"}, {"SeaShell", "SS"},
-            {"Bianchi Ilios", "BI"}, {"Shamasi", "SH"}, {"Masaya", "MAS"}, {"Stella Heights", "ST"},
-            {"Alura", "AL"}, {"La vista Cascada", "LS"}, {"Maraasi", "MAR"}, {"Stella", "STE"},
-            {"Diplo 3", "DIP"}, {"Haceinda Bay", "HN"}, {"Playa Ghazala", "PL"}, {"Zoya", "ZO"},
-            {"Zahra", "ZA"}, {"Crysta", "CR"}, {"Plage", "PLA"}, {"Lagoons", "LAG"}, {"Alma", "ALM"},
-            {"IL Latini", "IL"}, {"Downtown", "DOW"}, {"Plam Hills North Coast", "PA"}, {"Mazarine", "MAZ"},
-            {"Golf Porto Marina", "GPM"}, {"Marina 1", "MR1"}, {"Marina 2", "MR2"}, {"Marina 3", "MR3"},
-            {"Marina 4", "MR4"}, {"Marina 5", "MR5"}, {"Marina 6", "MR6"}, {"Marina 7", "MR7"}, {"Marina 8", "MR8"},
-            {"Viller", "VI"}, {"North Code", "NO"}, {"Wanas Master", "WA"}, {"London", "LON"}, {"Ajaza", "AGZ"},{"Youd", "YD"},
-            {"Eko Mena", "EK"}, {"Bungalows", "BU"}, {"Layana", "LAY"}, {"Glee", "GL"}, {"Ras Al-Hekma", "RH"},{"Hacienda Ras Al-Hekma", "HCR"}, {"Dayz", "DZ"}
-        };
-
-        private readonly Dictionary<string, string> ResaleProjectIds = new(StringComparer.OrdinalIgnoreCase)
-        {
-            {"Sawari", "1"}, {"Muruj", "2"}, {"Palm hills Alexandria", "3"}, {"The one", "4"}, {"Alex west", "5"},
-            {"Skyline", "6"}, {"Grand view", "7"}, {"Antoniades City", "8"}, {"Valore Antoniadis", "9"},
-            {"Valore Smouha", "10"}, {"Jewar", "11"}, {"Crystal Towers", "12"}, {"Twin Towers", "13"},
-            {"East Towers", "14"}, {"Saraya Gardens", "15"}, {"Veranda", "16"}, {"Jackranda", "17"},
-            {"Oria City", "18"}, {"Elite City", "19"}, {"Vida", "20"}, {"Abha Hayat", "21"},
-            {"Ouruba Royals", "22"}, {"Soly Vie", "23"}, {"San Stefano Royals", "24"}, {"Malaaz", "25"},
-            {"Smouha Gate", "26"}
-        };
-
-        private readonly Dictionary<string, string> ResaleZoneIds = new(StringComparer.OrdinalIgnoreCase)
-        {
-            {"Abu Qir", "1"}, {"Al-Maamoura", "2"}, {"Al-zawaida", "4"}, {"Khurshid", "5"}, {"Al-Maraghi", "6"},
-            {"Bahary", "7"}, {"El-Mandara-kebly", "8"}, {"Al-Manshiyya", "9"}, {"Bashair al-khayr", "11"},
-            {"Al-Agamy", "13"}, {"Al-Baytash", "14"}, {"Al-Hanovil", "15"}, {"Al-Dakhila", "16"}, {"October", "17"},
-            {"Al-Amiriya", "20"}, {"Borj Al-Arab", "21"}, {"Sidi Bishr", "23"}, {"Al-Aasafirah-45", "24"},
-            {"Al-Aasafirah-bahary", "25"}, {"Al-Aasafirah-30", "26"}, {"Janaklis", "32"}, {"San Stefano", "33"},
-            {"Fleming", "34"}, {"Shods", "35"}, {"Al-Suyuf", "39"}, {"Bakus", "40"}, {"Bolkley", "41"},
-            {"Roshdy", "42"}, {"Zizinia", "43"}, {"Kafr Abdo", "45"}, {"Cleopatra", "46"}, {"Sporting", "47"},
-            {"Sidi Gaber", "48"}, {"Camp Schésar", "49"}, {"Al-Shatibi", "50"}, {"Al-Azariṭa", "51"},
-            {"Mahattah al-raml", "52"}, {"Al-Saraya", "53"}, {"Muharram Bik", "56"}, {"Al-Hadra", "57"},
-            {"Miamy", "59"}, {"Abo solaiman", "60"}, {"Falaky", "61"}, {"Al-Aasafirah-kebly", "62"},
-            {"Smouha", "63"}, {"scot", "64"}, {"Mahattat Misr", "66"}, {"Al-Ibrahimiya", "67"},
-            {"Moustafa Kamel", "68"}, {"Loran", "69"}, {"Al-luban", "70"}, {"Victoria", "71"},
-            {"Gliem", "72"}, {"Wabur al-miyah", "73"}, {"Karmouz", "74"}, {"Stanly", "76"},
-            {"Al-Aawaid", "77"}, {"salah Salem", "78"}, {"Hajar al-nawatih", "79"}, {"Al-Montaza", "80"},
-            {"Al-Hedaya", "81"}, {"Wenget", "82"}, {"Road", "83"}, {"Abis", "84"}, {"Al-Hurriya", "85"},
-            {"Sultan Hussein", "86"}, {"Kubri al-namus", "87"}, {"Mohammed Naguib", "88"},
-            {"Al-Mahmoudia", "90"}, {"Saba Basha", "91"}, {"El-Mandara-bahary", "92"}, {"Marina", "93"},
-            {"Tharwat", "94"}, {"Elshalalat", "95"}, {"Green Plaza", "96"}, {"King Mariout", "97"}
-        };
+        // 🟢 المطورين والمشاريع (Primary/Resale) والمناطق بقوا متخزنين في جداول Developers/Projects/Regions
+        // بدل الـ Dictionaries الهاردكودد اللي كانت هنا، وبتتضاف/تتحذف من صفحة "Lookups" في الـ admin dashboard.
+        // القيم القديمة اتنقلت للداتابيز مرة واحدة عن طريق DbSeeder.SeedLookupsAsync، فكود العقارات
+        // الحالية والمستقبلية مش بيتأثر. شوفي GenerateSmartCodeAsync تحت.
 
         private readonly Dictionary<string, int> LegacySequenceStarters = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -835,9 +749,20 @@ namespace Unique_X.Services.Implementation
 
             if (property.ListingType == ListingType.Primary)
             {
-                string projCode = !string.IsNullOrEmpty(property.ProjectName) && PrimaryAndDeveloperCodes.TryGetValue(property.ProjectName, out var pc) ? pc : "";
-                string devCode = !string.IsNullOrEmpty(property.DeveloperName) && PrimaryAndDeveloperCodes.TryGetValue(property.DeveloperName, out var dc) ? dc :
-                                 (!string.IsNullOrEmpty(property.DeveloperName) && property.DeveloperName.Length >= 2 ? property.DeveloperName.Substring(0, 2).ToUpper() : "");
+                string projCode = "";
+                if (!string.IsNullOrEmpty(property.ProjectName))
+                {
+                    var proj = await _context.Projects.FirstOrDefaultAsync(p =>
+                        p.Type == ProjectListingType.Primary && p.Name.ToLower() == property.ProjectName.ToLower());
+                    projCode = proj?.Code ?? "";
+                }
+
+                string devCode = "";
+                if (!string.IsNullOrEmpty(property.DeveloperName))
+                {
+                    var dev = await _context.Developers.FirstOrDefaultAsync(d => d.Name.ToLower() == property.DeveloperName.ToLower());
+                    devCode = dev?.Code ?? (property.DeveloperName.Length >= 2 ? property.DeveloperName.Substring(0, 2).ToUpper() : "");
+                }
 
                 prefix = $"{city}{list}{type}-{projCode}{devCode}-";
             }
@@ -849,7 +774,13 @@ namespace Unique_X.Services.Implementation
                 }
                 else
                 {
-                    string projId = !string.IsNullOrEmpty(property.ProjectName) && ResaleProjectIds.TryGetValue(property.ProjectName, out var pi) ? pi : "0";
+                    string projId = "0";
+                    if (!string.IsNullOrEmpty(property.ProjectName))
+                    {
+                        var proj = await _context.Projects.FirstOrDefaultAsync(p =>
+                            p.Type == ProjectListingType.Resale && p.Name.ToLower() == property.ProjectName.ToLower());
+                        projId = proj?.Code ?? "0";
+                    }
                     prefix = $"{city}{list}{projId}-";
                 }
             }
@@ -861,7 +792,12 @@ namespace Unique_X.Services.Implementation
                 }
                 else
                 {
-                    string zoneId = !string.IsNullOrEmpty(property.Region) && ResaleZoneIds.TryGetValue(property.Region, out var zi) ? zi : "0";
+                    string zoneId = "0";
+                    if (!string.IsNullOrEmpty(property.Region))
+                    {
+                        var reg = await _context.Regions.FirstOrDefaultAsync(r => r.Name.ToLower() == property.Region.ToLower());
+                        zoneId = reg?.ZoneCode ?? "0";
+                    }
                     prefix = $"{city}{list}{zoneId}-";
                 }
             }

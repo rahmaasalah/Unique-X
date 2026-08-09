@@ -162,6 +162,12 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DbSeeder.SeedLookupsAsync(dbContext);
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

@@ -1,0 +1,688 @@
+<div style="min-height:100vh;background:#fff;">
+
+  @if (isLoading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-danger" role="status"></div>
+    </div>
+  }
+
+  @if (!isLoading() && !launch()) {
+    <div class="container text-center py-5 text-muted">
+      <i class="bi bi-exclamation-circle fs-1 d-block mb-3 opacity-25"></i>
+      Launch not found.
+    </div>
+  }
+
+  @if (!isLoading() && launch()) {
+
+    <!-- ===== PHOTO SLIDER ===== -->
+    @if (sliderImages().length > 0) {
+      <div class="position-relative bg-dark" style="height:480px;overflow:hidden;">
+
+        <!-- الصورة النشطة -->
+        <img [src]="launchService.getImageUrl(sliderImages()[activeSlide()])"
+             class="w-100 h-100" style="object-fit:cover;transition:opacity .3s;" alt="launch">
+
+        <!-- Prev / Next -->
+        @if (sliderImages().length > 1) {
+          <button class="btn btn-light position-absolute top-50 start-0 translate-middle-y ms-3 rounded-circle shadow"
+                  style="width:42px;height:42px;padding:0;z-index:2;"
+                  (click)="prevSlide()">
+            <i class="bi bi-chevron-left fw-bold"></i>
+          </button>
+          <button class="btn btn-light position-absolute top-50 end-0 translate-middle-y me-3 rounded-circle shadow"
+                  style="width:42px;height:42px;padding:0;z-index:2;"
+                  (click)="nextSlide()">
+            <i class="bi bi-chevron-right fw-bold"></i>
+          </button>
+        }
+
+        <!-- Thumbnails strip أسفل يمين -->
+        @if (sliderImages().length > 1) {
+          <div class="position-absolute bottom-0 end-0 d-flex gap-1 p-2 m-2"
+               style="background:rgba(0,0,0,0.45);border-radius:10px;z-index:2;">
+            @for (img of sliderImages().slice(0, 6); track $index) {
+              <div (click)="activeSlide.set($index)"
+                   style="cursor:pointer;width:60px;height:44px;border-radius:6px;overflow:hidden;flex-shrink:0;
+                          border:2px solid transparent;transition:border .2s;"
+                   [style.border-color]="activeSlide() === $index ? '#ef3341' : 'transparent'">
+                <img [src]="launchService.getImageUrl(img)" class="w-100 h-100"
+                     style="object-fit:cover;"
+                     [style.opacity]="activeSlide() === $index ? '1' : '0.55'" alt="">
+                @if ($index === 5 && sliderImages().length > 6) {
+                  <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                       style="background:rgba(0,0,0,0.6);color:#fff;font-size:0.7rem;font-weight:bold;">
+                    +{{ sliderImages().length - 6 }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- View All Photos -->
+        <button class="btn btn-light btn-sm rounded-pill position-absolute top-0 end-0 m-3 fw-semibold shadow-sm"
+                style="z-index:2;" (click)="openGallery(activeSlide())">
+          <i class="bi bi-images me-1"></i>All Photos ({{ sliderImages().length }})
+        </button>
+
+        <!-- Dots indicator -->
+        @if (sliderImages().length > 1 && sliderImages().length <= 10) {
+          <div class="position-absolute bottom-0 start-50 translate-middle-x mb-3 d-flex gap-2" style="z-index:2;">
+            @for (img of sliderImages(); track $index) {
+              <div (click)="activeSlide.set($index)"
+                   style="cursor:pointer;border-radius:50%;transition:all .2s;"
+                   [style.width]="activeSlide() === $index ? '10px' : '7px'"
+                   [style.height]="activeSlide() === $index ? '10px' : '7px'"
+                   [style.background]="activeSlide() === $index ? '#ef3341' : 'rgba(255,255,255,0.6)'">
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+    }
+
+    <!-- ===== STICKY INFO BAR (زي ناوي) ===== -->
+    <div class="border-bottom bg-white sticky-top shadow-sm" style="z-index:100;top:0;">
+      <div class="container py-3">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+
+          <!-- Title + Delivery Year -->
+          <div>
+            <h5 class="fw-bold mb-1" style="color:#1a1a2e;">{{ launch().title }}</h5>
+            <div class="d-flex flex-wrap gap-2 align-items-center mt-1">
+              @if (launch().zone) {
+                <span class="d-flex align-items-center gap-1 text-muted small">
+                  <i class="bi bi-geo-alt-fill text-danger"></i>{{ launch().zone }}
+                </span>
+              }
+              @if (launch().projectName) {
+                <span class="text-muted small">•</span>
+                <span class="d-flex align-items-center gap-1 text-muted small">
+                  <i class="bi bi-building text-danger"></i>{{ launch().projectName }}
+                </span>
+              }
+              @if (launch().developerName) {
+                <span class="text-muted small">•</span>
+                <span class="d-flex align-items-center gap-1 text-muted small">
+                  <i class="bi bi-person-workspace text-danger"></i>{{ launch().developerName }}
+                </span>
+              }
+            </div>
+            @if (launch().deliveryDate) {
+              <span class="badge rounded-pill px-3 py-1 mt-1"
+                    style="background:#f0f4ff;color:#1a1a2e;font-size:0.75rem;">
+                <i class="bi bi-clock-history me-1"></i>{{ launchService.getDeliveryLabel(launch()) }}
+              </span>
+            }
+          </div>
+
+          <!-- Prices -->
+          <div class="d-flex gap-4 align-items-center flex-wrap">
+            @if (launch().pricePerMeterPrimary) {
+              <div class="border-end pe-4">
+                <div class="text-muted small">Developer Price / m²</div>
+                <div class="fw-bold fs-5" style="color:#1a1a2e;">
+                  {{ currencyService.format(launch().pricePerMeterPrimary) }}
+                </div>
+              </div>
+            }
+            @if (launch().pricePerMeterResale) {
+              <div>
+                <div class="text-muted small">Resale Price / m²</div>
+                <div class="fw-bold fs-5 text-danger">
+                  {{ currencyService.format(launch().pricePerMeterResale) }}
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Call + WhatsApp (admin — ثابت دايماً) -->
+          <div class="d-flex gap-2 flex-wrap">
+            <a [href]="getAdminPhone('tel')"
+               class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2">
+              <i class="bi bi-telephone-fill"></i> Call Us
+            </a>
+            <a [href]="getAdminPhone('wa')"
+               target="_blank"
+               class="btn fw-semibold rounded-pill px-4 py-2 d-flex align-items-center gap-2"
+               style="background:#25D366;color:#fff;">
+              <i class="bi bi-whatsapp"></i> Whatsapp
+            </a>
+            <button type="button"
+                    class="btn btn-danger fw-semibold rounded-pill px-4 py-2 d-flex align-items-center gap-2"
+                    (click)="openMeetingModal()">
+              <i class="bi bi-calendar-check"></i> Schedule Meeting
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="container py-4" style="max-width:1100px;">
+      <div class="row g-4">
+
+        <!-- LEFT COLUMN (المحتوى الرئيسي) -->
+        <div class="col-lg-8">
+
+          <!-- Back -->
+          <button class="btn btn-link text-muted text-decoration-none px-0 mb-3 fw-semibold"
+                  (click)="goBack()">
+            <i class="bi bi-arrow-left me-2"></i>Back to Launches
+          </button>
+
+          <!-- ===== 3 BUTTONS (Gallery / View on Map / Master Plan) ===== -->
+          @if (sliderImages().length > 0 || launch().mapEmbedUrl || launch().button3ImageUrl) {
+            <div class="mb-4">
+              <h5 class="fw-bold mb-3" style="color:#1a1a2e;">Details</h5>
+              <div class="d-flex gap-3 flex-wrap">
+
+                <!-- Gallery → يفتح الـ lightbox -->
+                @if (sliderImages().length > 0) {
+                  <button class="btn btn-outline-secondary rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
+                          style="min-width:120px;min-height:90px;padding:16px;"
+                          (click)="openGallery(0)">
+                    <i class="bi bi-images fs-3" style="color:#1a1a2e;"></i>
+                    <span class="small text-dark">Gallery</span>
+                  </button>
+                }
+
+                <!-- View on Map → يفتح modal جوا الموقع -->
+                @if (launch().mapEmbedUrl) {
+                  <button class="btn btn-outline-secondary rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
+                          style="min-width:120px;min-height:90px;padding:16px;"
+                          (click)="mapModalOpen.set(true)">
+                    <i class="bi bi-map fs-3" style="color:#1a1a2e;"></i>
+                    <span class="small text-dark">View on Map</span>
+                  </button>
+                }
+
+                <!-- Master Plan → يفتح الصورة في modal -->
+                @if (launch().button3ImageUrl) {
+                  <button class="btn btn-outline-secondary rounded-3 fw-semibold d-flex flex-column align-items-center justify-content-center gap-2"
+                          style="min-width:120px;min-height:90px;padding:16px;"
+                          (click)="openImageModal(launchService.getImageUrl(launch().button3ImageUrl))">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#1a1a2e" viewBox="0 0 24 24">
+                      <path d="M3 3h8v8H3zm2 2v4h4V5zm8-2h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zm8-2h8v8h-8zm2 2v4h4v-4z"/>
+                    </svg>
+                    <span class="small text-dark">Master Plan</span>
+                  </button>
+                }
+
+              </div>
+            </div>
+          }
+
+          <!-- ===== PAYMENT PLANS ===== -->
+          @if (paymentPlans().length > 0 || launch().downPaymentPercentage || launch().avgDownPayment) {
+            <div class="mb-5">
+              <h5 class="fw-bold mb-3" style="color:#1a1a2e;">Payment Plans</h5>
+
+              <!-- Down Payment Overview -->
+              @if (launch().downPaymentPercentage || launch().avgDownPayment) {
+                <div class="d-flex gap-3 mb-4 flex-wrap">
+                  @if (launch().downPaymentPercentage) {
+                    <div class="card border-0 bg-danger-subtle rounded-3 p-3 d-flex flex-row align-items-center gap-3" style="min-width:180px;">
+                      <i class="bi bi-percent fs-3 text-danger"></i>
+                      <div>
+                        <div class="text-muted small">Down Payment</div>
+                        <div><span class="fw-bold fs-5">{{ formatNumber(launch().downPaymentPercentage) }}</span><span class="text-muted ms-1">%</span></div>
+                      </div>
+                    </div>
+                  }
+                  @if (launch().avgDownPayment) {
+                    <div class="card border-0 bg-light rounded-3 p-3 d-flex flex-row align-items-center gap-3" style="min-width:180px;">
+                      <i class="bi bi-cash-stack fs-3 text-success"></i>
+                      <div>
+                        <div class="text-muted small">Avg. Down Payment</div>
+                        <div><span class="fw-bold fs-5">{{ currencyService.format(launch().avgDownPayment) }}</span></div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Plans -->
+              @if (paymentPlans().length > 0) {
+                <div class="d-flex gap-3 flex-wrap">
+                  @for (plan of paymentPlans(); track $index) {
+                    <div class="card border rounded-3 p-3" style="min-width:220px;flex:1;">
+                      <!-- Plan Name -->
+                      <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-credit-card text-danger"></i>
+                        <span class="fw-bold text-danger">{{ plan.name || 'Plan ' + ($index+1) }}</span>
+                      </div>
+
+                      <!-- Down Payment % -->
+                      @if (plan.downPaymentPercentage) {
+                        <div class="mb-2 d-flex align-items-baseline gap-1">
+                          <span class="fw-bold fs-5">{{ plan.downPaymentPercentage }}</span>
+                          <span class="text-muted small">% Down Payment</span>
+                        </div>
+                      }
+
+                      <!-- Avg Down Payment -->
+                      @if (plan.avgDownPayment) {
+                        <div class="mb-2 d-flex align-items-baseline gap-1">
+                          <span class="fw-bold fs-5">{{ currencyService.format(plan.avgDownPayment) }}</span>
+                          <span class="text-muted small">Avg. Down Payment</span>
+                        </div>
+                      }
+
+                      <!-- fallback: old downPayment field -->
+                      @if (!plan.avgDownPayment && plan.downPayment) {
+                        <div class="mb-2 d-flex align-items-baseline gap-1">
+                          <span class="fw-bold fs-5">{{ currencyService.format(plan.downPayment) }}</span>
+                          <span class="text-muted small">Down Payment</span>
+                        </div>
+                      }
+
+                      <!-- Years -->
+                      @if (plan.years) {
+                        <div class="text-muted small fw-semibold mb-1">{{ plan.years }} Years</div>
+                      }
+
+                      <!-- Avg Installment -->
+                      @if (plan.avgInstallment) {
+                        <div class="text-muted small mt-1">
+                          <span class="fw-bold text-dark">{{ currencyService.format(plan.avgInstallment) }}</span>
+                          <span class="ms-1">/ quarterly installment</span>
+                        </div>
+                      }
+
+                      <!-- fallback: old installment field -->
+                      @if (!plan.avgInstallment && plan.installment) {
+                        <div class="text-muted small mt-1">
+                          <span class="fw-bold text-dark">{{ currencyService.format(plan.installment) }}</span>
+                          <span class="ms-1">/ quarterly installment</span>
+                        </div>
+                      }
+
+                      @if (plan.note) {
+                        <div class="text-muted small mt-2 fst-italic border-top pt-2">{{ plan.note }}</div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- ===== UNITS ===== -->
+          @if (allUnitIds().length > 0) {
+            <div class="mb-5">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold mb-0" style="color:#1a1a2e;">
+                  Explore Properties In {{ launch().title }}
+                </h5>
+                @if (units().length > 0) {
+                  <span class="text-muted small">{{ units().length }} Results Available</span>
+                }
+              </div>
+              @if (unitsLoading()) {
+                <div class="text-center py-3">
+                  <div class="spinner-border text-danger spinner-border-sm"></div>
+                </div>
+              }
+
+              <!-- Primary Units -->
+              @if (primaryUnits().length > 0) {
+                <h6 class="fw-bold text-dark mb-3 mt-2">
+                  <i class="bi bi-stars text-danger me-1"></i> Primary
+                </h6>
+                <div class="row g-3 mb-4">
+                  @for (unit of primaryUnits(); track unit.id) {
+                    <div class="col-md-6">
+                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Resale Units -->
+              @if (resaleUnits().length > 0) {
+                <h6 class="fw-bold text-dark mb-3 mt-2">
+                  <i class="bi bi-house-door text-danger me-1"></i> Resale
+                </h6>
+                <div class="row g-3 mb-4">
+                  @for (unit of resaleUnits(); track unit.id) {
+                    <div class="col-md-6">
+                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Rent Units -->
+              @if (rentUnits().length > 0) {
+                <h6 class="fw-bold text-dark mb-3 mt-2">
+                  <i class="bi bi-key text-danger me-1"></i> For Rent
+                </h6>
+                <div class="row g-3 mb-4">
+                  @for (unit of rentUnits(); track unit.id) {
+                    <div class="col-md-6">
+                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Fallback: old unitIdsJson (no category) -->
+              @if (primaryUnits().length === 0 && resaleUnits().length === 0 && rentUnits().length === 0) {
+                <div class="row g-3">
+                  @for (unit of units(); track unit.id) {
+                    <div class="col-md-6">
+                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Unit Card Template -->
+          <ng-template #unitCard let-unit="unit">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+              <div class="position-relative" style="cursor:pointer;"
+                   [routerLink]="['/property-details', unit.id]">
+                @if (unit.photos?.[0]?.url) {
+                  <img [src]="unit.photos[0].url" class="w-100"
+                       style="height:190px;object-fit:cover;" alt="unit">
+                } @else {
+                  <div class="bg-light d-flex align-items-center justify-content-center"
+                       style="height:190px;">
+                    <i class="bi bi-house text-muted fs-1 opacity-25"></i>
+                  </div>
+                }
+                @if (unit.listingType !== undefined) {
+                  <span class="badge position-absolute top-0 start-0 m-2 rounded-pill"
+                        style="background:rgba(239,51,65,0.9);font-size:0.7rem;">
+                    {{ unit.listingType === 0 ? 'Resale' : unit.listingType === 1 ? 'Rent' : 'Primary' }}
+                  </span>
+                }
+              </div>
+              <div class="card-body p-3">
+                <h6 class="fw-bold mb-1 text-truncate" style="cursor:pointer;"
+                    [routerLink]="['/property-details', unit.id]">{{ unit.title }}</h6>
+                <div class="d-flex gap-3 text-muted small mb-2">
+                  @if (unit.bedrooms) { <span><i class="bi bi-door-open me-1"></i>{{ unit.bedrooms }} Beds</span> }
+                  @if (unit.bathrooms) { <span><i class="bi bi-droplet me-1"></i>{{ unit.bathrooms }} Baths</span> }
+                  @if (unit.area) { <span><i class="bi bi-aspect-ratio me-1"></i>{{ unit.area }} m²</span> }
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="fw-bold text-danger fs-6">{{ currencyService.format(unit.price) }}</div>
+                  @if (unit.brokerPhone) {
+                    <div class="d-flex gap-2">
+                      <a [href]="'tel:' + unit.brokerPhone"
+                         class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center border"
+                         style="width:36px;height:36px;background:#f8f9fa;"
+                         (click)="$event.stopPropagation()" title="Call broker">
+                        <i class="bi bi-telephone-fill text-dark" style="font-size:0.85rem;"></i>
+                      </a>
+                      <a [href]="getBrokerWhatsAppLink(unit.brokerPhone, unit.code)"
+                         target="_blank"
+                         class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:36px;height:36px;background:#25D366;"
+                         (click)="$event.stopPropagation()" title="WhatsApp broker">
+                        <i class="bi bi-whatsapp text-white" style="font-size:0.85rem;"></i>
+                      </a>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </ng-template>
+
+          <!-- ===== PROJECT DETAILS ===== -->
+          @if (launch().projectDetails) {
+            <div class="mb-5">
+              <h5 class="fw-bold mb-3" style="color:#1a1a2e;">About {{ launch().title }}</h5>
+              <div class="article-content" [innerHTML]="launch().projectDetails"
+                   style="line-height:1.8;color:#444;"></div>
+            </div>
+          }
+
+          <!-- ===== ARTICLE SECTIONS ===== -->
+          @if (articleSections().length > 0) {
+            <div class="mb-5">
+              @for (section of articleSections(); track $index) {
+                <div class="mb-4">
+                  @if (section.headline) {
+                    <h5 class="fw-bold mb-3" style="color:#1a1a2e;">{{ section.headline }}</h5>
+                  }
+                  @if (section.text) {
+                    <div class="article-content" [innerHTML]="section.text"
+                         style="line-height:1.8;color:#444;"></div>
+                  }
+                </div>
+                @if ($index < articleSections().length - 1) {
+                  <hr class="my-4">
+                }
+              }
+            </div>
+          }
+
+          <!-- ===== MAP ===== -->
+          @if (launch().mapEmbedUrl) {
+            <div class="mb-5">
+              <h5 class="fw-bold mb-3" style="color:#1a1a2e;">
+                <i class="bi bi-geo-alt-fill text-danger me-2"></i>Location on Map
+              </h5>
+              <div class="rounded-4 overflow-hidden border" style="height:350px;">
+                <iframe [src]="safeMapUrl()" width="100%" height="100%"
+                        style="border:0;" allowfullscreen loading="lazy"></iframe>
+              </div>
+            </div>
+          }
+
+          <!-- ===== MASTER PLAN ===== -->
+          @if (launch().masterPlanImageUrl) {
+            <div class="mb-5">
+              <h5 class="fw-bold mb-3" style="color:#1a1a2e;">Master Plan</h5>
+              <img [src]="launchService.getImageUrl(launch().masterPlanImageUrl)"
+                   class="w-100 rounded-4 border" style="max-height:500px;object-fit:contain;background:#f8f9fa;cursor:pointer;"
+                   (click)="openImageModal(launchService.getImageUrl(launch().masterPlanImageUrl))"
+                   alt="master plan">
+            </div>
+          }
+
+          <!-- ===== FAQs ===== -->
+          @if (faqs().length > 0) {
+            <div class="mb-5">
+              <h5 class="fw-bold mb-4" style="color:#1a1a2e;">FAQs</h5>
+              <div class="accordion accordion-flush" id="faqAccordion">
+                @for (faq of faqs(); track $index) {
+                  <div class="accordion-item border-bottom" style="background:transparent;">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed fw-semibold px-0"
+                              style="background:transparent;color:#1a1a2e;box-shadow:none;"
+                              type="button"
+                              data-bs-toggle="collapse"
+                              [attr.data-bs-target]="'#faq' + $index">
+                        {{ faq.question }}
+                      </button>
+                    </h2>
+                    <div [id]="'faq' + $index" class="accordion-collapse collapse"
+                         data-bs-parent="#faqAccordion">
+                      <div class="accordion-body px-0 text-muted" style="line-height:1.7;">
+                        {{ faq.answer }}
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+        </div>
+
+        <!-- RIGHT COLUMN (Sticky Contact Card) -->
+        <div class="col-12 col-lg-4">
+          <div class="sticky-top" style="top:80px;">
+            <div class="card border-0 shadow rounded-4 p-4" style="background:#f8f9fa;">
+              <div class="text-center mb-3">
+                <i class="bi bi-envelope-paper fs-1 text-danger"></i>
+                <h6 class="fw-bold mt-2" style="color:#1a1a2e;">Need Expert Advice?</h6>
+                <p class="text-muted small mb-0">Fill out the form and one of our property consultants will contact you.</p>
+              </div>
+              <input type="text" class="form-control rounded-3 mb-2 border-0 bg-white"
+                     placeholder="Your Name" [(ngModel)]="contactName">
+              <input type="text" class="form-control rounded-3 mb-2 border-0 bg-white"
+                     placeholder="Phone Number" [(ngModel)]="contactPhone">
+              <textarea class="form-control rounded-3 mb-3 border-0 bg-white" rows="3"
+                        placeholder="Your message"
+                        [(ngModel)]="contactMessage"></textarea>
+              <button class="btn btn-danger w-100 rounded-3 fw-bold py-2"
+                      (click)="submitContact()">
+                <i class="bi bi-whatsapp me-2"></i>Download Brochure
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  }
+</div>
+
+<!-- ===== MEETING SUCCESS TOAST ===== -->
+@if (meetingSuccessMessage()) {
+  <div class="position-fixed top-0 start-50 translate-middle-x mt-3 alert alert-success shadow-lg rounded-4 px-4 py-3 d-flex align-items-center gap-2"
+       style="z-index:10000;">
+    <i class="bi bi-check-circle-fill fs-5"></i> {{ meetingSuccessMessage() }}
+  </div>
+}
+
+<!-- ===== SCHEDULE MEETING MODAL ===== -->
+@if (meetingModalOpen()) {
+  <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+       style="background:rgba(0,0,0,0.85);z-index:9999;" (click)="closeMeetingModal()">
+    <div class="position-relative bg-white rounded-4 shadow-lg overflow-hidden"
+         style="width:92vw;max-width:480px;"
+         (click)="$event.stopPropagation()">
+
+      <div class="p-4 text-white" style="background:#1a1a2e;">
+        <h5 class="fw-bold mb-0"><i class="bi bi-calendar-check me-2"></i>Schedule a Meeting</h5>
+      </div>
+      <button class="btn btn-light position-absolute top-0 end-0 m-3 rounded-circle"
+              style="width:36px;height:36px;padding:0;" (click)="closeMeetingModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+
+      <div class="p-4">
+        <p class="text-muted small mb-3">Pick a date and time, and one of our consultants will confirm it with you.</p>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-muted">Full Name *</label>
+          <input type="text" class="form-control bg-light border-0 rounded-3"
+                 [(ngModel)]="meetingName" placeholder="Your name">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-muted">Phone Number *</label>
+          <input type="tel" class="form-control bg-light border-0 rounded-3"
+                 [(ngModel)]="meetingPhone" placeholder="e.g. 01012345678">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-muted">Meeting Date & Time *</label>
+          <input type="datetime-local" class="form-control bg-light border-0 rounded-3"
+                 [(ngModel)]="meetingDate" [min]="minMeetingDate">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-muted">Notes (optional)</label>
+          <textarea class="form-control bg-light border-0 rounded-3" rows="2"
+                    [(ngModel)]="meetingNotes" placeholder="Any question you'd like us to know about..."></textarea>
+        </div>
+
+        @if (meetingErrorMessage()) {
+          <div class="alert alert-danger small py-2">{{ meetingErrorMessage() }}</div>
+        }
+
+        <button type="button"
+                class="btn btn-danger w-100 rounded-pill fw-bold py-2 shadow-sm"
+                [disabled]="!meetingName || !meetingPhone || !meetingDate || isSubmittingMeeting()"
+                (click)="submitMeetingRequest()">
+          @if (isSubmittingMeeting()) {
+            <span class="spinner-border spinner-border-sm me-2"></span> Sending...
+          } @else {
+            <i class="bi bi-calendar-check me-1"></i> Confirm Meeting Request
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ===== MAP MODAL ===== -->
+@if (mapModalOpen()) {
+  <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+       style="background:rgba(0,0,0,0.85);z-index:9999;" (click)="mapModalOpen.set(false)">
+    <div class="position-relative bg-white rounded-4 overflow-hidden shadow-lg"
+         style="width:90vw;max-width:900px;height:80vh;"
+         (click)="$event.stopPropagation()">
+      <button class="btn btn-dark position-absolute top-0 end-0 m-3 rounded-circle"
+              style="width:36px;height:36px;padding:0;z-index:1;"
+              (click)="mapModalOpen.set(false)">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <iframe [src]="safeMapUrl()" width="100%" height="100%"
+              style="border:0;" allowfullscreen loading="lazy"></iframe>
+    </div>
+  </div>
+}
+
+<!-- ===== GALLERY LIGHTBOX ===== -->
+@if (galleryOpen()) {
+  <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+       style="background:rgba(0,0,0,0.95);z-index:9999;" (click)="closeGallery()">
+    <div class="position-relative" style="max-width:90vw;max-height:90vh;"
+         (click)="$event.stopPropagation()">
+      <img [src]="launchService.getImageUrl(sliderImages()[galleryIndex()])"
+           style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:12px;" alt="">
+
+      <!-- Nav -->
+      @if (sliderImages().length > 1) {
+        <button class="btn btn-light position-absolute top-50 start-0 translate-middle-y rounded-circle ms-2"
+                style="width:44px;height:44px;" (click)="prevGallery()">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="btn btn-light position-absolute top-50 end-0 translate-middle-y rounded-circle me-2"
+                style="width:44px;height:44px;" (click)="nextGallery()">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      }
+
+      <!-- Counter -->
+      <div class="position-absolute bottom-0 start-50 translate-middle-x mb-3
+                  px-3 py-1 rounded-pill text-white small"
+           style="background:rgba(0,0,0,0.6);">
+        {{ galleryIndex() + 1 }} / {{ sliderImages().length }}
+      </div>
+
+      <!-- Close -->
+      <button class="btn btn-light position-absolute top-0 end-0 rounded-circle m-2"
+              style="width:36px;height:36px;padding:0;" (click)="closeGallery()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+  </div>
+}
+
+<!-- ===== IMAGE MODAL (for buttons) ===== -->
+@if (modalImageUrl()) {
+  <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+       style="background:rgba(0,0,0,0.9);z-index:9999;" (click)="closeModal()">
+    <div class="position-relative" (click)="$event.stopPropagation()">
+      <button class="btn btn-light position-absolute top-0 end-0 rounded-circle m-2"
+              style="width:36px;height:36px;padding:0;z-index:1;" (click)="closeModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <img [src]="modalImageUrl()" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:12px;" alt="">
+    </div>
+  </div>
+}
