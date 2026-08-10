@@ -1,29 +1,31 @@
 <div class="container-fluid mt-4 px-4" dir="ltr" *ngIf="profileData()">
   
-  <!-- رأس البروفايل (الزراير الجديدة على اليمين) -->
-  <div class="d-flex align-items-center mb-4 bg-white p-4 rounded-4 shadow-sm ">
-    <img [src]="brokerImage()" class="rounded-circle border border-3  shadow-sm me-4" style="width: 100px; height: 100px; object-fit: cover;">
-    <div class="flex-grow-1">
-      <h2 class="fw-bold mb-1">{{ brokerName() }}</h2>
-      
-      <!-- 🟢 لو اللي فاتح أدمن -->
-      <p class="text-muted fw-bold mb-0" *ngIf="isAdmin()">
-        <i class="bi bi-person-badge-fill text-danger me-2"></i> Master Admin Workspace
-      </p>
+  <!-- رأس البروفايل (الزراير الجديدة على اليمين في الديسكتوب، وتحت في الموبايل) -->
+  <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center mb-4 bg-white p-4 rounded-4 shadow-sm gap-3">
+    <div class="d-flex align-items-center gap-3 gap-lg-4 w-100">
+      <img [src]="brokerImage()" class="rounded-circle border border-3 shadow-sm flex-shrink-0" style="width: 80px; height: 80px; object-fit: cover;">
+      <div class="flex-grow-1">
+        <h2 class="fw-bold mb-1" style="font-size: 1.5rem;">{{ brokerName() }}</h2>
 
-      <!-- 🟢 لو اللي فاتح بروكر -->
-      <div *ngIf="!isAdmin()">
-        <p class="text-danger fw-bold mb-1" style="font-size: 0.95rem;">
-          <i class="bi bi-briefcase-fill me-1"></i> {{ brokerTitle() || 'Real Estate Consultant' }}
+        <!-- 🟢 لو اللي فاتح أدمن -->
+        <p class="text-muted fw-bold mb-0" *ngIf="isAdmin()">
+          <i class="bi bi-person-badge-fill text-danger me-2"></i> Master Admin Workspace
         </p>
-        <p class="text-muted small mb-0" style="max-width: 600px; white-space: pre-line; line-height: 1.5;">
-          {{ brokerDescription() || 'Welcome to your CRM workspace. Manage your leads, visits, and tasks efficiently.' }}
-        </p>
+
+        <!-- 🟢 لو اللي فاتح بروكر -->
+        <div *ngIf="!isAdmin()">
+          <p class="text-danger fw-bold mb-1" style="font-size: 0.95rem;">
+            <i class="bi bi-briefcase-fill me-1"></i> {{ brokerTitle() || 'Real Estate Consultant' }}
+          </p>
+          <p class="text-muted small mb-0" style="max-width: 600px; white-space: pre-line; line-height: 1.5;">
+            {{ brokerDescription() || 'Welcome to your CRM workspace. Manage your leads, visits, and tasks efficiently.' }}
+          </p>
+        </div>
       </div>
     </div>
-    
+
     <!-- 👇 الزراير الجديدة (Add Lead & Pipeline) -->
-    <div class="ms-auto d-flex gap-2 flex-wrap">
+    <div class="d-flex gap-2 flex-wrap w-100 w-lg-auto ms-lg-auto">
       <button class="btn btn-outline-danger rounded-pill fw-bold px-4" routerLink="/crm/add-lead">
         <i class="bi bi-person-plus-fill me-1"></i> Add Lead
       </button>

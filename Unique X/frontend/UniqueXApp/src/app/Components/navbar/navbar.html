@@ -1,12 +1,6 @@
 <style>
   /* 🟢 نافبار متراص على سطر واحد في الموبايل: بنقلل الحجم بدل ما نلف السطر */
   .navbar-logo-img { height: clamp(32px, 9vw, 52px); }
-  .navbar-right-group {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .navbar-right-group::-webkit-scrollbar { display: none; }
   .navbar-right-group > * { flex-shrink: 0; }
   @media (max-width: 575.98px) {
     .navbar-cta-btn { padding: .35rem .9rem !important; font-size: .8rem !important; }

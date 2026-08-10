@@ -38,7 +38,7 @@
       <div class="bg-white p-4 rounded-4 shadow-sm mb-4 border border-light">
         
         <!-- العنوان (Title) - الآن واضح وتحت الصور بمسافة مريحة -->
-        <div class="d-flex justify-content-between align-items-start mb-2">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-2">
           <div>
             <h2 class="fw-bold text-dark mb-1">
                 {{ prop.title }} 
@@ -56,22 +56,24 @@
             }
           </div>
           
-          <!-- زر النسخ (Copy Link) -->
-          <button class="btn btn-light border rounded-pill shadow-sm px-3 py-1 text-dark d-flex align-items-center gap-2" 
-                  (click)="copyLink()" 
-                  title="Copy Property Link">
-            <i class="bi bi-link-45deg fs-5"></i> 
-            <span class="small fw-bold">Copy Link</span>
-          </button>
-
-          @if(isBroker()) {
+          <!-- أزرار Copy Link / Download Photos: جروب لوحدها عشان تلف تحت بعض في الموبايل من غير ما تتداخل مع العنوان -->
+          <div class="d-flex flex-wrap gap-2">
             <button class="btn btn-light border rounded-pill shadow-sm px-3 py-1 text-dark d-flex align-items-center gap-2" 
-                  (click)="downloadPhotos()" 
-                  title="Download Photos">
-            <i class="bi bi-download fs-5"></i> 
-            <span class="small fw-bold">Download Photos</span>
-          </button>
-          }
+                    (click)="copyLink()" 
+                    title="Copy Property Link">
+              <i class="bi bi-link-45deg fs-5"></i> 
+              <span class="small fw-bold">Copy Link</span>
+            </button>
+
+            @if(isBroker()) {
+              <button class="btn btn-light border rounded-pill shadow-sm px-3 py-1 text-dark d-flex align-items-center gap-2" 
+                    (click)="downloadPhotos()" 
+                    title="Download Photos">
+              <i class="bi bi-download fs-5"></i> 
+              <span class="small fw-bold">Download Photos</span>
+            </button>
+            }
+          </div>
         </div>
         
          <div class="d-flex align-items-center gap-3 mb-3">
@@ -98,7 +100,7 @@
         </p>
         
         <!-- الأيقونات (Beds, Baths, etc.) -->
-        <div class="d-flex gap-4 border-top border-bottom py-3 my-4 justify-content-around text-center bg-light-subtle rounded-3">
+        <div class="d-flex flex-wrap gap-3 gap-md-4 row-gap-3 border-top border-bottom py-3 my-4 justify-content-around text-center bg-light-subtle rounded-3">
           @if (prop.rooms > 0) {
     <div><i class="bi bi-door-open fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.rooms }}</span> <small class="text-muted d-block small">Beds</small></div>
   }
