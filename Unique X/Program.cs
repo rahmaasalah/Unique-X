@@ -168,6 +168,13 @@ using (var scope = app.Services.CreateScope())
     await DbSeeder.SeedLookupsAsync(dbContext);
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DbSeeder.SeedLookupsAsync(dbContext);
+    await DbSeederFullCatalog.SeedFullProjectCatalogAsync(dbContext);
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

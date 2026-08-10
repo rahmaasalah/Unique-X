@@ -201,6 +201,7 @@ namespace Unique_X.Services.Implementation
             var query = _context.Properties
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
+                .Include(p => p.PaymentPlans)
                 .AsQueryable();
 
             if (filter.City.HasValue)
@@ -356,6 +357,7 @@ namespace Unique_X.Services.Implementation
             var properties = await _context.Properties
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
+                .Include(p => p.PaymentPlans)
                 // لو الوحدة اتقدمت من "Add Your Property" ولسه ماتوافقش عليها الأدمن، متظهرش في داشبورد أي بروكر
                 // (حتى لو BrokerId لسه شايل ID البروكر اللي قدمها بنفسه كـ placeholder مؤقت)
                 .Where(p => p.BrokerId == brokerId && (!p.IsOwnerSubmitted || p.IsApproved))
@@ -721,6 +723,7 @@ namespace Unique_X.Services.Implementation
             var properties = await _context.Properties
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
+                .Include(p => p.PaymentPlans)
                 .Where(p => hotDealIds.Contains(p.Id) && p.IsActive && p.IsApproved && !p.IsSold)
                 .ToListAsync();
 

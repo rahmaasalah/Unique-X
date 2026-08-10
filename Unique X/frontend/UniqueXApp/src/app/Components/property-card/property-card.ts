@@ -74,6 +74,15 @@ export class PropertyCardComponent {
     return this.property.bathrooms || 0;
   }
 
+  // 🟢 خطة الدفع الربع سنوية (لو موجودة) — بتُستخدم لعرض "القسط الربع سنوي / عدد السنين" تحت السعر
+  // ملحوظة: حقل QuarterInstallment في الموديل هو دايمًا قيمة القسط الربع سنوي بغض النظر عن قيمة Frequency،
+  // فبناخد أول خطة دفع موجودة للوحدة من غير ما نفلتر على frequency
+  get quarterlyPlan(): any {
+    const plans = this.property.paymentPlans;
+    if (!plans || !plans.length) return null;
+    return plans[0];
+  }
+
   getWhatsAppLink(phone: string, code: string, id: number): string {
     if (!phone) return '#';
     let cleanedPhone = phone.replace(/\D/g, '');
