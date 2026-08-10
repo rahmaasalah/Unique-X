@@ -43,216 +43,23 @@ ownerMode: boolean = false;
 
 
 
-regionsMapping: any = {
-  1: ['Sheikh Zayed', 'Green belt', '6th of October', 'North Expansions', 'October Gardens', 'Eastern Expansions', 'New Cairo'], // Cairo
-  2: [
-    'Zizinia', 'Janaklis', 'Gliem', 'Fleming', 'San Stefano', 'Shods', 'Sporting',
-    'Elshalalat', 'Wabur al-miyah', 'Al-Ibrahimiya', 'Al-Manshiyya', 
-    'Camp Schésar', 'Muharram Bik', 'Mahattat Misr', 'Cleopatra', 
-    'Al-Azariṭa', 'Al-Shatibi', 'Saba Basha', 'Sidi Gaber', 'Roshdy', 
-    'Bolkley', 'Moustafa Kamel', 'Kafr Abdo', 'Stanly', 'Sidi Bishr',
-    'El-Mandara-kebly', 'El-Mandara-bahary', 'Al-Suyuf', 'Victoria', 'Al-Aasafirah-kebly', 'Al-Aasafirah-bahary', 'Al-Aasafirah-30', 'Al-Aasafirah-45', 'Al-Maamoura', 
-    'Smouha', 'Borj Al-Arab', 'Loran', 
-    'Al-Agamy', 'King Mariout', 'Abu Qir', 'Al-zawaida', 'Khurshid', 'Al-Maraghi', 'Bahary', 'Bashair al-khayr', 'Al-Baytash', 'Al-Hanovil',
-    'Al-Dakhila', 'Al-Amiriya', 'Bakus', 'Sporting', 'Mahattah al-raml', 'Al-Saraya', 'Al-Hadra', 'Miamy', 'Abo solaiman', 'Falaky',
-    'Al-luban', 'Karmouz', 'Al-Aawaid', 'Hajar al-nawatih', 'Tharwat', 'Mohammed Naguib', 'Green Plaza', 'Al-Montaza', 'Al-Hedaya', 'Wenget',
-    'Abis', 'Al-Hurriya', 'Sultan Hussein', 'Kubri al-namus', 'Al-Mahmoudia'
-  ], // Alexandria
-  3: ['Al-Dabaa', 'Sidi Abdulrahman', 'Ghazala Bay', 'Al-Alamin', 'Sidi Henish', 'Sahel', 'Ras Al Hekma'] // North Coast
-};
+  // 🟢 بتتحمل بالكامل من الداتابيز (صفحة Developers & Projects بالأدمن) - شوفي loadDynamicLookups()
+regionsMapping: any = {};
 
 filteredRegions: string[] = []; 
 
 
-projectsMapping: any = {
-  1: { // Cairo
-    'Sheikh Zayed' : ['Village West-Dorra', 'Elkarma Kay', 'Zed West-Ora', 'Skyramp-Upwyde', 'La Colina-Capital Hills', 'Ivoire West-Pre', 'Etapa-City Edge', 'Allegria-Sodic', 'Westown-Sodic', ' Bura Residence-Kafafy', 'Terrace-Hdp', '205-Arkan Palm', 'Elite West-Taj', 'Bliss Gate-Torec', 'The Harv-Dal', 'Genova West-Eastren', 'Jazal-Legacy Estates', 'Bahja-Symphony', 'Coy-Voya', 'Lien-Elysium', 'Belva-Karnak', 'Rovan-Epd', 'Guira-Kaia', 'Pavia-Taj', 'Cloudside-Hills', 'Civ West-Civilia', 'Bona Nova-Ad', 'Levent-El Diwanya', 'White Residence-Pledge', 'La Quinta-Rhd', 'Calma-Leaders', 'Via-Eagles', 'D.Mile-District 4', 'Zia Park-Hills', 'Rewaya-Siac', 'Rouh Zayed-Al Amaken'],
-    'Green belt' : ['One 50 El-Gabry','Zg2-Zg','Montania Park-Everst View','T pearl-Torec','Novella-Al Karma','Stay-Zg','Tabah West-Zg','Upove-Contact','Zayard Elite-Palmier','El Patio Vera-La Vista','Levels-Duens', 'West End','Green Plaza', 'Vert-Palmier','S7n Shades-Zg', 'Yuva-Urban Edge', 'Lake West 5-Cairo Capital', 'Menorca-Mardev', 'Montania Gardens', 'Lake West 4-Cairo Capital', 'Montania-Everst view','Ira-El Gabry', 'The 8-El Gabry', 'West Line-Living Lines', 'Isola Villas-El Masria', 'Ladera Heights-Merath','Roudy-Zaya', 'Parkwoods-Malvern', 'Solimar', 'Moon Hills 5-Sakan', 'Ladera Rose-Merath', 'Kings Way-Mountain View'],
-    '6th of October' : ['Ever-Cred', 'O/Nine-Miqqat','Jazebeya-Upwyde', 'Pyramids City 5', 'West Clay-Remal', 'Stay`n-A plus', 'Hayah-Jawad'],
-    'North Expansions' : ['Rafts-The Ark', 'Elm Tree-Elm', 'One 33-Badreldin', 'Westdays-Ilcazar', 'ICity-Mountain View', 'October Plaza-Sodic', 'Diar 2-Tameer', 'Kayan-Badreldin', 'Nyoum October-Adh', 'Boulevard Hiils-Al Amar', 'Azalea-Egy Dev', 'Abha-Srd', 'Rayat-Malaz', 'Villaria-Mirad', 'M Apartments-Mirad', 'Murooj'],
-    'October Gardens' : ['kite-Centrada', ' Belong-Centrada', 'Aqmar-Kayan', 'Tesla Residence-Tesla', 'Flw-Zg', 'Darvell-White Eagle', 'Tabeaa-Nasdaq', 'O west-Orascom', 'Ashgar City-Igi', 'River-West Way', 'Rock Eden-El Batal', 'Ixora-Jora', 'Westera-Kastorai', 'Seven-Harby', 'Sun Capital-Arabia Holding', 'Zat-Voya', 'Zaya', 'Solin-Levels', 'Jiran-A Plus', 'Vienna-Dream Hills', 'Beta Residence-Beta Egypt', 'Badya-Palm Hills', 'Mountain View kings way', 'Badya'],
-    'Eastern Expansions' : ['Cleopatra Square-Cleopatra', 'Joya-Tcc', 'Nmq-Melee', 'keeva-Al Ahly Sabbour', 'Swan Lake West-Hassan Allam', 'Palm Parks-Palm Hills', 'Upville-Wadi El Nile', 'WestVille-Binbaz 9 El Masria', '31 West-M Squared', 'Club Hills-Hpd', 'Villagio-Modon', 'Tawny-Hyde Park', 'Signature-Hyde Park', 'Garden Lakes-Hyde Park', 'The Crown-Palm Hills', 'Px-Palm Hills', 'October Park-Mountain View', 'Joulz-Inertia', 'Midgard-Orbit', 'Giza Terracas-Marakez', 'West Leaves-El Attal', 'Hadaba-Pre', 'Nyoum Pyarmids-Adh', 'Brix-Inertia', 'Fifty 7-Inertia'],
-    'New Cairo' : ['Swan Lake Residences-Hassan Allam', 'Sa`ada-Horizon', 'Capital Gardens-Palm Hills', 'Palm Hills New Cairo', '97 Hills-Palm Hills', 'Patio Oro-La Vista', 'Patio Hills-La vista', 'Hyde park New cairo', 'Solana East-Ora', 'Zed East-Ora', 'Hyde park Central', 'Patio Vida-La Vista', 'Patio Riva-La Vista', 'Crescent Walk-Marakez', 'Sa`ada Boutique-Horizon', 'District 5-Marakez', 'Kairo-One & Waterway', 'Hyde Park Views', 'Katameya Creeks-Starlight', 'El-Patio Town - La Vista', 'Al Patio 7-La Vista', 'W Signature-The Waterway', 'The View-The Waterway', 'Villette-Sodic', 'Regent`s Square - Al Dawlia', 'Fifth Square - Marasem', 'Waterway 1-The Waterway', 'Taj City-Madinet Masr', 'Stei8ht-Lmd', 'Creek Town-II Cazar',
-      'Yellow-Urbnlanes', 'Address East-Dorra', 'Telal East-Roya', 'ICity New Cairo-Mountain View', 'Mist-M Squared', 'Trio Gardens-M Squared', 'Sarai-Madinet Masr', 'Tierra-Sed', 'Glen-II Cazar', 'Roya', 'Cred-Ever', 'Midtown East-Better Home', 'The Crest-|| Cazar', 'Mountain View Hyde park', 'City Gate-Qatari Diar', 'IVoire East-Pre', 'Promenade-Wadi Degla', 'The WaterMarQ-The MarQ', 'Azad-Tameer', 'Noi-Urbnlanes', 'Galleria Moon Valley-Arabia Holding', 'Jayd-Sed', 'Mountain View 1.1', 'Ashrafieh-Arabia Holding', 'Jw Marriott Residences-Al Jazi', 'White Residence-Upwyde', 'Stone park-Royal', 'Stone Residence-Pre', 'Brooks-Pre', 'SQ1-Hdp', 'The Median-Egy Gab', 'Nile Boulevard-Nile', 'Eelaf-Erg', 'Life Wise-Eons', 'Linwood-Erg',
-      'Livair-Erg', 'Zeya-El Baron', 'Orla-ICapital', 'Peerage-Al riyadh Misr', 'Acasa Mia-Dar Al Alamia', 'Hope Memaar Al Ashraf', 'Notion-TownWriters', 'The lark-Tamayoz', 'La Colina-Capital Hills', 'Eastville - Ajna', 'Solay-Living Yards', 'Cavali-Al Basiony', 'Blue Tree-Sky Ad', 'Zomra East-Nations of Sky', 'The Red-Abm', 'Greya-El Baron', 'Kin-Imarra', 'Cattleya Arabco', 'Aster-Times', ' Boutique Village-Modon', 'Nurai-Mercon', 'Amara-New Plan', 'Isola Centra-El Masria', 'The Residence-Salam', 'True-UC', 'Avelin-Times', 'Garnet-Jadeer', '90 Avenue-Tabarak', 'The Ark', 'J East-Juzur', 'Palm East-Tg', 'Begonia-Menassat', 'Blanks-Manaj', 'Sephora Heights-Sephora', 'Jada & Blue-Aspect', 'Rock Vera-Al Batal', 'Jadie-Concrete',
-      'The Icon Gardens-Style Home', 'Valencia Valley-Ncb', 'Silvia-Ted', 'Yardin-Mass', 'Rivali-Samco Holding', 'Century city-Vantage', 'Amorada-Afaaq', 'Elen-Concrete', 'Wuud-Tharaa', 'Dijar-Azzar Reedy', 'Maliv-kulture', 'Noll-Kleek', 'Acasa Alma-Dar Al Alamia', 'Najm-Royal', 'Jiwar-Concrete', 'Home Residence-Home Town', 'Cairova-Rna', 'Lusail-Margins', 'Nest N Developments', 'Alca-Sag', 'Grounds - One / One'
-     ]
+  // 🟢 بتتحمل بالكامل من الداتابيز (صفحة Developers & Projects بالأدمن) - شوفي loadDynamicLookups()
+projectsMapping: any = {};
 
-  },
-  2: { // Alexandria
-    'any': [
-      'Palm hills Alexandria', 'Sawari', 'The One', 'Muruj', 'Alex west', 'Skyline', 'Crystal towers', 
-      'Grand view', 'Twin towers', 'Valore smouha', 'Valore Antoniadis', 'East towers', 
-      'Saraya gardens', 'Veranda', 'Jackranda', 'Oria city', 'Elite City',
-      'Alsafwa City', 'Vida', 'Abha hayat', 'Jewar', 'Ouruba royals', 
-      'Soly vie', 'San Stefano royals', 'Malaaz', 'Cleopatra Plaza','Smouha Gate', 'Antoniades City', 'Creeks'
-    ]
-  },
-  3: { // North Coast
-    'Ras Al Hekma': ['Ramla', 'Azha', 'Naia Bay', 'El Masyaf', 'Fouka Bay', 'Remal', 'Hacienda West', 'Seashore', 'Ras Al-Hekma', 'Hacienda Ras Al-Hekma', 'Youd', 'Ogami', 'Seashell Playa', 'La Vista Ras El Hikma', 'Caesar', 'Koun', 'Caesar Bay', 'Lyv', 'Mountain View Ras El Hikma', 'Solare', 'Swan Lake', 'Seashell Ras El Hikma', 'The Med', 'Gaia', 'June', 'Direction White', 'Cali Coast', 'Hacienda Waters', 'Mar Bay', 'Jefaira', 'Sea View', 'Safia', 'Salt', 'Azzar Islands', 'Saada North Coast', 'Katamya Coast', 'Soul', 'Lvls','قرية لافيستا باي','قرية سواني','قرية الامارات هايتس','قرية قطامية كوست','قرية بالي','قرية ذا ووتر واي','قرية ذا شور','قرية سي فيو','قرية لاميرا','قرية وان علمين','قرية دايركشن وايت','قرية جون سوديك','قرية رملة','قرية ذا ميد','قرية كالي كوست','قرية سيتي ستارز','قرية رودس','قرية ذا كريبس جيفيرا','قرية ماونتن فيو الدبلوماسيين','قرية سيزر قيصر باي','قرية هاسيندا وايت','قرية جيفيرا','قرية بلوز تيفاني','قرية الجوهرة','قرية رويال بيتش','قرية لافيستا باي ايست','قرية كوست 82 سابقا المصيف حاليا','قرية فوكا كلوب','قرية المصيف','قرية نايا باي','قرية مينا كلوب','قرية ازها','قرية ملاذ سوديك','قرية كاي','قرية سيلفر ساندس','قرية وايت باي سيدي حنيش','قرية سيسيليا لاجونز','قرية اس باس سيدي حنيش','قرية ازميرالدا باي','قرية بورتو كريستال لاجونز','قرية جزر الجراولة'],
-    'Al-Dabaa': ['Dose', 'The Water Way', 'Seazen', 'La Vista Bay', 'La Vista Bay East', 'Hacienda Blue', 'La Sirena', 'D bay', 'South Med','قرية كورونادو','قرية جاي','قرية دي باي','قرية لاسيرينا','قرية سيزين','قرية دوس'],
-    'Sidi Abdulrahman': ['Telal', 'Hacienda Red', 'Hacienda White', 'Amwaj', 'Q North', 'SeaShell', 'Bianchi Ilios', 'Shamasi', 'Masaya', 'Location', 'Stella Heights', 'Alura', 'La vista Cascada', 'Maraasi', 'Stella', 'Diplo 3', 'Haceinda Bay','قرية هاسيندا باي','قرية ستيلا سيدي عبدالرحمن','قرية ليك يارد','قرية ماراسي','قرية سكايا مراسي','قرية أجورا','قرية فرح','قرية لافيستا كاسكادا','قرية سي شيل بلايا','قرية سوان ليك','قرية ريتان','قرية مسايا','قرية اوركيديا','قرية ستيلا هايتس','قرية كاسكاديا','قرية بيانكي','قرية ستيلا مارينا','قرية أمواج','قرية بلومار','قرية هاسيندا وايت','قرية خليج غزالة','قرية زويا','قرية تلال'],
-    'Ghazala Bay': ['Playa Ghazala', 'Ghazala Bay', 'Zoya'],
-    'Al-Alamin': ['Zahra', 'Crysta', 'Plage', 'Lagoons', 'Alma', 'Ajaza', 'IL Latini', 'Downtown', 'Plam Hills North Coast', 'Mazarine', 'Golf Porto Marina', 'Marina 1', 'Marina 2', 'Marina 3', 'Marina 4', 'Marina 5', 'Marina 6', 'Marina 7', 'Marina 8','قرية مازارين','قرية مارسيليا لاند','قرية ليفير','قرية اركو لاجون','قرية فيستا مارينا','منتجع العلمين كابيتال','قرية باب البحر','قرية بلو فالي','قرية لازوردي باي','قرية بو ايلاند','قرية بو ساندس','قرية داون تاون مارينا','قرية رو مارينا','قرية بورتو مارينا','قرية سيا فيلاجيو','قرية جولف بورتو مارينا','قرية بورتو كروز'],
-    'Sidi Henish' : ['Silver Sands'],
-    'Sahel': ['Viller', 'The Island', 'Marina 8', 'North Code', 'Wanas Master', 'London', 'Eko Mena', 'Bungalows', 'Layana', 'Glee', 'قرية المهندسين', 'فخر البحار للقوات البحرية', 'قرية سيدرا', 'قرية ريزيه', 'قرية أمون','مايوركا', 'قرية كرير باراديس','قرية ألماظة باي','قرية داليا','قرية مصر للتعمير','قرية كرير لاجون','قرية الفيروز','قرية شاطئ الشروق','قرية البنوك','قرية الأطباء','قرية الطيارين','قرية جامعة القاهرة','قرية رمسيس','قرية كازابلانكا','قرية جولدن بيتش','قرية مرسي باجوش','قرية هليو بيتش','قرية مراقيا','قرية سرايات','قرية الدبلوماسيين التجاريين','قرية زمردة','قرية روزانا','قرية غرناطة','قرية فالنسيا','قرية ديانا بيتش','قرية هايدي','قرية سيلا','قرية الريفيرا','قرية تيباروز','قرية جراند هيلز','قرية المروة','قرية سلسبيل','قرية تاهيتي',
-      'قرية التجاريين','قرية بلو باي','قرية باراديس بيتش','قرية البلاح','قرية قناة السويس','قرية ماربيلا','قرية اونديكسا','قرية روز فالي','قرية الرواد بيتش','قرية الكروان','قرية بالم بيتش','قرية كازابيانكا','قرية الروضة','قرية جامعة الدول العربية','قرية جامعة عين شمس','قرية المعمورة الجديدة','قرية الصفا','قرية بانجلوز','قرية حورس والرمال الذهبية','قرية زهرة','قرية بيلا ميرا','قرية ديمورا','قرية مارسيليا بوكية','قرية وايت ساند','قرية بانوراما بيتش','قرية عايدة','قرية المعادي','قرية مرحبا بيتش','قرية ريتال فيو','قرية كاربيان','قرية ريماس','قرية الروان','قرية المنتزة','قرية ايكو','قرية المرجان','قرية قرطاج','قرية مارينا فلاورز','قرية أغادير','قرية سيرينا','قرية الصحفيين','قرية بلو بلاجا','قرية كوستا دل سول','قرية بيو بيلا','قرية روتندو كوست','قرية سانتوريني','قرية بدر','قرية فيرجينيا','قرية نيفادا هيلز','قرية كيلوباترا','قرية الزهور','قرية مارينا صن شاين','قرية البوسيت','قرية جرين بيتش','قرية سوميد','قرية جامعة أسيوط','قرية دياموند بيتش','قرية أتيك','قرية مارينا جاردنز','قرية اللوتس','قرية أكوا فيو','قرية باترسي','قرية بيترو بيتش','قرية مارينا فالي','قرية بيلا مارينا',
-    ]
-  }
-};
+  // 🟢 بتتحمل بالكامل من الداتابيز (صفحة Developers & Projects بالأدمن) - شوفي loadDynamicLookups()
+dummyDevelopers: any[] = [];
 
-dummyDevelopers =[
-  { code: 'PH', name: 'Palm hills' },
-  { code: 'EW', name: 'Elsewhere' },
-  { code: 'OR', name: 'Orouba' },
-  { code: 'ZN', name: 'Zinnia' },
-  { code: 'TD', name: 'Tasheed' },
-  { code: 'TK', name: 'Turkey' },
-  { code: 'AG', name: 'Add Group' },
-  { code: 'CG', name: 'Gamal Elghonimy' },
-  { code: 'KG', name: 'Khames Elghonimy' },
-  { code: 'BY', name: 'Bunyan' },
-  { code: 'TR', name: 'The rise' },
-  { code: 'BN', name: 'Baron' },
-  { code: 'MR', name: 'Mimary' },
-  { code: 'AZ', name: 'Abo Zahra' },
-  { code: 'MA', name: 'Al maram' },
-  { code: 'IV', name: 'Ivory' },
-  { code: 'AF', name: 'Alforat' },
-  { code: 'AZ', name: 'Abo Zahra "Diva"' },
-  { code: 'KG', name: 'Elghonimy "Saluga Elite"' },
-  { code: 'KG', name: 'Elghonimy " Vee Club"' },
-  { code: 'BV', name: 'Boulivard' },
-  { code: 'SWF', name: 'Seif water front' },
-  { code: 'SM', name: 'Saudi Masria' },
-  { code: 'SK', name: 'Solik' },
-  { code: 'FT', name: 'First' },
-  { code: 'TB', name: 'Tabark' },
-  { code: 'SG', name: 'Swag' },
-  { code: 'W', name: 'Waf' },
-  { code: 'SD', name: 'Elsedeky' },
-  { code: 'TG', name: 'Tegan, Eldawlia' },
-  { code: 'JN', name: 'Jeran' },
-  { code: 'AL', name: 'Alexandria development' },
-  { code: 'DK', name: 'Darak' },
-  { code: 'SF', name: 'Saif' },
-  { code: 'CP', name: 'Cleopatra' },
-  { code: 'JW', name: 'Jedar & Jawiria' },
-  { code: 'MS', name: 'Marsoum Development' },
-  {code: 'MAR', name: 'Marakez' },
-  {code: 'MAD', name: 'Madar' },
-  {code: 'NAI', name: 'Naia' },
-  {code: 'MS', name: 'M Squared' },
-  {code: 'TM', name: 'Tatweer Misr' },
-  {code: 'MZ', name: 'Mezyan' },
-  {code: 'HP', name: 'Hyde Park' },
-  {code: 'SOD', name: 'Sodic' },
-  {code: 'GD', name: 'G Development' },
-  {code: 'LVR', name: 'La Vista Ras' },
-  {code: 'MBE', name: 'Mabany Edris' },
-  {code: 'MET', name: 'Metso' },
-  {code: 'GAT', name: 'Gates' },
-  {code: 'MV', name: 'Mountain View' },
-  {code: 'MI', name: 'Misr Italia' },
-  {code: 'HA', name: 'Hassan Allam' },
-  {code: 'PEO', name: 'People' },
-  {code: 'AS', name: 'Ahly Sabbour' },
-  {code: 'AB', name: 'Ara Bella' },
-  {code: 'MAV', name: 'Maven' },
-  {code: 'MAR1', name: 'Marasem' },
-  {code: 'INE', name: 'Inertia' },
-  {code: 'IDA', name: 'Idar' },
-  {code: 'IC', name: 'Il Cazar' },
-  {code: 'RRE', name: 'Rreedy' },
-  {code: 'HE', name: 'He' },
-  {code: 'SD', name: 'Starlight Development' },
-  {code: 'EMA', name: 'Emaar' },
-  {code: 'AER', name: 'Akam El Rajhi' },
-  {code: 'TWW', name: 'The Water Way' },
-  {code: 'ALQ', name: 'Alqamzi' },
-  {code: 'LAV', name: 'Lavista' },
-  {code: 'LS', name: 'La Sirena' },
-  {code: 'TMG', name: 'Tmg' },
-  {code: 'ROU', name: 'Roua' },
-  {code: 'QD', name: 'Q Development' },
-  {code: 'DX', name: 'Developer X' },
-  {code: 'SER', name: 'Serac' },
-  {code: 'EG', name: 'Egy Gab' },
-  {code: 'LOC', name: 'Location' },
-  {code: 'ME', name: 'Memar Elmorshedy' },
-  {code: 'LMD', name: 'LMD' },
-  {code: 'GB', name: 'Ghazala Bay' },
-  {code: 'MOD', name: 'Modon' },
-  {code: 'NG', name: 'New Generation' },
-  {code: 'CE', name: 'City Edge' },
-  {code: 'ALD', name: 'Aldiwan' },
-  {code: 'HDP', name: 'Hdp' },
-  {code: 'COD', name: 'Code' },
-  {code: 'MAS', name: 'Master' },
-  {code: 'JD', name: 'J D' },
-  {code: 'MG', name: 'Mena Group' },
-  {code: 'ARA', name: 'Arabia' },
-  {code: 'TOL', name: 'Toledo' },
-  {code: 'THA', name: 'Tharaa' },
-  {code: 'FAG', name: 'Farag Amer' },
-  {code: 'SED', name: 'Saudi Egyptian Development' },
-  {code: 'HBD', name: 'Housing and Development bank' },
-  {code: 'MRC', name: 'Mercon' },
-  {code: 'ALE', name: 'Alex West'},
-  {code: 'OR', name: 'ORA'},
-];
+  // 🟢 بتتحمل بالكامل من الداتابيز (صفحة Developers & Projects بالأدمن) - شوفي loadDynamicLookups()
+primaryProjectCodes: any = {};
 
-primaryProjectCodes: any = {
-    "Palm hills Alexandria": "PHA", "The One": "TO", "Skyline": "SL", "East towers": "ET",
-    "Alex west": "AW", "Valore Smouha": "VS", " Valore Antoniadis": "VA", "Muruj": "MJ",
-    "Sawari": "SW", "Jackranda": "JK", "Vida": "VD", "Alsafwa": "AS", "Abha hayat": "AH",
-    "Grand view": "GV", "Crystal towers": "CT", "Twin towers": "TT", "Veranda": "VR",
-    "Jewar": "JR", "Soly vie": "SV", "San Stefano royals": "SSR", "Cleopatra Plaza": "CP",
-    "Malaaz": "MZ", "Smouha Gate": "SMG", "Amwaj": "AM", "Antoniades City": "AC", 'Oria City': 'OC', 'Elite City': 'EC', 'Ouruba Royals': 'OR'
-    , 'Saraya Gardens': 'SG', 'Alsafwa City': 'AS', 'The Island': 'TI', 'Telal': 'TE', 
-    "Ramla": "RA", "Azha": "AZ", "Naia Bay": "NA", "El Masyaf": "EL", "Fouka Bay": "FO",
-    "Remal": "RE", "Hacienda West": "HA", "Seashore": "SE", "Ogami": "OG", "Seashell Playa": "SEA",
-    "La Vista Ras El Hikma": "LA", "Caesar": "CA", "Koun": "KO", "Caesar Bay": "CAE", "Lyv": "LY",
-    "Mountain View Ras El Hikma": "MO", "Solare": "SO", "Swan Lake": "SW", "Seashell Ras El Hikma": "SA",
-    "The Med": "TH", "Gaia": "GA", "June": "JU", "Direction White": "DI", "Cali Coast": "CAL",
-    "Hacienda Waters": "HAC", "Mar Bay": "MA", "Jefaira": "JE", "Sea View": "SV", "Safia": "SAF",
-    "Salt": "SAL", "Azzar Islands": "AZZ", "Saada North Coast": "SAA", "Katamya Coast": "KA",
-    "Soul": "SOU", "Lvls": "LV", "Ras Al-Hekma": "RH", "Hacienda Ras Al-Hekma": "HCR", "Youd": "YD", "Creeks": "CK", "Silver Sands": "SSN",
-
-    // 🏖️ الساحل الشمالي (Al-Dabaa)
-    "Dose": "DO", "The Water Way": "THE", "Seazen": "SZ", "La Vista Bay": "LAV", 
-    "La Vista Bay East": "LI", "Hacienda Blue": "HC", "La Sirena": "LAS", "D bay": "DB", 
-    "South Med": "SU",
-
-    // 🏖️ الساحل الشمالي (Sidi Abdulrahman)
-    "Hacienda Red": "HI", "Hacienda White": "HE", "Q North": "QN", "SeaShell": "SS", 
-    "Bianchi Ilios": "BI", "Shamasi": "SH", "Masaya": "MAS", "Location": "LO", 
-    "Stella Heights": "ST", "Alura": "AL", "La vista Cascada": "LS", "Maraasi": "MAR", 
-    "Stella": "STE", "Diplo 3": "DIP", "Haceinda Bay": "HN",
-
-    // 🏖️ الساحل الشمالي (Ghazala Bay)
-    "Playa Ghazala": "PL", "Ghazala Bay": "GH", "Zoya": "ZO",
-
-    // 🏖️ الساحل الشمالي (Al-Alamin)
-    "Zahra": "ZA", "Crysta": "CR", "Plage": "PLA", "Lagoons": "LAG", "Alma": "ALM",
-    "IL Latini": "IL", "Downtown": "DOW", "Plam Hills North Coast": "PA", "Mazarine": "MAZ",
-    "Golf Porto Marina": "GPM", "Marina 1": "MR1", "Marina 2": "MR2", "Marina 3": "MR3",
-    "Marina 4": "MR4", "Marina 5": "MR5", "Marina 6": "MR6", "Marina 7": "MR7", "Marina 8": "MR8","Ajaza": "AGZ",
-
-    // 🏖️ الساحل الشمالي (Sahel)
-    "Viller": "VI", "North Code": "NO", "Wanas Master": "WA", "London": "LON", 
-    "Eko Mena": "EK", "Bungalows": "BU", "Layana": "LAY", "Glee": "GL", "Dayz": "DZ"
-  };
-
-  resaleProjectIds: any = {
-    "Sawari": "1", "Muruj": "2", "Palm hills Alexandria": "3", "The one": "4", "Alex west": "5",
-    "Skyline": "6", "Grand view": "7", "Antoniades City": "8", "Valore Antoniadis": "9",
-    "Valore Smouha": "10", "Jewar": "11", "Crystal Towers": "12", "Twin Towers": "13",
-    "East Towers": "14", "Saraya Gardens": "15", "Veranda": "16", "Jackranda": "17",
-    "Oria City": "18", "Elite City": "19", "Vida": "20", "Abha Hayat": "21",
-    "Ouruba Royals": "22", "Soly Vie": "23", "San Stefano Royals": "24", "Malaaz": "25",
-    "Smouha Gate": "26"
-  };
+    // 🟢 بتتحمل بالكامل من الداتابيز (صفحة Developers & Projects بالأدمن) - شوفي loadDynamicLookups()
+resaleProjectIds: any = {};
 
   legacySequenceStarters: any = {
     "NR93-": 51, "NPR93-": 85, 
@@ -266,26 +73,8 @@ primaryProjectCodes: any = {
     "AR23-": 127, "AR2-": 11, "AR92-": 35, "AR97-": 15
   };
 
-  resaleZoneIds: any = {
-    "Abu Qir": "1", "Al-Maamoura": "2", "Al-zawaida": "4", "Khurshid": "5", "Al-Maraghi": "6",
-    "Bahary": "7", "El-Mandara-kebly": "8", "Al-Manshiyya": "9", "Bashair al-khayr": "11",
-    "Al-Agamy": "13", "Al-Baytash": "14", "Al-Hanovil": "15", "Al-Dakhila": "16", "October": "17",
-    "Al-Amiriya": "20", "Borj Al-Arab": "21", "Sidi Bishr": "23", "Al-Aasafirah-45": "24",
-    "Al-Aasafirah-bahary": "25", "Al-Aasafirah-30": "26", "Janaklis": "32", "San Stefano": "33",
-    "Fleming": "34", "Shods": "35", "Al-Suyuf": "39", "Bakus": "40", "Bolkley": "41",
-    "Roshdy": "42", "Zizinia": "43", "Kafr Abdo": "45", "Cleopatra": "46", "Sporting": "47",
-    "Sidi Gaber": "48", "Camp Schésar": "49", "Al-Shatibi": "50", "Al-Azariṭa": "51",
-    "Mahattah al-raml": "52", "Al-Saraya": "53", "Muharram Bik": "56", "Al-Hadra": "57",
-    "Miamy": "59", "Abo solaiman": "60", "Falaky": "61", "Al-Aasafirah-kebly": "62",
-    "Smouha": "63", "scot": "64", "Mahattat Misr": "66", "Al-Ibrahimiya": "67",
-    "Moustafa Kamel": "68", "Loran": "69", "Al-luban": "70", "Victoria": "71",
-    "Gliem": "72", "Wabur al-miyah": "73", "Karmouz": "74", "Stanly": "76",
-    "Al-Aawaid": "77", "salah Salem": "78", "Hajar al-nawatih": "79", "Al-Montaza": "80",
-    "Al-Hedaya": "81", "Wenget": "82", "Road": "83", "Abis": "84", "Al-Hurriya": "85",
-    "Sultan Hussein": "86", "Kubri al-namus": "87", "Mohammed Naguib": "88",
-    "Al-Mahmoudia": "90", "Saba Basha": "91", "El-Mandara-bahary": "92", "Marina": "93",
-    "Tharwat": "94", "Elshalalat": "95", "Green Plaza": "96", "King Mariout": "97"
-  };
+    // 🟢 بتتحمل بالكامل من الداتابيز (صفحة Developers & Projects بالأدمن) - شوفي loadDynamicLookups()
+resaleZoneIds: any = {};
 filteredProjects: string[] = [];
 
   private fb = inject(FormBuilder);
@@ -754,28 +543,27 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
   return Number(val.toString().replace(/,/g, ''));
 }
 
-  // 🟢 بتجيب أي Developer/Project/Region جديد أضافه الأدمن من صفحة "Developers & Projects"
-  // وبتضيفه فوق الليستات الحالية (من غير ما تشيل/تلمس أي حاجة موجودة أصلاً)
+  // 🟢 بتجيب كل الـ Developers/Projects/Regions من الداتابيز (صفحة Lookups بالأدمن) وتبني
+  // بيها الليستات المستخدمة في الفورم بالكامل - مفيش أي بيانات هاردكودد تانية في الملف ده
   loadDynamicLookups(): void {
     this.propertyService.getDevelopersList().subscribe({
       next: (list) => {
-        list.forEach((d: any) => {
-          if (!this.dummyDevelopers.some(x => x.name.toLowerCase() === d.name.toLowerCase())) {
-            this.dummyDevelopers.push({ code: d.code, name: d.name });
-          }
-        });
+        this.dummyDevelopers = list.map((d: any) => ({ code: d.code, name: d.name }));
       },
       error: () => {}
     });
 
     this.propertyService.getRegionsList().subscribe({
       next: (list) => {
+        const mapping: any = {};
+        const zoneIds: any = {};
         list.forEach((r: any) => {
-          const cityId = r.city;
-          if (!this.regionsMapping[cityId]) this.regionsMapping[cityId] = [];
-          if (!this.regionsMapping[cityId].includes(r.name)) this.regionsMapping[cityId].push(r.name);
-          if (r.zoneCode && !(r.name in this.resaleZoneIds)) this.resaleZoneIds[r.name] = r.zoneCode;
+          if (!mapping[r.city]) mapping[r.city] = [];
+          mapping[r.city].push(r.name);
+          if (r.zoneCode) zoneIds[r.name] = r.zoneCode;
         });
+        this.regionsMapping = mapping;
+        this.resaleZoneIds = zoneIds;
         this.refreshFilteredListsSilently();
       },
       error: () => {}
@@ -784,19 +572,23 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
     // مشاريع Primary
     this.propertyService.getProjectsList(0).subscribe({
       next: (list) => {
+        const mapping = this.projectsMapping || {};
+        const codes: any = {};
         list.forEach((p: any) => {
           if (p.city === 2) {
-            if (!this.projectsMapping[2]) this.projectsMapping[2] = {};
-            if (!this.projectsMapping[2]['any']) this.projectsMapping[2]['any'] = [];
-            if (!this.projectsMapping[2]['any'].includes(p.name)) this.projectsMapping[2]['any'].push(p.name);
+            if (!mapping[2]) mapping[2] = {};
+            if (!mapping[2]['any']) mapping[2]['any'] = [];
+            mapping[2]['any'].push(p.name);
           } else {
             const region = p.region || 'any';
-            if (!this.projectsMapping[p.city]) this.projectsMapping[p.city] = {};
-            if (!this.projectsMapping[p.city][region]) this.projectsMapping[p.city][region] = [];
-            if (!this.projectsMapping[p.city][region].includes(p.name)) this.projectsMapping[p.city][region].push(p.name);
+            if (!mapping[p.city]) mapping[p.city] = {};
+            if (!mapping[p.city][region]) mapping[p.city][region] = [];
+            mapping[p.city][region].push(p.name);
           }
-          if (!(p.name in this.primaryProjectCodes)) this.primaryProjectCodes[p.name] = p.code;
+          if (p.code) codes[p.name] = p.code;
         });
+        this.projectsMapping = mapping;
+        this.primaryProjectCodes = codes;
         this.refreshFilteredListsSilently();
       },
       error: () => {}
@@ -805,27 +597,30 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
     // مشاريع Resale
     this.propertyService.getProjectsList(1).subscribe({
       next: (list) => {
+        const mapping = this.projectsMapping || {};
+        const ids: any = {};
         list.forEach((p: any) => {
           if (p.city === 2) {
-            if (!this.projectsMapping[2]) this.projectsMapping[2] = {};
-            if (!this.projectsMapping[2]['any']) this.projectsMapping[2]['any'] = [];
-            if (!this.projectsMapping[2]['any'].includes(p.name)) this.projectsMapping[2]['any'].push(p.name);
+            if (!mapping[2]) mapping[2] = {};
+            if (!mapping[2]['any']) mapping[2]['any'] = [];
+            mapping[2]['any'].push(p.name);
           } else {
             const region = p.region || 'any';
-            if (!this.projectsMapping[p.city]) this.projectsMapping[p.city] = {};
-            if (!this.projectsMapping[p.city][region]) this.projectsMapping[p.city][region] = [];
-            if (!this.projectsMapping[p.city][region].includes(p.name)) this.projectsMapping[p.city][region].push(p.name);
+            if (!mapping[p.city]) mapping[p.city] = {};
+            if (!mapping[p.city][region]) mapping[p.city][region] = [];
+            mapping[p.city][region].push(p.name);
           }
-          if (!(p.name in this.resaleProjectIds)) this.resaleProjectIds[p.name] = p.code;
+          if (p.code) ids[p.name] = p.code;
         });
+        this.projectsMapping = mapping;
+        this.resaleProjectIds = ids;
         this.refreshFilteredListsSilently();
       },
       error: () => {}
     });
   }
 
-  // 🟢 بتحدث الليستات الظاهرة (Regions/Projects) من غير ما تمسح اختيار المستخدم -
-  // مستخدمة بس لما بيانات جديدة توصل من الأدمن بعد ما الصفحة تكون فاتحة بالفعل
+  // بتحدث الليستات الظاهرة (Regions/Projects) من غير ما تمسح اختيار المستخدم
   private refreshFilteredListsSilently(): void {
     const cityId = Number(this.propertyForm.get('city')?.value);
     const region = this.propertyForm.get('region')?.value;

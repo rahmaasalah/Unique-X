@@ -95,6 +95,13 @@
       <h6 class="text-dark mb-1">Down Payment {{ currencyService.format(property.downPayment) }}</h6>
     }
 
+    @if (property.listingType === 'Primary' && property.paymentMethod?.toLowerCase() === 'installment' && quarterlyPlan) {
+      <p class="text-dark small mb-1">
+        {{ currencyService.format(quarterlyPlan.installmentAmount) }}
+        <span class="text-muted fw-normal">Quarterly</span> / {{ quarterlyPlan.installmentYears }} Years
+      </p>
+    }
+
     <p class="text-truncate text-muted small mb-2">
       <i class="bi bi-geo-alt-fill text-danger me-1"></i>
        {{ property.region }}, {{ property.city }}
@@ -117,25 +124,70 @@
       </div>
     }
 
-    <div class="mt-auto pt-2">
+    <div class="mt-auto pt-2 d-flex justify-content-center gap-3 card-icon-actions">
       <a href="javascript:void(0)" 
          (click)="handleContact($event, 'call')"
-         class="btn btn-outline-dark w-100 rounded-pill fw-bold py-2 mb-2 shadow-sm d-flex align-items-center justify-content-center transition-all">
-        <i class="bi bi-telephone-fill me-2 fs-6"></i> Call Now
+         class="card-icon-btn card-icon-btn-outline" data-tooltip="Call Now">
+        <i class="bi bi-telephone-fill"></i>
       </a>
       <a href="javascript:void(0)" 
          (click)="handleContact($event, 'whatsapp')"
-         class="btn btn-success w-100 rounded-pill fw-bold py-2 mb-2 shadow-sm d-flex align-items-center justify-content-center transition-all">
-        <i class="bi bi-whatsapp me-2 fs-5"></i> WhatsApp
+         class="card-icon-btn card-icon-btn-whatsapp" data-tooltip="WhatsApp">
+        <i class="bi bi-whatsapp"></i>
       </a>
       <a href="javascript:void(0)" 
          (click)="openVisitModal($event)"
-         class="btn btn-danger w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center transition-all">
-        <i class="bi bi-calendar-check me-2 fs-6"></i> Visit Now
+         class="card-icon-btn card-icon-btn-visit" data-tooltip="Visit Now">
+        <i class="bi bi-calendar-check"></i>
       </a>
     </div>
   </div>
 </div>
+
+<!-- 🟢 أزرار الأكشن بشكل أيقونات فقط + تولتيب باسم الزرار عند الوقوف عليه (زي نافي) -->
+<style>
+  .card-icon-btn {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.10);
+    transition: transform .15s ease, box-shadow .15s ease;
+    flex-shrink: 0;
+  }
+  .card-icon-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,.16); }
+  .card-icon-btn-outline { background: #fff; border: 1.5px solid #212529; color: #212529; }
+  .card-icon-btn-whatsapp { background: #25D366; color: #fff; }
+  .card-icon-btn-visit { background: #ef3341; color: #fff; }
+
+  .card-icon-btn[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a2e;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: .7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .15s ease;
+    z-index: 20;
+  }
+  .card-icon-btn[data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+  }
+</style>
 
 <!-- Modal: Visit Now (لكل كارت ID مميز عشان منتعارضش لو الكارت اتكرر في نفس الصفحة) -->
 <div class="modal fade" [id]="'visitNowModal-' + property.id" tabindex="-1" aria-hidden="true" (click)="$event.stopPropagation()">
