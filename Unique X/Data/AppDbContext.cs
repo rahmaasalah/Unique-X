@@ -18,6 +18,7 @@ namespace Unique_X.Data
         public DbSet<PaymentPlan> PaymentPlans { get; set; }
         public DbSet<FinancialFile> FinancialFiles { get; set; }
         public DbSet<HotDeal> HotDeals { get; set; }
+        public DbSet<RecommendedVisit> RecommendedVisits { get; set; }
         public DbSet<Lead> Leads { get; set; }
         public DbSet<LeadRequest> LeadRequests { get; set; }
         public DbSet<LeadActivity> LeadActivities { get; set; }
@@ -39,6 +40,7 @@ namespace Unique_X.Data
         public DbSet<Developer> Developers { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<Region> Regions { get; set; }
+        public DbSet<Article> Articles { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)

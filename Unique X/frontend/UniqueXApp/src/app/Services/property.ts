@@ -78,6 +78,10 @@ getFinancialHistory(code: string): Observable<any[]> {
   return this.http.get<any[]>(`${this.baseUrl}/hot-deals`);
 }
 
+getRecommendedVisits() {
+  return this.http.get<any[]>(`${environment.apiUrl}/properties/recommended-visits`);
+}
+
 getNextCode(prefix: string) {
     return this.http.get<any>(`${this.baseUrl}/next-code?prefix=${prefix}`);
   }

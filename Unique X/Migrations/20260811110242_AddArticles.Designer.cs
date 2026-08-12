@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Unique_X.Data;
 
@@ -11,9 +12,11 @@ using Unique_X.Data;
 namespace Unique_X.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260811110242_AddArticles")]
+    partial class AddArticles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1629,27 +1632,6 @@ namespace Unique_X.Migrations
                     b.ToTable("Properties");
                 });
 
-            modelBuilder.Entity("Unique_X.Models.RecommendedVisit", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("AddedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("PropertyId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PropertyId");
-
-                    b.ToTable("RecommendedVisits");
-                });
-
             modelBuilder.Entity("Unique_X.Models.Region", b =>
                 {
                     b.Property<int>("Id")
@@ -2060,17 +2042,6 @@ namespace Unique_X.Migrations
                         .IsRequired();
 
                     b.Navigation("Broker");
-                });
-
-            modelBuilder.Entity("Unique_X.Models.RecommendedVisit", b =>
-                {
-                    b.HasOne("Unique_X.Models.Property", "Property")
-                        .WithMany()
-                        .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("Unique_X.Models.Review", b =>

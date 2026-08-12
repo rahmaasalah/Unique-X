@@ -730,6 +730,20 @@ namespace Unique_X.Services.Implementation
             return properties.Select(p => MapToResponseDto(p));
         }
 
+        public async Task<IEnumerable<PropertyResponseDto>> GetRecommendedVisitsAsync()
+        {
+            var recommendedIds = await _context.RecommendedVisits.Select(r => r.PropertyId).ToListAsync();
+
+            var properties = await _context.Properties
+                .Include(p => p.Photos)
+                .Include(p => p.Broker)
+                .Include(p => p.PaymentPlans)
+                .Where(p => recommendedIds.Contains(p.Id) && p.IsActive && p.IsApproved && !p.IsSold)
+                .ToListAsync();
+
+            return properties.Select(p => MapToResponseDto(p));
+        }
+
         private async Task<string> GenerateSmartCodeAsync(Property property)
         {
             string prefix = "";

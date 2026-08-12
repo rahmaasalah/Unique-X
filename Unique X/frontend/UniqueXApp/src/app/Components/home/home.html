@@ -244,7 +244,7 @@
 </div>
 
   <!-- ===== Quick Links: تابات دائرية تحت الفلتر وقبل البانرز ===== -->
-  <div class="d-flex flex-nowrap flex-md-wrap justify-content-start justify-content-md-center align-items-start row-gap-4 column-gap-5 mb-5 pb-4 border-bottom quick-links-row">
+  <div class="d-flex flex-nowrap justify-content-start align-items-start column-gap-5 mb-5 pb-4 border-bottom quick-links-row">
 
     <a class="text-decoration-none d-flex flex-column align-items-center quick-link-item" style="width:80px;"
        [routerLink]="['/home']" [queryParams]="{ listingType: 0 }" title="Resale">
@@ -315,6 +315,15 @@
         <i class="bi bi-rocket-takeoff fs-4"></i>
       </div>
       <span class="small fw-semibold text-dark text-center" style="font-size:0.75rem;">Launches</span>
+    </a>
+
+    <a class="text-decoration-none d-flex flex-column align-items-center quick-link-item" style="width:80px;"
+       routerLink="/blogs" routerLinkActive="quick-link-active" title="Blogs">
+      <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mb-1 shadow-sm text-dark"
+           style="width:60px;height:60px;">
+        <i class="bi bi-journal-text fs-4"></i>
+      </div>
+      <span class="small fw-semibold text-dark text-center" style="font-size:0.75rem;">Blogs</span>
     </a>
 
     @if (!authService.loggedIn() || authService.getUserType() === 0) {
@@ -415,6 +424,30 @@
             }
           </div>
           <button class="h-scroll-arrow right" (click)="scrollH(hotDealsScroll, 1)" aria-label="Scroll right">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    }
+  </ng-template>
+
+  <!-- 🟢 نفس فكرة Hot Deals بالظبط - بتظهر تحتها مباشرة -->
+  <ng-template #recommendedVisitsSection>
+    @if (filteredRecommendedVisits().length > 0) {
+      <div class="container my-5 animate__animated animate__fadeIn">
+        <h3 class="fw-bold text-danger mb-4"><i class="bi bi-geo-alt-fill"></i> Recommended to Visit</h3>
+        <div class="h-scroll-wrap">
+          <button class="h-scroll-arrow left" (click)="scrollH(recommendedVisitsScroll, -1)" aria-label="Scroll left">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <div class="d-flex h-scroll gap-4 pb-2" #recommendedVisitsScroll>
+            @for (prop of filteredRecommendedVisits(); track prop.id) {
+              <div class="h-scroll-item" style="width:320px;">
+                <app-property-card [property]="prop"></app-property-card>
+              </div>
+            }
+          </div>
+          <button class="h-scroll-arrow right" (click)="scrollH(recommendedVisitsScroll, 1)" aria-label="Scroll right">
             <i class="bi bi-chevron-right"></i>
           </button>
         </div>
@@ -649,6 +682,7 @@
 
     @if (!hasSearchFilters()) {
       <ng-container *ngTemplateOutlet="hotDealsSection"></ng-container>
+      <ng-container *ngTemplateOutlet="recommendedVisitsSection"></ng-container>
     }
 
     @if (isLoading()) {
@@ -858,3 +892,99 @@
   </a>
 
 </div>
+
+<!-- ===== Get Recommendation Prompt (لليوزر مش المسجل دخول) ===== -->
+@if (showRecommendationPrompt()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 1200;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-body text-center p-4">
+          <i class="bi bi-stars text-danger" style="font-size: 2.5rem;"></i>
+          <h5 class="fw-bold mt-3 mb-2">Get recommendation matching your request</h5>
+          <p class="text-muted small mb-4">Tell us what you're looking for and we'll find the best matching units for you.</p>
+          <div class="d-flex justify-content-center gap-2">
+            <button class="btn btn-light rounded-pill px-4" (click)="onCancelRecommendationPrompt()">Cancel</button>
+            <button class="btn btn-danger rounded-pill px-4" (click)="onGetRecommendationClick()">Get Recommendation</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ===== Recommendation Criteria Modal (بعد تسجيل الدخول) ===== -->
+@if (showRecommendationModal()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 1200;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">Tell us what you're looking for</h5>
+          <button type="button" class="btn-close" (click)="closeRecommendationModal()"></button>
+        </div>
+        <div class="modal-body py-3">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Zone</label>
+              <select class="form-select rounded-3" [(ngModel)]="recommendationForm.city">
+                <option value="">Any</option>
+                <option value="1">Cairo</option>
+                <option value="2">Alexandria</option>
+                <option value="3">North Coast</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Listing Type</label>
+              <select class="form-select rounded-3" [(ngModel)]="recommendationForm.listingType">
+                <option value="">Any</option>
+                <option value="0">Resale</option>
+                <option value="1">Rent</option>
+                <option value="2">Primary</option>
+                <option value="3">Resale Project</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Property Type</label>
+              <select class="form-select rounded-3" [(ngModel)]="recommendationForm.propertyType">
+                <option value="">Any</option>
+                <option value="0">Apartment</option>
+                <option value="1">Villa</option>
+                <option value="2">Shop</option>
+                <option value="3">Office</option>
+                <option value="4">Chalet</option>
+                <option value="5">Full Floor</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Number of Rooms</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.rooms">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Number of Bathrooms</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.bathrooms">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Total Floors</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.floors">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Floor Number</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.floorNumber">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Min Budget (EGP)</label>
+              <input type="text" class="form-control rounded-3" (input)="formatPrice($event)" #minBudget>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Max Budget (EGP)</label>
+              <input type="text" class="form-control rounded-3" (input)="formatPrice($event)" #maxBudget>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button class="btn btn-light rounded-pill px-4" (click)="closeRecommendationModal()">Cancel</button>
+          <button class="btn btn-danger rounded-pill px-4" (click)="submitRecommendation(minBudget, maxBudget)">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

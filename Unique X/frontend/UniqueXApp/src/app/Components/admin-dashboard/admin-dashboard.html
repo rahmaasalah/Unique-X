@@ -83,6 +83,13 @@
   </button>
 </li>
 
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
+          [class.active]="activeTab() === 'recommendedVisits'" (click)="switchTab('recommendedVisits')">
+    <i class="bi bi-geo-alt-fill me-3 fs-6"></i> Recommended to Visit
+  </button>
+</li>
+
 <li  class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
           [class.active]="activeTab() === 'deletions'"
@@ -151,20 +158,23 @@
 
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'launchMeetings'"
-          (click)="activeTab.set('launchMeetings'); loadLaunchMeetings()">
-    <i class="bi bi-calendar-check me-3 fs-6"></i> Launch Meetings
-    @if (uncontactedLaunchMeetingsCount() > 0) {
-      <span class="badge bg-danger ms-2">{{ uncontactedLaunchMeetingsCount() }}</span>
+          [class.active]="activeTab() === 'articles'"
+          (click)="activeTab.set('articles'); loadArticles()">
+    <i class="bi bi-journal-text me-3 fs-6"></i> Blogs
+    @if (articles().length > 0) {
+      <span class="badge bg-danger ms-2">{{ articles().length }}</span>
     }
   </button>
 </li>
 
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'lookups'"
-          (click)="switchTab('lookups')">
-    <i class="bi bi-diagram-3 me-3 fs-6"></i> Developers &amp; Projects
+          [class.active]="activeTab() === 'launchMeetings'"
+          (click)="activeTab.set('launchMeetings'); loadLaunchMeetings()">
+    <i class="bi bi-calendar-check me-3 fs-6"></i> Launch Meetings
+    @if (uncontactedLaunchMeetingsCount() > 0) {
+      <span class="badge bg-danger ms-2">{{ uncontactedLaunchMeetingsCount() }}</span>
+    }
   </button>
 </li>
         
@@ -305,251 +315,64 @@
   </section>
 }
 
-@if (activeTab() === 'lookups') {
+@if (activeTab() === 'recommendedVisits') {
   <section class="animate__animated animate__fadeIn">
-    <h4 class="fw-bold mb-4"><i class="bi bi-diagram-3 me-2"></i>Developers &amp; Projects</h4>
+    <h4 class="fw-bold mb-4">Manage Recommended to Visit ({{ recommendedVisits().length }}/12)</h4>
 
-    <!-- Sub tabs -->
-    <ul class="nav nav-pills mb-4">
-      <li class="nav-item">
-        <button class="nav-link" [class.active]="lookupsSubTab() === 'developers'" (click)="lookupsSubTab.set('developers')">Developers</button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" [class.active]="lookupsSubTab() === 'primaryProjects'" (click)="lookupsSubTab.set('primaryProjects')">Primary Projects</button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" [class.active]="lookupsSubTab() === 'resaleProjects'" (click)="lookupsSubTab.set('resaleProjects')">Resale Projects</button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" [class.active]="lookupsSubTab() === 'regions'" (click)="lookupsSubTab.set('regions')">Regions</button>
-      </li>
-    </ul>
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-10 position-relative">
+  <label class="small fw-bold text-muted">Select Property Code</label>
 
-    <!-- City filter - بيتحكم في المشاريع والمناطق (مش المطورين، لأن المطور مش مرتبط بمدينة) -->
-    @if (lookupsSubTab() !== 'developers') {
-      <div class="mb-3" style="max-width: 260px;">
-        <label class="small fw-bold text-muted">City</label>
-        <select class="form-select bg-light border-0 shadow-sm" [ngModel]="lookupCityFilter()" (ngModelChange)="onLookupCityChange(+$event)">
-          <option [value]="1">Cairo</option>
-          <option [value]="2">Alexandria</option>
-          <option [value]="3">North Coast</option>
-        </select>
-      </div>
+  <input type="text" class="form-control bg-light border-0 shadow-sm" 
+         placeholder="Type code (e.g. ARP) or property title..."
+         [ngModel]="recommendedVisitSearchText()" 
+         (ngModelChange)="recommendedVisitSearchText.set($event); selectedRecommendedVisitCode.set(''); isRecommendedVisitDropdownOpen.set(true)"
+         (focus)="isRecommendedVisitDropdownOpen.set(true)"
+         (blur)="closeRecommendedVisitDropdown()">
+
+  <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1" 
+      [class.show]="isRecommendedVisitDropdownOpen()"
+      style="max-height: 250px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1050;">
+
+    @for (prop of filteredRecommendedVisitOptions(); track prop.id) {
+      <li>
+        <button class="dropdown-item py-2 border-bottom border-light" (mousedown)="selectRecommendedVisit(prop.code, prop.title)">
+          <span class="badge bg-light text-dark border me-2">{{ prop.code }}</span> 
+          <span class="small text-muted">{{ prop.title }}</span>
+        </button>
+      </li>
+    } @empty {
+      <li><span class="dropdown-item text-muted small py-2">No properties found.</span></li>
     }
+  </ul>
+</div>
 
-    <!-- ===== Developers ===== -->
-    @if (lookupsSubTab() === 'developers') {
-      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-6">
-            <label class="small fw-bold text-muted">Developer Name</label>
-            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Palm Hills"
-                   [ngModel]="newDeveloperName()" (ngModelChange)="newDeveloperName.set($event)">
-          </div>
-          <div class="col-md-4">
-            <label class="small fw-bold text-muted">Code</label>
-            <input type="text" class="form-control bg-light border-0" placeholder="e.g. PH"
-                   [ngModel]="newDeveloperCode()" (ngModelChange)="newDeveloperCode.set($event)">
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddDeveloper()"
-                    [disabled]="!newDeveloperName().trim() || !newDeveloperCode().trim()">
-              <i class="bi bi-plus-lg me-1"></i> Add
+<div class="col-md-2">
+  <button class="btn btn-danger w-100 rounded-pill fw-bold" 
+          (click)="onAddRecommendedVisit(selectedRecommendedVisitCode())" 
+          [disabled]="!selectedRecommendedVisitCode() || recommendedVisits().length >= 12">
+    <i class="bi bi-plus-lg me-1"></i> Add
+  </button>
+</div>
+      </div>
+    </div>
+
+    <!-- قائمة الـ Recommended to Visit المضافة -->
+    <div class="row g-3">
+      @for (visit of recommendedVisits(); track visit.id) {
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
+            <span class="fw-bold text-dark">{{ visit.property.code }}</span>
+            <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onRemoveRecommendedVisit(visit.id)">
+              <i class="bi bi-trash"></i>
             </button>
           </div>
         </div>
-      </div>
-
-      <div class="row g-3">
-        @for (dev of lookupDevelopers(); track dev.id) {
-          <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
-              <div>
-                <div class="fw-bold text-dark">{{ dev.name }}</div>
-                <span class="badge bg-light text-dark border">{{ dev.code }}</span>
-              </div>
-              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteDeveloper(dev.id)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-        } @empty {
-          <p class="text-muted">No developers yet.</p>
-        }
-      </div>
-    }
-
-    <!-- ===== Primary Projects ===== -->
-    @if (lookupsSubTab() === 'primaryProjects') {
-      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-4">
-            <label class="small fw-bold text-muted">Project Name</label>
-            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Village West"
-                   [ngModel]="newProjectName()" (ngModelChange)="newProjectName.set($event)">
-          </div>
-          <div class="col-md-2">
-            <label class="small fw-bold text-muted">Code</label>
-            <input type="text" class="form-control bg-light border-0" placeholder="e.g. VW"
-                   [ngModel]="newProjectCode()" (ngModelChange)="newProjectCode.set($event)">
-          </div>
-          <div class="col-md-3">
-            <label class="small fw-bold text-muted">
-              Region @if (lookupCityFilter() !== 2) { <span class="text-danger">*</span> }
-            </label>
-            @if (lookupCityFilter() === 2) {
-              <input type="text" class="form-control bg-light border-0" value="Alexandria (no region needed)" disabled>
-            } @else {
-              <select class="form-select bg-light border-0" [class.border-danger]="!newProjectRegion()"
-                      [ngModel]="newProjectRegion()" (ngModelChange)="newProjectRegion.set($event)">
-                <option value="">-- Select Region --</option>
-                @for (reg of lookupRegions(); track reg.id) {
-                  <option [value]="reg.name">{{ reg.name }}</option>
-                }
-              </select>
-            }
-          </div>
-          <div class="col-md-2">
-            <label class="small fw-bold text-muted">Developer</label>
-            <select class="form-select bg-light border-0" [ngModel]="newProjectDeveloperId()" (ngModelChange)="newProjectDeveloperId.set($event)">
-              <option value="">—</option>
-              @for (dev of lookupDevelopers(); track dev.id) {
-                <option [value]="dev.id">{{ dev.name }}</option>
-              }
-            </select>
-          </div>
-          <div class="col-md-1">
-            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddProject(0)"
-                    [disabled]="!newProjectName().trim() || !newProjectCode().trim() || (lookupCityFilter() !== 2 && !newProjectRegion())">
-              <i class="bi bi-plus-lg"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="row g-3">
-        @for (proj of lookupPrimaryProjects(); track proj.id) {
-          <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
-              <div>
-                <div class="fw-bold text-dark">{{ proj.name }}</div>
-                <span class="badge bg-light text-dark border me-1">{{ proj.code }}</span>
-                @if (proj.region) { <span class="small text-muted">{{ proj.region }}</span> }
-              </div>
-              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteProject(proj.id)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-        } @empty {
-          <p class="text-muted">No primary projects for this city yet.</p>
-        }
-      </div>
-    }
-
-    <!-- ===== Resale Projects ===== -->
-    @if (lookupsSubTab() === 'resaleProjects') {
-      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-4">
-            <label class="small fw-bold text-muted">Project Name</label>
-            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Sawari"
-                   [ngModel]="newProjectName()" (ngModelChange)="newProjectName.set($event)">
-          </div>
-          <div class="col-md-3">
-            <label class="small fw-bold text-muted">Project ID / Code</label>
-            <input type="text" class="form-control bg-light border-0" placeholder="e.g. 27"
-                   [ngModel]="newProjectCode()" (ngModelChange)="newProjectCode.set($event)">
-          </div>
-          <div class="col-md-3">
-            <label class="small fw-bold text-muted">
-              Region @if (lookupCityFilter() !== 2) { <span class="text-danger">*</span> }
-            </label>
-            @if (lookupCityFilter() === 2) {
-              <input type="text" class="form-control bg-light border-0" value="Alexandria (no region needed)" disabled>
-            } @else {
-              <select class="form-select bg-light border-0"
-                      [ngModel]="newProjectRegion()" (ngModelChange)="newProjectRegion.set($event)">
-                <option value="">-- Select Region --</option>
-                @for (reg of lookupRegions(); track reg.id) {
-                  <option [value]="reg.name">{{ reg.name }}</option>
-                }
-              </select>
-            }
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddProject(1)"
-                    [disabled]="!newProjectName().trim() || !newProjectCode().trim() || (lookupCityFilter() !== 2 && !newProjectRegion())">
-              <i class="bi bi-plus-lg me-1"></i> Add
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="row g-3">
-        @for (proj of lookupResaleProjects(); track proj.id) {
-          <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
-              <div>
-                <div class="fw-bold text-dark">{{ proj.name }}</div>
-                <span class="badge bg-light text-dark border me-1">ID {{ proj.code }}</span>
-                @if (proj.region) { <span class="small text-muted">{{ proj.region }}</span> }
-              </div>
-              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteProject(proj.id)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-        } @empty {
-          <p class="text-muted">No resale projects for this city yet.</p>
-        }
-      </div>
-    }
-
-    <!-- ===== Regions ===== -->
-    @if (lookupsSubTab() === 'regions') {
-      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-6">
-            <label class="small fw-bold text-muted">Region Name</label>
-            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Smouha"
-                   [ngModel]="newRegionName()" (ngModelChange)="newRegionName.set($event)">
-          </div>
-          <div class="col-md-4">
-            <label class="small fw-bold text-muted">Zone Code (optional)</label>
-            <input type="text" class="form-control bg-light border-0" placeholder="e.g. 63"
-                   [ngModel]="newRegionZoneCode()" (ngModelChange)="newRegionZoneCode.set($event)">
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddRegion()"
-                    [disabled]="!newRegionName().trim()">
-              <i class="bi bi-plus-lg me-1"></i> Add
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="row g-3">
-        @for (reg of lookupRegions(); track reg.id) {
-          <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
-              <div>
-                <div class="fw-bold text-dark">{{ reg.name }}</div>
-                @if (reg.zoneCode) { <span class="badge bg-light text-dark border">{{ reg.zoneCode }}</span> }
-              </div>
-              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteRegion(reg.id)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-        } @empty {
-          <p class="text-muted">No regions for this city yet.</p>
-        }
-      </div>
-    }
+      }
+    </div>
   </section>
 }
-
     <!-- تبويب إدارة المستخدمين -->
     @if (activeTab() === 'users') {
       <section class="animate__animated animate__fadeIn">
@@ -743,7 +566,7 @@
             <div class="col-md-3">
               <select class="form-select bg-light border-0" [ngModel]="propBrokerFilter()" (ngModelChange)="propBrokerFilter.set($event)">
                 <option value="">All Brokers</option>
-                @for (b of brokersList(); track b.id) {
+                @for (b of brokersWithPropertiesList(); track b.id) {
                   <option [value]="b.id">{{ b.firstName }} {{ b.lastName }}</option>
                 }
               </select>
@@ -1495,7 +1318,7 @@
         <select class="form-select border-0 shadow-sm rounded-3" 
         [ngModel]="soldBrokerFilter()" (ngModelChange)="soldBrokerFilter.set($event)">
   <option value="">All Brokers</option>
-  @for (b of brokersList(); track b.id) {
+  @for (b of brokersWithPropertiesList(); track b.id) {
     <!-- شيلنا الـ toLowerCase من هنا وخليناها طبيعية -->
     <option [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
   }
@@ -1613,7 +1436,7 @@
         <select class="form-select border-0 shadow-sm rounded-3" 
         [ngModel]="suspBrokerFilter()" (ngModelChange)="suspBrokerFilter.set($event)">
   <option value="">All Brokers</option>
-  @for (b of brokersList(); track b.id) {
+  @for (b of brokersWithPropertiesList(); track b.id) {
     <option [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
   }
 </select>
@@ -2729,7 +2552,7 @@
                   }
                 </div>
                 <h6 class="fw-bold mb-1">{{ blog.title }}</h6>
-                <p class="text-muted small mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                <p class="text-muted small mb-2" style="display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
                   {{ blog.excerpt }}
                 </p>
                 @if (blog.pricePerMeterResale || blog.pricePerMeterPrimary) {
@@ -3305,7 +3128,7 @@
                   }
                 </div>
                 <h6 class="fw-bold mb-1">{{ launch.title }}</h6>
-                <p class="text-muted small mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                <p class="text-muted small mb-2" style="display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
                   {{ launch.excerpt }}
                 </p>
                 @if (launch.pricePerMeterResale || launch.pricePerMeterPrimary) {
@@ -3814,6 +3637,232 @@
               <span class="spinner-border spinner-border-sm me-2"></span>Saving...
             } @else {
               <i class="bi bi-check-lg me-2"></i>{{ editingLaunch() ? 'Update Launch' : 'Publish Launch' }}
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ================================================================= -->
+<!-- 🟢 تاب Blogs (Articles) - جديد بالكامل -->
+<!-- ================================================================= -->
+@if (activeTab() === 'articles') {
+  <section class="animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold mb-0"><i class="bi bi-journal-text me-2"></i>Blogs</h4>
+      <button class="btn btn-danger rounded-pill fw-bold px-4 shadow-sm" (click)="openAddArticle()">
+        <i class="bi bi-plus-lg me-2"></i>Add New Blog
+      </button>
+    </div>
+
+    @if (articles().length === 0) {
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-journal-text fs-1 d-block mb-3 opacity-25"></i>
+        No blogs yet. Click "Add New Blog" to get started.
+      </div>
+    } @else {
+      <div class="row g-4">
+        @for (article of articles(); track article.id) {
+          <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+              @if (article.coverImageUrl) {
+                <img [src]="getArticleImageUrl(article.coverImageUrl)" class="card-img-top" style="height:180px;object-fit:cover;" alt="{{ article.title }}">
+              } @else {
+                <div class="d-flex align-items-center justify-content-center bg-light" style="height:180px;">
+                  <i class="bi bi-journal-text text-muted fs-1 opacity-25"></i>
+                </div>
+              }
+              <div class="card-body d-flex flex-column p-3">
+                <div class="mb-2">
+                  @if (article.isPublished) {
+                    <span class="badge bg-success-subtle text-success rounded-pill px-3">Published</span>
+                  } @else {
+                    <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3">Draft</span>
+                  }
+                </div>
+                <h6 class="fw-bold mb-1" style="line-height:1.3;">{{ article.title }}</h6>
+                <small class="text-muted mb-3">
+                  <i class="bi bi-person me-1"></i>{{ article.writtenBy }} ·
+                  <i class="bi bi-calendar3 ms-1 me-1"></i>{{ article.publishedAt | date:'MMM d, y' }}
+                </small>
+                <div class="mt-auto d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-dark rounded-pill flex-fill" (click)="openEditArticle(article)">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill flex-fill" (click)="deleteArticle(article.id)">
+                    <i class="bi bi-trash me-1"></i>Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Modal: Add/Edit Blog -->
+  <div class="modal fade" id="articleFormModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-journal-text me-2"></i>
+            {{ editingArticle() ? 'Edit Blog' : 'Add New Blog' }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body p-4" [formGroup]="articleForm">
+
+          <!-- ── Section 1: Basic Info ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-info-circle me-2"></i>Basic Info</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Title *</label>
+              <input type="text" class="form-control rounded-3 bg-light border-0" formControlName="title">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Written By *</label>
+              <input type="text" class="form-control rounded-3 bg-light border-0" formControlName="writtenBy">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Excerpt <span class="text-muted small">(short summary for the blogs list)</span></label>
+              <textarea class="form-control rounded-3 bg-light border-0" rows="2" formControlName="excerpt"></textarea>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Published Date</label>
+              <input type="date" class="form-control rounded-3 bg-light border-0" formControlName="publishedAt" [min]="todayDate">
+              <small class="text-muted">Leave empty to use today's date. Past dates aren't allowed.</small>
+              @if (articleForm.get('publishedAt')?.value && articleForm.get('publishedAt')?.invalid) {
+                <small class="text-danger d-block">Date can't be in the past.</small>
+              }
+            </div>
+            <div class="col-12 form-check form-switch ps-0">
+              <div class="d-flex align-items-center gap-2">
+                <input class="form-check-input ms-0" type="checkbox" role="switch" formControlName="isPublished" id="articleIsPublished">
+                <label class="form-check-label fw-semibold" for="articleIsPublished">Published (visible on the site)</label>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 2: Cover Photo ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-image me-2"></i>Cover Photo</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-8">
+              <input type="file" class="form-control rounded-3 bg-light border-0" accept="image/*" (change)="onArticleCoverChange($event)">
+              @if (editingArticle()?.coverImageUrl && !articleCoverFile()) {
+                <img [src]="getArticleImageUrl(editingArticle().coverImageUrl)" class="mt-2 rounded-3" style="height:100px;object-fit:cover;" alt="cover">
+              }
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Caption <span class="text-muted small">(small text under the photo)</span></label>
+              <input type="text" class="form-control rounded-3 bg-light border-0" formControlName="coverCaption">
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 3: Ad Banners (5 مواضع، كل واحد صورة/GIF/فيديو + لينك تحويل) ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-badge-ad me-2"></i>Ad Banners</h6>
+          <p class="text-muted small mb-3">Each banner accepts an image, GIF, or video (mp4) — plus an optional redirect link when clicked.</p>
+
+          @for (slot of [1,2,3,4,5]; track slot) {
+            <div class="card border-0 bg-light rounded-3 p-3 mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-semibold small">
+                  Ad {{ slot }}
+                  @if (slot === 1) { <span class="text-muted">— top of article, before the title</span> }
+                  @if (slot === 2) { <span class="text-muted">— after Written by / Date</span> }
+                  @if (slot === 3) { <span class="text-muted">— right after Ad 2, before content</span> }
+                  @if (slot === 4) { <span class="text-muted">— after all content sections</span> }
+                  @if (slot === 5) { <span class="text-muted">— near the end, after the 2nd share row</span> }
+                </span>
+                @if (getArticleAdUrl(slot)) {
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0" (click)="onDeleteArticleAdBanner(slot)">Remove</button>
+                }
+              </div>
+
+              <div class="row g-2">
+                <div class="col-md-7">
+                  @if (getArticleAdUrl(slot)) {
+                    <div class="mb-2">
+                      @if (articleService.isVideo(getArticleAdUrl(slot))) {
+                        <video [src]="getArticleAdUrl(slot)" style="height:70px;" controls muted></video>
+                      } @else {
+                        <img [src]="getArticleAdUrl(slot)" style="height:70px;object-fit:cover;" class="rounded-3" alt="ad">
+                      }
+                    </div>
+                  }
+                  <input type="file" class="form-control form-control-sm rounded-3 border-0" accept="image/*,video/mp4,video/webm" (change)="onArticleAdChange($event, slot)">
+                </div>
+                <div class="col-md-5">
+                  <input type="url" class="form-control form-control-sm rounded-3 border-0" placeholder="Redirect link (optional)"
+                         [value]="getArticleAdLink(slot)"
+                         (input)="setArticleAdLink(slot, $any($event.target).value)">
+                </div>
+              </div>
+            </div>
+          }
+
+          <hr class="my-3">
+
+          <!-- ── Section 4: Content Sections (Headline + Text) — عدد مفتوح ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-newspaper me-2"></i>Content Sections</h6>
+          <div class="mb-4">
+            @for (section of articleContentSections(); track $index; let i = $index) {
+              <div class="card border-0 bg-light rounded-3 p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="fw-semibold small">Section {{ i + 1 }}</span>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0" (click)="removeArticleContentSection(i)">Remove</button>
+                </div>
+                <input type="text" class="form-control form-control-sm rounded-3 border-0 mb-2"
+                       placeholder="Headline" [(ngModel)]="section.headline" [ngModelOptions]="{standalone:true}">
+                <textarea class="form-control form-control-sm rounded-3 border-0" rows="3"
+                          placeholder="Text content"
+                          [(ngModel)]="section.text" [ngModelOptions]="{standalone:true}"></textarea>
+              </div>
+            }
+            <button class="btn btn-outline-danger btn-sm rounded-pill px-3" (click)="addArticleContentSection()">
+              <i class="bi bi-plus me-1"></i>Add Section
+            </button>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ── Section 5: Keywords ── -->
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-tags me-2"></i>Keywords</h6>
+          <div class="mb-2">
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              @for (kw of articleKeywords(); track kw; let i = $index) {
+                <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2 d-flex align-items-center gap-2">
+                  {{ kw }}
+                  <i class="bi bi-x-circle-fill" style="cursor:pointer;" (click)="removeArticleKeyword(i)"></i>
+                </span>
+              }
+            </div>
+            <div class="input-group" style="max-width:400px;">
+              <input type="text" class="form-control rounded-start-3 bg-light border-0" placeholder="Add a keyword..."
+                     [(ngModel)]="newKeywordInput" [ngModelOptions]="{standalone:true}"
+                     (keydown.enter)="$event.preventDefault(); addArticleKeyword()">
+              <button class="btn btn-outline-danger" (click)="addArticleKeyword()">Add</button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer border-0 px-4 pb-4">
+          <button class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger rounded-pill fw-bold px-5"
+                  [disabled]="articleSubmitting()" (click)="submitArticle()">
+            @if (articleSubmitting()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>Saving...
+            } @else {
+              <i class="bi bi-check-lg me-2"></i>{{ editingArticle() ? 'Update Blog' : 'Publish Blog' }}
             }
           </button>
         </div>

@@ -18,10 +18,15 @@ export const routes: Routes = [
   { path: 'property-details/:id', loadComponent: () => import('./Components/property-details/property-details').then(m => m.PropertyDetailsComponent) },
   { path: 'property-details/:id/:title', loadComponent: () => import('./Components/property-details/property-details').then(m => m.PropertyDetailsComponent) },
   { path: 'compare/:ids', loadComponent: () => import('./Components/compare-properties/compare-properties').then(m => m.ComparePropertiesComponent) },
+  { path: 'recommendation-results', loadComponent: () => import('./Components/recommendation-results/recommendation-results').then(m => m.RecommendationResultsComponent), canActivate: [authGuard] },
   { path: 'join-our-team', loadComponent: () => import('./Components/join-our-team/join-our-team').then(m => m.JoinOurTeamComponent) },
   { path: 'blog', loadComponent: () => import('./Components/blog-list/blog-list').then(m => m.BlogListComponent) },
   { path: 'blog/:id', loadComponent: () => import('./Components/blog-detail/blog-detail').then(m => m.BlogDetailComponent) },
   { path: 'explore-home', loadComponent: () => import('./Components/explore-home/explore-home').then(m => m.ExploreHomeComponent) },
+  // 🟢 Blogs (Articles) - منفصلين تمامًا عن /blog (اللي هو في الحقيقة Projects)
+  { path: 'blogs', loadComponent: () => import('./Components/article-list/article-list').then(m => m.ArticleListComponent) },
+  { path: 'blogs/:id', loadComponent: () => import('./Components/article-detail/article-detail').then(m => m.ArticleDetailComponent) },
+  { path: 'blogs/:id/:slug', loadComponent: () => import('./Components/article-detail/article-detail').then(m => m.ArticleDetailComponent) },
 
   // ===== Auth Required =====
   { path: 'add-property', loadComponent: () => import('./Components/add-property/add-property').then(m => m.AddPropertyComponent), canActivate: [authGuard] },
