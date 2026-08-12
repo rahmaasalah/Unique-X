@@ -152,6 +152,19 @@ duplicateProperty(propertyId: number, brokerId: string) {
     return this.http.delete(`${this.baseUrl}/hot-deals/${id}`);
   }
 
+  // ===================== Recommended to Visit (نفس فكرة Hot Deals) =====================
+  getRecommendedVisits() {
+    return this.http.get<any[]>(`${this.baseUrl}/recommended-visits`);
+  }
+
+  addRecommendedVisit(code: string) {
+    return this.http.post(`${this.baseUrl}/recommended-visits`, { code });
+  }
+
+  removeRecommendedVisit(id: number) {
+    return this.http.delete(`${this.baseUrl}/recommended-visits/${id}`);
+  }
+
   grantCrmAccess(userId: string) {
   return this.http.patch(`${this.baseUrl}/grant-crm/${userId}`, {});
 }
@@ -245,51 +258,5 @@ approveOwnerProperty(id: number, brokerId: string): Observable<any> {
 
 rejectOwnerProperty(id: number, reason: string): Observable<any> {
   return this.http.patch(`${this.ownerPropsUrl}/${id}/reject`, { reason });
-}
-
-// --- Lookups: Developers / Projects (Primary & Resale) / Regions ---
-
-getDevelopers(): Observable<any[]> {
-  return this.http.get<any[]>(`${this.baseUrl}/developers`);
-}
-
-addDeveloper(name: string, code: string): Observable<any> {
-  return this.http.post(`${this.baseUrl}/developers`, { name, code });
-}
-
-deleteDeveloper(id: number): Observable<any> {
-  return this.http.delete(`${this.baseUrl}/developers/${id}`);
-}
-
-// type: 0 = Primary, 1 = Resale
-getProjects(type?: number, city?: number): Observable<any[]> {
-  let url = `${this.baseUrl}/projects`;
-  const params: string[] = [];
-  if (type !== undefined && type !== null) params.push(`type=${type}`);
-  if (city !== undefined && city !== null) params.push(`city=${city}`);
-  if (params.length) url += `?${params.join('&')}`;
-  return this.http.get<any[]>(url);
-}
-
-addProject(name: string, code: string, type: number, city: number, region?: string, developerId?: number): Observable<any> {
-  return this.http.post(`${this.baseUrl}/projects`, { name, code, type, city, region: region || null, developerId: developerId || null });
-}
-
-deleteProject(id: number): Observable<any> {
-  return this.http.delete(`${this.baseUrl}/projects/${id}`);
-}
-
-getRegions(city?: number): Observable<any[]> {
-  let url = `${this.baseUrl}/regions`;
-  if (city !== undefined && city !== null) url += `?city=${city}`;
-  return this.http.get<any[]>(url);
-}
-
-addRegion(name: string, city: number, zoneCode?: string): Observable<any> {
-  return this.http.post(`${this.baseUrl}/regions`, { name, zoneCode: zoneCode || null, city });
-}
-
-deleteRegion(id: number): Observable<any> {
-  return this.http.delete(`${this.baseUrl}/regions/${id}`);
 }
 }

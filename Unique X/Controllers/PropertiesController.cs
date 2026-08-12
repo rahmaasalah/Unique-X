@@ -283,6 +283,14 @@ namespace Unique_X.Controllers
             return Ok(result);
         }
 
+        [HttpGet("recommended-visits")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetRecommendedVisits()
+        {
+            var result = await _propertiesService.GetRecommendedVisitsAsync();
+            return Ok(result);
+        }
+
         [HttpGet("next-code")]
         public async Task<IActionResult> GetNextCode([FromQuery] string prefix)
         {

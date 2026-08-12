@@ -244,6 +244,26 @@ export class PropertyCardComponent {
     });
   }
 
+  // 🟢 زرار "Compare" - بيبدأ مقارنة جديدة بالوحدة دي، أو يضيفها لمقارنة شغالة بالفعل
+  onCompareClick(event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    const compareMode = localStorage.getItem('compare_mode');
+
+    if (compareMode === 'add_to_existing') {
+      const existingIds = localStorage.getItem('compare_existing_ids');
+      localStorage.removeItem('compare_mode');
+      localStorage.removeItem('compare_existing_ids');
+      const newIds = existingIds
+        ? `${existingIds},${this.property.id}`
+        : `${this.property.id}`;
+      this.router.navigate(['/compare', newIds]);
+    } else {
+      this.router.navigate(['/compare', this.property.id]);
+    }
+  }
+
   onCardClick() {
     const compareMode = localStorage.getItem('compare_mode');
 

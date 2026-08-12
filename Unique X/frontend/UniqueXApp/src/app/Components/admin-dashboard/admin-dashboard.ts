@@ -9,6 +9,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } 
 import { CrmService } from '../../Services/crm.services';
 import { BlogService } from '../../Services/blog.service';
 import { LaunchService } from '../../Services/launch.service';
+import { ArticleService } from '../../Services/article.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
@@ -30,6 +31,7 @@ export class AdminDashboardComponent implements OnInit {
   private crmService = inject(CrmService);
   private blogService = inject(BlogService);
   private launchService = inject(LaunchService);
+  articleService = inject(ArticleService);
   private http = inject(HttpClient);
   adminLeadForm!: FormGroup;
 
@@ -49,6 +51,20 @@ export class AdminDashboardComponent implements OnInit {
   hotDealSearchText = signal<string>('');
   selectedHotDealCode = signal<string>('');
   isHotDealDropdownOpen = signal<boolean>(false);
+
+  // ===================== Recommended to Visit (نفس فكرة Hot Deals بالظبط) =====================
+  recommendedVisits = signal<any[]>([]);
+  recommendedVisitSearchText = signal<string>('');
+  selectedRecommendedVisitCode = signal<string>('');
+  isRecommendedVisitDropdownOpen = signal<boolean>(false);
+
+  filteredRecommendedVisitOptions = computed(() => {
+    const search = this.recommendedVisitSearchText().toLowerCase();
+    return this.properties().filter(p =>
+      (p.code && p.code.toLowerCase().includes(search)) ||
+      (p.title && p.title.toLowerCase().includes(search))
+    ).slice(0, 50);
+  });
 
   propBrokerFilter = signal(''); // فلتر البروكر في Full Listing
   propProjectFilter = signal('');
@@ -84,27 +100,7 @@ export class AdminDashboardComponent implements OnInit {
   // بيحمل الـ key ('explore-home' | 'add-property') وقت الرفع/المسح عشان نعطل الزرار بتاعه بس
   homeSectionBannerSaving = signal<string>('');
 
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'homeSectionBanners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings' | 'launches' | 'launchMeetings' | 'lookups'>('users');
-
-  // --- Lookups: Developers / Primary Projects / Resale Projects / Regions ---
-  lookupsSubTab = signal<'developers' | 'primaryProjects' | 'resaleProjects' | 'regions'>('developers');
-  lookupCityFilter = signal<number>(1); // 1 Cairo, 2 Alexandria, 3 North Coast
-
-  lookupDevelopers = signal<any[]>([]);
-  lookupPrimaryProjects = signal<any[]>([]);
-  lookupResaleProjects = signal<any[]>([]);
-  lookupRegions = signal<any[]>([]);
-
-  newDeveloperName = signal<string>('');
-  newDeveloperCode = signal<string>('');
-
-  newProjectName = signal<string>('');
-  newProjectCode = signal<string>('');
-  newProjectRegion = signal<string>('');
-  newProjectDeveloperId = signal<string>('');
-
-  newRegionName = signal<string>('');
-  newRegionZoneCode = signal<string>('');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'homeSectionBanners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'recommendedVisits' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings' | 'launches' | 'launchMeetings' | 'articles'>('users');
 
   detailData = signal<any[]>([]);
 
@@ -254,7 +250,14 @@ export class AdminDashboardComponent implements OnInit {
   rejectedPropertiesCount = computed(() => this.properties().filter(p => !p.isApproved && p.rejectionReason).length);
   rejectedPropertiesList = computed(() => this.properties().filter(p => !p.isApproved && p.rejectionReason && !p.isOwnerSubmitted));
 
-  brokersList = computed(() => this.users().filter(u => u.userType === 1));
+  // كل البروكرز النشطين (مش suspended) - تُستخدم في إعادة تعيين/نقل الوحدات (لازم نقدر نعيّن حتى لو البروكر لسه معهوش وحدات)
+  brokersList = computed(() => this.users().filter(u => u.userType === 1 && u.isActive));
+
+  // 🟢 بروكرز نشطين وليهم وحدة واحدة على الأقل - تُستخدم في قوائم الفلترة بس (Full Listing / Sold / Suspended)
+  brokersWithPropertiesList = computed(() => {
+    const brokerIdsWithProperties = new Set(this.properties().map(p => p.brokerId));
+    return this.brokersList().filter(u => brokerIdsWithProperties.has(u.id));
+  });
 
 
 
@@ -424,6 +427,7 @@ export class AdminDashboardComponent implements OnInit {
     this.loadPendingDeletions();
     this.initBlogForm(); // initialize blog form on load
     this.initLaunchForm(); // initialize launch form on load
+    this.initArticleForm(); // initialize article (Blogs) form on load
   }
 
   loadPendingDeletions() {
@@ -675,9 +679,9 @@ onRejectDeletion(id: number) {
   else if (tab === 'hotDeals') {
   this.adminService.getHotDeals().subscribe(data => this.hotDeals.set(data));
 }
-  else if (tab === 'lookups') {
-    this.loadLookups();
-  }
+  else if (tab === 'recommendedVisits') {
+  this.loadRecommendedVisits();
+}
 
   else if (tab === 'suspUsers') {
     this.adminService.getSuspendedUsers().subscribe(data => this.detailData.set(data));
@@ -742,123 +746,51 @@ loadHotDeals() {
   this.adminService.getHotDeals().subscribe(data => this.hotDeals.set(data));
 }
 
-// ===================== Lookups: Developers / Projects / Regions =====================
+// ===================== Recommended to Visit =====================
 
-loadLookups() {
-  this.adminService.getDevelopers().subscribe(data => this.lookupDevelopers.set(data));
-  this.reloadProjectsAndRegions();
-}
-
-// بيتعاد استدعاؤها كل ما الفلتر بتاع المدينة يتغير
-reloadProjectsAndRegions() {
-  const city = this.lookupCityFilter();
-  this.adminService.getProjects(0, city).subscribe(data => this.lookupPrimaryProjects.set(data)); // 0 = Primary
-  this.adminService.getProjects(1, city).subscribe(data => this.lookupResaleProjects.set(data));   // 1 = Resale
-  this.adminService.getRegions(city).subscribe(data => this.lookupRegions.set(data));
-}
-
-onLookupCityChange(city: number) {
-  this.lookupCityFilter.set(city);
-  this.reloadProjectsAndRegions();
-}
-
-onAddDeveloper() {
-  const name = this.newDeveloperName().trim();
-  const code = this.newDeveloperCode().trim();
-  if (!name || !code) return;
+onAddRecommendedVisit(code: string) {
+  if (!code) return;
 
   this.alertService.showLoading('Adding...');
-  this.adminService.addDeveloper(name, code).subscribe({
+  this.adminService.addRecommendedVisit(code).subscribe({
     next: () => {
       this.alertService.close();
-      this.alertService.success('Developer added');
-      this.newDeveloperName.set('');
-      this.newDeveloperCode.set('');
-      this.adminService.getDevelopers().subscribe(data => this.lookupDevelopers.set(data));
+      this.alertService.success('Added to Recommended to Visit');
+      this.loadRecommendedVisits();
+
+      this.recommendedVisitSearchText.set('');
+      this.selectedRecommendedVisitCode.set('');
     },
     error: (err) => {
       this.alertService.close();
-      this.alertService.error(err.error || 'Failed to add developer.');
+      this.alertService.error(err.error || 'Failed to add.');
     }
   });
 }
 
-onDeleteDeveloper(id: number) {
-  this.alertService.confirm('Delete this developer?', () => {
-    this.adminService.deleteDeveloper(id).subscribe(() => {
-      this.alertService.success('Deleted');
-      this.adminService.getDevelopers().subscribe(data => this.lookupDevelopers.set(data));
+selectRecommendedVisit(code: string, title: string) {
+  this.selectedRecommendedVisitCode.set(code);
+  this.recommendedVisitSearchText.set(`${code} - ${title}`);
+  this.isRecommendedVisitDropdownOpen.set(false);
+}
+
+closeRecommendedVisitDropdown() {
+  setTimeout(() => {
+    this.isRecommendedVisitDropdownOpen.set(false);
+  }, 200);
+}
+
+onRemoveRecommendedVisit(id: number) {
+  this.alertService.confirm('Remove this property from Recommended to Visit?', () => {
+    this.adminService.removeRecommendedVisit(id).subscribe(() => {
+      this.alertService.success('Removed successfully');
+      this.loadRecommendedVisits();
     });
   });
 }
 
-// type: 0 = Primary, 1 = Resale
-onAddProject(type: number) {
-  const name = this.newProjectName().trim();
-  const code = this.newProjectCode().trim();
-  if (!name || !code) return;
-
-  const city = this.lookupCityFilter();
-  const region = this.newProjectRegion().trim();
-  const devId = this.newProjectDeveloperId() ? Number(this.newProjectDeveloperId()) : undefined;
-
-  this.alertService.showLoading('Adding...');
-  this.adminService.addProject(name, code, type, city, region, devId).subscribe({
-    next: () => {
-      this.alertService.close();
-      this.alertService.success('Project added');
-      this.newProjectName.set('');
-      this.newProjectCode.set('');
-      this.newProjectRegion.set('');
-      this.newProjectDeveloperId.set('');
-      this.reloadProjectsAndRegions();
-    },
-    error: (err) => {
-      this.alertService.close();
-      this.alertService.error(err.error || 'Failed to add project.');
-    }
-  });
-}
-
-onDeleteProject(id: number) {
-  this.alertService.confirm('Delete this project?', () => {
-    this.adminService.deleteProject(id).subscribe(() => {
-      this.alertService.success('Deleted');
-      this.reloadProjectsAndRegions();
-    });
-  });
-}
-
-onAddRegion() {
-  const name = this.newRegionName().trim();
-  if (!name) return;
-
-  const city = this.lookupCityFilter();
-  const zoneCode = this.newRegionZoneCode().trim();
-
-  this.alertService.showLoading('Adding...');
-  this.adminService.addRegion(name, city, zoneCode).subscribe({
-    next: () => {
-      this.alertService.close();
-      this.alertService.success('Region added');
-      this.newRegionName.set('');
-      this.newRegionZoneCode.set('');
-      this.reloadProjectsAndRegions();
-    },
-    error: (err) => {
-      this.alertService.close();
-      this.alertService.error(err.error || 'Failed to add region.');
-    }
-  });
-}
-
-onDeleteRegion(id: number) {
-  this.alertService.confirm('Delete this region?', () => {
-    this.adminService.deleteRegion(id).subscribe(() => {
-      this.alertService.success('Deleted');
-      this.reloadProjectsAndRegions();
-    });
-  });
+loadRecommendedVisits() {
+  this.adminService.getRecommendedVisits().subscribe(data => this.recommendedVisits.set(data));
 }
 
   toggleProperty(propId: number, currentStatus: boolean) {
@@ -2258,12 +2190,14 @@ formatPrice(event: any) {
   input.value = raw ? Number(raw).toLocaleString('en-US') : '';
 }
 
+// 🟢 بيعرض رقم بفواصل (500,000) في الحقل بس، وبيخزن الرقم النضيف في الداتا
+// (قبل كده كنا بنخزن النص المنسّق بالفواصل زي "500,000" وده كان بيبوّظ currencyService.format() في صفحة العرض ويطلع "EGP NaN")
 formatPlanField(event: any, plan: any, field: string) {
   const input = event.target;
   const raw = input.value.replace(/[^0-9]/g, '');
   const formatted = raw ? Number(raw).toLocaleString('en-US') : '';
-  input.value = formatted;
-  plan[field] = formatted;
+  input.value = formatted;           // للعرض في الحقل بس
+  plan[field] = raw ? Number(raw) : '';  // القيمة الفعلية المخزنة = رقم نضيف من غير فواصل
 }
 
 // ================== Launches ==================
@@ -2885,5 +2819,226 @@ getLaunchFirstImage(launch: any): string {
 getLaunchCoverImage(launch: any): string {
   if (launch?.coverImageUrl) return launch.coverImageUrl;
   return this.getLaunchFirstImage(launch);
+}
+
+// ============================================================
+// 🟢 Blogs (Articles) — تاب جديد بالكامل، منفصل عن blogs/launches الحاليين
+// ============================================================
+
+articles = signal<any[]>([]);
+editingArticle = signal<any>(null);
+articleSubmitting = signal(false);
+articleForm!: FormGroup;
+
+// عناوين وفقرات المقال (عدد مفتوح) + الكلمات المفتاحية
+articleContentSections = signal<any[]>([]);
+articleKeywords = signal<string[]>([]);
+newKeywordInput: string = '';
+
+// ملفات مرفوعة حديثًا (لسه ما اتبعتتش) — الغلاف + الـ 5 بانرات
+articleCoverFile = signal<File | null>(null);
+articleAd1File = signal<File | null>(null);
+articleAd2File = signal<File | null>(null);
+articleAd3File = signal<File | null>(null);
+articleAd4File = signal<File | null>(null);
+articleAd5File = signal<File | null>(null);
+
+// روابط تحويل البانرات الخمسة - محفوظة محليًا عشان تشتغل في وضع الإضافة والتعديل مع بعض
+articleAdLinks: any = { ad1Link: '', ad2Link: '', ad3Link: '', ad4Link: '', ad5Link: '' };
+
+// أقل تاريخ مسموح بيه في حقل Published Date = النهاردة (بيتجدد تلقائيًا كل يوم)
+get todayDate(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+// بيمنع اختيار تاريخ نشر في الماضي
+minTodayValidator = (control: any) => {
+  if (!control.value) return null;
+  return control.value < this.todayDate ? { pastDate: true } : null;
+};
+
+loadArticles() {
+  this.articleService.getAll().subscribe({
+    next: (data: any[]) => this.articles.set(data),
+    error: () => this.alertService.error('Failed to load blogs.')
+  });
+}
+
+initArticleForm(article?: any) {
+  this.articleForm = this.fb.group({
+    title:          ['', Validators.required],
+    excerpt:        [''],
+    coverCaption:   [''],
+    writtenBy:      ['', Validators.required],
+    publishedAt:    ['', [this.minTodayValidator]],
+    isPublished:    [true],
+  });
+
+  this.articleCoverFile.set(null);
+  this.articleAd1File.set(null);
+  this.articleAd2File.set(null);
+  this.articleAd3File.set(null);
+  this.articleAd4File.set(null);
+  this.articleAd5File.set(null);
+
+  if (article) {
+    this.articleForm.patchValue({
+      title:        article.title || '',
+      excerpt:      article.excerpt || '',
+      coverCaption: article.coverCaption || '',
+      writtenBy:    article.writtenBy || '',
+      publishedAt:  article.publishedAt ? article.publishedAt.substring(0, 10) : '',
+      isPublished:  article.isPublished,
+    });
+    this.articleContentSections.set(this.parseJson(article.sectionsJson));
+    this.articleKeywords.set(this.parseJson(article.keywordsJson));
+    this.articleAdLinks = {
+      ad1Link: article.ad1Link || '',
+      ad2Link: article.ad2Link || '',
+      ad3Link: article.ad3Link || '',
+      ad4Link: article.ad4Link || '',
+      ad5Link: article.ad5Link || '',
+    };
+  } else {
+    this.articleContentSections.set([]);
+    this.articleKeywords.set([]);
+    this.articleAdLinks = { ad1Link: '', ad2Link: '', ad3Link: '', ad4Link: '', ad5Link: '' };
+  }
+}
+
+openAddArticle() {
+  this.editingArticle.set(null);
+  this.initArticleForm();
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('articleFormModal'));
+  modal.show();
+}
+
+openEditArticle(article: any) {
+  this.editingArticle.set(article);
+  this.initArticleForm(article);
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('articleFormModal'));
+  modal.show();
+}
+
+// ── عناوين وفقرات المقال ──
+addArticleContentSection() { this.articleContentSections.update(s => [...s, { headline: '', text: '' }]); }
+removeArticleContentSection(i: number) { this.articleContentSections.update(s => s.filter((_, idx) => idx !== i)); }
+
+// ── الكلمات المفتاحية ──
+addArticleKeyword() {
+  const kw = this.newKeywordInput.trim();
+  if (!kw) return;
+  if (!this.articleKeywords().includes(kw)) {
+    this.articleKeywords.update(k => [...k, kw]);
+  }
+  this.newKeywordInput = '';
+}
+removeArticleKeyword(i: number) { this.articleKeywords.update(k => k.filter((_, idx) => idx !== i)); }
+
+// ── رفع الملفات (Cover + 5 بانرات) ──
+onArticleCoverChange(event: any) {
+  const file = event.target.files[0];
+  if (file) this.articleCoverFile.set(file);
+}
+onArticleAdChange(event: any, slot: number) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (slot === 1) this.articleAd1File.set(file);
+  if (slot === 2) this.articleAd2File.set(file);
+  if (slot === 3) this.articleAd3File.set(file);
+  if (slot === 4) this.articleAd4File.set(file);
+  if (slot === 5) this.articleAd5File.set(file);
+}
+
+// مسح بانر إعلان موجود بالفعل (بعد الحفظ، من صفحة التعديل)
+onDeleteArticleAdBanner(slot: number) {
+  const article = this.editingArticle();
+  if (!article) return;
+  this.alertService.confirm('Remove this ad banner?', () => {
+    this.articleService.deleteAdBanner(article.id, slot).subscribe({
+      next: () => {
+        this.alertService.success('Ad banner removed.');
+        this.articleService.getById(article.id).subscribe((fresh: any) => this.editingArticle.set(fresh));
+      },
+      error: () => this.alertService.error('Failed to remove ad banner.')
+    });
+  });
+}
+
+submitArticle() {
+  if (this.articleForm.get('title')?.invalid || this.articleForm.get('writtenBy')?.invalid) {
+    this.alertService.error('Please fill in the required fields (Title, Written By).');
+    return;
+  }
+  if (this.articleForm.get('publishedAt')?.invalid) {
+    this.alertService.error("Published date can't be in the past.");
+    return;
+  }
+
+  this.articleSubmitting.set(true);
+  const f = this.articleForm.value;
+  const fd = new FormData();
+
+  fd.append('Title',        f.title || '');
+  fd.append('Excerpt',      f.excerpt || '');
+  fd.append('CoverCaption', f.coverCaption || '');
+  fd.append('WrittenBy',    f.writtenBy || '');
+  if (f.publishedAt) fd.append('PublishedAt', f.publishedAt);
+  fd.append('IsPublished',  String(f.isPublished));
+  fd.append('SectionsJson', JSON.stringify(this.articleContentSections()));
+  fd.append('KeywordsJson', JSON.stringify(this.articleKeywords()));
+
+  if (this.articleCoverFile()) fd.append('CoverImage', this.articleCoverFile()!);
+  if (this.articleAd1File())   fd.append('Ad1Media', this.articleAd1File()!);
+  if (this.articleAd2File())   fd.append('Ad2Media', this.articleAd2File()!);
+  if (this.articleAd3File())   fd.append('Ad3Media', this.articleAd3File()!);
+  if (this.articleAd4File())   fd.append('Ad4Media', this.articleAd4File()!);
+  if (this.articleAd5File())   fd.append('Ad5Media', this.articleAd5File()!);
+
+  const editing = this.editingArticle();
+  fd.append('Ad1Link', this.articleAdLinks.ad1Link || '');
+  fd.append('Ad2Link', this.articleAdLinks.ad2Link || '');
+  fd.append('Ad3Link', this.articleAdLinks.ad3Link || '');
+  fd.append('Ad4Link', this.articleAdLinks.ad4Link || '');
+  fd.append('Ad5Link', this.articleAdLinks.ad5Link || '');
+
+  const req = editing ? this.articleService.update(editing.id, fd) : this.articleService.create(fd);
+  req.subscribe({
+    next: () => {
+      this.articleSubmitting.set(false);
+      this.alertService.success(editing ? 'Blog updated!' : 'Blog published!');
+      const modalEl = document.getElementById('articleFormModal');
+      const modalInstance = (window as any).bootstrap.Modal.getInstance(modalEl);
+      modalInstance?.hide();
+      this.loadArticles();
+    },
+    error: () => {
+      this.articleSubmitting.set(false);
+      this.alertService.error('Failed to save the blog. Please try again.');
+    }
+  });
+}
+
+deleteArticle(id: number) {
+  this.alertService.confirm('Delete this blog?', () => {
+    this.articleService.delete(id).subscribe({
+      next: () => { this.alertService.success('Blog deleted.'); this.loadArticles(); },
+      error: () => this.alertService.error('Failed to delete blog.')
+    });
+  });
+}
+
+getArticleImageUrl(url: string) { return this.articleService.getImageUrl(url); }
+
+// ── Helpers لقراءة/تعديل حقول البانرات الخمسة (Ad1..Ad5) من الـ template بأمان ──
+getArticleAdUrl(slot: number): string {
+  const a = this.editingArticle();
+  return a ? (a[`ad${slot}Url`] || '') : '';
+}
+getArticleAdLink(slot: number): string {
+  return this.articleAdLinks[`ad${slot}Link`] || '';
+}
+setArticleAdLink(slot: number, value: string) {
+  this.articleAdLinks[`ad${slot}Link`] = value;
 }
 }

@@ -59,6 +59,37 @@ namespace Unique_X.Services.Implementation
             return await _cloudinary.DestroyAsync(deleteParams);
         }
 
-        
+        // 🟢 لبانرات الإعلانات: بيكتشف نوع الملف ويرفعه بالطريقة المناسبة (صورة/GIF عادي، أو فيديو)
+        public async Task<string?> AddMediaAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return null;
+
+            var isVideo = file.ContentType.StartsWith("video/") ||
+                          file.FileName.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) ||
+                          file.FileName.EndsWith(".webm", StringComparison.OrdinalIgnoreCase) ||
+                          file.FileName.EndsWith(".mov", StringComparison.OrdinalIgnoreCase);
+
+            if (isVideo)
+            {
+                try
+                {
+                    using var stream = file.OpenReadStream();
+                    var uploadParams = new VideoUploadParams
+                    {
+                        File = new FileDescription(file.FileName, stream)
+                    };
+                    var result = await _cloudinary.UploadAsync(uploadParams);
+                    return result.Error == null ? result.SecureUrl?.AbsoluteUri : null;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            // صورة أو GIF: بنستخدم نفس دالة رفع الصور الموجودة أصلاً
+            var imageResult = await AddPhotoAsync(file);
+            return imageResult.Error == null ? imageResult.SecureUrl?.AbsoluteUri : null;
+        }
     }
 }

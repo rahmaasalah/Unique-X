@@ -570,6 +570,48 @@ namespace Unique_X.Controllers
             return Ok(new { Message = "Removed successfully" });
         }
 
+        // ===================== Recommended to Visit =====================
+        // نفس فكرة Hot Deals بالظبط - قائمة تانية منفصلة تظهر في الهوم تحت Hot Deals
+
+        [HttpGet("recommended-visits")]
+        public async Task<IActionResult> GetAllRecommendedVisits()
+        {
+            var visits = await _context.RecommendedVisits
+                .Include(h => h.Property)
+                .ThenInclude(p => p.Photos)
+                .OrderByDescending(h => h.AddedAt)
+                .ToListAsync();
+            return Ok(visits);
+        }
+
+        [HttpPost("recommended-visits")]
+        public async Task<IActionResult> AddRecommendedVisit([FromBody] RecommendedVisitDto dto)
+        {
+            var count = await _context.RecommendedVisits.CountAsync();
+            if (count >= 12) return BadRequest("Maximum 12 Recommended to Visit properties allowed.");
+
+            var property = await _context.Properties.FirstOrDefaultAsync(p => p.Code == dto.Code);
+            if (property == null) return NotFound("Property not found with this code.");
+
+            if (await _context.RecommendedVisits.AnyAsync(h => h.PropertyId == property.Id))
+                return BadRequest("Property already exists in Recommended to Visit.");
+
+            _context.RecommendedVisits.Add(new RecommendedVisit { PropertyId = property.Id });
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Added successfully" });
+        }
+
+        [HttpDelete("recommended-visits/{id}")]
+        public async Task<IActionResult> RemoveRecommendedVisit(int id)
+        {
+            var visit = await _context.RecommendedVisits.FindAsync(id);
+            if (visit == null) return NotFound();
+
+            _context.RecommendedVisits.Remove(visit);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Removed successfully" });
+        }
+
         [HttpPatch("grant-crm/{id}")]
         public async Task<IActionResult> GrantCrmAccess(string id)
         {

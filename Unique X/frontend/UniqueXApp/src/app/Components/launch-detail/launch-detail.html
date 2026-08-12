@@ -267,7 +267,7 @@
                       <!-- Avg Down Payment -->
                       @if (plan.avgDownPayment) {
                         <div class="mb-2 d-flex align-items-baseline gap-1">
-                          <span class="fw-bold fs-5">{{ currencyService.format(plan.avgDownPayment) }}</span>
+                          <span class="fw-bold fs-5">{{ currencyService.format(cleanNum(plan.avgDownPayment)) }}</span>
                           <span class="text-muted small">Avg. Down Payment</span>
                         </div>
                       }
@@ -275,7 +275,7 @@
                       <!-- fallback: old downPayment field -->
                       @if (!plan.avgDownPayment && plan.downPayment) {
                         <div class="mb-2 d-flex align-items-baseline gap-1">
-                          <span class="fw-bold fs-5">{{ currencyService.format(plan.downPayment) }}</span>
+                          <span class="fw-bold fs-5">{{ currencyService.format(cleanNum(plan.downPayment)) }}</span>
                           <span class="text-muted small">Down Payment</span>
                         </div>
                       }
@@ -288,7 +288,7 @@
                       <!-- Avg Installment -->
                       @if (plan.avgInstallment) {
                         <div class="text-muted small mt-1">
-                          <span class="fw-bold text-dark">{{ currencyService.format(plan.avgInstallment) }}</span>
+                          <span class="fw-bold text-dark">{{ currencyService.format(cleanNum(plan.avgInstallment)) }}</span>
                           <span class="ms-1">/ quarterly installment</span>
                         </div>
                       }
@@ -296,7 +296,7 @@
                       <!-- fallback: old installment field -->
                       @if (!plan.avgInstallment && plan.installment) {
                         <div class="text-muted small mt-1">
-                          <span class="fw-bold text-dark">{{ currencyService.format(plan.installment) }}</span>
+                          <span class="fw-bold text-dark">{{ currencyService.format(cleanNum(plan.installment)) }}</span>
                           <span class="ms-1">/ quarterly installment</span>
                         </div>
                       }

@@ -266,4 +266,11 @@ export class LaunchDetailComponent implements OnInit {
     if (isNaN(num)) return value;
     return num.toLocaleString('en-US');
   }
+
+  // 🟢 بيحول أي قيمة (رقم أو نص فيه فواصل زي "500,000") لرقم نضيف صالح لـ currencyService.format()
+  cleanNum(value: any): number {
+    if (value === null || value === undefined || value === '') return 0;
+    const num = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : Number(value);
+    return isNaN(num) ? 0 : num;
+  }
 }

@@ -140,6 +140,11 @@
          class="card-icon-btn card-icon-btn-visit" data-tooltip="Visit Now">
         <i class="bi bi-calendar-check"></i>
       </a>
+      <a href="javascript:void(0)" 
+         (click)="onCompareClick($event)"
+         class="card-icon-btn card-icon-btn-compare" data-tooltip="Compare">
+        <i class="bi bi-arrow-left-right"></i>
+      </a>
     </div>
   </div>
 </div>
@@ -163,6 +168,7 @@
   .card-icon-btn-outline { background: #fff; border: 1.5px solid #212529; color: #212529; }
   .card-icon-btn-whatsapp { background: #25D366; color: #fff; }
   .card-icon-btn-visit { background: #ef3341; color: #fff; }
+  .card-icon-btn-compare { background: #212529; color: #fff; }
 
   .card-icon-btn[data-tooltip]::after {
     content: attr(data-tooltip);

@@ -45,8 +45,23 @@ export class HomeComponent implements OnInit {
   primaryProps = computed(() => this.properties().filter(p => p.listingType === 'Primary'));
   rentProps = computed(() => this.properties().filter(p => p.listingType === 'Rent'));
   hotDealsList = signal<any[]>([]);
+  recommendedVisitsList = signal<any[]>([]);
 
   activeQueryParams = signal<any>({});
+
+  // 🟢 "Get Recommendation" — بوب أب لليوزر مش المسجل دخول + مودال اختيار المواصفات
+  showRecommendationPrompt = signal<boolean>(false);
+  showRecommendationModal = signal<boolean>(false);
+  recommendationForm = {
+    city: '',
+    listingType: '',
+    propertyType: '',
+    rooms: '',
+    bathrooms: '',
+    floors: '',
+    floorNumber: ''
+  };
+
 
   // 🟢 2. التحقق هل المستخدم يبحث من شريط البحث (Search Bar) أم لا
    hasSearchFilters = computed(() => {
@@ -80,6 +95,20 @@ export class HomeComponent implements OnInit {
     }
     
     return deals;
+  });
+
+  // 🟢 نفس فكرة الـ Hot Deals بالظبط - فلترة Recommended to Visit بناءً على الناف بار (Listing Type)
+  filteredRecommendedVisits = computed(() => {
+    const params = this.activeQueryParams();
+    let visits = this.recommendedVisitsList();
+
+    const listingType = params['listingType']?.toString() || null;
+
+    if (listingType && listingType !== 'null') {
+      visits = visits.filter(v => v.listingType === listingType);
+    }
+
+    return visits;
   });
 
 
@@ -135,6 +164,16 @@ export class HomeComponent implements OnInit {
 ngOnInit(): void {
   // 🟢 1. نقلنا الـ Hot Deals بره عشان تحمل مرة واحدة بس ومتبقاش بطيئة!
   this.loadHotDeals();
+  this.loadRecommendedVisits();
+
+  // 🟢 "Get Recommendation": لو المستخدم رجع من صفحة اللوجين وعنده طلب معلق، افتحي المودال على طول
+  if (this.authService.loggedIn() && localStorage.getItem('pendingRecommendationModal') === 'true') {
+    localStorage.removeItem('pendingRecommendationModal');
+    this.showRecommendationModal.set(true);
+  } else if (!this.authService.loggedIn() && !sessionStorage.getItem('recommendationPromptDismissed')) {
+    // بوب أب بسيط لليوزر مش المسجل دخول، مرة واحدة بس في الجلسة دي
+    setTimeout(() => this.showRecommendationPrompt.set(true), 800);
+  }
 
   this.route.queryParams.subscribe(params => {
     this.currentListingType = params['listingType']?.toString() || null;
@@ -179,6 +218,54 @@ ngOnInit(): void {
 loadHotDeals() {
   // افترضي وجود هذه الدالة في الـ PropertyService
   this.propertyService.getHotDeals().subscribe(data => this.hotDealsList.set(data));
+}
+
+// 🟢 نفس فكرة loadHotDeals بالظبط - افترضي وجود getRecommendedVisits() في الـ PropertyService
+loadRecommendedVisits() {
+  this.propertyService.getRecommendedVisits().subscribe(data => this.recommendedVisitsList.set(data));
+}
+
+// ===== "Get Recommendation" =====
+
+onCancelRecommendationPrompt() {
+  this.showRecommendationPrompt.set(false);
+  sessionStorage.setItem('recommendationPromptDismissed', 'true');
+}
+
+onGetRecommendationClick() {
+  this.showRecommendationPrompt.set(false);
+  if (!this.authService.loggedIn()) {
+    // بنحفظ إشارة إن فيه طلب توصية معلق، عشان الهوم يفتح المودال على طول بعد الرجوع من اللوجين
+    localStorage.setItem('pendingRecommendationModal', 'true');
+    this.router.navigate(['/login']);
+  } else {
+    this.showRecommendationModal.set(true);
+  }
+}
+
+closeRecommendationModal() {
+  this.showRecommendationModal.set(false);
+}
+
+submitRecommendation(minBudgetEl: HTMLInputElement, maxBudgetEl: HTMLInputElement) {
+  const f = this.recommendationForm;
+  const queryParams: any = {};
+
+  if (f.city) queryParams.city = f.city;
+  if (f.listingType) queryParams.listingType = f.listingType;
+  if (f.propertyType) queryParams.propertyType = f.propertyType;
+  if (f.rooms) queryParams.rooms = f.rooms;
+  if (f.bathrooms) queryParams.bathrooms = f.bathrooms;
+  if (f.floors) queryParams.floors = f.floors;
+  if (f.floorNumber) queryParams.floorNumber = f.floorNumber;
+
+  const minBudget = minBudgetEl?.value?.replace(/,/g, '');
+  const maxBudget = maxBudgetEl?.value?.replace(/,/g, '');
+  if (minBudget) queryParams.minBudget = minBudget;
+  if (maxBudget) queryParams.maxBudget = maxBudget;
+
+  this.showRecommendationModal.set(false);
+  this.router.navigate(['/recommendation-results'], { queryParams });
 }
 
 loadBlogs() {
