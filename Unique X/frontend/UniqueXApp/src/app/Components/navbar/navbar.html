@@ -6,6 +6,8 @@
     .navbar-cta-btn { padding: .35rem .9rem !important; font-size: .8rem !important; }
     .navbar-currency-toggle { padding: .3rem .6rem !important; font-size: .8rem !important; }
     .profile-name-stack { display: none !important; }
+    .navbar-recommend-btn span { display: none !important; }
+    .navbar-recommend-btn { padding: .45rem .55rem !important; }
   }
 </style>
 
@@ -45,6 +47,14 @@
 
         <div class="vr d-none d-md-block" style="opacity:.15; height:32px;"></div>
       }
+
+      <!-- Get Recommendations -->
+      <a href="javascript:void(0)" (click)="onGetRecommendationsClick()"
+         class="btn btn-outline-danger navbar-recommend-btn rounded-pill fw-semibold d-flex align-items-center gap-1 text-nowrap px-3 py-2"
+         title="Get Recommendations">
+        <i class="bi bi-stars"></i>
+        <span>Get Recommendations</span>
+      </a>
 
       <!-- Change Currency -->
       <div class="dropdown">

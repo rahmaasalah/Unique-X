@@ -387,6 +387,69 @@ namespace Unique_X.Controllers
             return Ok(new { Message = "File deleted successfully" });
         }
 
+        // ===================== Project Financial Charts (نفس فكرة Financial بالظبط) =====================
+        // ملف واحد شامل فيه: اسم المشروع + السنة + سعر المتر Resale + سعر المتر Primary
+
+        [HttpGet("project-financial-file")]
+        public async Task<IActionResult> GetProjectFinancialFile()
+        {
+            var file = await _context.ProjectFinancialFiles
+                .OrderByDescending(f => f.UploadedAt)
+                .Select(f => new {
+                    f.Id,
+                    f.FileName,
+                    f.UploadedAt
+                }).FirstOrDefaultAsync();
+
+            if (file == null) return NotFound("No project financial file found.");
+            return Ok(file);
+        }
+
+        [HttpPost("upload-project-financial")]
+        public async Task<IActionResult> UploadProjectFinancialFile(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            var ext = Path.GetExtension(file.FileName).ToLower();
+            if (ext != ".xlsx" && ext != ".csv" && ext != ".xls")
+                return BadRequest("Only Excel (.xlsx, .xls) and CSV files are allowed.");
+
+            using var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+
+            var oldFiles = await _context.ProjectFinancialFiles.ToListAsync();
+            if (oldFiles.Any())
+            {
+                _context.ProjectFinancialFiles.RemoveRange(oldFiles);
+            }
+
+            var newFile = new ProjectFinancialFile
+            {
+                FileName = file.FileName,
+                ContentType = file.ContentType,
+                FileData = memoryStream.ToArray(),
+                UploadedAt = DateTime.UtcNow
+            };
+
+            _context.ProjectFinancialFiles.Add(newFile);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { newFile.Id, newFile.FileName, newFile.UploadedAt });
+        }
+
+        [HttpDelete("delete-project-financial/{id}")]
+        public async Task<IActionResult> DeleteProjectFinancialFile(int id)
+        {
+            var file = await _context.ProjectFinancialFiles.FindAsync(id);
+            if (file == null) return NotFound();
+
+            _context.ProjectFinancialFiles.Remove(file);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "File deleted successfully" });
+        }
+
 
         [HttpGet("pending-properties")]
         public async Task<IActionResult> GetPendingProperties()
@@ -806,28 +869,38 @@ namespace Unique_X.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetHomeSectionBanners()
         {
-            var banners = await _context.HomeSectionBanners.ToListAsync();
-            var explore = banners.FirstOrDefault(b => b.Key == "explore-home");
-            var addProp = banners.FirstOrDefault(b => b.Key == "add-property");
-            return Ok(new
-            {
-                ExploreHomeBannerUrl = explore?.ImageUrl,
-                AddPropertyBannerUrl = addProp?.ImageUrl
-            });
+            // 🟢 دلوقتي بترجع Array مرتب حسب DisplayOrder بدل object بخصائص ثابتة،
+            // عشان يدعم أي عدد بانرات وترتيب قابل للتغيير من الأدمن (Drag & Drop)
+            var banners = await _context.HomeSectionBanners
+                .OrderBy(b => b.DisplayOrder)
+                .Select(b => new { b.Key, b.ImageUrl, b.DisplayOrder })
+                .ToListAsync();
+
+            return Ok(banners);
         }
 
         [HttpPost("home-section-banners")]
         public async Task<IActionResult> UploadHomeSectionBanner([FromForm] HomeSectionBannerUploadDto dto)
         {
-            if (dto.Key != "explore-home" && dto.Key != "add-property")
+            var validKeys = new[] { "explore-home", "add-property", "add-property-2", "compare", "price-range", "recommendation" };
+            if (!validKeys.Contains(dto.Key))
                 return BadRequest("Invalid banner key.");
 
-            // لو فيه بانر قديم بنفس المكان، بنمسحه الأول (صورة واحدة بس مسموح بيها)
+            // لو فيه بانر قديم بنفس المكان، بنمسحه الأول (صورة واحدة بس مسموح بيها) - بنحافظ على مكانه في الترتيب
             var existing = await _context.HomeSectionBanners.FirstOrDefaultAsync(b => b.Key == dto.Key);
+            int displayOrder;
             if (existing != null)
             {
+                displayOrder = existing.DisplayOrder;
                 await _photoService.DeletePhotoAsync(existing.PublicId);
                 _context.HomeSectionBanners.Remove(existing);
+            }
+            else
+            {
+                // بانر جديد بيتحط في آخر الترتيب
+                displayOrder = await _context.HomeSectionBanners.AnyAsync()
+                    ? await _context.HomeSectionBanners.MaxAsync(b => b.DisplayOrder) + 1
+                    : 0;
             }
 
             var result = await _photoService.AddPhotoAsync(dto.File);
@@ -837,7 +910,8 @@ namespace Unique_X.Controllers
             {
                 Key = dto.Key,
                 ImageUrl = result.SecureUrl.AbsoluteUri,
-                PublicId = result.PublicId
+                PublicId = result.PublicId,
+                DisplayOrder = displayOrder
             };
 
             _context.HomeSectionBanners.Add(banner);
@@ -855,6 +929,20 @@ namespace Unique_X.Controllers
             _context.HomeSectionBanners.Remove(banner);
             await _context.SaveChangesAsync();
             return Ok(new { Message = "Deleted" });
+        }
+
+        // 🟢 حفظ ترتيب البانرات بعد الـ drag & drop في صفحة Load Banners
+        [HttpPut("home-section-banners/reorder")]
+        public async Task<IActionResult> ReorderHomeSectionBanners([FromBody] List<string> orderedKeys)
+        {
+            var banners = await _context.HomeSectionBanners.ToListAsync();
+            for (int i = 0; i < orderedKeys.Count; i++)
+            {
+                var banner = banners.FirstOrDefault(b => b.Key == orderedKeys[i]);
+                if (banner != null) banner.DisplayOrder = i;
+            }
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Order updated" });
         }
 
         // DELETE: api/admin/project-meetings/{id}

@@ -9,6 +9,8 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../Services/auth';
 import { AdminService } from '../../Services/admin';
 import { BlogService } from '../../Services/blog.service';
+import { ArticleService } from '../../Services/article.service';
+import { RecommendationModalService } from '../../Services/recommendation-modal.service';
 import { LaunchService } from '../../Services/launch.service';
 import { GoogleAnalyticsService } from 'ngx-google-analytics';
 import { CurrencyService } from '../../Services/currency.service';
@@ -29,14 +31,35 @@ export class HomeComponent implements OnInit {
   blogs = signal<any[]>([]);
   launches = signal<any[]>([]);
 
-  // 🟢 بانرات ثابتة بين قسمي Launches و Hot Deals
-  exploreHomeBannerUrl = signal<string>('');
-  addPropertyBannerUrl = signal<string>('');
+  // 🟢 بانرات ثابتة بين قسمي Launches و Hot Deals - Array واحد مرتب حسب ترتيب الأدمن
+  homeSectionBanners = signal<any[]>([]);
+
+  // 🟢 "Get Recommendation" — مودال اختيار المواصفات (بيفتح من البانر مباشرة، من غير بوب أب تأكيد الأول)
+  // 🟢 حالة مودال "Get Recommendation" بقت في service مشترك عشان زرار الناف بار يقدر يفتحه من أي صفحة
+  recommendationForm: {
+    cities: string[];
+    listingTypes: string[];
+    propertyTypes: string[];
+    minRooms: string; maxRooms: string;
+    minBathrooms: string; maxBathrooms: string;
+    minFloors: string; maxFloors: string;
+    minFloorNumber: string; maxFloorNumber: string;
+  } = {
+    cities: [],
+    listingTypes: [],
+    propertyTypes: [],
+    minRooms: '', maxRooms: '',
+    minBathrooms: '', maxBathrooms: '',
+    minFloors: '', maxFloors: '',
+    minFloorNumber: '', maxFloorNumber: ''
+  };
 
   adminPhone = signal<string>('');
   showAdvancedFilters = signal<boolean>(false);
   private gaService = inject(GoogleAnalyticsService);
   private blogService = inject(BlogService);
+  private articleService = inject(ArticleService);
+  recommendationModalService = inject(RecommendationModalService);
   private launchService = inject(LaunchService);
   currencyService = inject(CurrencyService);
 
@@ -46,29 +69,16 @@ export class HomeComponent implements OnInit {
   rentProps = computed(() => this.properties().filter(p => p.listingType === 'Rent'));
   hotDealsList = signal<any[]>([]);
   recommendedVisitsList = signal<any[]>([]);
+  articles = signal<any[]>([]);
 
   activeQueryParams = signal<any>({});
-
-  // 🟢 "Get Recommendation" — بوب أب لليوزر مش المسجل دخول + مودال اختيار المواصفات
-  showRecommendationPrompt = signal<boolean>(false);
-  showRecommendationModal = signal<boolean>(false);
-  recommendationForm = {
-    city: '',
-    listingType: '',
-    propertyType: '',
-    rooms: '',
-    bathrooms: '',
-    floors: '',
-    floorNumber: ''
-  };
-
 
   // 🟢 2. التحقق هل المستخدم يبحث من شريط البحث (Search Bar) أم لا
    hasSearchFilters = computed(() => {
     const q = this.activeQueryParams();
     return !!(
       q['searchTerm'] || q['city'] || q['projectName'] || q['code'] || 
-      q['minPrice'] || q['maxPrice'] || q['area'] || q['minRooms'] || 
+      q['minPrice'] || q['maxPrice'] || q['minPricePerMeter'] || q['maxPricePerMeter'] || q['area'] || q['minRooms'] || 
       q['maxRooms'] || q['minBathrooms'] || q['maxBathrooms'] || 
       q['minFloor'] || q['maxFloor'] || 
       q['brokerId'] || q['brokerName'] || q['broker'] || // 👈 ضفنا فحص البروكر
@@ -166,13 +176,18 @@ ngOnInit(): void {
   this.loadHotDeals();
   this.loadRecommendedVisits();
 
-  // 🟢 "Get Recommendation": لو المستخدم رجع من صفحة اللوجين وعنده طلب معلق، افتحي المودال على طول
-  if (this.authService.loggedIn() && localStorage.getItem('pendingRecommendationModal') === 'true') {
-    localStorage.removeItem('pendingRecommendationModal');
-    this.showRecommendationModal.set(true);
-  } else if (!this.authService.loggedIn() && !sessionStorage.getItem('recommendationPromptDismissed')) {
-    // بوب أب بسيط لليوزر مش المسجل دخول، مرة واحدة بس في الجلسة دي
-    setTimeout(() => this.showRecommendationPrompt.set(true), 800);
+  // 🟢 "Get Recommendation": لو المستخدم رجع من صفحة اللوجين وكان عبّى المودال قبل كده وهو مش مسجل دخول،
+  // نوديه لصفحة النتائج على طول (من غير ما نعيد فتح المودال تاني)
+  const pendingParams = localStorage.getItem('pendingRecommendationParams');
+  if (this.authService.loggedIn() && pendingParams) {
+    localStorage.removeItem('pendingRecommendationParams');
+    try {
+      const params = JSON.parse(pendingParams);
+      this.router.navigate(['/recommendation-results'], { queryParams: params });
+    } catch { }
+  } else if (!this.authService.loggedIn()) {
+    // 🟢 لو مش مسجل دخول، مودال الـ Recommendation بيفتح تلقائي أول ما يوصل الهوم (من غير بوب أب تأكيد)
+    setTimeout(() => this.recommendationModalService.open(), 600);
   }
 
   this.route.queryParams.subscribe(params => {
@@ -212,6 +227,7 @@ ngOnInit(): void {
   });
 
   this.loadBlogs();
+  this.loadArticles();
   this.loadLaunches();
   this.loadHomeSectionBanners();
 }
@@ -225,47 +241,69 @@ loadRecommendedVisits() {
   this.propertyService.getRecommendedVisits().subscribe(data => this.recommendedVisitsList.set(data));
 }
 
-// ===== "Get Recommendation" =====
+// ===== "Get Recommendation" (بتفتح تلقائي لليوزر مش المسجل دخول، أو من بانر Recommendation) =====
 
-onCancelRecommendationPrompt() {
-  this.showRecommendationPrompt.set(false);
-  sessionStorage.setItem('recommendationPromptDismissed', 'true');
-}
-
-onGetRecommendationClick() {
-  this.showRecommendationPrompt.set(false);
-  if (!this.authService.loggedIn()) {
-    // بنحفظ إشارة إن فيه طلب توصية معلق، عشان الهوم يفتح المودال على طول بعد الرجوع من اللوجين
-    localStorage.setItem('pendingRecommendationModal', 'true');
-    this.router.navigate(['/login']);
-  } else {
-    this.showRecommendationModal.set(true);
-  }
+onRecommendationBannerClick() {
+  // بقى مفتوح لأي حد يملاه، تسجيل الدخول بقى بس وقت الـ Submit
+  this.recommendationModalService.open();
 }
 
 closeRecommendationModal() {
-  this.showRecommendationModal.set(false);
+  this.recommendationModalService.close();
+}
+
+// checkboxes الاختيار المتعدد (Zone / Listing Type / Property Type)
+toggleRecommendationValue(list: string[], value: string): void {
+  const idx = list.indexOf(value);
+  if (idx > -1) list.splice(idx, 1);
+  else list.push(value);
+}
+
+isRecommendationValueSelected(list: string[], value: string): boolean {
+  return list.includes(value);
+}
+
+// لو "Villa" من ضمن الأنواع المختارة، بنلغي معيار "Total Floors" خالص
+get isVillaSelectedInRecommendation(): boolean {
+  return this.recommendationForm.propertyTypes.includes('1');
 }
 
 submitRecommendation(minBudgetEl: HTMLInputElement, maxBudgetEl: HTMLInputElement) {
   const f = this.recommendationForm;
   const queryParams: any = {};
 
-  if (f.city) queryParams.city = f.city;
-  if (f.listingType) queryParams.listingType = f.listingType;
-  if (f.propertyType) queryParams.propertyType = f.propertyType;
-  if (f.rooms) queryParams.rooms = f.rooms;
-  if (f.bathrooms) queryParams.bathrooms = f.bathrooms;
-  if (f.floors) queryParams.floors = f.floors;
-  if (f.floorNumber) queryParams.floorNumber = f.floorNumber;
+  if (f.cities.length) queryParams.city = f.cities.join(',');
+  if (f.listingTypes.length) queryParams.listingType = f.listingTypes.join(',');
+  if (f.propertyTypes.length) queryParams.propertyType = f.propertyTypes.join(',');
+
+  if (f.minRooms) queryParams.minRooms = f.minRooms;
+  if (f.maxRooms) queryParams.maxRooms = f.maxRooms;
+  if (f.minBathrooms) queryParams.minBathrooms = f.minBathrooms;
+  if (f.maxBathrooms) queryParams.maxBathrooms = f.maxBathrooms;
+
+  // لو فيلا مختارة، مش بنبعت معيار الـ Total Floors خالص
+  if (!this.isVillaSelectedInRecommendation) {
+    if (f.minFloors) queryParams.minFloors = f.minFloors;
+    if (f.maxFloors) queryParams.maxFloors = f.maxFloors;
+  }
+  if (f.minFloorNumber) queryParams.minFloorNumber = f.minFloorNumber;
+  if (f.maxFloorNumber) queryParams.maxFloorNumber = f.maxFloorNumber;
 
   const minBudget = minBudgetEl?.value?.replace(/,/g, '');
   const maxBudget = maxBudgetEl?.value?.replace(/,/g, '');
   if (minBudget) queryParams.minBudget = minBudget;
   if (maxBudget) queryParams.maxBudget = maxBudget;
 
-  this.showRecommendationModal.set(false);
-  this.router.navigate(['/recommendation-results'], { queryParams });
+  this.recommendationModalService.close();
+
+  // 🟢 لو مش مسجل دخول: نحفظ المواصفات اللي ملاها ونوديه يسجل دخول الأول، وبعد الرجوع هيتوجه لصفحة
+  // النتائج تلقائي (اتعمل فوق في ngOnInit). لو مسجل دخول بالفعل: يروح لصفحة النتائج على طول
+  if (!this.authService.loggedIn()) {
+    localStorage.setItem('pendingRecommendationParams', JSON.stringify(queryParams));
+    this.router.navigate(['/login']);
+  } else {
+    this.router.navigate(['/recommendation-results'], { queryParams });
+  }
 }
 
 loadBlogs() {
@@ -278,6 +316,28 @@ loadBlogs() {
   });
 }
 
+// 🟢 المقالات (Articles) - بتظهر تحت Recommended to Visit مباشرة
+loadArticles() {
+  this.articleService.getPublished().subscribe({
+    next: (data: any[]) => this.articles.set(data || []),
+    error: () => {}
+  });
+}
+
+getArticleThumbnail(article: any): string {
+  const raw = article?.coverImageUrl || article?.imageUrl || article?.thumbnailUrl || article?.coverImage;
+  return raw ? this.articleService.getImageUrl(raw) : '';
+}
+
+goToArticle(article: any): void {
+  const slug = this.articleService.generateSlug(article?.title);
+  if (slug) {
+    this.router.navigate(['/blogs', article.id, slug]);
+  } else {
+    this.router.navigate(['/blogs', article.id]);
+  }
+}
+
 loadLaunches() {
   this.launchService.getAll().subscribe({
     next: (data: any[]) => {
@@ -288,15 +348,29 @@ loadLaunches() {
   });
 }
 
-// 🟢 البانرين الثابتين اللي الأدمن حدهم (Explore Home + Add Property)
+// 🟢 البانرات الثابتة اللي الأدمن حددها ورتبها - Array واحد بترتيب الأدمن
 loadHomeSectionBanners() {
   this.adminService.getHomeSectionBanners().subscribe({
-    next: (data: any) => {
-      this.exploreHomeBannerUrl.set(data?.exploreHomeBannerUrl || '');
-      this.addPropertyBannerUrl.set(data?.addPropertyBannerUrl || '');
+    next: (data: any[]) => {
+      this.homeSectionBanners.set([...(data || [])].sort((a, b) => a.displayOrder - b.displayOrder));
     },
     error: () => {}
   });
+}
+
+// 🟢 بتحدد الرابط/الأكشن المناسب لكل بانر حسب الـ key بتاعه (بيدعم أكتر من مفتاح لنفس الرابط، زي add-property و add-property-2)
+onBannerClick(key: string): void {
+  if (key === 'explore-home') {
+    this.router.navigate(['/explore-home']);
+  } else if (key === 'add-property' || key === 'add-property-2') {
+    this.router.navigate(['/add-your-property']);
+  } else if (key === 'compare') {
+    this.router.navigate(['/compare']);
+  } else if (key === 'price-range') {
+    this.router.navigate(['/price-per-meter-search']);
+  } else if (key === 'recommendation') {
+    this.onRecommendationBannerClick();
+  }
 }
 
 updateProjectsList(cityId: any) {
@@ -519,6 +593,8 @@ getSmartSearchTerm(term: string): string {
     city: params.city || null,
     minPrice: params.minPrice ? params.minPrice.replace(/,/g, '') : null,
     maxPrice: params.maxPrice ? params.maxPrice.replace(/,/g, '') : null,
+    minPricePerMeter: params.minPricePerMeter ? params.minPricePerMeter.replace(/,/g, '') : null,
+    maxPricePerMeter: params.maxPricePerMeter ? params.maxPricePerMeter.replace(/,/g, '') : null,
     listingType: resolvedType,
     propertyType: resolvedPropertyType,
     projectName: params.projectName || null,

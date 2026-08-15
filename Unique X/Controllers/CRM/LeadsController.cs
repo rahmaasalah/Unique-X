@@ -730,12 +730,9 @@ namespace Unique_X.Controllers.CRM
                 );
             }
 
-            // 3. استبعاد العقارات التي تم اقتراحها مسبقاً (اختياري، خليتها هنا عشان ميظهرش القديم)
-            if (proposedIds.Any())
-            {
-                var proposedIntIds = proposedIds.Select(id => int.TryParse(id, out int res) ? res : 0).Where(id => id > 0).ToList();
-                query = query.Where(p => !proposedIntIds.Contains(p.Id));
-            }
+            // 🟢 مبقاش بنستبعد العقارات المقترحة قبل كده - بنسيبها في الليستة وبس بنعلّم عليها بـ IsProposed
+            // (كان في فلتر هنا بيشيلها خالص من الـ query، وده اللي كان بيخلي عدد المطابقات يقل مع كل Refresh
+            // وكان بيخلي التلوين الأخضر يختفي - لأن العقار نفسه كان بيتشال من النتائج، مش إن التلوين بس بيروح)
 
             // 4. ترتيب وتجهيز الخرج للفرونت إند
             var recommendations = await query

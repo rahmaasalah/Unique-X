@@ -94,13 +94,44 @@ export class AdminDashboardComponent implements OnInit {
   // أضفنا 'settings' للأنواع المسموحة للـ Signal
   homeBanners = signal<any[]>([]);
 
-  // 🟢 بانرات ثابتة لصفحة الهوم (بين Launches و Hot Deals): Explore Home + Add Property
-  exploreHomeBannerUrl = signal<string>('');
-  addPropertyBannerUrl = signal<string>('');
-  // بيحمل الـ key ('explore-home' | 'add-property') وقت الرفع/المسح عشان نعطل الزرار بتاعه بس
+  // 🟢 بانرات ثابتة لصفحة الهوم (بين Launches و Hot Deals) - Array واحد مرتب حسب DisplayOrder
+  // بيدعم أي عدد بانرات وقابل لإعادة الترتيب بالـ Drag & Drop
+  homeSectionBanners = signal<any[]>([]);
+  homeSectionBannerKeys: { key: string; title: string; description: string; icon: string }[] = [
+    { key: 'explore-home', title: 'Explore Home Banner', description: 'Opens the "Explore Your Dream Home" page.', icon: 'bi-house-heart' },
+    { key: 'add-property', title: 'Add Property Banner', description: 'Opens the "Add Your Property" page.', icon: 'bi-plus-square' },
+    { key: 'add-property-2', title: 'Add Property Banner 2', description: 'Opens the "Add Your Property" page (a second slot for the same link).', icon: 'bi-plus-square' },
+    { key: 'compare', title: 'Compare Banner', description: 'Opens the Compare Properties page.', icon: 'bi-arrow-left-right' },
+    { key: 'price-range', title: 'Price/m² Search Banner', description: 'Opens a page to search units by price-per-meter range.', icon: 'bi-calculator' },
+    { key: 'recommendation', title: 'Get Recommendation Banner', description: 'Opens the "Get Recommendation" criteria popup.', icon: 'bi-stars' }
+  ];
+  // بيحمل الـ key وقت الرفع/المسح عشان نعطل الزرار بتاعه بس
   homeSectionBannerSaving = signal<string>('');
+  // نسخة قابلة لإعادة الترتيب بالـ Drag & Drop + هل الترتيب اتغير عشان نظهر زرار Save Order
+  draggedBannerKey: string | null = null;
+  bannersOrderChanged = signal<boolean>(false);
 
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'homeSectionBanners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'recommendedVisits' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings' | 'launches' | 'launchMeetings' | 'articles'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'homeSectionBanners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'projectFinancial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'recommendedVisits' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings' | 'launches' | 'launchMeetings' | 'articles' | 'lookups'>('users');
+
+  // --- Lookups: Developers / Primary Projects / Resale Projects / Regions ---
+  lookupsSubTab = signal<'developers' | 'primaryProjects' | 'resaleProjects' | 'regions'>('developers');
+  lookupCityFilter = signal<number>(1); // 1 Cairo, 2 Alexandria, 3 North Coast
+
+  lookupDevelopers = signal<any[]>([]);
+  lookupPrimaryProjects = signal<any[]>([]);
+  lookupResaleProjects = signal<any[]>([]);
+  lookupRegions = signal<any[]>([]);
+
+  newDeveloperName = signal<string>('');
+  newDeveloperCode = signal<string>('');
+
+  newProjectName = signal<string>('');
+  newProjectCode = signal<string>('');
+  newProjectRegion = signal<string>('');
+  newProjectDeveloperId = signal<string>('');
+
+  newRegionName = signal<string>('');
+  newRegionZoneCode = signal<string>('');
 
   detailData = signal<any[]>([]);
 
@@ -521,6 +552,7 @@ onRejectDeletion(id: number) {
 
   this.loadBanners(); 
   this.loadFinancialFile();
+  this.loadProjectFinancialFile();
 }
 
   loadBanners() {
@@ -529,15 +561,38 @@ onRejectDeletion(id: number) {
     });
   }
 
-  // 🟢 تحميل البانرين الثابتين بتوع الهوم (Explore Home + Add Property)
+  // 🟢 تحميل البانرات الثابتة بتوع الهوم - Array واحد مرتب حسب DisplayOrder
   loadHomeSectionBanners() {
     this.adminService.getHomeSectionBanners().subscribe({
-      next: (data: any) => {
-        this.exploreHomeBannerUrl.set(data?.exploreHomeBannerUrl || '');
-        this.addPropertyBannerUrl.set(data?.addPropertyBannerUrl || '');
+      next: (data: any[]) => {
+        this.homeSectionBanners.set([...(data || [])].sort((a, b) => a.displayOrder - b.displayOrder));
+        this.bannersOrderChanged.set(false);
       },
       error: (err: any) => console.error('Home section banners error:', err)
     });
+  }
+
+  // بتجيب صورة البانر الحالية بمفتاحه (لو موجود) عشان نعرف نعرض upload ولا preview+delete
+  getBannerUrl(key: string): string {
+    return this.homeSectionBanners().find(b => b.key === key)?.imageUrl || '';
+  }
+
+  // 🟢 ليستة العرض في صفحة Load Banners: البانرات اللي اتحطت بالفعل بالترتيب المحفوظ الأول (قابلة للسحب)،
+  // وبعدها أي مكان لسه فاضي (من غير صورة) في الآخر عشان يترفع لأول مرة
+  get bannerDisplayList(): { key: string; title: string; description: string; icon: string; imageUrl?: string }[] {
+    const existing = this.homeSectionBanners();
+    const existingKeys = new Set(existing.map(b => b.key));
+
+    const uploaded = existing
+      .map(b => {
+        const meta = this.homeSectionBannerKeys.find(m => m.key === b.key);
+        return meta ? { ...meta, imageUrl: b.imageUrl } : null;
+      })
+      .filter((m): m is { key: string; title: string; description: string; icon: string; imageUrl: any } => m !== null);
+
+    const empty = this.homeSectionBannerKeys.filter(m => !existingKeys.has(m.key));
+
+    return [...uploaded, ...empty];
   }
 
   onUploadHomeSectionBanner(key: string, fileInput: any) {
@@ -575,6 +630,43 @@ onRejectDeletion(id: number) {
           this.alertService.error('Failed to delete the banner. Please try again.');
         }
       });
+    });
+  }
+
+  // ===== Drag & Drop إعادة ترتيب البانرات (نفس فكرة ترتيب الـ Blogs) =====
+
+  onBannerDragStart(key: string) {
+    this.draggedBannerKey = key;
+  }
+
+  onBannerDragOver(event: DragEvent) {
+    event.preventDefault();
+  }
+
+  onBannerDrop(targetKey: string) {
+    if (!this.draggedBannerKey || this.draggedBannerKey === targetKey) return;
+
+    const list = [...this.homeSectionBanners()];
+    const fromIndex = list.findIndex(b => b.key === this.draggedBannerKey);
+    const toIndex = list.findIndex(b => b.key === targetKey);
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const [moved] = list.splice(fromIndex, 1);
+    list.splice(toIndex, 0, moved);
+
+    this.homeSectionBanners.set(list);
+    this.bannersOrderChanged.set(true);
+    this.draggedBannerKey = null;
+  }
+
+  saveBannersOrder() {
+    const orderedKeys = this.homeSectionBanners().map(b => b.key);
+    this.adminService.reorderHomeSectionBanners(orderedKeys).subscribe({
+      next: () => {
+        this.alertService.success('Banner order saved!');
+        this.bannersOrderChanged.set(false);
+      },
+      error: () => this.alertService.error('Failed to save the order. Please try again.')
     });
   }
 
@@ -682,6 +774,9 @@ onRejectDeletion(id: number) {
   else if (tab === 'recommendedVisits') {
   this.loadRecommendedVisits();
 }
+  else if (tab === 'lookups') {
+    this.loadLookups();
+  }
 
   else if (tab === 'suspUsers') {
     this.adminService.getSuspendedUsers().subscribe(data => this.detailData.set(data));
@@ -744,6 +839,123 @@ onRemoveHotDeal(id: number) {
 }
 loadHotDeals() {
   this.adminService.getHotDeals().subscribe(data => this.hotDeals.set(data));
+}
+
+// ===================== Lookups: Developers / Projects / Regions =====================
+
+loadLookups() {
+  this.adminService.getDevelopers().subscribe(data => this.lookupDevelopers.set(data));
+  this.reloadProjectsAndRegions();
+}
+
+reloadProjectsAndRegions() {
+  const city = this.lookupCityFilter();
+  this.adminService.getProjects(0, city).subscribe(data => this.lookupPrimaryProjects.set(data));
+  this.adminService.getProjects(1, city).subscribe(data => this.lookupResaleProjects.set(data));
+  this.adminService.getRegions(city).subscribe(data => this.lookupRegions.set(data));
+}
+
+onLookupCityChange(city: number) {
+  this.lookupCityFilter.set(city);
+  this.reloadProjectsAndRegions();
+}
+
+onAddDeveloper() {
+  const name = this.newDeveloperName().trim();
+  const code = this.newDeveloperCode().trim();
+  if (!name || !code) return;
+
+  this.alertService.showLoading('Adding...');
+  this.adminService.addDeveloper(name, code).subscribe({
+    next: () => {
+      this.alertService.close();
+      this.alertService.success('Developer added');
+      this.newDeveloperName.set('');
+      this.newDeveloperCode.set('');
+      this.adminService.getDevelopers().subscribe(data => this.lookupDevelopers.set(data));
+    },
+    error: (err) => {
+      this.alertService.close();
+      this.alertService.error(err.error || 'Failed to add developer.');
+    }
+  });
+}
+
+onDeleteDeveloper(id: number) {
+  this.alertService.confirm('Delete this developer?', () => {
+    this.adminService.deleteDeveloper(id).subscribe(() => {
+      this.alertService.success('Deleted');
+      this.adminService.getDevelopers().subscribe(data => this.lookupDevelopers.set(data));
+    });
+  });
+}
+
+onAddProject(type: number) {
+  const name = this.newProjectName().trim();
+  const code = this.newProjectCode().trim();
+  if (!name || !code) return;
+
+  const city = this.lookupCityFilter();
+  const region = this.newProjectRegion().trim();
+  const devId = this.newProjectDeveloperId() ? Number(this.newProjectDeveloperId()) : undefined;
+
+  this.alertService.showLoading('Adding...');
+  this.adminService.addProject(name, code, type, city, region, devId).subscribe({
+    next: () => {
+      this.alertService.close();
+      this.alertService.success('Project added');
+      this.newProjectName.set('');
+      this.newProjectCode.set('');
+      this.newProjectRegion.set('');
+      this.newProjectDeveloperId.set('');
+      this.reloadProjectsAndRegions();
+    },
+    error: (err) => {
+      this.alertService.close();
+      this.alertService.error(err.error || 'Failed to add project.');
+    }
+  });
+}
+
+onDeleteProject(id: number) {
+  this.alertService.confirm('Delete this project?', () => {
+    this.adminService.deleteProject(id).subscribe(() => {
+      this.alertService.success('Deleted');
+      this.reloadProjectsAndRegions();
+    });
+  });
+}
+
+onAddRegion() {
+  const name = this.newRegionName().trim();
+  if (!name) return;
+
+  const city = this.lookupCityFilter();
+  const zoneCode = this.newRegionZoneCode().trim();
+
+  this.alertService.showLoading('Adding...');
+  this.adminService.addRegion(name, city, zoneCode).subscribe({
+    next: () => {
+      this.alertService.close();
+      this.alertService.success('Region added');
+      this.newRegionName.set('');
+      this.newRegionZoneCode.set('');
+      this.reloadProjectsAndRegions();
+    },
+    error: (err) => {
+      this.alertService.close();
+      this.alertService.error(err.error || 'Failed to add region.');
+    }
+  });
+}
+
+onDeleteRegion(id: number) {
+  this.alertService.confirm('Delete this region?', () => {
+    this.adminService.deleteRegion(id).subscribe(() => {
+      this.alertService.success('Deleted');
+      this.reloadProjectsAndRegions();
+    });
+  });
 }
 
 // ===================== Recommended to Visit =====================
@@ -940,6 +1152,51 @@ loadRecommendedVisits() {
           this.alertService.close();
           this.alertService.success('File deleted.');
           this.loadFinancialFile();
+        }
+      });
+    });
+  }
+
+  // ================== 🟢 إدارة ملف الحسابات (Financial) - المشاريع (Projects) ==================
+  currentProjectFinancialFile = signal<any>(null);
+
+  loadProjectFinancialFile() {
+    this.adminService.getProjectFinancialFile().subscribe({
+      next: (data) => this.currentProjectFinancialFile.set(data),
+      error: () => this.currentProjectFinancialFile.set(null) // لو مفيش ملف هيفضل null
+    });
+  }
+
+  onUploadProjectFinancial(fileInput: any) {
+    const file = fileInput.files[0];
+    if (!file) {
+      this.alertService.error('Please select an Excel or CSV file first.');
+      return;
+    }
+
+    this.alertService.showLoading('Uploading Data File...');
+    this.adminService.uploadProjectFinancialFile(file).subscribe({
+      next: () => {
+        this.alertService.close();
+        this.alertService.success('Project Financial Data Updated Successfully!');
+        this.loadProjectFinancialFile();
+        fileInput.value = '';
+      },
+      error: (err) => {
+        this.alertService.close();
+        this.alertService.error(err.error || 'Failed to upload file.');
+      }
+    });
+  }
+
+  onDeleteProjectFinancial(id: number) {
+    this.alertService.confirm('Are you sure you want to delete the current project financial data?', () => {
+      this.alertService.showLoading('Deleting...');
+      this.adminService.deleteProjectFinancialFile(id).subscribe({
+        next: () => {
+          this.alertService.close();
+          this.alertService.success('File deleted.');
+          this.loadProjectFinancialFile();
         }
       });
     });

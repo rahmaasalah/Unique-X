@@ -141,6 +141,8 @@ namespace Unique_X.DTOs
         public int? MaxBathrooms { get; set; }
         public int? MinFloor { get; set; }
         public int? MaxFloor { get; set; }
+        public decimal? MinPricePerMeter { get; set; }
+        public decimal? MaxPricePerMeter { get; set; }
 
     }
 

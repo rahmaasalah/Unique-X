@@ -213,6 +213,13 @@ namespace Unique_X.Services.Implementation
             if (filter.MaxPrice.HasValue)
                 query = query.Where(p => p.Price <= filter.MaxPrice.Value);
 
+            // 🟢 فلترة بسعر المتر
+            if (filter.MinPricePerMeter.HasValue)
+                query = query.Where(p => p.PricePerMeter >= filter.MinPricePerMeter.Value);
+
+            if (filter.MaxPricePerMeter.HasValue)
+                query = query.Where(p => p.PricePerMeter <= filter.MaxPricePerMeter.Value);
+
             if (filter.Rooms.HasValue)
                 query = query.Where(p => p.Rooms == filter.Rooms.Value);
 

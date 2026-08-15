@@ -15,6 +15,11 @@ export class BlogService {
   delete(id: number)                    { return this.http.delete(`${this.base}/${id}`); }
   reorder(orderedIds: number[])         { return this.http.put(`${this.base}/reorder`, orderedIds); }
 
+  // 🟢 تاريخ سعر المتر (Resale + Primary) عبر السنين لمشروع معين - للـ Financial Chart في صفحة تفاصيل المشروع
+  getFinancialHistory(projectName: string) {
+    return this.http.get<any[]>(`${this.base}/financial-history`, { params: { projectName } });
+  }
+
   // دلوقتي الـ URLs بتيجي من Cloudinary مباشرة — مش محتاجين نبني URL
   getImageUrl(url: string): string {
     if (!url) return '';

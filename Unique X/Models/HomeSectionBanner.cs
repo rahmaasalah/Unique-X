@@ -7,5 +7,6 @@
         public string Key { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public string PublicId { get; set; } = string.Empty;
+        public int DisplayOrder { get; set; } = 0;
     }
 }
