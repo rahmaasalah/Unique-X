@@ -104,6 +104,21 @@ getFinancialFile(): Observable<any> {
     return this.http.delete(`${this.baseUrl}/delete-financial/${id}`);
   }
 
+  // ===================== Project Financial Charts (نفس فكرة Financial File بالظبط) =====================
+  getProjectFinancialFile(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/project-financial-file`);
+  }
+
+  uploadProjectFinancialFile(file: File): Observable<any> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post(`${this.baseUrl}/upload-project-financial`, fd);
+  }
+
+  deleteProjectFinancialFile(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/delete-project-financial/${id}`);
+  }
+
   getPendingProperties(): Observable<any[]> {
   return this.http.get<any[]>(`${this.baseUrl}/pending-properties`);
 }
@@ -119,10 +134,10 @@ reorderBanners(orderedIds: number[]) {
   return this.http.put(`${this.baseUrl}/banners/reorder`, orderedIds);
 }
 
-// --- بانرات ثابتة لصفحة الهوم (Explore Home Banner + Add Property Banner) ---
-// كل واحد فيهم صورة واحدة بس، ممكن تتمسح وتتحط غيرها. الـ key: 'explore-home' | 'add-property'
-getHomeSectionBanners(): Observable<any> {
-  return this.http.get<any>(`${this.baseUrl}/home-section-banners`);
+// --- بانرات ثابتة لصفحة الهوم (Explore Home / Add Property / Compare / Price Range / Recommendation...) ---
+// كل واحد بيتحدد بـ key فريد وله صورة واحدة بس. بترجع Array مرتب حسب DisplayOrder
+getHomeSectionBanners(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/home-section-banners`);
 }
 
 uploadHomeSectionBanner(key: string, file: File): Observable<any> {
@@ -134,6 +149,11 @@ uploadHomeSectionBanner(key: string, file: File): Observable<any> {
 
 deleteHomeSectionBanner(key: string): Observable<any> {
   return this.http.delete(`${this.baseUrl}/home-section-banners/${key}`);
+}
+
+// 🟢 حفظ ترتيب البانرات بعد الـ drag & drop
+reorderHomeSectionBanners(orderedKeys: string[]): Observable<any> {
+  return this.http.put(`${this.baseUrl}/home-section-banners/reorder`, orderedKeys);
 }
 
 duplicateProperty(propertyId: number, brokerId: string) {
@@ -258,5 +278,51 @@ approveOwnerProperty(id: number, brokerId: string): Observable<any> {
 
 rejectOwnerProperty(id: number, reason: string): Observable<any> {
   return this.http.patch(`${this.ownerPropsUrl}/${id}/reject`, { reason });
+}
+
+// --- Lookups: Developers / Projects (Primary & Resale) / Regions ---
+
+getDevelopers(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/developers`);
+}
+
+addDeveloper(name: string, code: string): Observable<any> {
+  return this.http.post(`${this.baseUrl}/developers`, { name, code });
+}
+
+deleteDeveloper(id: number): Observable<any> {
+  return this.http.delete(`${this.baseUrl}/developers/${id}`);
+}
+
+// type: 0 = Primary, 1 = Resale
+getProjects(type?: number, city?: number): Observable<any[]> {
+  let url = `${this.baseUrl}/projects`;
+  const params: string[] = [];
+  if (type !== undefined && type !== null) params.push(`type=${type}`);
+  if (city !== undefined && city !== null) params.push(`city=${city}`);
+  if (params.length) url += `?${params.join('&')}`;
+  return this.http.get<any[]>(url);
+}
+
+addProject(name: string, code: string, type: number, city: number, region?: string, developerId?: number): Observable<any> {
+  return this.http.post(`${this.baseUrl}/projects`, { name, code, type, city, region: region || null, developerId: developerId || null });
+}
+
+deleteProject(id: number): Observable<any> {
+  return this.http.delete(`${this.baseUrl}/projects/${id}`);
+}
+
+getRegions(city?: number): Observable<any[]> {
+  let url = `${this.baseUrl}/regions`;
+  if (city !== undefined && city !== null) url += `?city=${city}`;
+  return this.http.get<any[]>(url);
+}
+
+addRegion(name: string, city: number, zoneCode?: string): Observable<any> {
+  return this.http.post(`${this.baseUrl}/regions`, { name, zoneCode: zoneCode || null, city });
+}
+
+deleteRegion(id: number): Observable<any> {
+  return this.http.delete(`${this.baseUrl}/regions/${id}`);
 }
 }

@@ -65,6 +65,7 @@
                  (keyup.enter)="onSearch({
                    searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: projectName.value,
                    code: code.value, minPrice: minPrice.value, maxPrice: maxPrice.value,
+                   minPricePerMeter: minPricePerMeter.value, maxPricePerMeter: maxPricePerMeter.value,
                    listingType: propertyType.value, propertyType: propType.value,
                    minFloor: minFloor.value, maxFloor: maxFloor.value,
                    minRooms: minRooms.value, maxRooms: maxRooms.value,
@@ -87,6 +88,7 @@
                 (click)="onSearch({
                   searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: projectName.value,
                   code: code.value, minPrice: minPrice.value, maxPrice: maxPrice.value,
+                  minPricePerMeter: minPricePerMeter.value, maxPricePerMeter: maxPricePerMeter.value,
                   listingType: propertyType.value, propertyType: propType.value,
                   minFloor: minFloor.value, maxFloor: maxFloor.value,
                   minRooms: minRooms.value, maxRooms: maxRooms.value,
@@ -217,12 +219,28 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="row g-2 align-items-end mt-1">
+        <div class="col-md-8">
+          <div class="row g-1">
+            <div class="col-6">
+              <label class="form-label x-small-bold mb-1 text-muted">Min Price / m²</label>
+              <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatPrice($event)" #minPricePerMeter>
+            </div>
+            <div class="col-6">
+              <label class="form-label x-small-bold mb-1 text-muted">Max Price / m²</label>
+              <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatPrice($event)" #maxPricePerMeter>
+            </div>
+          </div>
+        </div>
         <div class="col-md-4">
           <div class="d-flex gap-2">
             <button class="btn btn-danger btn-sm fw-bold shadow py-2 rounded-3 flex-grow-1"
                     (click)="onSearch({
                       searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: projectName.value,
                       code: code.value, minPrice: minPrice.value, maxPrice: maxPrice.value,
+                      minPricePerMeter: minPricePerMeter.value, maxPricePerMeter: maxPricePerMeter.value,
                       listingType: propertyType.value, propertyType: propType.value,
                       minFloor: minFloor.value, maxFloor: maxFloor.value,
                       minRooms: minRooms.value, maxRooms: maxRooms.value,
@@ -561,7 +579,6 @@
         </div>
       </div>
     }
-
     <!-- ===== قسم اللانشز (Launches) ===== -->
     @if (!hasSearchFilters() && launches().length > 0) {
       <div class="col-12 mb-5 animate__animated animate__fadeInUp">
@@ -656,23 +673,15 @@
       </div>
     }
 
-    <!-- ===== بانرات ثابتة: Explore Your Dream Home + Add Your Property ===== -->
-    @if (!hasSearchFilters() && (exploreHomeBannerUrl() || addPropertyBannerUrl())) {
+    <!-- ===== بانرات ثابتة (ترتيبها بيتحدد من الأدمن) ===== -->
+    @if (!hasSearchFilters() && homeSectionBanners().length > 0) {
       <div class="col-12 mb-5 animate__animated animate__fadeInUp">
         <div class="row g-4">
-          @if (exploreHomeBannerUrl()) {
+          @for (banner of homeSectionBanners(); track banner.key) {
             <div class="col-md-6">
-              <a routerLink="/explore-home" class="d-block text-decoration-none rounded-4 overflow-hidden shadow-sm"
+              <a href="javascript:void(0)" (click)="onBannerClick(banner.key)" class="d-block text-decoration-none rounded-4 overflow-hidden shadow-sm"
                  style="position:relative;height:220px;">
-                <img [src]="exploreHomeBannerUrl()" class="w-100 h-100" style="object-fit:cover;" alt="Explore Your Dream Home">
-              </a>
-            </div>
-          }
-          @if (addPropertyBannerUrl()) {
-            <div class="col-md-6">
-              <a routerLink="/add-your-property" class="d-block text-decoration-none rounded-4 overflow-hidden shadow-sm"
-                 style="position:relative;height:220px;">
-                <img [src]="addPropertyBannerUrl()" class="w-100 h-100" style="object-fit:cover;" alt="Add Your Property">
+                <img [src]="banner.imageUrl" class="w-100 h-100" style="object-fit:cover;" alt="Banner">
               </a>
             </div>
           }
@@ -683,6 +692,56 @@
     @if (!hasSearchFilters()) {
       <ng-container *ngTemplateOutlet="hotDealsSection"></ng-container>
       <ng-container *ngTemplateOutlet="recommendedVisitsSection"></ng-container>
+
+    <!-- ===== قسم المقالات (Articles) - تحت Recommended to Visit مباشرة ===== -->
+    @if (articles().length > 0) {
+      <div class="col-12 mb-5 animate__animated animate__fadeInUp">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <h3 class="fw-bold text-dark mb-0">
+            <i class="bi bi-newspaper text-danger me-2"></i>Articles
+          </h3>
+        </div>
+        <div class="h-scroll-wrap">
+          <button class="h-scroll-arrow left" (click)="scrollH(articlesScroll, -1)" aria-label="Scroll left">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <div class="d-flex h-scroll gap-4 pb-2" #articlesScroll>
+            @for (article of articles(); track article.id) {
+              <div class="h-scroll-item" style="width:280px;">
+                <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden"
+                     style="cursor:pointer;transition:transform .2s,box-shadow .2s;"
+                     (click)="goToArticle(article)"
+                     (mouseenter)="$event.currentTarget['style'].transform='translateY(-4px)';$event.currentTarget['style'].boxShadow='0 12px 30px rgba(0,0,0,0.13)'"
+                     (mouseleave)="$event.currentTarget['style'].transform='';$event.currentTarget['style'].boxShadow=''">
+
+                  @if (getArticleThumbnail(article)) {
+                    <img [src]="getArticleThumbnail(article)"
+                         class="card-img-top" style="height:170px;object-fit:cover;" alt="{{ article.title }}">
+                  } @else {
+                    <div class="d-flex align-items-center justify-content-center bg-light"
+                         style="height:170px;">
+                      <i class="bi bi-newspaper text-muted fs-1 opacity-25"></i>
+                    </div>
+                  }
+
+                  <div class="card-body d-flex flex-column p-3">
+                    <h6 class="fw-bold mb-2" style="line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                      {{ article.title }}
+                    </h6>
+                    <div class="mt-auto d-flex align-items-center justify-content-end">
+                      <span class="text-danger fw-semibold small">Read More →</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+          <button class="h-scroll-arrow right" (click)="scrollH(articlesScroll, 1)" aria-label="Scroll right">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    }
     }
 
     @if (isLoading()) {
@@ -873,7 +932,7 @@
   </div>
 </section>
 
-<div class="floating-contact-wrap animate__animated animate__fadeInUp animate__delay-1s">
+<div class="floating-contact-wrap animate__animated animate__fadeInUp animate__delay-1s" [hidden]="recommendationModalService.show()">
   
   <!-- زر الواتساب -->
   <a href="javascript:void(0)" 
@@ -893,96 +952,123 @@
 
 </div>
 
-<!-- ===== Get Recommendation Prompt (لليوزر مش المسجل دخول) ===== -->
-@if (showRecommendationPrompt()) {
-  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 1200;">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content rounded-4 border-0 shadow">
-        <div class="modal-body text-center p-4">
-          <i class="bi bi-stars text-danger" style="font-size: 2.5rem;"></i>
-          <h5 class="fw-bold mt-3 mb-2">Get recommendation matching your request</h5>
-          <p class="text-muted small mb-4">Tell us what you're looking for and we'll find the best matching units for you.</p>
-          <div class="d-flex justify-content-center gap-2">
-            <button class="btn btn-light rounded-pill px-4" (click)="onCancelRecommendationPrompt()">Cancel</button>
-            <button class="btn btn-danger rounded-pill px-4" (click)="onGetRecommendationClick()">Get Recommendation</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- ===== Recommendation Criteria Modal (بعد تسجيل الدخول) ===== -->
-@if (showRecommendationModal()) {
-  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 1200;">
-    <div class="modal-dialog modal-dialog-centered">
+<!-- ===== Recommendation Criteria Modal (بتفتح من بانر Recommendation مباشرة) ===== -->
+@if (recommendationModalService.show()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 2000;">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content rounded-4 border-0 shadow">
         <div class="modal-header border-0 pb-0">
           <h5 class="modal-title fw-bold">Tell us what you're looking for</h5>
           <button type="button" class="btn-close" (click)="closeRecommendationModal()"></button>
         </div>
         <div class="modal-body py-3">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Zone</label>
-              <select class="form-select rounded-3" [(ngModel)]="recommendationForm.city">
-                <option value="">Any</option>
-                <option value="1">Cairo</option>
-                <option value="2">Alexandria</option>
-                <option value="3">North Coast</option>
-              </select>
+          <div class="row g-4">
+
+            <!-- Zone (multi) -->
+            <div class="col-12">
+              <label class="form-label small fw-bold d-block mb-2">Zone</label>
+              <div class="d-flex flex-wrap gap-2">
+                @for (opt of [{v:'1', l:'Cairo'}, {v:'2', l:'Alexandria'}, {v:'3', l:'North Coast'}]; track opt.v) {
+                  <button type="button" class="btn btn-sm rounded-pill px-3"
+                          [class.btn-danger]="isRecommendationValueSelected(recommendationForm.cities, opt.v)"
+                          [class.btn-outline-secondary]="!isRecommendationValueSelected(recommendationForm.cities, opt.v)"
+                          (click)="toggleRecommendationValue(recommendationForm.cities, opt.v)">
+                    {{ opt.l }}
+                  </button>
+                }
+              </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Listing Type</label>
-              <select class="form-select rounded-3" [(ngModel)]="recommendationForm.listingType">
-                <option value="">Any</option>
-                <option value="0">Resale</option>
-                <option value="1">Rent</option>
-                <option value="2">Primary</option>
-                <option value="3">Resale Project</option>
-              </select>
+
+            <!-- Listing Type (multi) -->
+            <div class="col-12">
+              <label class="form-label small fw-bold d-block mb-2">Listing Type</label>
+              <div class="d-flex flex-wrap gap-2">
+                @for (opt of [{v:'0', l:'Resale'}, {v:'1', l:'Rent'}, {v:'2', l:'Primary'}, {v:'3', l:'Resale Project'}]; track opt.v) {
+                  <button type="button" class="btn btn-sm rounded-pill px-3"
+                          [class.btn-danger]="isRecommendationValueSelected(recommendationForm.listingTypes, opt.v)"
+                          [class.btn-outline-secondary]="!isRecommendationValueSelected(recommendationForm.listingTypes, opt.v)"
+                          (click)="toggleRecommendationValue(recommendationForm.listingTypes, opt.v)">
+                    {{ opt.l }}
+                  </button>
+                }
+              </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Property Type</label>
-              <select class="form-select rounded-3" [(ngModel)]="recommendationForm.propertyType">
-                <option value="">Any</option>
-                <option value="0">Apartment</option>
-                <option value="1">Villa</option>
-                <option value="2">Shop</option>
-                <option value="3">Office</option>
-                <option value="4">Chalet</option>
-                <option value="5">Full Floor</option>
-              </select>
+
+            <!-- Property Type (multi) -->
+            <div class="col-12">
+              <label class="form-label small fw-bold d-block mb-2">Property Type</label>
+              <div class="d-flex flex-wrap gap-2">
+                @for (opt of [{v:'0', l:'Apartment'}, {v:'1', l:'Villa'}, {v:'2', l:'Shop'}, {v:'3', l:'Office'}, {v:'4', l:'Chalet'}, {v:'5', l:'Full Floor'}]; track opt.v) {
+                  <button type="button" class="btn btn-sm rounded-pill px-3"
+                          [class.btn-danger]="isRecommendationValueSelected(recommendationForm.propertyTypes, opt.v)"
+                          [class.btn-outline-secondary]="!isRecommendationValueSelected(recommendationForm.propertyTypes, opt.v)"
+                          (click)="toggleRecommendationValue(recommendationForm.propertyTypes, opt.v)">
+                    {{ opt.l }}
+                  </button>
+                }
+              </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Number of Rooms</label>
-              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.rooms">
+
+            <hr class="my-1">
+
+            <!-- Rooms range -->
+            <div class="col-6">
+              <label class="form-label small fw-bold">Min Rooms</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.minRooms">
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Number of Bathrooms</label>
-              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.bathrooms">
+            <div class="col-6">
+              <label class="form-label small fw-bold">Max Rooms</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.maxRooms">
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Total Floors</label>
-              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.floors">
+
+            <!-- Bathrooms range -->
+            <div class="col-6">
+              <label class="form-label small fw-bold">Min Bathrooms</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.minBathrooms">
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Floor Number</label>
-              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.floorNumber">
+            <div class="col-6">
+              <label class="form-label small fw-bold">Max Bathrooms</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.maxBathrooms">
             </div>
-            <div class="col-md-6">
+
+            <!-- Total Floors range - بتتلغي خالص لو Villa من ضمن الأنواع المختارة -->
+            @if (!isVillaSelectedInRecommendation) {
+              <div class="col-6">
+                <label class="form-label small fw-bold">Min Total Floors</label>
+                <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.minFloors">
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold">Max Total Floors</label>
+                <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.maxFloors">
+              </div>
+            }
+
+            <!-- Floor Number range -->
+            <div class="col-6">
+              <label class="form-label small fw-bold">Min Floor Number</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.minFloorNumber">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">Max Floor Number</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.maxFloorNumber">
+            </div>
+
+            <!-- Budget range -->
+            <div class="col-6">
               <label class="form-label small fw-bold">Min Budget (EGP)</label>
               <input type="text" class="form-control rounded-3" (input)="formatPrice($event)" #minBudget>
             </div>
-            <div class="col-md-6">
+            <div class="col-6">
               <label class="form-label small fw-bold">Max Budget (EGP)</label>
               <input type="text" class="form-control rounded-3" (input)="formatPrice($event)" #maxBudget>
             </div>
+
           </div>
         </div>
         <div class="modal-footer border-0 pt-0">
-          <button class="btn btn-light rounded-pill px-4" (click)="closeRecommendationModal()">Cancel</button>
-          <button class="btn btn-danger rounded-pill px-4" (click)="submitRecommendation(minBudget, maxBudget)">Submit</button>
+          <button class="btn btn-danger w-100 rounded-pill fw-bold py-2" (click)="submitRecommendation(minBudget, maxBudget)">
+            Submit
+          </button>
         </div>
       </div>
     </div>

@@ -32,12 +32,6 @@
       <ul class="list-unstyled pe-2">
         <!-- كل مسافات الـ li اتغيرت من mb-3 لـ mb-1 -->
         <li class="mb-1">
-          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-                  [class.active]="activeTab() === 'users'" (click)="switchTab('users')">
-            <i class="bi bi-people-fill me-3 fs-6"></i> User Accounts
-          </button>
-        </li>
-        <li class="mb-1">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"[class.active]="activeTab() === 'props'" (click)="switchTab('props')">
             <i class="bi bi-houses-fill me-3 fs-6"></i> Property Listings
           </button>
@@ -51,12 +45,78 @@
             }
           </button>
         </li>
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'ownerProps'"
+          (click)="activeTab.set('ownerProps'); loadOwnerProperties()">
+    <i class="bi bi-person-vcard me-3 fs-6"></i> Owners Properties
+    @if (ownerPropertiesPendingCount() > 0) {
+      <span class="badge bg-danger ms-2">{{ ownerPropertiesPendingCount() }}</span>
+    }
+  </button>
+</li>
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'articles'"
+          (click)="activeTab.set('articles'); loadArticles()">
+    <i class="bi bi-journal-text me-3 fs-6"></i> Blogs
+    @if (articles().length > 0) {
+      <span class="badge bg-danger ms-2">{{ articles().length }}</span>
+    }
+  </button>
+</li>
         <li class="mb-1">
-          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-                  [class.active]="activeTab() === 'settings'" (click)="switchTab('settings')">
-            <i class="bi bi-person-gear me-3 fs-6"></i> My Account
-          </button>
-        </li>
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
+          [class.active]="activeTab() === 'hotDeals'" (click)="switchTab('hotDeals')">
+    <i class="bi bi-fire me-3 fs-6"></i> Hot Deals
+  </button>
+</li>
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
+          [class.active]="activeTab() === 'recommendedVisits'" (click)="switchTab('recommendedVisits')">
+    <i class="bi bi-geo-alt-fill me-3 fs-6"></i> Recommended to Visit
+  </button>
+</li>
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'blogs'"
+          (click)="activeTab.set('blogs'); loadBlogs()">
+    <i class="bi bi-newspaper me-3 fs-6"></i> Projects
+    @if (blogs().length > 0) {
+      <span class="badge bg-danger ms-2">{{ blogs().length }}</span>
+    }
+  </button>
+</li>
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'launches'"
+          (click)="activeTab.set('launches'); loadLaunches()">
+    <i class="bi bi-rocket-takeoff me-3 fs-6"></i> Launches
+    @if (launches().length > 0) {
+      <span class="badge bg-danger ms-2">{{ launches().length }}</span>
+    }
+  </button>
+</li>
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'projectMeetings'"
+          (click)="activeTab.set('projectMeetings'); loadProjectMeetings()">
+    <i class="bi bi-calendar-check me-3 fs-6"></i> Projects Meetings
+    @if (uncontactedMeetingsCount() > 0) {
+      <span class="badge bg-danger ms-2">{{ uncontactedMeetingsCount() }}</span>
+    }
+  </button>
+</li>
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'launchMeetings'"
+          (click)="activeTab.set('launchMeetings'); loadLaunchMeetings()">
+    <i class="bi bi-calendar-check me-3 fs-6"></i> Launch Meetings
+    @if (uncontactedLaunchMeetingsCount() > 0) {
+      <span class="badge bg-danger ms-2">{{ uncontactedLaunchMeetingsCount() }}</span>
+    }
+  </button>
+</li>
         <li class="mb-1">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
                   [class.active]="activeTab() === 'banners'" (click)="switchTab('banners')">
@@ -75,21 +135,12 @@
             <i class="bi bi-bar-chart-fill me-3 fs-6"></i> Financial Charts
           </button>
         </li>
-
         <li class="mb-1">
-  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-          [class.active]="activeTab() === 'hotDeals'" (click)="switchTab('hotDeals')">
-    <i class="bi bi-fire me-3 fs-6"></i> Hot Deals
-  </button>
-</li>
-
-<li class="mb-1">
-  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-          [class.active]="activeTab() === 'recommendedVisits'" (click)="switchTab('recommendedVisits')">
-    <i class="bi bi-geo-alt-fill me-3 fs-6"></i> Recommended to Visit
-  </button>
-</li>
-
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
+                  [class.active]="activeTab() === 'projectFinancial'" (click)="switchTab('projectFinancial')">
+            <i class="bi bi-graph-up-arrow me-3 fs-6"></i> Financial Charts (Projects)
+          </button>
+        </li>
 <li  class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
           [class.active]="activeTab() === 'deletions'"
@@ -100,7 +151,12 @@
     }
   </button>
 </li>
-
+        <li class="mb-1">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
+                  [class.active]="activeTab() === 'users'" (click)="switchTab('users')">
+            <i class="bi bi-people-fill me-3 fs-6"></i> User Accounts
+          </button>
+        </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
           [class.active]="activeTab() === 'ourTeam'"
@@ -111,70 +167,17 @@
     }
   </button>
 </li>
-
+        <li class="mb-1">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
+                  [class.active]="activeTab() === 'settings'" (click)="switchTab('settings')">
+            <i class="bi bi-person-gear me-3 fs-6"></i> My Account
+          </button>
+        </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'blogs'"
-          (click)="activeTab.set('blogs'); loadBlogs()">
-    <i class="bi bi-newspaper me-3 fs-6"></i> Projects
-    @if (blogs().length > 0) {
-      <span class="badge bg-danger ms-2">{{ blogs().length }}</span>
-    }
-  </button>
-</li>
-
-<li class="mb-1">
-  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'ownerProps'"
-          (click)="activeTab.set('ownerProps'); loadOwnerProperties()">
-    <i class="bi bi-person-vcard me-3 fs-6"></i> Owners Properties
-    @if (ownerPropertiesPendingCount() > 0) {
-      <span class="badge bg-danger ms-2">{{ ownerPropertiesPendingCount() }}</span>
-    }
-  </button>
-</li>
-
-<li class="mb-1">
-  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'projectMeetings'"
-          (click)="activeTab.set('projectMeetings'); loadProjectMeetings()">
-    <i class="bi bi-calendar-check me-3 fs-6"></i> Projects Meetings
-    @if (uncontactedMeetingsCount() > 0) {
-      <span class="badge bg-danger ms-2">{{ uncontactedMeetingsCount() }}</span>
-    }
-  </button>
-</li>
-
-<li class="mb-1">
-  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'launches'"
-          (click)="activeTab.set('launches'); loadLaunches()">
-    <i class="bi bi-rocket-takeoff me-3 fs-6"></i> Launches
-    @if (launches().length > 0) {
-      <span class="badge bg-danger ms-2">{{ launches().length }}</span>
-    }
-  </button>
-</li>
-
-<li class="mb-1">
-  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'articles'"
-          (click)="activeTab.set('articles'); loadArticles()">
-    <i class="bi bi-journal-text me-3 fs-6"></i> Blogs
-    @if (articles().length > 0) {
-      <span class="badge bg-danger ms-2">{{ articles().length }}</span>
-    }
-  </button>
-</li>
-
-<li class="mb-1">
-  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'launchMeetings'"
-          (click)="activeTab.set('launchMeetings'); loadLaunchMeetings()">
-    <i class="bi bi-calendar-check me-3 fs-6"></i> Launch Meetings
-    @if (uncontactedLaunchMeetingsCount() > 0) {
-      <span class="badge bg-danger ms-2">{{ uncontactedLaunchMeetingsCount() }}</span>
-    }
+          [class.active]="activeTab() === 'lookups'"
+          (click)="switchTab('lookups')">
+    <i class="bi bi-diagram-3 me-3 fs-6"></i> Developers &amp; Projects
   </button>
 </li>
         
@@ -373,6 +376,250 @@
     </div>
   </section>
 }
+
+@if (activeTab() === 'lookups') {
+  <section class="animate__animated animate__fadeIn">
+    <h4 class="fw-bold mb-4"><i class="bi bi-diagram-3 me-2"></i>Developers &amp; Projects</h4>
+
+    <ul class="nav nav-pills mb-4">
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="lookupsSubTab() === 'developers'" (click)="lookupsSubTab.set('developers')">Developers</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="lookupsSubTab() === 'primaryProjects'" (click)="lookupsSubTab.set('primaryProjects')">Primary Projects</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="lookupsSubTab() === 'resaleProjects'" (click)="lookupsSubTab.set('resaleProjects')">Resale Projects</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="lookupsSubTab() === 'regions'" (click)="lookupsSubTab.set('regions')">Regions</button>
+      </li>
+    </ul>
+
+    @if (lookupsSubTab() !== 'developers') {
+      <div class="mb-3" style="max-width: 260px;">
+        <label class="small fw-bold text-muted">City</label>
+        <select class="form-select bg-light border-0 shadow-sm" [ngModel]="lookupCityFilter()" (ngModelChange)="onLookupCityChange(+$event)">
+          <option [value]="1">Cairo</option>
+          <option [value]="2">Alexandria</option>
+          <option [value]="3">North Coast</option>
+        </select>
+      </div>
+    }
+
+    <!-- ===== Developers ===== -->
+    @if (lookupsSubTab() === 'developers') {
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-6">
+            <label class="small fw-bold text-muted">Developer Name</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Palm Hills"
+                   [ngModel]="newDeveloperName()" (ngModelChange)="newDeveloperName.set($event)">
+          </div>
+          <div class="col-md-4">
+            <label class="small fw-bold text-muted">Code</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. PH"
+                   [ngModel]="newDeveloperCode()" (ngModelChange)="newDeveloperCode.set($event)">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddDeveloper()"
+                    [disabled]="!newDeveloperName().trim() || !newDeveloperCode().trim()">
+              <i class="bi bi-plus-lg me-1"></i> Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        @for (dev of lookupDevelopers(); track dev.id) {
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark">{{ dev.name }}</div>
+                <span class="badge bg-light text-dark border">{{ dev.code }}</span>
+              </div>
+              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteDeveloper(dev.id)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-muted">No developers yet.</p>
+        }
+      </div>
+    }
+
+    <!-- ===== Primary Projects ===== -->
+    @if (lookupsSubTab() === 'primaryProjects') {
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="small fw-bold text-muted">Project Name</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Village West"
+                   [ngModel]="newProjectName()" (ngModelChange)="newProjectName.set($event)">
+          </div>
+          <div class="col-md-2">
+            <label class="small fw-bold text-muted">Code</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. VW"
+                   [ngModel]="newProjectCode()" (ngModelChange)="newProjectCode.set($event)">
+          </div>
+          <div class="col-md-3">
+            <label class="small fw-bold text-muted">
+              Region @if (lookupCityFilter() !== 2) { <span class="text-danger">*</span> }
+            </label>
+            @if (lookupCityFilter() === 2) {
+              <input type="text" class="form-control bg-light border-0" value="Alexandria (no region needed)" disabled>
+            } @else {
+              <select class="form-select bg-light border-0" [class.border-danger]="!newProjectRegion()"
+                      [ngModel]="newProjectRegion()" (ngModelChange)="newProjectRegion.set($event)">
+                <option value="">-- Select Region --</option>
+                @for (reg of lookupRegions(); track reg.id) {
+                  <option [value]="reg.name">{{ reg.name }}</option>
+                }
+              </select>
+            }
+          </div>
+          <div class="col-md-2">
+            <label class="small fw-bold text-muted">Developer</label>
+            <select class="form-select bg-light border-0" [ngModel]="newProjectDeveloperId()" (ngModelChange)="newProjectDeveloperId.set($event)">
+              <option value="">—</option>
+              @for (dev of lookupDevelopers(); track dev.id) {
+                <option [value]="dev.id">{{ dev.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-1">
+            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddProject(0)"
+                    [disabled]="!newProjectName().trim() || !newProjectCode().trim() || (lookupCityFilter() !== 2 && !newProjectRegion())">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        @for (proj of lookupPrimaryProjects(); track proj.id) {
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark">{{ proj.name }}</div>
+                <span class="badge bg-light text-dark border me-1">{{ proj.code }}</span>
+                @if (proj.region) { <span class="small text-muted">{{ proj.region }}</span> }
+              </div>
+              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteProject(proj.id)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-muted">No primary projects for this city yet.</p>
+        }
+      </div>
+    }
+
+    <!-- ===== Resale Projects ===== -->
+    @if (lookupsSubTab() === 'resaleProjects') {
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="small fw-bold text-muted">Project Name</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Sawari"
+                   [ngModel]="newProjectName()" (ngModelChange)="newProjectName.set($event)">
+          </div>
+          <div class="col-md-3">
+            <label class="small fw-bold text-muted">Project ID / Code</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. 27"
+                   [ngModel]="newProjectCode()" (ngModelChange)="newProjectCode.set($event)">
+          </div>
+          <div class="col-md-3">
+            <label class="small fw-bold text-muted">
+              Region @if (lookupCityFilter() !== 2) { <span class="text-danger">*</span> }
+            </label>
+            @if (lookupCityFilter() === 2) {
+              <input type="text" class="form-control bg-light border-0" value="Alexandria (no region needed)" disabled>
+            } @else {
+              <select class="form-select bg-light border-0"
+                      [ngModel]="newProjectRegion()" (ngModelChange)="newProjectRegion.set($event)">
+                <option value="">-- Select Region --</option>
+                @for (reg of lookupRegions(); track reg.id) {
+                  <option [value]="reg.name">{{ reg.name }}</option>
+                }
+              </select>
+            }
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddProject(1)"
+                    [disabled]="!newProjectName().trim() || !newProjectCode().trim() || (lookupCityFilter() !== 2 && !newProjectRegion())">
+              <i class="bi bi-plus-lg me-1"></i> Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        @for (proj of lookupResaleProjects(); track proj.id) {
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark">{{ proj.name }}</div>
+                <span class="badge bg-light text-dark border me-1">ID {{ proj.code }}</span>
+                @if (proj.region) { <span class="small text-muted">{{ proj.region }}</span> }
+              </div>
+              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteProject(proj.id)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-muted">No resale projects for this city yet.</p>
+        }
+      </div>
+    }
+
+    <!-- ===== Regions ===== -->
+    @if (lookupsSubTab() === 'regions') {
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-6">
+            <label class="small fw-bold text-muted">Region Name</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. Smouha"
+                   [ngModel]="newRegionName()" (ngModelChange)="newRegionName.set($event)">
+          </div>
+          <div class="col-md-4">
+            <label class="small fw-bold text-muted">Zone Code (optional)</label>
+            <input type="text" class="form-control bg-light border-0" placeholder="e.g. 63"
+                   [ngModel]="newRegionZoneCode()" (ngModelChange)="newRegionZoneCode.set($event)">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-danger w-100 rounded-pill fw-bold" (click)="onAddRegion()"
+                    [disabled]="!newRegionName().trim()">
+              <i class="bi bi-plus-lg me-1"></i> Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        @for (reg of lookupRegions(); track reg.id) {
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold text-dark">{{ reg.name }}</div>
+                @if (reg.zoneCode) { <span class="badge bg-light text-dark border">{{ reg.zoneCode }}</span> }
+              </div>
+              <button class="btn btn-outline-danger btn-sm rounded-pill" (click)="onDeleteRegion(reg.id)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-muted">No regions for this city yet.</p>
+        }
+      </div>
+    }
+  </section>
+}
+
     <!-- تبويب إدارة المستخدمين -->
     @if (activeTab() === 'users') {
       <section class="animate__animated animate__fadeIn">
@@ -1030,63 +1277,53 @@
   <section class="animate__animated animate__fadeIn">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h4 class="fw-bold mb-0"><i class="bi bi-images me-2"></i>Load Banners</h4>
-      <small class="text-muted">Home page — between Launches &amp; Hot Deals</small>
+      <small class="text-muted">Home page — between Launches &amp; Hot Deals. Drag to reorder.</small>
     </div>
 
+    @if (bannersOrderChanged()) {
+      <div class="alert alert-warning d-flex justify-content-between align-items-center rounded-4 mb-4">
+        <span><i class="bi bi-info-circle me-2"></i>You changed the banner order.</span>
+        <button class="btn btn-dark btn-sm rounded-pill px-3 fw-bold" (click)="saveBannersOrder()">
+          <i class="bi bi-check-lg me-1"></i> Save Order
+        </button>
+      </div>
+    }
+
     <div class="row g-4">
+      @for (meta of bannerDisplayList; track meta.key) {
+        <div class="col-md-6"
+             [attr.draggable]="!!meta.imageUrl"
+             (dragstart)="onBannerDragStart(meta.key)"
+             (dragover)="onBannerDragOver($event)"
+             (drop)="onBannerDrop(meta.key)"
+             [style.cursor]="meta.imageUrl ? 'grab' : 'default'">
+          <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              @if (meta.imageUrl) { <i class="bi bi-grip-vertical text-muted"></i> }
+              <h6 class="fw-bold mb-0"><i class="bi {{ meta.icon }} text-danger me-2"></i>{{ meta.title }}</h6>
+            </div>
+            <p class="text-muted small mb-3">{{ meta.description }}</p>
 
-      <!-- Explore Home Banner -->
-      <div class="col-md-6">
-        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
-          <h6 class="fw-bold mb-1"><i class="bi bi-house-heart text-danger me-2"></i>Explore Home Banner</h6>
-          <p class="text-muted small mb-3">The left banner — opens the "Explore Your Dream Home" page.</p>
-
-          @if (exploreHomeBannerUrl()) {
-            <img [src]="exploreHomeBannerUrl()" class="w-100 rounded-3 mb-3" style="height:160px;object-fit:cover;">
-            <button class="btn btn-outline-danger rounded-3 fw-bold w-100"
-                    [disabled]="homeSectionBannerSaving() === 'explore-home'"
-                    (click)="onDeleteHomeSectionBanner('explore-home')">
-              <i class="bi bi-trash me-1"></i>
-              {{ homeSectionBannerSaving() === 'explore-home' ? 'Deleting...' : 'Delete' }}
-            </button>
-          } @else {
-            <input #exploreHomeFile type="file" accept="image/*" class="form-control bg-light border-0 rounded-3 mb-3">
-            <button class="btn btn-danger rounded-3 fw-bold w-100"
-                    [disabled]="homeSectionBannerSaving() === 'explore-home'"
-                    (click)="onUploadHomeSectionBanner('explore-home', exploreHomeFile)">
-              <i class="bi bi-upload me-1"></i>
-              {{ homeSectionBannerSaving() === 'explore-home' ? 'Uploading...' : 'Upload' }}
-            </button>
-          }
+            @if (meta.imageUrl) {
+              <img [src]="meta.imageUrl" class="w-100 rounded-3 mb-3" style="height:160px;object-fit:cover;">
+              <button class="btn btn-outline-danger rounded-3 fw-bold w-100"
+                      [disabled]="homeSectionBannerSaving() === meta.key"
+                      (click)="onDeleteHomeSectionBanner(meta.key)">
+                <i class="bi bi-trash me-1"></i>
+                {{ homeSectionBannerSaving() === meta.key ? 'Deleting...' : 'Delete' }}
+              </button>
+            } @else {
+              <input #bannerFile type="file" accept="image/*" class="form-control bg-light border-0 rounded-3 mb-3">
+              <button class="btn btn-danger rounded-3 fw-bold w-100"
+                      [disabled]="homeSectionBannerSaving() === meta.key"
+                      (click)="onUploadHomeSectionBanner(meta.key, bannerFile)">
+                <i class="bi bi-upload me-1"></i>
+                {{ homeSectionBannerSaving() === meta.key ? 'Uploading...' : 'Upload' }}
+              </button>
+            }
+          </div>
         </div>
-      </div>
-
-      <!-- Add Property Banner -->
-      <div class="col-md-6">
-        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
-          <h6 class="fw-bold mb-1"><i class="bi bi-plus-square text-danger me-2"></i>Add Property Banner</h6>
-          <p class="text-muted small mb-3">The right banner — opens the "Add Your Property" page.</p>
-
-          @if (addPropertyBannerUrl()) {
-            <img [src]="addPropertyBannerUrl()" class="w-100 rounded-3 mb-3" style="height:160px;object-fit:cover;">
-            <button class="btn btn-outline-danger rounded-3 fw-bold w-100"
-                    [disabled]="homeSectionBannerSaving() === 'add-property'"
-                    (click)="onDeleteHomeSectionBanner('add-property')">
-              <i class="bi bi-trash me-1"></i>
-              {{ homeSectionBannerSaving() === 'add-property' ? 'Deleting...' : 'Delete' }}
-            </button>
-          } @else {
-            <input #addPropertyFile type="file" accept="image/*" class="form-control bg-light border-0 rounded-3 mb-3">
-            <button class="btn btn-danger rounded-3 fw-bold w-100"
-                    [disabled]="homeSectionBannerSaving() === 'add-property'"
-                    (click)="onUploadHomeSectionBanner('add-property', addPropertyFile)">
-              <i class="bi bi-upload me-1"></i>
-              {{ homeSectionBannerSaving() === 'add-property' ? 'Uploading...' : 'Upload' }}
-            </button>
-          }
-        </div>
-      </div>
-
+      }
     </div>
   </section>
 }
@@ -1133,6 +1370,61 @@
             <i class="bi bi-folder-x fs-1 d-block mb-3 text-secondary opacity-50"></i>
             <h5 class="fw-bold text-dark">No Data File Uploaded</h5>
             <p class="mb-0">Upload an Excel or CSV file above to generate your financial charts.</p>
+          </div>
+        }
+      </section>
+    }
+
+
+@if (activeTab() === 'projectFinancial') {
+      <section class="animate__animated animate__fadeIn">
+        <h4 class="fw-bold mb-4">Financial Data Source (Projects)</h4>
+
+        <div class="alert alert-light border small text-muted rounded-4 mb-4">
+          <i class="bi bi-info-circle me-2"></i>
+          The sheet must include these columns: <strong>Project Name</strong>, <strong>Year</strong>,
+          <strong>Resale Price/m²</strong>, <strong>Primary Price/m²</strong>. Each row is one project + one year.
+          A project can have multiple rows (one per year) to build its chart over time.
+        </div>
+
+        <!-- فورم الرفع -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+          <h6 class="fw-bold mb-3">Upload New Data File</h6>
+          <div class="row g-3 align-items-end">
+            <div class="col-md-9">
+              <label class="small fw-bold text-muted">Select Excel or CSV File</label>
+              <!-- محددين إنه يقبل ملفات اكسيل او csv بس -->
+              <input type="file" #projFinFile class="form-control bg-light border-0" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+            </div>
+            <div class="col-md-3">
+              <button class="btn btn-danger w-100 rounded-pill fw-bold" 
+                      (click)="onUploadProjectFinancial(projFinFile)">Upload & Replace</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- عرض الملف الحالي -->
+        <h6 class="fw-bold mb-3 text-muted mt-5">Current Active File</h6>
+        @if (currentProjectFinancialFile()) {
+          <div class="card border-0 shadow-sm rounded-4 p-4 bg-white d-flex flex-row justify-content-between align-items-center border-start border-success border-5">
+            <div class="d-flex align-items-center">
+              <div class="bg-success-subtle text-success p-3 rounded-circle me-3 shadow-sm">
+                <i class="bi bi-file-earmark-excel-fill fs-2"></i>
+              </div>
+              <div>
+                <h5 class="fw-bold mb-1 text-dark">{{ currentProjectFinancialFile().fileName }}</h5>
+                <small class="text-muted">Uploaded on: {{ currentProjectFinancialFile().uploadedAt | date:'mediumDate' }}</small>
+              </div>
+            </div>
+            <button class="btn btn-outline-danger rounded-pill px-4 fw-bold shadow-sm" (click)="onDeleteProjectFinancial(currentProjectFinancialFile().id)">
+              <i class="bi bi-trash me-2"></i> Delete File
+            </button>
+          </div>
+        } @else {
+          <div class="alert alert-light border text-center text-muted p-5 rounded-4 shadow-sm">
+            <i class="bi bi-folder-x fs-1 d-block mb-3 text-secondary opacity-50"></i>
+            <h5 class="fw-bold text-dark">No Data File Uploaded</h5>
+            <p class="mb-0">Upload an Excel or CSV file above to generate the project price charts.</p>
           </div>
         }
       </section>

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ExcelDataReader;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Unique_X.Data;
 using Unique_X.DTOs;
@@ -43,11 +44,93 @@ namespace Unique_X.Controllers
                 .ThenByDescending(b => b.CreatedAt)
                 .ToListAsync());
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
             var blog = await _context.Blogs.FindAsync(id);
             return blog == null ? NotFound() : Ok(blog);
+        }
+
+        // 🟢 Financial Chart بتاع المشروع - بيرجع تاريخ سعر المتر (Resale + Primary) عبر السنين
+        // من الشيت العام اللي رفعه الأدمن من تاب "Financial Charts" (Projects)
+        [HttpGet("financial-history")]
+        public async Task<IActionResult> GetProjectFinancialHistory([FromQuery] string projectName)
+        {
+            if (string.IsNullOrEmpty(projectName)) return BadRequest("Project name is required");
+
+            var fileRecord = await _context.ProjectFinancialFiles.OrderByDescending(f => f.UploadedAt).FirstOrDefaultAsync();
+            if (fileRecord == null || fileRecord.FileData == null)
+                return Ok(new List<object>());
+
+            var history = new List<(int Year, decimal? Resale, decimal? Primary)>();
+
+            try
+            {
+                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+                using var stream = new MemoryStream(fileRecord.FileData);
+
+                // 🟢 التعرف التلقائي: لو الملف CSV نستخدم القارئ الخاص بيه، ولو إكسيل نستخدم العادي
+                var ext = Path.GetExtension(fileRecord.FileName).ToLower();
+                using var reader = ext == ".csv"
+                    ? ExcelDataReader.ExcelReaderFactory.CreateCsvReader(stream)
+                    : ExcelDataReader.ExcelReaderFactory.CreateReader(stream);
+
+                var result = reader.AsDataSet(new ExcelDataReader.ExcelDataSetConfiguration()
+                {
+                    ConfigureDataTable = (_) => new ExcelDataReader.ExcelDataTableConfiguration() { UseHeaderRow = true }
+                });
+
+                var dataTable = result.Tables[0];
+
+                // 🟢 البحث الذكي عن الأعمدة: Project Name / Year / Resale Price / Primary Price
+                int nameCol = -1, yearCol = -1, resaleCol = -1, primaryCol = -1;
+                for (int i = 0; i < dataTable.Columns.Count; i++)
+                {
+                    var colName = dataTable.Columns[i].ColumnName.Trim().ToLower();
+                    if (colName.Contains("project")) nameCol = i;
+                    else if (colName.Contains("year")) yearCol = i;
+                    else if (colName.Contains("resale")) resaleCol = i;
+                    else if (colName.Contains("primary")) primaryCol = i;
+                }
+
+                // لو ملقاش عمود الاسم أو السنة، يرجع فاضي
+                if (nameCol == -1 || yearCol == -1)
+                    return Ok(new List<object>());
+
+                foreach (System.Data.DataRow row in dataTable.Rows)
+                {
+                    var rowName = row[nameCol]?.ToString()?.Trim();
+                    if (string.IsNullOrEmpty(rowName) || !rowName.Equals(projectName.Trim(), StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    try
+                    {
+                        if (row[yearCol] == DBNull.Value) continue;
+                        int year = Convert.ToInt32(row[yearCol]);
+
+                        decimal? resalePrice = (resaleCol != -1 && row[resaleCol] != DBNull.Value)
+                            ? Convert.ToDecimal(row[resaleCol]) : null;
+                        decimal? primaryPrice = (primaryCol != -1 && row[primaryCol] != DBNull.Value)
+                            ? Convert.ToDecimal(row[primaryCol]) : null;
+
+                        history.Add((year, resalePrice, primaryPrice));
+                    }
+                    catch { /* لو فيه صف بايظ في الإكسيل يتجاهله ويكمل */ }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Excel Parsing Error: {ex.Message}");
+                return Ok(new List<object>());
+            }
+
+            // ترتيب من الأقدم للأحدث عشان الرسم البياني يبقى بترتيب زمني صح
+            var sorted = history
+                .OrderBy(h => h.Year)
+                .Select(h => new { h.Year, ResalePricePerMeter = h.Resale, PrimaryPricePerMeter = h.Primary })
+                .ToList();
+
+            return Ok(sorted);
         }
 
         [HttpPost]

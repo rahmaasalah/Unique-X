@@ -32,6 +32,9 @@ export class BlogDetailComponent implements OnInit {
   rentUnits = signal<any[]>([]);
   unitsLoading = signal(false);
 
+  // 🟢 Financial Chart بتاع المشروع (سعر المتر Resale/Primary عبر السنين)
+  financialHistory = signal<any[]>([]);
+
   // Main slider
   activeSlide = signal(0);
 
@@ -95,6 +98,7 @@ export class BlogDetailComponent implements OnInit {
         this.blog.set(data);
         this.isLoading.set(false);
         this.loadUnits();
+        this.loadFinancialHistory(data);
 
         // تحديث اللينك في المتصفح ليشمل اسم المشروع بدل الاعتماد على الـ id لوحده
         const slug = this.blogService.generateSlug(data.title);
@@ -104,6 +108,70 @@ export class BlogDetailComponent implements OnInit {
       error: () => this.isLoading.set(false)
     });
   }
+
+  // 🟢 بنجيب تاريخ سعر المتر لنفس اسم المشروع اللي الأدمن كتبه في الشيت (ProjectName أولاً، ولو مش موجود بناخد Title)
+  loadFinancialHistory(blog: any) {
+    const projectKey = blog?.projectName || blog?.title;
+    if (!projectKey) return;
+
+    this.blogService.getFinancialHistory(projectKey).subscribe({
+      next: (data) => this.financialHistory.set(data || []),
+      error: () => this.financialHistory.set([])
+    });
+  }
+
+  // ===================== Financial Chart (SVG بسيط من غير أي مكتبة خارجية) =====================
+  chartWidth = 640;
+  chartHeight = 260;
+  chartPad = { top: 20, right: 20, bottom: 30, left: 60 };
+
+  financialChart = computed(() => {
+    const data = this.financialHistory();
+    if (!data.length) return null;
+
+    const allPrices = data
+      .flatMap(d => [d.resalePricePerMeter, d.primaryPricePerMeter])
+      .filter((v): v is number => v !== null && v !== undefined);
+
+    if (!allPrices.length) return null;
+
+    const minPrice = Math.min(...allPrices, 0);
+    const maxPrice = Math.max(...allPrices);
+    const priceRange = (maxPrice - minPrice) || 1;
+
+    const innerW = this.chartWidth - this.chartPad.left - this.chartPad.right;
+    const innerH = this.chartHeight - this.chartPad.top - this.chartPad.bottom;
+    const xStep = data.length > 1 ? innerW / (data.length - 1) : 0;
+
+    const toX = (i: number) => this.chartPad.left + i * xStep;
+    const toY = (price: number) => this.chartPad.top + innerH - ((price - minPrice) / priceRange) * innerH;
+
+    const resalePoints = data
+      .map((d, i) => (d.resalePricePerMeter != null ? `${toX(i)},${toY(d.resalePricePerMeter)}` : null))
+      .filter(Boolean)
+      .join(' ');
+
+    const primaryPoints = data
+      .map((d, i) => (d.primaryPricePerMeter != null ? `${toX(i)},${toY(d.primaryPricePerMeter)}` : null))
+      .filter(Boolean)
+      .join(' ');
+
+    const dots = data.map((d, i) => ({
+      year: d.year,
+      x: toX(i),
+      resaleY: d.resalePricePerMeter != null ? toY(d.resalePricePerMeter) : null,
+      primaryY: d.primaryPricePerMeter != null ? toY(d.primaryPricePerMeter) : null,
+      resale: d.resalePricePerMeter,
+      primary: d.primaryPricePerMeter
+    }));
+
+    const yTicks = [minPrice, (minPrice + maxPrice) / 2, maxPrice].map(p => ({
+      y: toY(p),
+      label: this.formatNumber(Math.round(p))
+    }));
+
+    return { resalePoints, primaryPoints, dots, yTicks, baseY: toY(minPrice) };
+  });
 
   loadUnits() {
     const allIds = this.allUnitIds();

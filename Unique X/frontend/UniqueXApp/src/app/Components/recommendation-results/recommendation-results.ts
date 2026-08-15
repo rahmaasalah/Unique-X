@@ -13,6 +13,11 @@ export interface ScoredProperty {
   matchPercent: number;
 }
 
+// ملحوظة: القيم دي لازم تطابق أسماء الـ enums في الباك إند بالظبط (PropEnums.cs)
+const CITY_LABELS: Record<string, string> = { '1': 'Cairo', '2': 'Alexandria', '3': 'NorthCoast' };
+const LISTING_TYPE_LABELS: Record<string, string> = { '0': 'Resale', '1': 'Rent', '2': 'Primary', '3': 'ResaleProject' };
+const PROPERTY_TYPE_LABELS: Record<string, string> = { '0': 'Apartment', '1': 'Villa', '2': 'Shop', '3': 'Office', '4': 'Chalet', '5': 'FullFloor' };
+
 @Component({
   selector: 'app-recommendation-results',
   standalone: true,
@@ -38,17 +43,24 @@ export class RecommendationResultsComponent implements OnInit {
   private loadRecommendations(): void {
     this.isLoading.set(true);
 
-    // 🟢 بنستخدم الفلاتر الأساسية بس (Zone/Listing Type/Property Type) في الطلب للباك إند،
-    // وباقي المواصفات (أوض، حمامات، أدوار، ميزانية) بنستخدمها في المطابقة والترتيب هنا في الفرونت
-    const hardFilters: any = {};
-    if (this.criteria.city) hardFilters.city = this.criteria.city;
-    if (this.criteria.listingType) hardFilters.listingType = this.criteria.listingType;
-    if (this.criteria.propertyType) hardFilters.propertyType = this.criteria.propertyType;
-
-    this.propertyService.getProperties(hardFilters).subscribe({
+    // 🟢 المعايير التصنيفية (Zone/Listing Type/Property Type) بقت Multiple، فمش بنقدر نبعتها كفلتر واحد
+    // للباك إند - بنجيب كل العقارات وبنفلتر ونرتب هنا في الفرونت
+    this.propertyService.getProperties({}).subscribe({
       next: (response: any) => {
         const data: Property[] = response?.message ? response.data : response;
-        const scored = (data || []).map(p => this.scoreProperty(p));
+
+        const cities = this.splitParam(this.criteria.city).map(v => CITY_LABELS[v]).filter(Boolean);
+        const listingTypes = this.splitParam(this.criteria.listingType).map(v => LISTING_TYPE_LABELS[v]).filter(Boolean);
+        const propertyTypes = this.splitParam(this.criteria.propertyType).map(v => PROPERTY_TYPE_LABELS[v]).filter(Boolean);
+
+        const filtered = (data || []).filter(p => {
+          if (cities.length && !cities.includes(p.city)) return false;
+          if (listingTypes.length && !listingTypes.includes(p.listingType)) return false;
+          if (propertyTypes.length && !propertyTypes.includes(p.propertyType)) return false;
+          return true;
+        });
+
+        const scored = filtered.map(p => this.scoreProperty(p));
         // ترتيب من الأعلى تطابقًا للأقل
         scored.sort((a, b) => b.matchPercent - a.matchPercent || b.score - a.score);
         this.results.set(scored);
@@ -58,33 +70,43 @@ export class RecommendationResultsComponent implements OnInit {
     });
   }
 
+  private splitParam(val: any): string[] {
+    if (!val) return [];
+    return String(val).split(',').map(v => v.trim()).filter(Boolean);
+  }
+
+  private inRange(value: number, min?: string, max?: string): boolean {
+    const minN = min ? Number(min) : -Infinity;
+    const maxN = max ? Number(max) : Infinity;
+    return value >= minN && value <= maxN;
+  }
+
   private scoreProperty(property: Property): ScoredProperty {
     const c = this.criteria;
     const matchedFields = new Set<string>();
     let maxScore = 0;
     let score = 0;
 
-    if (c.rooms) {
+    if (c.minRooms || c.maxRooms) {
       maxScore++;
-      if (Number(property.rooms) === Number(c.rooms)) { score++; matchedFields.add('rooms'); }
+      if (this.inRange(Number(property.rooms), c.minRooms, c.maxRooms)) { score++; matchedFields.add('rooms'); }
     }
-    if (c.bathrooms) {
+    if (c.minBathrooms || c.maxBathrooms) {
       maxScore++;
-      if (Number(property.bathrooms) === Number(c.bathrooms)) { score++; matchedFields.add('bathrooms'); }
+      if (this.inRange(Number(property.bathrooms), c.minBathrooms, c.maxBathrooms)) { score++; matchedFields.add('bathrooms'); }
     }
-    if (c.floors) {
+    // معيار الـ Total Floors مش بيتبعت خالص من الفورم لو Villa مختارة، فمش هيتحسب هنا
+    if (c.minFloors || c.maxFloors) {
       maxScore++;
-      if (Number(property.totalFloors) === Number(c.floors)) { score++; matchedFields.add('floors'); }
+      if (this.inRange(Number(property.totalFloors), c.minFloors, c.maxFloors)) { score++; matchedFields.add('floors'); }
     }
-    if (c.floorNumber) {
+    if (c.minFloorNumber || c.maxFloorNumber) {
       maxScore++;
-      if (Number(property.floor) === Number(c.floorNumber)) { score++; matchedFields.add('floorNumber'); }
+      if (this.inRange(Number(property.floor), c.minFloorNumber, c.maxFloorNumber)) { score++; matchedFields.add('floorNumber'); }
     }
     if (c.minBudget || c.maxBudget) {
       maxScore++;
-      const min = c.minBudget ? Number(c.minBudget) : 0;
-      const max = c.maxBudget ? Number(c.maxBudget) : Infinity;
-      if (property.price >= min && property.price <= max) { score++; matchedFields.add('budget'); }
+      if (this.inRange(property.price, c.minBudget, c.maxBudget)) { score++; matchedFields.add('budget'); }
     }
 
     const matchPercent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 100;

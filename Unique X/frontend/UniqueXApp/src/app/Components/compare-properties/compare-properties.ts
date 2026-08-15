@@ -36,6 +36,9 @@ export class ComparePropertiesComponent implements OnInit {
         },
         error: () => this.isLoading.set(false)
       });
+    } else {
+      // 🟢 لو مفيش ids خالص (زي لما نيجي من بانر "Compare" في الهوم) - نوقف الـ Loading ونعرض شاشة فاضية بدل السبينر اللانهائي
+      this.isLoading.set(false);
     }
   });
 }

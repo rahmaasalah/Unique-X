@@ -18,6 +18,8 @@ export const routes: Routes = [
   { path: 'property-details/:id', loadComponent: () => import('./Components/property-details/property-details').then(m => m.PropertyDetailsComponent) },
   { path: 'property-details/:id/:title', loadComponent: () => import('./Components/property-details/property-details').then(m => m.PropertyDetailsComponent) },
   { path: 'compare/:ids', loadComponent: () => import('./Components/compare-properties/compare-properties').then(m => m.ComparePropertiesComponent) },
+  { path: 'compare', loadComponent: () => import('./Components/compare-properties/compare-properties').then(m => m.ComparePropertiesComponent) },
+  { path: 'price-per-meter-search', loadComponent: () => import('./Components/price-range-search/price-range-search').then(m => m.PriceRangeSearchComponent) },
   { path: 'recommendation-results', loadComponent: () => import('./Components/recommendation-results/recommendation-results').then(m => m.RecommendationResultsComponent), canActivate: [authGuard] },
   { path: 'join-our-team', loadComponent: () => import('./Components/join-our-team/join-our-team').then(m => m.JoinOurTeamComponent) },
   { path: 'blog', loadComponent: () => import('./Components/blog-list/blog-list').then(m => m.BlogListComponent) },
