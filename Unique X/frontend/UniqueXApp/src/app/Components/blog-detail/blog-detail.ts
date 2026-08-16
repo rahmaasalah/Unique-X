@@ -109,12 +109,14 @@ export class BlogDetailComponent implements OnInit {
     });
   }
 
-  // 🟢 بنجيب تاريخ سعر المتر لنفس اسم المشروع اللي الأدمن كتبه في الشيت (ProjectName أولاً، ولو مش موجود بناخد Title)
+  // 🟢 بنجيب تاريخ سعر المتر حسب "Project Name" اللي الأدمن كتبه فعليًا (blog.title)
+  // ده الحقل اللي بيظهر كعنوان الكارد وده اللي الأدمن بيدخله في الشيت، مش اللي بيختاره من قائمة "Project" الاختيارية
   loadFinancialHistory(blog: any) {
-    const projectKey = blog?.projectName || blog?.title;
-    if (!projectKey) return;
+    const primaryName = blog?.title;
+    const altName = blog?.projectName; // fallback بس لو الشيت مكتوب فيه اسم المشروع من القائمة بدل العنوان
+    if (!primaryName) return;
 
-    this.blogService.getFinancialHistory(projectKey).subscribe({
+    this.blogService.getFinancialHistory(primaryName, altName).subscribe({
       next: (data) => this.financialHistory.set(data || []),
       error: () => this.financialHistory.set([])
     });

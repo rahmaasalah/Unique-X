@@ -53,10 +53,15 @@ namespace Unique_X.Controllers
 
         // 🟢 Financial Chart بتاع المشروع - بيرجع تاريخ سعر المتر (Resale + Primary) عبر السنين
         // من الشيت العام اللي رفعه الأدمن من تاب "Financial Charts" (Projects)
+        // بنستقبل مرشحين للاسم (ProjectName والـ Title) عشان الأدمن يقدر يكتب أي واحد فيهم في الشيت والاتنين يشتغلوا
         [HttpGet("financial-history")]
-        public async Task<IActionResult> GetProjectFinancialHistory([FromQuery] string projectName)
+        public async Task<IActionResult> GetProjectFinancialHistory([FromQuery] string projectName, [FromQuery] string? altName = null)
         {
             if (string.IsNullOrEmpty(projectName)) return BadRequest("Project name is required");
+
+            var candidates = new List<string> { projectName.Trim() };
+            if (!string.IsNullOrWhiteSpace(altName) && !altName.Trim().Equals(projectName.Trim(), StringComparison.OrdinalIgnoreCase))
+                candidates.Add(altName.Trim());
 
             var fileRecord = await _context.ProjectFinancialFiles.OrderByDescending(f => f.UploadedAt).FirstOrDefaultAsync();
             if (fileRecord == null || fileRecord.FileData == null)
@@ -100,7 +105,7 @@ namespace Unique_X.Controllers
                 foreach (System.Data.DataRow row in dataTable.Rows)
                 {
                     var rowName = row[nameCol]?.ToString()?.Trim();
-                    if (string.IsNullOrEmpty(rowName) || !rowName.Equals(projectName.Trim(), StringComparison.OrdinalIgnoreCase))
+                    if (string.IsNullOrEmpty(rowName) || !candidates.Any(c => c.Equals(rowName, StringComparison.OrdinalIgnoreCase)))
                         continue;
 
                     try
