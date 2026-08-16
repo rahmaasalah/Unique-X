@@ -16,8 +16,11 @@ export class BlogService {
   reorder(orderedIds: number[])         { return this.http.put(`${this.base}/reorder`, orderedIds); }
 
   // 🟢 تاريخ سعر المتر (Resale + Primary) عبر السنين لمشروع معين - للـ Financial Chart في صفحة تفاصيل المشروع
-  getFinancialHistory(projectName: string) {
-    return this.http.get<any[]>(`${this.base}/financial-history`, { params: { projectName } });
+  // primaryName = العنوان (Title) اللي الأدمن كتبه، altName = اسم المشروع لو مختار من قائمة "Project" الاختيارية (fallback بس)
+  getFinancialHistory(primaryName: string, altName?: string) {
+    const params: any = { projectName: primaryName };
+    if (altName) params.altName = altName;
+    return this.http.get<any[]>(`${this.base}/financial-history`, { params });
   }
 
   // دلوقتي الـ URLs بتيجي من Cloudinary مباشرة — مش محتاجين نبني URL
