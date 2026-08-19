@@ -237,7 +237,9 @@ export class InvestmentCalculatorComponent {
       if (year > D) cumulativeRent += annualRent;
 
       const netWorth = propertyValue + cumulativeRent - totalPaid;
-      const roiYear = P0 > 0 ? (netWorth / P0) * 100 : 0;
+      // 🟢 ROI = نسبة الربح (المكسب) على رأس المال، مش القيمة الكلية على رأس المال
+      // عشان يبدأ من 0% في السنة صفر بدل ما يبدأ من 100%
+      const roiYear = P0 > 0 ? ((netWorth - P0) / P0) * 100 : 0;
       const roeYear = totalPaid > 0 ? (netWorth / totalPaid) * 100 : null;
 
       yearlyTable.push({

@@ -1,3 +1,9 @@
+<style>
+  /* 🟢 تأثير بصري وقت سحب أي عنصر (Projects/Launches/Banners...) - Pointer Events */
+  .dragging-item { opacity: .5; outline: 2px dashed #dc3545; outline-offset: 2px; }
+  .drag-handle { touch-action: none; }
+</style>
+
 <div class="d-flex admin-container min-vh-100 bg-light">
 
   <!-- زرار الهامبرجر (موبايل فقط) -->
@@ -2814,13 +2820,15 @@
       <div class="row g-4">
         @for (blog of blogs(); track blog.id; let i = $index) {
           <div class="col-md-6 col-xl-4"
-               draggable="true"
-               (dragstart)="onBlogDragStart(i)"
-               (dragover)="onBlogDragOver($event)"
-               (drop)="onBlogDrop(i)"
+               [attr.data-blog-index]="i"
                style="cursor: grab;">
             <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden position-relative">
-              <span class="position-absolute top-0 start-0 m-2 badge bg-dark bg-opacity-75 rounded-pill" style="z-index:2;">
+              <span class="position-absolute top-0 start-0 m-2 badge bg-dark bg-opacity-75 rounded-pill drag-handle"
+                    style="z-index:2; touch-action: none; cursor: grab;"
+                    (pointerdown)="onBlogPointerDown($event, i)"
+                    (pointermove)="onBlogPointerMove($event)"
+                    (pointerup)="onBlogPointerUp($event)"
+                    (pointercancel)="onBlogPointerUp($event)">
                 <i class="bi bi-arrows-move me-1"></i>#{{ i + 1 }}
               </span>
               @if (getBlogCoverImage(blog)) {

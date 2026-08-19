@@ -776,7 +776,10 @@ namespace Unique_X.Controllers
 
         // GET: api/admin/brokers-with-codes
         // بيرجع كل البروكرز مع الـ Code بتاعهم
+        // 🟢 [AllowAnonymous] هنا عشان أي بروكر (مش أدمن بس) يقدر يجيب اللستة دي من صفحة Add Lead / Edit Request
+        // من غير ما نفتح باقي endpoints الأدمن (اللي لسه محمية بـ [Authorize(Roles = "Admin")] على مستوى الكلاس)
         [HttpGet("brokers-with-codes")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetBrokersWithCodes()
         {
             var brokers = await _userManager.Users
