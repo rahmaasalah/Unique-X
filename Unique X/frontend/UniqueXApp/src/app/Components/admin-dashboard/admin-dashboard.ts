@@ -1864,29 +1864,46 @@ deleteProjectMeeting(meeting: any) {
 }
 
 
-// ترتيب الظهور بالـ drag & drop
+// ترتيب الظهور بالـ Drag & Drop - باستخدام Pointer Events (بدل الـ HTML5 draggable القديم)
+// عشان يشتغل صح على الموبايل والتابلت كمان، مش بس بالماوس (Pointer Events بتوحد الماوس واللمس والقلم)
 draggedBlogIndex: number | null = null;
 blogOrderChanged = signal(false);
 savingBlogOrder = signal(false);
 
-onBlogDragStart(index: number) {
+onBlogPointerDown(event: PointerEvent, index: number) {
+  event.preventDefault();
   this.draggedBlogIndex = index;
+  const handle = event.currentTarget as HTMLElement;
+  handle.setPointerCapture(event.pointerId);
+  handle.closest('[data-blog-index]')?.classList.add('dragging-item');
+  document.body.style.userSelect = 'none';
 }
 
-onBlogDragOver(event: DragEvent) {
-  event.preventDefault(); // لازم عشان الـ drop يشتغل
-}
+onBlogPointerMove(event: PointerEvent) {
+  if (this.draggedBlogIndex === null) return;
+  event.preventDefault();
 
-onBlogDrop(index: number) {
-  if (this.draggedBlogIndex === null || this.draggedBlogIndex === index) return;
+  const el = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-blog-index]') as HTMLElement | null;
+  if (!el) return;
+
+  const targetIndex = Number(el.getAttribute('data-blog-index'));
+  if (isNaN(targetIndex) || targetIndex === this.draggedBlogIndex) return;
 
   const current = [...this.blogs()];
   const [moved] = current.splice(this.draggedBlogIndex, 1);
-  current.splice(index, 0, moved);
+  current.splice(targetIndex, 0, moved);
 
   this.blogs.set(current);
-  this.draggedBlogIndex = null;
+  this.draggedBlogIndex = targetIndex;
   this.blogOrderChanged.set(true);
+}
+
+onBlogPointerUp(event: PointerEvent) {
+  const handle = event.currentTarget as HTMLElement;
+  handle.releasePointerCapture(event.pointerId);
+  handle.closest('[data-blog-index]')?.classList.remove('dragging-item');
+  document.body.style.userSelect = '';
+  this.draggedBlogIndex = null;
 }
 
 saveBlogOrder() {

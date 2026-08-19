@@ -123,7 +123,8 @@ export class AddLeadComponent implements OnInit {
           .filter((b: any) => b.brokerCode)
           .map((b: any) => ({ code: b.brokerCode, name: `${b.firstName} ${b.lastName}` }));
         this.dummyBrokers.set(formatted);
-      }
+      },
+      error: (err) => console.error('Failed to load brokers with codes:', err)
     });
   }
   
