@@ -99,6 +99,10 @@ namespace Unique_X.Models
         // Foreign Key for Broker (User)
         public string BrokerId { get; set; }
         public ApplicantUser Broker { get; set; }
+
+        // 🟢 مين اللي رفع الوحدة أصلاً - بيتسجل مرة واحدة بس وقت الإضافة ومايتغيرش أبداً حتى لو الأدمن نقل الوحدة لبروكر تاني.
+        // الفرق بينه وبين BrokerId: BrokerId = مين المسؤول عن الوحدة دلوقتي (ممكن يتغير)، AddedByBrokerId = مين اللي رفعها فعلاً (ثابت)
+        public string? AddedByBrokerId { get; set; }
         public bool IsActive { get; set; } = false;
         public bool IsApproved { get; set; } = false;
         public bool IsHotDeal { get; set; } = false;

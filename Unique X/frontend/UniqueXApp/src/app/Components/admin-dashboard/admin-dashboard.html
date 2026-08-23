@@ -173,6 +173,26 @@
     }
   </button>
 </li>
+
+<button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+        [class.active]="activeTab() === 'propertyAnalytics'" (click)="switchTab('propertyAnalytics')">
+  <i class="bi bi-graph-up me-2"></i> Property Views & Clicks
+</button>
+
+<button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+        [class.active]="activeTab() === 'searchAnalytics'" (click)="switchTab('searchAnalytics')">
+  <i class="bi bi-search me-2"></i> Search Analytics
+</button>
+
+<button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+        [class.active]="activeTab() === 'brokerLimits'" (click)="switchTab('brokerLimits')">
+  <i class="bi bi-person-lines-fill me-2"></i> Broker Limits
+</button>
+
+<button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+        [class.active]="activeTab() === 'jobPostings'" (click)="switchTab('jobPostings')">
+  <i class="bi bi-briefcase-fill me-2"></i> Job Postings
+</button>
         <li class="mb-1">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
                   [class.active]="activeTab() === 'settings'" (click)="switchTab('settings')">
@@ -381,6 +401,259 @@
       }
     </div>
   </section>
+}
+
+@if (activeTab() === 'propertyAnalytics') {
+  <div class="p-4">
+    <h4 class="fw-bold mb-4">Property Views & Clicks (Highest to Lowest)</h4>
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Code</th><th>Title</th><th>Type</th><th>Listing</th>
+          <th>Views</th><th>Clicks</th><th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of propertyAnalytics(); track item.propertyId) {
+          <tr>
+            <td>{{ item.code }}</td>
+            <td>{{ item.title }}</td>
+            <td>{{ item.propertyType }}</td>
+            <td>{{ item.listingType }}</td>
+            <td>{{ item.views }}</td>
+            <td>{{ item.clicks }}</td>
+            <td class="fw-bold">{{ item.total }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (activeTab() === 'searchAnalytics' && searchAnalytics()) {
+  <div class="p-4">
+    <h4 class="fw-bold mb-4">Search Analytics ({{ searchAnalytics().totalSearches }} total searches)</h4>
+
+    <h6 class="fw-bold mt-4">🔍 Top Search Terms</h6>
+    <table class="table table-sm">
+      <tbody>
+        @for (t of searchAnalytics().searchTerms; track t.term) {
+          <tr><td>{{ t.term }}</td><td class="text-end fw-bold">{{ t.count }}</td></tr>
+        }
+      </tbody>
+    </table>
+
+    <h6 class="fw-bold mt-4">💰 Price Ranges</h6>
+    <table class="table table-sm">
+      <tbody>
+        @for (r of searchAnalytics().priceRanges; track $index) {
+          <tr>
+            <td>{{ r.minPrice ?? '—' }} : {{ r.maxPrice ?? '—' }}</td>
+            <td class="text-end fw-bold">{{ r.count }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <h6 class="fw-bold mt-4">📐 Price/Meter Ranges</h6>
+    <table class="table table-sm">
+      <tbody>
+        @for (r of searchAnalytics().pricePerMeterRanges; track $index) {
+          <tr>
+            <td>{{ r.minPricePerMeter ?? '—' }} : {{ r.maxPricePerMeter ?? '—' }}</td>
+            <td class="text-end fw-bold">{{ r.count }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <h6 class="fw-bold mt-4">🛏️ Rooms Ranges</h6>
+    <table class="table table-sm">
+      <tbody>
+        @for (r of searchAnalytics().roomsRanges; track $index) {
+          <tr>
+            <td>{{ r.minRooms ?? '—' }} : {{ r.maxRooms ?? '—' }}</td>
+            <td class="text-end fw-bold">{{ r.count }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <h6 class="fw-bold mt-4">🚿 Bathrooms Ranges</h6>
+    <table class="table table-sm">
+      <tbody>
+        @for (r of searchAnalytics().bathroomsRanges; track $index) {
+          <tr>
+            <td>{{ r.minBathrooms ?? '—' }} : {{ r.maxBathrooms ?? '—' }}</td>
+            <td class="text-end fw-bold">{{ r.count }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <h6 class="fw-bold mt-4">🏢 Floor Ranges</h6>
+    <table class="table table-sm">
+      <tbody>
+        @for (r of searchAnalytics().floorRanges; track $index) {
+          <tr>
+            <td>{{ r.minFloor ?? '—' }} : {{ r.maxFloor ?? '—' }}</td>
+            <td class="text-end fw-bold">{{ r.count }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <h6 class="fw-bold mt-4">🏠 Most Searched Property Types</h6>
+    <table class="table table-sm">
+      <tbody>
+        @for (t of searchAnalytics().propertyTypes; track $index) {
+          <tr><td>{{ mapPropertyType(t.propertyType) }}</td><td class="text-end fw-bold">{{ t.count }}</td></tr>
+        }
+      </tbody>
+    </table>
+
+    <h6 class="fw-bold mt-4">🏷️ Most Searched Listing Types</h6>
+    <table class="table table-sm">
+      <tbody>
+        @for (t of searchAnalytics().listingTypes; track $index) {
+          <tr><td>{{ mapListingType(t.listingType) }}</td><td class="text-end fw-bold">{{ t.count }}</td></tr>
+        }
+      </tbody>
+    </table>
+
+    <h6 class="fw-bold mt-4">📍 Most Searched Cities</h6>
+    <table class="table table-sm">
+      <tbody>
+        @for (t of searchAnalytics().cities; track $index) {
+          <tr><td>{{ mapCity(t.city) }}</td><td class="text-end fw-bold">{{ t.count }}</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (activeTab() === 'brokerLimits') {
+  <div class="p-4">
+    <h4 class="fw-bold mb-4">Broker Property Limits</h4>
+    <p class="text-muted small">Total = عدد الوحدات المسؤول عنها البروكر دلوقتي (سواء رفعها هو أو اتنقلتله). الـ Limit بيتحسب على الوحدات النشطة (الغير مباعة) بس.</p>
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>Broker</th>
+          <th>Code</th>
+          <th>Added by them</th>
+          <th>Transferred to them</th>
+          <th>Current Total</th>
+          <th>Limit</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (b of brokerStats(); track b.brokerId) {
+          <tr>
+            <td>{{ b.brokerName }}</td>
+            <td>{{ b.brokerCode || '—' }}</td>
+            <td>{{ b.addedCount }}</td>
+            <td>{{ b.transferredCount }}</td>
+            <td class="fw-bold">{{ b.currentTotal }}</td>
+            <td style="width: 130px;">
+              <input type="number" class="form-control form-control-sm" min="0"
+                     [value]="b.propertyLimit" #limitInput
+                     placeholder="No limit">
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary" (click)="updateBrokerLimit(b.brokerId, limitInput.value)">
+                Save
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (activeTab() === 'jobPostings') {
+  <div class="p-4">
+    <h4 class="fw-bold mb-4">Job Postings — Join Our Team</h4>
+
+    <!-- إضافة وظيفة جديدة -->
+    <div class="card shadow-sm border-0 rounded-4 p-4 mb-4">
+      <h6 class="fw-bold text-danger mb-3">Add New Job Posting</h6>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Job Title *</label>
+          <input type="text" class="form-control rounded-3" [ngModel]="newJobTitle()" (ngModelChange)="newJobTitle.set($event)" placeholder="e.g. Senior Property Consultant">
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold">Job Summary *</label>
+          <textarea class="form-control rounded-3" rows="2" [ngModel]="newJobSummary()" (ngModelChange)="newJobSummary.set($event)" placeholder="Short summary shown on the card..."></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold">Key Responsibilities</label>
+          <textarea class="form-control rounded-3" rows="3" [ngModel]="newJobResponsibilities()" (ngModelChange)="newJobResponsibilities.set($event)" placeholder="One per line..."></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold">Qualifications</label>
+          <textarea class="form-control rounded-3" rows="3" [ngModel]="newJobQualifications()" (ngModelChange)="newJobQualifications.set($event)" placeholder="One per line..."></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold">KPIs</label>
+          <textarea class="form-control rounded-3" rows="3" [ngModel]="newJobKPIs()" (ngModelChange)="newJobKPIs.set($event)" placeholder="One per line..."></textarea>
+        </div>
+        <div class="col-12">
+          <button class="btn btn-danger rounded-pill px-4" [disabled]="isSavingJobPosting()" (click)="addJobPosting()">
+            @if (isSavingJobPosting()) {
+              <span class="spinner-border spinner-border-sm me-2"></span> Saving...
+            } @else {
+              <i class="bi bi-plus-circle me-1"></i> Add Job Posting
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- قائمة الوظائف -->
+    <h6 class="fw-bold mb-3">All Job Postings</h6>
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>Job Title</th>
+          <th>Summary</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (job of jobPostings(); track job.id) {
+          <tr>
+            <td class="fw-bold">{{ job.jobTitle }}</td>
+            <td class="text-truncate" style="max-width: 320px;">{{ job.jobSummary }}</td>
+            <td>
+              @if (job.isActive) {
+                <span class="badge bg-success">Active</span>
+              } @else {
+                <span class="badge bg-secondary">Hidden</span>
+              }
+            </td>
+            <td>{{ job.createdAt | date:'d/M/yyyy' }}</td>
+            <td class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" (click)="toggleJobPosting(job.id)">
+                {{ job.isActive ? 'Hide' : 'Activate' }}
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteJobPosting(job.id)">
+                Delete
+              </button>
+            </td>
+          </tr>
+        }
+        @if (jobPostings().length === 0) {
+          <tr><td colspan="5" class="text-center text-muted py-3">No job postings yet.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
 }
 
 @if (activeTab() === 'lookups') {
@@ -1298,14 +1571,18 @@
     <div class="row g-4">
       @for (meta of bannerDisplayList; track meta.key) {
         <div class="col-md-6"
-             [attr.draggable]="!!meta.imageUrl"
-             (dragstart)="onBannerDragStart(meta.key)"
-             (dragover)="onBannerDragOver($event)"
-             (drop)="onBannerDrop(meta.key)"
-             [style.cursor]="meta.imageUrl ? 'grab' : 'default'">
+             [attr.data-banner-key]="meta.key"
+             [class.dragging-item]="draggedBannerKey === meta.key">
           <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
             <div class="d-flex align-items-center gap-2 mb-1">
-              @if (meta.imageUrl) { <i class="bi bi-grip-vertical text-muted"></i> }
+              @if (meta.imageUrl) {
+                <i class="bi bi-grip-vertical text-muted drag-handle"
+                   style="cursor:grab; touch-action:none;"
+                   (pointerdown)="onBannerPointerDown($event, meta.key)"
+                   (pointermove)="onBannerPointerMove($event)"
+                   (pointerup)="onBannerPointerUp($event)"
+                   (pointercancel)="onBannerPointerUp($event)"></i>
+              }
               <h6 class="fw-bold mb-0"><i class="bi {{ meta.icon }} text-danger me-2"></i>{{ meta.title }}</h6>
             </div>
             <p class="text-muted small mb-3">{{ meta.description }}</p>
@@ -2821,6 +3098,7 @@
         @for (blog of blogs(); track blog.id; let i = $index) {
           <div class="col-md-6 col-xl-4"
                [attr.data-blog-index]="i"
+               [class.dragging-item]="draggedBlogIndex === i"
                style="cursor: grab;">
             <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden position-relative">
               <span class="position-absolute top-0 start-0 m-2 badge bg-dark bg-opacity-75 rounded-pill drag-handle"
@@ -2958,14 +3236,13 @@
                 <small class="text-muted fw-semibold d-block mb-2"><i class="bi bi-arrows-move me-1"></i>Existing Images (drag to reorder):</small>
                 <div class="d-flex flex-wrap gap-2">
                   @for (img of getSliderImagesArray(editingBlog()); track img; let i = $index) {
-                    <div class="position-relative" style="cursor:grab;"
-                         draggable="true"
-                         (dragstart)="onExistingSliderDragStart(i)"
-                         (dragover)="onExistingSliderDragOver($event)"
-                         (drop)="onExistingSliderDrop(i)"
-                         (dragend)="onExistingSliderDragEnd()"
-                         [style.opacity]="draggedExistingSliderIndex === i ? 0.4 : 1"
-                         (click)="setMainExistingImage(img)">
+                    <div class="position-relative" style="cursor:grab; touch-action:none;"
+                         [attr.data-slider-index]="i"
+                         (pointerdown)="onExistingSliderPointerDown($event, i)"
+                         (pointermove)="onExistingSliderPointerMove($event)"
+                         (pointerup)="onExistingSliderPointerUp($event)"
+                         (pointercancel)="onExistingSliderPointerUp($event)"
+                         [style.opacity]="draggedExistingSliderIndex === i && dragHasMoved ? 0.4 : 1">
                       <img [src]="getBlogImageUrl(img)"
                            style="width:80px;height:60px;object-fit:cover;border-radius:8px;"
                            [style.border]="isMainExistingImage(img) ? '3px solid #ef3341' : '3px solid transparent'" alt="">
@@ -2988,14 +3265,13 @@
                 <small class="text-muted fw-semibold d-block mb-2"><i class="bi bi-arrows-move me-1"></i>New Images Selected ({{ blogSliderFiles().length }}) — drag to reorder:</small>
                 <div class="d-flex flex-wrap gap-2">
                   @for (file of blogSliderFiles(); track $index; let i = $index) {
-                    <div class="position-relative" style="cursor:grab;"
-                         draggable="true"
-                         (dragstart)="onNewSliderDragStart(i)"
-                         (dragover)="onNewSliderDragOver($event)"
-                         (drop)="onNewSliderDrop(i, sliderInput)"
-                         (dragend)="onNewSliderDragEnd()"
-                         [style.opacity]="draggedNewSliderIndex === i ? 0.4 : 1"
-                         (click)="setMainNewImage(i)">
+                    <div class="position-relative" style="cursor:grab; touch-action:none;"
+                         [attr.data-new-slider-index]="i"
+                         (pointerdown)="onNewSliderPointerDown($event, i, sliderInput)"
+                         (pointermove)="onNewSliderPointerMove($event)"
+                         (pointerup)="onNewSliderPointerUp($event)"
+                         (pointercancel)="onNewSliderPointerUp($event)"
+                         [style.opacity]="draggedNewSliderIndex === i && dragHasMoved ? 0.4 : 1">
                       <img [src]="getSliderPreviewUrl(i)"
                            style="width:80px;height:60px;object-fit:cover;border-radius:8px;"
                            [style.border]="isMainNewImage(i) ? '3px solid #ef3341' : '2px solid #ef3341'"
@@ -3395,13 +3671,16 @@
       <div class="row g-4">
         @for (launch of launches(); track launch.id; let i = $index) {
           <div class="col-md-6 col-xl-4"
-               draggable="true"
-               (dragstart)="onLaunchDragStart(i)"
-               (dragover)="onLaunchDragOver($event)"
-               (drop)="onLaunchDrop(i)"
+               [attr.data-launch-index]="i"
+               [class.dragging-item]="draggedLaunchIndex === i"
                style="cursor: grab;">
             <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden position-relative">
-              <span class="position-absolute top-0 start-0 m-2 badge bg-dark bg-opacity-75 rounded-pill" style="z-index:2;">
+              <span class="position-absolute top-0 start-0 m-2 badge bg-dark bg-opacity-75 rounded-pill drag-handle"
+                    style="z-index:2; touch-action: none; cursor: grab;"
+                    (pointerdown)="onLaunchPointerDown($event, i)"
+                    (pointermove)="onLaunchPointerMove($event)"
+                    (pointerup)="onLaunchPointerUp($event)"
+                    (pointercancel)="onLaunchPointerUp($event)">
                 <i class="bi bi-arrows-move me-1"></i>#{{ i + 1 }}
               </span>
               @if (getLaunchCoverImage(launch)) {
@@ -3543,14 +3822,13 @@
                 <small class="text-muted fw-semibold d-block mb-2"><i class="bi bi-arrows-move me-1"></i>Existing Images (drag to reorder):</small>
                 <div class="d-flex flex-wrap gap-2">
                   @for (img of getSliderImagesArray(editingLaunch()); track img; let i = $index) {
-                    <div class="position-relative" style="cursor:grab;"
-                         draggable="true"
-                         (dragstart)="onExistingLaunchSliderDragStart(i)"
-                         (dragover)="onExistingLaunchSliderDragOver($event)"
-                         (drop)="onExistingLaunchSliderDrop(i)"
-                         (dragend)="onExistingLaunchSliderDragEnd()"
-                         [style.opacity]="draggedExistingLaunchSliderIndex === i ? 0.4 : 1"
-                         (click)="setLaunchMainExistingImage(img)">
+                    <div class="position-relative" style="cursor:grab; touch-action:none;"
+                         [attr.data-launch-slider-index]="i"
+                         (pointerdown)="onExistingLaunchSliderPointerDown($event, i)"
+                         (pointermove)="onExistingLaunchSliderPointerMove($event)"
+                         (pointerup)="onExistingLaunchSliderPointerUp($event)"
+                         (pointercancel)="onExistingLaunchSliderPointerUp($event)"
+                         [style.opacity]="draggedExistingLaunchSliderIndex === i && dragHasMoved ? 0.4 : 1">
                       <img [src]="getLaunchImageUrl(img)"
                            style="width:80px;height:60px;object-fit:cover;border-radius:8px;"
                            [style.border]="isLaunchMainExistingImage(img) ? '3px solid #ef3341' : '3px solid transparent'" alt="">
@@ -3573,14 +3851,13 @@
                 <small class="text-muted fw-semibold d-block mb-2"><i class="bi bi-arrows-move me-1"></i>New Images Selected ({{ launchSliderFiles().length }}) — drag to reorder:</small>
                 <div class="d-flex flex-wrap gap-2">
                   @for (file of launchSliderFiles(); track $index; let i = $index) {
-                    <div class="position-relative" style="cursor:grab;"
-                         draggable="true"
-                         (dragstart)="onNewLaunchSliderDragStart(i)"
-                         (dragover)="onNewLaunchSliderDragOver($event)"
-                         (drop)="onNewLaunchSliderDrop(i, sliderInput)"
-                         (dragend)="onNewLaunchSliderDragEnd()"
-                         [style.opacity]="draggedNewLaunchSliderIndex === i ? 0.4 : 1"
-                         (click)="setLaunchMainNewImage(i)">
+                    <div class="position-relative" style="cursor:grab; touch-action:none;"
+                         [attr.data-new-launch-slider-index]="i"
+                         (pointerdown)="onNewLaunchSliderPointerDown($event, i, sliderInput)"
+                         (pointermove)="onNewLaunchSliderPointerMove($event)"
+                         (pointerup)="onNewLaunchSliderPointerUp($event)"
+                         (pointercancel)="onNewLaunchSliderPointerUp($event)"
+                         [style.opacity]="draggedNewLaunchSliderIndex === i && dragHasMoved ? 0.4 : 1">
                       <img [src]="getLaunchSliderPreviewUrl(i)"
                            style="width:80px;height:60px;object-fit:cover;border-radius:8px;"
                            [style.border]="isLaunchMainNewImage(i) ? '3px solid #ef3341' : '2px solid #ef3341'"

@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AlertService } from '../../Services/alert';
+import { AdminService } from '../../Services/admin';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -12,14 +13,56 @@ import { environment } from '../../../environments/environment';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './join-our-team.html'
 })
-export class JoinOurTeamComponent {
+export class JoinOurTeamComponent implements OnInit {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
   private alertService = inject(AlertService);
+  private adminService = inject(AdminService);
   private router = inject(Router);
 
   selectedFile = signal<File | null>(null);
   isSubmitting = signal(false);
+
+  // ===================== Job Postings =====================
+  jobs = signal<any[]>([]);
+  jobsLoading = signal(true);
+  selectedJob = signal<any>(null);
+  // list = كروت الوظائف، detail = تفاصيل وظيفة واحدة، form = الفورم اللي كانت موجودة أصلاً
+  viewMode = signal<'list' | 'detail' | 'form'>('list');
+
+  ngOnInit() {
+    this.adminService.getActiveJobPostings().subscribe({
+      next: (data) => {
+        this.jobs.set(data);
+        this.jobsLoading.set(false);
+      },
+      error: () => this.jobsLoading.set(false)
+    });
+  }
+
+  openJobDetail(job: any) {
+    this.selectedJob.set(job);
+    this.viewMode.set('detail');
+  }
+
+  backToList() {
+    this.selectedJob.set(null);
+    this.viewMode.set('list');
+  }
+
+  backToDetail() {
+    this.viewMode.set('detail');
+  }
+
+  openApplyForm() {
+    this.viewMode.set('form');
+  }
+
+  // 🟢 بيحول نص متعدد الأسطر (Key Responsibilities / Qualifications / KPIs) لقائمة نقاط
+  toLines(text: string): string[] {
+    if (!text) return [];
+    return text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  }
 
   form: FormGroup = this.fb.group({
     fullName:              ['', Validators.required],

@@ -328,6 +328,13 @@ export class BlogDetailComponent implements OnInit {
     });
   }
 
+  // 🟢 سكرول أفقي بأسهم يمين وشمال لأقسام الوحدات (نفس اللي في صفحة الهوم)
+  scrollH(container: HTMLElement, dir: number) {
+    if (!container) return;
+    const amount = container.clientWidth * 0.8 * dir;
+    container.scrollBy({ left: amount, behavior: 'smooth' });
+  }
+
   formatNumber(value: any): string {
     if (!value && value !== 0) return '';
     const num = typeof value === 'string'

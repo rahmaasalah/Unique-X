@@ -83,6 +83,15 @@ export class PropertyCardComponent {
     return plans[0];
   }
 
+  // 🟢 بيصغّر صورة الغلاف في الكارت بدل ما يحمّل الصورة بحجمها الكامل (1200px) في نتائج البحث/القوائم
+  // شغالة على روابط Cloudinary بس - بتضيف transformation في نفس الرابط من غير رفع أي نسخة جديدة،
+  // وCloudinary بيولّد النسخة المصغّرة أول مرة وبعدها بيكاش لها، فمفيش أي تأخير ملحوظ
+  getThumbUrl(url: string | undefined | null, width: number = 400): string {
+    if (!url) return 'assets/placeholder.jpg';
+    if (!url.includes('/upload/')) return url; // مش رابط Cloudinary (زي الـ placeholder المحلي)، رجّعه زي ما هو
+    return url.replace('/upload/', `/upload/w_${width},c_fill,q_auto,f_auto/`);
+  }
+
   getWhatsAppLink(phone: string, code: string, id: number): string {
     if (!phone) return '#';
     let cleanedPhone = phone.replace(/\D/g, '');
@@ -287,6 +296,7 @@ export class PropertyCardComponent {
       this.router.navigate(['/compare', newIds]);
 
     } else {
+      this.adminService.trackAction('PropertyClick', this.property.id).subscribe();
       this.router.navigate(['/property-details', this.property.id]);
     }
   }

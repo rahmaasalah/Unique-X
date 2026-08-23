@@ -128,6 +128,8 @@ namespace Unique_X.DTOs
         public int? ListingType { get; set; }
         public string? BrokerId { get; set; }
         public string? BrokerName { get; set; }
+        public int? PageNumber { get; set; }
+        public int? PageSize { get; set; }
 
         public string? Code { get; set; }
         public int? BuildYear { get; set; }

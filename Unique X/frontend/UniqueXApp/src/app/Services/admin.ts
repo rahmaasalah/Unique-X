@@ -325,4 +325,53 @@ addRegion(name: string, city: number, zoneCode?: string): Observable<any> {
 deleteRegion(id: number): Observable<any> {
   return this.http.delete(`${this.baseUrl}/regions/${id}`);
 }
+
+logSearch(filters: any) {
+  return this.http.post(`${this.baseUrl}/log-search`, filters);
+}
+
+getPropertiesAnalytics() {
+  return this.http.get<any[]>(`${this.baseUrl}/properties-analytics`);
+}
+
+getSearchAnalytics() {
+  return this.http.get<any>(`${this.baseUrl}/search-analytics`);
+}
+
+getBrokerStats(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/broker-stats`);
+}
+
+setBrokerLimit(brokerId: string, limit: number | null): Observable<any> {
+  return this.http.patch(`${this.baseUrl}/set-broker-limit/${brokerId}`, { limit });
+}
+
+// --- Job Postings (Join Our Team) ---
+getActiveJobPostings(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/job-postings`);
+}
+
+getJobPostingById(id: number): Observable<any> {
+  return this.http.get<any>(`${this.baseUrl}/job-postings/${id}`);
+}
+
+getAllJobPostings(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/job-postings/all`);
+}
+
+addJobPosting(dto: any): Observable<any> {
+  return this.http.post(`${this.baseUrl}/job-postings`, dto);
+}
+
+updateJobPosting(id: number, dto: any): Observable<any> {
+  return this.http.put(`${this.baseUrl}/job-postings/${id}`, dto);
+}
+
+toggleJobPosting(id: number): Observable<any> {
+  return this.http.patch(`${this.baseUrl}/job-postings/${id}/toggle`, {});
+}
+
+deleteJobPosting(id: number): Observable<any> {
+  return this.http.delete(`${this.baseUrl}/job-postings/${id}`);
+}
 }

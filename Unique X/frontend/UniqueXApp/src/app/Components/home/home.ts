@@ -42,16 +42,12 @@ export class HomeComponent implements OnInit {
     propertyTypes: string[];
     minRooms: string; maxRooms: string;
     minBathrooms: string; maxBathrooms: string;
-    minFloors: string; maxFloors: string;
-    minFloorNumber: string; maxFloorNumber: string;
   } = {
     cities: [],
     listingTypes: [],
     propertyTypes: [],
     minRooms: '', maxRooms: '',
-    minBathrooms: '', maxBathrooms: '',
-    minFloors: '', maxFloors: '',
-    minFloorNumber: '', maxFloorNumber: ''
+    minBathrooms: '', maxBathrooms: ''
   };
 
   adminPhone = signal<string>('');
@@ -263,11 +259,6 @@ isRecommendationValueSelected(list: string[], value: string): boolean {
   return list.includes(value);
 }
 
-// لو "Villa" من ضمن الأنواع المختارة، بنلغي معيار "Total Floors" خالص
-get isVillaSelectedInRecommendation(): boolean {
-  return this.recommendationForm.propertyTypes.includes('1');
-}
-
 submitRecommendation(minBudgetEl: HTMLInputElement, maxBudgetEl: HTMLInputElement) {
   const f = this.recommendationForm;
   const queryParams: any = {};
@@ -280,14 +271,6 @@ submitRecommendation(minBudgetEl: HTMLInputElement, maxBudgetEl: HTMLInputElemen
   if (f.maxRooms) queryParams.maxRooms = f.maxRooms;
   if (f.minBathrooms) queryParams.minBathrooms = f.minBathrooms;
   if (f.maxBathrooms) queryParams.maxBathrooms = f.maxBathrooms;
-
-  // لو فيلا مختارة، مش بنبعت معيار الـ Total Floors خالص
-  if (!this.isVillaSelectedInRecommendation) {
-    if (f.minFloors) queryParams.minFloors = f.minFloors;
-    if (f.maxFloors) queryParams.maxFloors = f.maxFloors;
-  }
-  if (f.minFloorNumber) queryParams.minFloorNumber = f.minFloorNumber;
-  if (f.maxFloorNumber) queryParams.maxFloorNumber = f.maxFloorNumber;
 
   const minBudget = minBudgetEl?.value?.replace(/,/g, '');
   const maxBudget = maxBudgetEl?.value?.replace(/,/g, '');
@@ -359,6 +342,11 @@ loadHomeSectionBanners() {
 }
 
 // 🟢 بتحدد الرابط/الأكشن المناسب لكل بانر حسب الـ key بتاعه (بيدعم أكتر من مفتاح لنفس الرابط، زي add-property و add-property-2)
+// 🟢 بترجع بانر معين حسب الـ key بتاعه عشان نوزعهم في أماكن مختلفة في الصفحة (بدل ما يبقوا كلهم مجمعين مكان واحد)
+getBanner(key: string): any {
+  return this.homeSectionBanners().find(b => b.key === key) || null;
+}
+
 onBannerClick(key: string): void {
   if (key === 'explore-home') {
     this.router.navigate(['/explore-home']);
@@ -609,6 +597,32 @@ getSmartSearchTerm(term: string): string {
     maxFloor: params.maxFloor || null
   };
 
+  // 🟢 لازم نبعت أرقام فعلية (مش نصوص) للـ log-search، لأن الـ DTO في الباك اند int? وبيرفض النصوص
+  const toNum = (v: any): number | null => {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    return isNaN(n) ? null : n;
+  };
+
+  const searchLogPayload = {
+    searchTerm: filters.searchTerm,
+    projectName: filters.projectName,
+    city: toNum(filters.city),
+    propertyType: toNum(filters.propertyType),
+    listingType: toNum(filters.listingType),
+    minPrice: toNum(filters.minPrice),
+    maxPrice: toNum(filters.maxPrice),
+    minPricePerMeter: toNum(filters.minPricePerMeter),
+    maxPricePerMeter: toNum(filters.maxPricePerMeter),
+    minRooms: toNum(filters.minRooms),
+    maxRooms: toNum(filters.maxRooms),
+    minBathrooms: toNum(filters.minBathrooms),
+    maxBathrooms: toNum(filters.maxBathrooms),
+    minFloor: toNum(filters.minFloor),
+    maxFloor: toNum(filters.maxFloor)
+  };
+
+  this.adminService.logSearch(searchLogPayload).subscribe({ error: () => {} });
   this.router.navigate(['/home'], { queryParams: filters });
 }
 clearFilters() {

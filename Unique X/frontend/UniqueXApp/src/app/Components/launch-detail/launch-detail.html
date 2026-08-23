@@ -1,4 +1,43 @@
+<style>
+  /* 🟢 سكرول أفقي بأسهم يمين وشمال — نفس النظام المستخدم في صفحة الهوم */
+  .h-scroll-wrap { position: relative; padding: 0 46px; }
+  .h-scroll {
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    align-items: stretch;
+  }
+  .h-scroll::-webkit-scrollbar { display: none; }
+  .h-scroll-item { flex: 0 0 auto; scroll-snap-align: start; }
+  .h-scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.08);
+    box-shadow: 0 4px 14px rgba(0,0,0,.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef3341;
+    cursor: pointer;
+  }
+  .h-scroll-arrow:hover { background: #ef3341; color: #fff; }
+  .h-scroll-arrow.left { left: 0; }
+  .h-scroll-arrow.right { right: 0; }
+  @media (max-width: 767.98px) {
+    .h-scroll-arrow { display: none; }
+    .h-scroll-wrap { padding: 0; }
+  }
+</style>
 <div style="min-height:100vh;background:#fff;">
+
 
   @if (isLoading()) {
     <div class="text-center py-5">
@@ -333,12 +372,20 @@
                 <h6 class="fw-bold text-dark mb-3 mt-2">
                   <i class="bi bi-stars text-danger me-1"></i> Primary
                 </h6>
-                <div class="row g-3 mb-4">
-                  @for (unit of primaryUnits(); track unit.id) {
-                    <div class="col-md-6">
-                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
-                    </div>
-                  }
+                <div class="h-scroll-wrap mb-4">
+                  <button class="h-scroll-arrow left" (click)="scrollH(launchPrimaryScroll, -1)" aria-label="Scroll left">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                  <div class="d-flex h-scroll gap-3 pb-2" #launchPrimaryScroll>
+                    @for (unit of primaryUnits(); track unit.id) {
+                      <div class="h-scroll-item" style="width:320px;">
+                        <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
+                      </div>
+                    }
+                  </div>
+                  <button class="h-scroll-arrow right" (click)="scrollH(launchPrimaryScroll, 1)" aria-label="Scroll right">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
                 </div>
               }
 
@@ -347,12 +394,20 @@
                 <h6 class="fw-bold text-dark mb-3 mt-2">
                   <i class="bi bi-house-door text-danger me-1"></i> Resale
                 </h6>
-                <div class="row g-3 mb-4">
-                  @for (unit of resaleUnits(); track unit.id) {
-                    <div class="col-md-6">
-                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
-                    </div>
-                  }
+                <div class="h-scroll-wrap mb-4">
+                  <button class="h-scroll-arrow left" (click)="scrollH(launchResaleScroll, -1)" aria-label="Scroll left">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                  <div class="d-flex h-scroll gap-3 pb-2" #launchResaleScroll>
+                    @for (unit of resaleUnits(); track unit.id) {
+                      <div class="h-scroll-item" style="width:320px;">
+                        <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
+                      </div>
+                    }
+                  </div>
+                  <button class="h-scroll-arrow right" (click)="scrollH(launchResaleScroll, 1)" aria-label="Scroll right">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
                 </div>
               }
 
@@ -361,23 +416,39 @@
                 <h6 class="fw-bold text-dark mb-3 mt-2">
                   <i class="bi bi-key text-danger me-1"></i> For Rent
                 </h6>
-                <div class="row g-3 mb-4">
-                  @for (unit of rentUnits(); track unit.id) {
-                    <div class="col-md-6">
-                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
-                    </div>
-                  }
+                <div class="h-scroll-wrap mb-4">
+                  <button class="h-scroll-arrow left" (click)="scrollH(launchRentScroll, -1)" aria-label="Scroll left">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                  <div class="d-flex h-scroll gap-3 pb-2" #launchRentScroll>
+                    @for (unit of rentUnits(); track unit.id) {
+                      <div class="h-scroll-item" style="width:320px;">
+                        <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
+                      </div>
+                    }
+                  </div>
+                  <button class="h-scroll-arrow right" (click)="scrollH(launchRentScroll, 1)" aria-label="Scroll right">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
                 </div>
               }
 
               <!-- Fallback: old unitIdsJson (no category) -->
               @if (primaryUnits().length === 0 && resaleUnits().length === 0 && rentUnits().length === 0) {
-                <div class="row g-3">
-                  @for (unit of units(); track unit.id) {
-                    <div class="col-md-6">
-                      <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
-                    </div>
-                  }
+                <div class="h-scroll-wrap">
+                  <button class="h-scroll-arrow left" (click)="scrollH(launchFallbackScroll, -1)" aria-label="Scroll left">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                  <div class="d-flex h-scroll gap-3 pb-2" #launchFallbackScroll>
+                    @for (unit of units(); track unit.id) {
+                      <div class="h-scroll-item" style="width:320px;">
+                        <ng-container *ngTemplateOutlet="unitCard; context: {unit: unit}"></ng-container>
+                      </div>
+                    }
+                  </div>
+                  <button class="h-scroll-arrow right" (click)="scrollH(launchFallbackScroll, 1)" aria-label="Scroll right">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
                 </div>
               }
             </div>

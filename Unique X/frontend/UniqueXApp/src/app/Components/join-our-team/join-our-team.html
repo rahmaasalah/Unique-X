@@ -1,12 +1,103 @@
 <section class="py-5" style="background: #f8f9fa; min-height: 100vh;">
-  <div class="container" style="max-width: 800px;">
+  <div class="container" style="max-width: 900px;">
 
     <!-- Header -->
     <div class="text-center mb-5">
       <h2 class="fw-bold" style="color: #1a1a2e;">Join Our Team</h2>
-      <p class="text-muted">Fill in your details and we'll get back to you soon.</p>
+      @if (viewMode() === 'list') {
+        <p class="text-muted">Explore our open positions and find where you fit best.</p>
+      } @else if (viewMode() === 'detail') {
+        <p class="text-muted">Take a look at the role details below.</p>
+      } @else {
+        <p class="text-muted">Fill in your details and we'll get back to you soon.</p>
+      }
       <div style="width: 60px; height: 4px; background: #ef3341; margin: 0 auto; border-radius: 2px;"></div>
     </div>
+
+    <!-- ===================== 1. قائمة الوظائف (كروت) ===================== -->
+    @if (viewMode() === 'list') {
+
+      @if (jobsLoading()) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-danger" role="status"></div>
+        </div>
+      }
+
+      @if (!jobsLoading() && jobs().length === 0) {
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-briefcase fs-1 opacity-25 d-block mb-3"></i>
+          No open positions right now. Check back soon!
+        </div>
+      }
+
+      <div class="row g-4">
+        @for (job of jobs(); track job.id) {
+          <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-4 p-4 h-100 cursor-pointer"
+                 style="cursor:pointer; transition: transform .15s ease, box-shadow .15s ease;"
+                 (click)="openJobDetail(job)">
+              <h5 class="fw-bold mb-2" style="color:#1a1a2e;">{{ job.jobTitle }}</h5>
+              <p class="text-muted mb-3">{{ job.jobSummary }}</p>
+              <div class="mt-auto">
+                <span class="text-danger fw-bold small">View Details <i class="bi bi-arrow-left ms-1"></i></span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ===================== 2. تفاصيل الوظيفة ===================== -->
+    @if (viewMode() === 'detail' && selectedJob()) {
+      <div class="card shadow-sm border-0 rounded-4 p-4 mb-4">
+        <button class="btn btn-sm btn-outline-secondary rounded-pill mb-3" style="width: fit-content;" (click)="backToList()">
+          <i class="bi bi-arrow-right me-1"></i> Back to positions
+        </button>
+
+        <h4 class="fw-bold mb-2" style="color:#1a1a2e;">{{ selectedJob().jobTitle }}</h4>
+        <p class="text-muted mb-4">{{ selectedJob().jobSummary }}</p>
+
+        @if (toLines(selectedJob().keyResponsibilities).length > 0) {
+          <h6 class="fw-bold text-danger mb-2"><i class="bi bi-list-check me-2"></i>Key Responsibilities</h6>
+          <ul class="mb-4">
+            @for (line of toLines(selectedJob().keyResponsibilities); track $index) {
+              <li class="text-muted mb-1">{{ line }}</li>
+            }
+          </ul>
+        }
+
+        @if (toLines(selectedJob().qualifications).length > 0) {
+          <h6 class="fw-bold text-danger mb-2"><i class="bi bi-mortarboard me-2"></i>Qualifications</h6>
+          <ul class="mb-4">
+            @for (line of toLines(selectedJob().qualifications); track $index) {
+              <li class="text-muted mb-1">{{ line }}</li>
+            }
+          </ul>
+        }
+
+        @if (toLines(selectedJob().kpis).length > 0) {
+          <h6 class="fw-bold text-danger mb-2"><i class="bi bi-graph-up-arrow me-2"></i>KPIs</h6>
+          <ul class="mb-4">
+            @for (line of toLines(selectedJob().kpis); track $index) {
+              <li class="text-muted mb-1">{{ line }}</li>
+            }
+          </ul>
+        }
+
+        <div class="text-center mt-3">
+          <button type="button" class="btn btn-danger px-5 py-2 rounded-pill fw-bold shadow" (click)="openApplyForm()">
+            <i class="bi bi-send-fill me-2"></i> Apply
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ===================== 3. فورم التقديم ===================== -->
+    @if (viewMode() === 'form') {
+
+      <button class="btn btn-sm btn-outline-secondary rounded-pill mb-3" style="width: fit-content;" (click)="backToDetail()">
+        <i class="bi bi-arrow-right me-1"></i> Back to job details
+      </button>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
       <div class="card shadow-sm border-0 rounded-4 p-4 mb-4">
@@ -255,6 +346,8 @@
         </button>
       </div>
     </form>
+
+    }
 
   </div>
 </section>

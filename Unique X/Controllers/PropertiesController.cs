@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Unique_X.Data;
 using Unique_X.DTOs;
 using Unique_X.Services;
+using Unique_X.Services;
 using Unique_X.Services.Interface;
 
 namespace Unique_X.Controllers
@@ -39,9 +40,15 @@ namespace Unique_X.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _propertiesService.AddPropertyAsync(dto, brokerId);
-
-            return Ok(result);
+            try
+            {
+                var result = await _propertiesService.AddPropertyAsync(dto, brokerId);
+                return Ok(result);
+            }
+            catch (PropertyLimitExceededException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
         }
 
         [HttpGet]

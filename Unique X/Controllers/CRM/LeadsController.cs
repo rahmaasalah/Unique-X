@@ -421,6 +421,8 @@ namespace Unique_X.Controllers.CRM
                     lead.FullName,
                     lead.PhoneNumber,
                     lead.Email,
+                    // 👇 محتاجينه في الفرونت إند عشان نتأكد هل الليد ده بتاع البروكر اللي فاتح الصفحة ولا لأ
+                    lead.BrokerId,
                     // 👇 التعديل الأول: عرض اسم البروكر بدل الإيميل
                     BrokerName = lead.Broker.FirstName + " " + lead.Broker.LastName,
                     StatusId = lead.LeadStatusId,

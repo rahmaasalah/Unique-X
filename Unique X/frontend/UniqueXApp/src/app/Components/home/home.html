@@ -542,31 +542,35 @@
                     {{ blog.excerpt }}
                   </p>
 
-                  <!-- Price per meter -->
-                  @if (blog.pricePerMeterResale || blog.pricePerMeterPrimary) {
-                    <div class="d-flex gap-3 mb-3">
-                      @if (blog.pricePerMeterResale) {
-                        <div class="text-center bg-danger-subtle rounded-3 px-3 py-2 flex-fill">
-                          <div class="small text-muted">Resale/m²</div>
-                          <div class="fw-bold text-danger">{{ currencyService.format(blog.pricePerMeterResale) }}</div>
-                        </div>
-                      }
-                      @if (blog.pricePerMeterPrimary) {
-                        <div class="text-center bg-light rounded-3 px-3 py-2 flex-fill">
-                          <div class="small text-muted">Primary/m²</div>
-                          <div class="fw-bold text-dark">{{ currencyService.format(blog.pricePerMeterPrimary) }}</div>
-                        </div>
-                      }
+                  <!-- 🟢 كل الجزء ده (السعر + الزرار + View Project) بقى مجمّع في container واحد بـ mt-auto
+                       عشان يفضل ثابت في نفس المكان أسفل كل الكروت، بغض النظر عن طول العنوان/الـ badges فوقه -->
+                  <div class="mt-auto">
+                    <!-- Price per meter -->
+                    @if (blog.pricePerMeterResale || blog.pricePerMeterPrimary) {
+                      <div class="d-flex gap-3 mb-3">
+                        @if (blog.pricePerMeterResale) {
+                          <div class="text-center bg-danger-subtle rounded-3 px-3 py-2 flex-fill">
+                            <div class="small text-muted">Resale/m²</div>
+                            <div class="fw-bold text-danger">{{ currencyService.format(blog.pricePerMeterResale) }}</div>
+                          </div>
+                        }
+                        @if (blog.pricePerMeterPrimary) {
+                          <div class="text-center bg-light rounded-3 px-3 py-2 flex-fill">
+                            <div class="small text-muted">Primary/m²</div>
+                            <div class="fw-bold text-dark">{{ currencyService.format(blog.pricePerMeterPrimary) }}</div>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <button class="btn btn-danger w-100 rounded-3 fw-bold py-2 mb-2"
+                            (click)="sendBlogInquiry(blog, $event)">
+                      <i class="bi bi-whatsapp me-2"></i>Download Brochure
+                    </button>
+
+                    <div class="d-flex align-items-center justify-content-end">
+                      <span class="text-danger fw-semibold small">View Project →</span>
                     </div>
-                  }
-
-                  <button class="btn btn-danger w-100 rounded-3 fw-bold py-2 mb-2"
-                          (click)="sendBlogInquiry(blog, $event)">
-                    <i class="bi bi-whatsapp me-2"></i>Download Brochure
-                  </button>
-
-                  <div class="mt-auto d-flex align-items-center justify-content-end">
-                    <span class="text-danger fw-semibold small">View Project →</span>
                   </div>
                 </div>
               </div>
@@ -635,31 +639,34 @@
                     {{ launch.excerpt }}
                   </p>
 
-                  <!-- Price per meter -->
-                  @if (launch.pricePerMeterResale || launch.pricePerMeterPrimary) {
-                    <div class="d-flex gap-3 mb-3">
-                      @if (launch.pricePerMeterResale) {
-                        <div class="text-center bg-danger-subtle rounded-3 px-3 py-2 flex-fill">
-                          <div class="small text-muted">Resale/m²</div>
-                          <div class="fw-bold text-danger">{{ currencyService.format(launch.pricePerMeterResale) }}</div>
-                        </div>
-                      }
-                      @if (launch.pricePerMeterPrimary) {
-                        <div class="text-center bg-light rounded-3 px-3 py-2 flex-fill">
-                          <div class="small text-muted">Primary/m²</div>
-                          <div class="fw-bold text-dark">{{ currencyService.format(launch.pricePerMeterPrimary) }}</div>
-                        </div>
-                      }
+                  <!-- 🟢 نفس الإصلاح: كل الجزء ده مجمّع في container واحد بـ mt-auto -->
+                  <div class="mt-auto">
+                    <!-- Price per meter -->
+                    @if (launch.pricePerMeterResale || launch.pricePerMeterPrimary) {
+                      <div class="d-flex gap-3 mb-3">
+                        @if (launch.pricePerMeterResale) {
+                          <div class="text-center bg-danger-subtle rounded-3 px-3 py-2 flex-fill">
+                            <div class="small text-muted">Resale/m²</div>
+                            <div class="fw-bold text-danger">{{ currencyService.format(launch.pricePerMeterResale) }}</div>
+                          </div>
+                        }
+                        @if (launch.pricePerMeterPrimary) {
+                          <div class="text-center bg-light rounded-3 px-3 py-2 flex-fill">
+                            <div class="small text-muted">Primary/m²</div>
+                            <div class="fw-bold text-dark">{{ currencyService.format(launch.pricePerMeterPrimary) }}</div>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <button class="btn btn-danger w-100 rounded-3 fw-bold py-2 mb-2"
+                            (click)="sendLaunchInquiry(launch, $event)">
+                      <i class="bi bi-whatsapp me-2"></i>Download Brochure
+                    </button>
+
+                    <div class="d-flex align-items-center justify-content-end">
+                      <span class="text-danger fw-semibold small">View Launch →</span>
                     </div>
-                  }
-
-                  <button class="btn btn-danger w-100 rounded-3 fw-bold py-2 mb-2"
-                          (click)="sendLaunchInquiry(launch, $event)">
-                    <i class="bi bi-whatsapp me-2"></i>Download Brochure
-                  </button>
-
-                  <div class="mt-auto d-flex align-items-center justify-content-end">
-                    <span class="text-danger fw-semibold small">View Launch →</span>
                   </div>
                 </div>
               </div>
@@ -673,25 +680,28 @@
       </div>
     }
 
-    <!-- ===== بانرات ثابتة (ترتيبها بيتحدد من الأدمن) ===== -->
-    @if (!hasSearchFilters() && homeSectionBanners().length > 0) {
-      <div class="col-12 mb-5 animate__animated animate__fadeInUp">
-        <div class="row g-4">
-          @for (banner of homeSectionBanners(); track banner.key) {
+    <!-- ===== ng-template مشترك لعرض بانر واحد بالـ key بتاعه (بدل ما كل البانرات تتجمع في مكان واحد) ===== -->
+    <ng-template #sectionBanner let-key="key">
+      @if (getBanner(key); as banner) {
+        <div class="col-12 mb-5 animate__animated animate__fadeInUp">
+          <div class="row justify-content-center">
             <div class="col-md-6">
               <a href="javascript:void(0)" (click)="onBannerClick(banner.key)" class="d-block text-decoration-none rounded-4 overflow-hidden shadow-sm"
                  style="position:relative;height:220px;">
                 <img [src]="banner.imageUrl" class="w-100 h-100" style="object-fit:cover;" alt="Banner">
               </a>
             </div>
-          }
+          </div>
         </div>
-      </div>
-    }
+      }
+    </ng-template>
 
     @if (!hasSearchFilters()) {
       <ng-container *ngTemplateOutlet="hotDealsSection"></ng-container>
+      <ng-container *ngTemplateOutlet="sectionBanner; context: {key: 'explore-home'}"></ng-container>
+
       <ng-container *ngTemplateOutlet="recommendedVisitsSection"></ng-container>
+      <ng-container *ngTemplateOutlet="sectionBanner; context: {key: 'add-property'}"></ng-container>
 
     <!-- ===== قسم المقالات (Articles) - تحت Recommended to Visit مباشرة ===== -->
     @if (articles().length > 0) {
@@ -775,6 +785,8 @@
         </div>
       }
 
+      <ng-container *ngTemplateOutlet="sectionBanner; context: {key: 'compare'}"></ng-container>
+
       <!-- 2. قسم Resale Project -->
       @if (resaleProjectProps().length > 0) {
         <div class="col-12 mb-5 animate__animated animate__fadeInUp">
@@ -798,6 +810,8 @@
           </div>
         </div>
       }
+
+      <ng-container *ngTemplateOutlet="sectionBanner; context: {key: 'add-property-2'}"></ng-container>
 
       <!-- 3. قسم Primary -->
       @if (primaryProps().length > 0) {
@@ -823,6 +837,8 @@
         </div>
       }
 
+      <ng-container *ngTemplateOutlet="sectionBanner; context: {key: 'price-range'}"></ng-container>
+
       <!-- 4. قسم Rent -->
       @if (rentProps().length > 0) {
         <div class="col-12 mb-5 animate__animated animate__fadeInUp">
@@ -846,6 +862,8 @@
           </div>
         </div>
       }
+
+      <ng-container *ngTemplateOutlet="sectionBanner; context: {key: 'recommendation'}"></ng-container>
     }
     @else {
       <!-- حالة عدم وجود نتائج: تم تكبيرها وتوسيطها -->
@@ -958,7 +976,7 @@
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content rounded-4 border-0 shadow">
         <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold">Tell us what you're looking for</h5>
+          <h5 class="modal-title fw-bold text-danger">Tell us what you're looking for</h5>
           <button type="button" class="btn-close" (click)="closeRecommendationModal()"></button>
         </div>
         <div class="modal-body py-3">
@@ -997,14 +1015,16 @@
             <!-- Property Type (multi) -->
             <div class="col-12">
               <label class="form-label small fw-bold d-block mb-2">Property Type</label>
-              <div class="d-flex flex-wrap gap-2">
+              <div class="row g-2">
                 @for (opt of [{v:'0', l:'Apartment'}, {v:'1', l:'Villa'}, {v:'2', l:'Shop'}, {v:'3', l:'Office'}, {v:'4', l:'Chalet'}, {v:'5', l:'Full Floor'}]; track opt.v) {
-                  <button type="button" class="btn btn-sm rounded-pill px-3"
-                          [class.btn-danger]="isRecommendationValueSelected(recommendationForm.propertyTypes, opt.v)"
-                          [class.btn-outline-secondary]="!isRecommendationValueSelected(recommendationForm.propertyTypes, opt.v)"
-                          (click)="toggleRecommendationValue(recommendationForm.propertyTypes, opt.v)">
-                    {{ opt.l }}
-                  </button>
+                  <div class="col-4">
+                    <button type="button" class="btn btn-sm rounded-pill px-2 w-100"
+                            [class.btn-danger]="isRecommendationValueSelected(recommendationForm.propertyTypes, opt.v)"
+                            [class.btn-outline-secondary]="!isRecommendationValueSelected(recommendationForm.propertyTypes, opt.v)"
+                            (click)="toggleRecommendationValue(recommendationForm.propertyTypes, opt.v)">
+                      {{ opt.l }}
+                    </button>
+                  </div>
                 }
               </div>
             </div>
@@ -1029,28 +1049,6 @@
             <div class="col-6">
               <label class="form-label small fw-bold">Max Bathrooms</label>
               <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.maxBathrooms">
-            </div>
-
-            <!-- Total Floors range - بتتلغي خالص لو Villa من ضمن الأنواع المختارة -->
-            @if (!isVillaSelectedInRecommendation) {
-              <div class="col-6">
-                <label class="form-label small fw-bold">Min Total Floors</label>
-                <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.minFloors">
-              </div>
-              <div class="col-6">
-                <label class="form-label small fw-bold">Max Total Floors</label>
-                <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.maxFloors">
-              </div>
-            }
-
-            <!-- Floor Number range -->
-            <div class="col-6">
-              <label class="form-label small fw-bold">Min Floor Number</label>
-              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.minFloorNumber">
-            </div>
-            <div class="col-6">
-              <label class="form-label small fw-bold">Max Floor Number</label>
-              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.maxFloorNumber">
             </div>
 
             <!-- Budget range -->

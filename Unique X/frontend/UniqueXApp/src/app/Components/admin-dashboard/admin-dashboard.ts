@@ -111,7 +111,7 @@ export class AdminDashboardComponent implements OnInit {
   draggedBannerKey: string | null = null;
   bannersOrderChanged = signal<boolean>(false);
 
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'homeSectionBanners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'projectFinancial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'recommendedVisits' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings' | 'launches' | 'launchMeetings' | 'articles' | 'lookups'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'homeSectionBanners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'projectFinancial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'recommendedVisits' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings' | 'launches' | 'launchMeetings' | 'articles' | 'lookups' | 'propertyAnalytics' | 'searchAnalytics' | 'brokerLimits' | 'jobPostings'>('users');
 
   // --- Lookups: Developers / Primary Projects / Resale Projects / Regions ---
   lookupsSubTab = signal<'developers' | 'primaryProjects' | 'resaleProjects' | 'regions'>('developers');
@@ -129,6 +129,108 @@ export class AdminDashboardComponent implements OnInit {
   newProjectCode = signal<string>('');
   newProjectRegion = signal<string>('');
   newProjectDeveloperId = signal<string>('');
+
+  propertyAnalytics = signal<any[]>([]);
+searchAnalytics = signal<any>(null);
+brokerStats = signal<any[]>([]);
+
+// 🟢 نفس الـ maps المستخدمة في home.ts (onSearch) بالظبط، بس معكوسة رقم->اسم
+private propertyTypeNames: Record<number, string> = {
+  0: 'Apartment', 1: 'Villa', 2: 'Shop', 3: 'Office', 4: 'Chalet', 5: 'FullFloor'
+};
+private listingTypeNames: Record<number, string> = {
+  0: 'Resale', 1: 'Rent', 2: 'Primary', 3: 'ResaleProject'
+};
+private cityNames: Record<number, string> = {
+  1: 'Cairo', 2: 'Alexandria', 3: 'North Coast'
+};
+
+mapPropertyType(n: number | null | undefined): string {
+  if (n === null || n === undefined) return '—';
+  return this.propertyTypeNames[n] ?? `Unknown (${n})`;
+}
+
+mapListingType(n: number | null | undefined): string {
+  if (n === null || n === undefined) return '—';
+  return this.listingTypeNames[n] ?? `Unknown (${n})`;
+}
+
+mapCity(n: number | null | undefined): string {
+  if (n === null || n === undefined) return '—';
+  return this.cityNames[n] ?? `Unknown (${n})`;
+}
+
+// 🟢 حفظ الـ limit بتاع بروكر معين
+updateBrokerLimit(brokerId: string, value: string) {
+  const limit = value === '' ? null : Number(value);
+  this.adminService.setBrokerLimit(brokerId, limit).subscribe({
+    next: () => this.alertService.success('Limit updated successfully'),
+    error: () => this.alertService.error('Failed to update limit')
+  });
+}
+
+// ===================== Job Postings (Join Our Team) =====================
+jobPostings = signal<any[]>([]);
+newJobTitle = signal<string>('');
+newJobSummary = signal<string>('');
+newJobResponsibilities = signal<string>('');
+newJobQualifications = signal<string>('');
+newJobKPIs = signal<string>('');
+isSavingJobPosting = signal(false);
+
+loadJobPostings() {
+  this.adminService.getAllJobPostings().subscribe(data => this.jobPostings.set(data));
+}
+
+addJobPosting() {
+  if (!this.newJobTitle() || !this.newJobSummary()) {
+    this.alertService.error('Job Title and Job Summary are required.');
+    return;
+  }
+
+  this.isSavingJobPosting.set(true);
+  this.adminService.addJobPosting({
+    jobTitle: this.newJobTitle(),
+    jobSummary: this.newJobSummary(),
+    keyResponsibilities: this.newJobResponsibilities(),
+    qualifications: this.newJobQualifications(),
+    kpis: this.newJobKPIs()
+  }).subscribe({
+    next: () => {
+      this.isSavingJobPosting.set(false);
+      this.alertService.success('Job posting added successfully');
+      this.newJobTitle.set('');
+      this.newJobSummary.set('');
+      this.newJobResponsibilities.set('');
+      this.newJobQualifications.set('');
+      this.newJobKPIs.set('');
+      this.loadJobPostings();
+    },
+    error: () => {
+      this.isSavingJobPosting.set(false);
+      this.alertService.error('Failed to add job posting');
+    }
+  });
+}
+
+toggleJobPosting(id: number) {
+  this.adminService.toggleJobPosting(id).subscribe({
+    next: () => this.loadJobPostings(),
+    error: () => this.alertService.error('Failed to update job posting')
+  });
+}
+
+deleteJobPosting(id: number) {
+  this.alertService.confirm('Delete this job posting permanently?', () => {
+    this.adminService.deleteJobPosting(id).subscribe({
+      next: () => {
+        this.alertService.success('Job posting deleted');
+        this.loadJobPostings();
+      },
+      error: () => this.alertService.error('Failed to delete job posting')
+    });
+  });
+}
 
   newRegionName = signal<string>('');
   newRegionZoneCode = signal<string>('');
@@ -633,18 +735,25 @@ onRejectDeletion(id: number) {
     });
   }
 
-  // ===== Drag & Drop إعادة ترتيب البانرات (نفس فكرة ترتيب الـ Blogs) =====
+  // ===== Drag & Drop إعادة ترتيب البانرات - Pointer Events (بيشتغل موبايل/تابلت/ماوس) =====
 
-  onBannerDragStart(key: string) {
-    this.draggedBannerKey = key;
-  }
-
-  onBannerDragOver(event: DragEvent) {
+  onBannerPointerDown(event: PointerEvent, key: string) {
     event.preventDefault();
+    this.draggedBannerKey = key;
+    const handle = event.currentTarget as HTMLElement;
+    handle.setPointerCapture(event.pointerId);
+    document.body.style.userSelect = 'none';
   }
 
-  onBannerDrop(targetKey: string) {
-    if (!this.draggedBannerKey || this.draggedBannerKey === targetKey) return;
+  onBannerPointerMove(event: PointerEvent) {
+    if (!this.draggedBannerKey) return;
+    event.preventDefault();
+
+    const el = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-banner-key]') as HTMLElement | null;
+    if (!el) return;
+
+    const targetKey = el.getAttribute('data-banner-key');
+    if (!targetKey || targetKey === this.draggedBannerKey) return;
 
     const list = [...this.homeSectionBanners()];
     const fromIndex = list.findIndex(b => b.key === this.draggedBannerKey);
@@ -656,6 +765,12 @@ onRejectDeletion(id: number) {
 
     this.homeSectionBanners.set(list);
     this.bannersOrderChanged.set(true);
+  }
+
+  onBannerPointerUp(event: PointerEvent) {
+    const handle = event.currentTarget as HTMLElement;
+    handle.releasePointerCapture(event.pointerId);
+    document.body.style.userSelect = '';
     this.draggedBannerKey = null;
   }
 
@@ -781,6 +896,18 @@ onRejectDeletion(id: number) {
   else if (tab === 'suspUsers') {
     this.adminService.getSuspendedUsers().subscribe(data => this.detailData.set(data));
   }
+  else if (tab === 'propertyAnalytics') {
+  this.adminService.getPropertiesAnalytics().subscribe(data => this.propertyAnalytics.set(data));
+}
+else if (tab === 'searchAnalytics') {
+  this.adminService.getSearchAnalytics().subscribe(data => this.searchAnalytics.set(data));
+}
+else if (tab === 'brokerLimits') {
+  this.adminService.getBrokerStats().subscribe(data => this.brokerStats.set(data));
+}
+else if (tab === 'jobPostings') {
+  this.loadJobPostings();
+}
   else if (tab === 'suspProps') {
     this.adminService.getSuspendedProperties().subscribe(data => this.detailData.set(data));
   }
@@ -1875,7 +2002,6 @@ onBlogPointerDown(event: PointerEvent, index: number) {
   this.draggedBlogIndex = index;
   const handle = event.currentTarget as HTMLElement;
   handle.setPointerCapture(event.pointerId);
-  handle.closest('[data-blog-index]')?.classList.add('dragging-item');
   document.body.style.userSelect = 'none';
 }
 
@@ -1901,7 +2027,6 @@ onBlogPointerMove(event: PointerEvent) {
 onBlogPointerUp(event: PointerEvent) {
   const handle = event.currentTarget as HTMLElement;
   handle.releasePointerCapture(event.pointerId);
-  handle.closest('[data-blog-index]')?.classList.remove('dragging-item');
   document.body.style.userSelect = '';
   this.draggedBlogIndex = null;
 }
@@ -2283,30 +2408,49 @@ removeSliderImage(filename: string) {
   });
 }
 
-// ===================== Drag & Drop reordering - Existing (already uploaded) slider images =====================
+// 🟢 عتبة حركة بسيطة عشان نفرّق بين "تاب/كليك" و"سحب فعلي" على نفس العنصر (مستخدمة في الـ 4 سلايدرات تحت)
+private dragPointerStart = { x: 0, y: 0 };
+public dragHasMoved = false;
+private readonly DRAG_THRESHOLD_PX = 6;
+
+// ===================== Drag & Drop reordering - Existing (already uploaded) slider images - Pointer Events =====================
 draggedExistingSliderIndex: number | null = null;
 
-onExistingSliderDragStart(index: number) {
+onExistingSliderPointerDown(event: PointerEvent, index: number) {
   this.draggedExistingSliderIndex = index;
+  this.dragHasMoved = false;
+  this.dragPointerStart = { x: event.clientX, y: event.clientY };
+  const handle = event.currentTarget as HTMLElement;
+  handle.setPointerCapture(event.pointerId);
 }
 
-onExistingSliderDragOver(event: DragEvent) {
-  event.preventDefault();
-}
+onExistingSliderPointerMove(event: PointerEvent) {
+  if (this.draggedExistingSliderIndex === null) return;
 
-onExistingSliderDrop(targetIndex: number) {
-  const blog = this.editingBlog();
-  if (!blog || this.draggedExistingSliderIndex === null || this.draggedExistingSliderIndex === targetIndex) {
-    this.draggedExistingSliderIndex = null;
-    return;
+  if (!this.dragHasMoved) {
+    const dx = Math.abs(event.clientX - this.dragPointerStart.x);
+    const dy = Math.abs(event.clientY - this.dragPointerStart.y);
+    if (dx < this.DRAG_THRESHOLD_PX && dy < this.DRAG_THRESHOLD_PX) return;
+    this.dragHasMoved = true;
+    document.body.style.userSelect = 'none';
   }
+  event.preventDefault();
+
+  const el = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-slider-index]') as HTMLElement | null;
+  if (!el) return;
+
+  const targetIndex = Number(el.getAttribute('data-slider-index'));
+  if (isNaN(targetIndex) || targetIndex === this.draggedExistingSliderIndex) return;
+
+  const blog = this.editingBlog();
+  if (!blog) return;
 
   const imgs = this.getSliderImagesArray(blog);
   const [moved] = imgs.splice(this.draggedExistingSliderIndex, 1);
   imgs.splice(targetIndex, 0, moved);
 
   this.editingBlog.set({ ...blog, sliderImages: imgs.join('|') });
-  this.draggedExistingSliderIndex = null;
+  this.draggedExistingSliderIndex = targetIndex;
 
   // 👈 بنحفظ الترتيب الجديد فورًا في الداتابيز
   this.blogService.reorderSliderImages(blog.id, imgs).subscribe({
@@ -2314,26 +2458,53 @@ onExistingSliderDrop(targetIndex: number) {
   });
 }
 
-onExistingSliderDragEnd() {
-  this.draggedExistingSliderIndex = null;
-}
+onExistingSliderPointerUp(event: PointerEvent) {
+  const handle = event.currentTarget as HTMLElement;
+  handle.releasePointerCapture(event.pointerId);
+  document.body.style.userSelect = '';
 
-// ===================== Drag & Drop reordering - New (not-yet-uploaded) slider images =====================
-draggedNewSliderIndex: number | null = null;
-
-onNewSliderDragStart(index: number) {
-  this.draggedNewSliderIndex = index;
-}
-
-onNewSliderDragOver(event: DragEvent) {
-  event.preventDefault();
-}
-
-onNewSliderDrop(targetIndex: number, inputEl?: HTMLInputElement) {
-  if (this.draggedNewSliderIndex === null || this.draggedNewSliderIndex === targetIndex) {
-    this.draggedNewSliderIndex = null;
-    return;
+  // لو معملش سحب فعلي، يبقى ده تاب/كليك عادي - نعمل الأكشن بتاع "خليها الصورة الرئيسية"
+  if (!this.dragHasMoved && this.draggedExistingSliderIndex !== null) {
+    const blog = this.editingBlog();
+    const imgs = blog ? this.getSliderImagesArray(blog) : [];
+    const img = imgs[this.draggedExistingSliderIndex];
+    if (img) this.setMainExistingImage(img);
   }
+
+  this.draggedExistingSliderIndex = null;
+  this.dragHasMoved = false;
+}
+
+// ===================== Drag & Drop reordering - New (not-yet-uploaded) slider images - Pointer Events =====================
+draggedNewSliderIndex: number | null = null;
+private newSliderInputEl: HTMLInputElement | undefined;
+
+onNewSliderPointerDown(event: PointerEvent, index: number, inputEl?: HTMLInputElement) {
+  this.draggedNewSliderIndex = index;
+  this.newSliderInputEl = inputEl;
+  this.dragHasMoved = false;
+  this.dragPointerStart = { x: event.clientX, y: event.clientY };
+  const handle = event.currentTarget as HTMLElement;
+  handle.setPointerCapture(event.pointerId);
+}
+
+onNewSliderPointerMove(event: PointerEvent) {
+  if (this.draggedNewSliderIndex === null) return;
+
+  if (!this.dragHasMoved) {
+    const dx = Math.abs(event.clientX - this.dragPointerStart.x);
+    const dy = Math.abs(event.clientY - this.dragPointerStart.y);
+    if (dx < this.DRAG_THRESHOLD_PX && dy < this.DRAG_THRESHOLD_PX) return;
+    this.dragHasMoved = true;
+    document.body.style.userSelect = 'none';
+  }
+  event.preventDefault();
+
+  const el = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-new-slider-index]') as HTMLElement | null;
+  if (!el) return;
+
+  const targetIndex = Number(el.getAttribute('data-new-slider-index'));
+  if (isNaN(targetIndex) || targetIndex === this.draggedNewSliderIndex) return;
 
   const currentMainFile = this.mainNewImageIndex() !== null ? this.blogSliderFiles()[this.mainNewImageIndex()!] : null;
 
@@ -2352,16 +2523,19 @@ onNewSliderDrop(targetIndex: number, inputEl?: HTMLInputElement) {
   }
 
   // نعيد بناء الـ FileList بتاعة الـ input نفسه عشان العداد الطبيعي للمتصفح يفضل متطابق
-  if (inputEl) {
+  if (this.newSliderInputEl) {
     const dt = new DataTransfer();
     files.forEach(f => dt.items.add(f));
-    inputEl.files = dt.files;
+    this.newSliderInputEl.files = dt.files;
   }
 
-  this.draggedNewSliderIndex = null;
+  this.draggedNewSliderIndex = targetIndex;
 }
 
-onNewSliderDragEnd() {
+onNewSliderPointerUp(event: PointerEvent) {
+  const handle = event.currentTarget as HTMLElement;
+  handle.releasePointerCapture(event.pointerId);
+  document.body.style.userSelect = '';
   this.draggedNewSliderIndex = null;
 }
 
@@ -2538,29 +2712,43 @@ deleteLaunchMeeting(meeting: any) {
 }
 
 
-// ترتيب الظهور بالـ drag & drop
+// ترتيب الظهور بالـ Drag & Drop - Pointer Events (بيشتغل موبايل/تابلت/ماوس)
 draggedLaunchIndex: number | null = null;
 launchOrderChanged = signal(false);
 savingLaunchOrder = signal(false);
 
-onLaunchDragStart(index: number) {
+onLaunchPointerDown(event: PointerEvent, index: number) {
+  event.preventDefault();
   this.draggedLaunchIndex = index;
+  const handle = event.currentTarget as HTMLElement;
+  handle.setPointerCapture(event.pointerId);
+  document.body.style.userSelect = 'none';
 }
 
-onLaunchDragOver(event: DragEvent) {
-  event.preventDefault(); // لازم عشان الـ drop يشتغل
-}
+onLaunchPointerMove(event: PointerEvent) {
+  if (this.draggedLaunchIndex === null) return;
+  event.preventDefault();
 
-onLaunchDrop(index: number) {
-  if (this.draggedLaunchIndex === null || this.draggedLaunchIndex === index) return;
+  const el = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-launch-index]') as HTMLElement | null;
+  if (!el) return;
+
+  const targetIndex = Number(el.getAttribute('data-launch-index'));
+  if (isNaN(targetIndex) || targetIndex === this.draggedLaunchIndex) return;
 
   const current = [...this.launches()];
   const [moved] = current.splice(this.draggedLaunchIndex, 1);
-  current.splice(index, 0, moved);
+  current.splice(targetIndex, 0, moved);
 
   this.launches.set(current);
-  this.draggedLaunchIndex = null;
+  this.draggedLaunchIndex = targetIndex;
   this.launchOrderChanged.set(true);
+}
+
+onLaunchPointerUp(event: PointerEvent) {
+  const handle = event.currentTarget as HTMLElement;
+  handle.releasePointerCapture(event.pointerId);
+  document.body.style.userSelect = '';
+  this.draggedLaunchIndex = null;
 }
 
 saveLaunchOrder() {
@@ -2910,30 +3098,44 @@ removeLaunchSliderImage(filename: string) {
   });
 }
 
-// ===================== Drag & Drop reordering - Existing (already uploaded) slider images =====================
+// ===================== Drag & Drop reordering - Existing (already uploaded) slider images - Pointer Events =====================
 draggedExistingLaunchSliderIndex: number | null = null;
 
-onExistingLaunchSliderDragStart(index: number) {
+onExistingLaunchSliderPointerDown(event: PointerEvent, index: number) {
   this.draggedExistingLaunchSliderIndex = index;
+  this.dragHasMoved = false;
+  this.dragPointerStart = { x: event.clientX, y: event.clientY };
+  const handle = event.currentTarget as HTMLElement;
+  handle.setPointerCapture(event.pointerId);
 }
 
-onExistingLaunchSliderDragOver(event: DragEvent) {
-  event.preventDefault();
-}
+onExistingLaunchSliderPointerMove(event: PointerEvent) {
+  if (this.draggedExistingLaunchSliderIndex === null) return;
 
-onExistingLaunchSliderDrop(targetIndex: number) {
-  const launch = this.editingLaunch();
-  if (!launch || this.draggedExistingLaunchSliderIndex === null || this.draggedExistingLaunchSliderIndex === targetIndex) {
-    this.draggedExistingLaunchSliderIndex = null;
-    return;
+  if (!this.dragHasMoved) {
+    const dx = Math.abs(event.clientX - this.dragPointerStart.x);
+    const dy = Math.abs(event.clientY - this.dragPointerStart.y);
+    if (dx < this.DRAG_THRESHOLD_PX && dy < this.DRAG_THRESHOLD_PX) return;
+    this.dragHasMoved = true;
+    document.body.style.userSelect = 'none';
   }
+  event.preventDefault();
+
+  const el = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-launch-slider-index]') as HTMLElement | null;
+  if (!el) return;
+
+  const targetIndex = Number(el.getAttribute('data-launch-slider-index'));
+  if (isNaN(targetIndex) || targetIndex === this.draggedExistingLaunchSliderIndex) return;
+
+  const launch = this.editingLaunch();
+  if (!launch) return;
 
   const imgs = this.getSliderImagesArray(launch);
   const [moved] = imgs.splice(this.draggedExistingLaunchSliderIndex, 1);
   imgs.splice(targetIndex, 0, moved);
 
   this.editingLaunch.set({ ...launch, sliderImages: imgs.join('|') });
-  this.draggedExistingLaunchSliderIndex = null;
+  this.draggedExistingLaunchSliderIndex = targetIndex;
 
   // 👈 بنحفظ الترتيب الجديد فورًا في الداتابيز
   this.launchService.reorderSliderImages(launch.id, imgs).subscribe({
@@ -2941,26 +3143,53 @@ onExistingLaunchSliderDrop(targetIndex: number) {
   });
 }
 
-onExistingLaunchSliderDragEnd() {
-  this.draggedExistingLaunchSliderIndex = null;
-}
+onExistingLaunchSliderPointerUp(event: PointerEvent) {
+  const handle = event.currentTarget as HTMLElement;
+  handle.releasePointerCapture(event.pointerId);
+  document.body.style.userSelect = '';
 
-// ===================== Drag & Drop reordering - New (not-yet-uploaded) slider images =====================
-draggedNewLaunchSliderIndex: number | null = null;
-
-onNewLaunchSliderDragStart(index: number) {
-  this.draggedNewLaunchSliderIndex = index;
-}
-
-onNewLaunchSliderDragOver(event: DragEvent) {
-  event.preventDefault();
-}
-
-onNewLaunchSliderDrop(targetIndex: number, inputEl?: HTMLInputElement) {
-  if (this.draggedNewLaunchSliderIndex === null || this.draggedNewLaunchSliderIndex === targetIndex) {
-    this.draggedNewLaunchSliderIndex = null;
-    return;
+  // لو معملش سحب فعلي، يبقى ده تاب/كليك عادي - نعمل الأكشن بتاع "خليها الصورة الرئيسية"
+  if (!this.dragHasMoved && this.draggedExistingLaunchSliderIndex !== null) {
+    const launch = this.editingLaunch();
+    const imgs = launch ? this.getSliderImagesArray(launch) : [];
+    const img = imgs[this.draggedExistingLaunchSliderIndex];
+    if (img) this.setLaunchMainExistingImage(img);
   }
+
+  this.draggedExistingLaunchSliderIndex = null;
+  this.dragHasMoved = false;
+}
+
+// ===================== Drag & Drop reordering - New (not-yet-uploaded) slider images - Pointer Events =====================
+draggedNewLaunchSliderIndex: number | null = null;
+private newLaunchSliderInputEl: HTMLInputElement | undefined;
+
+onNewLaunchSliderPointerDown(event: PointerEvent, index: number, inputEl?: HTMLInputElement) {
+  this.draggedNewLaunchSliderIndex = index;
+  this.newLaunchSliderInputEl = inputEl;
+  this.dragHasMoved = false;
+  this.dragPointerStart = { x: event.clientX, y: event.clientY };
+  const handle = event.currentTarget as HTMLElement;
+  handle.setPointerCapture(event.pointerId);
+}
+
+onNewLaunchSliderPointerMove(event: PointerEvent) {
+  if (this.draggedNewLaunchSliderIndex === null) return;
+
+  if (!this.dragHasMoved) {
+    const dx = Math.abs(event.clientX - this.dragPointerStart.x);
+    const dy = Math.abs(event.clientY - this.dragPointerStart.y);
+    if (dx < this.DRAG_THRESHOLD_PX && dy < this.DRAG_THRESHOLD_PX) return;
+    this.dragHasMoved = true;
+    document.body.style.userSelect = 'none';
+  }
+  event.preventDefault();
+
+  const el = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-new-launch-slider-index]') as HTMLElement | null;
+  if (!el) return;
+
+  const targetIndex = Number(el.getAttribute('data-new-launch-slider-index'));
+  if (isNaN(targetIndex) || targetIndex === this.draggedNewLaunchSliderIndex) return;
 
   const currentMainFile = this.launchMainNewImageIndex() !== null ? this.launchSliderFiles()[this.launchMainNewImageIndex()!] : null;
 
@@ -2979,17 +3208,26 @@ onNewLaunchSliderDrop(targetIndex: number, inputEl?: HTMLInputElement) {
   }
 
   // نعيد بناء الـ FileList بتاعة الـ input نفسه عشان العداد الطبيعي للمتصفح يفضل متطابق
-  if (inputEl) {
+  if (this.newLaunchSliderInputEl) {
     const dt = new DataTransfer();
     files.forEach(f => dt.items.add(f));
-    inputEl.files = dt.files;
+    this.newLaunchSliderInputEl.files = dt.files;
+  }
+
+  this.draggedNewLaunchSliderIndex = targetIndex;
+}
+
+onNewLaunchSliderPointerUp(event: PointerEvent) {
+  const handle = event.currentTarget as HTMLElement;
+  handle.releasePointerCapture(event.pointerId);
+  document.body.style.userSelect = '';
+
+  if (!this.dragHasMoved && this.draggedNewLaunchSliderIndex !== null) {
+    this.setLaunchMainNewImage(this.draggedNewLaunchSliderIndex);
   }
 
   this.draggedNewLaunchSliderIndex = null;
-}
-
-onNewLaunchSliderDragEnd() {
-  this.draggedNewLaunchSliderIndex = null;
+  this.dragHasMoved = false;
 }
 
 // Payment Plans

@@ -16,5 +16,8 @@ namespace Unique_X.Models
         public string? BrokerCode { get; set; } // مثال: X7, X10, X249
         public string? BrokerDescription { get; set; }
         public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // 🟢 الحد الأقصى لعدد الوحدات (النشطة/الغير مباعة) اللي البروكر يقدر يضيفها. null = من غير حد أقصى، الأدمن هو اللي بيحددها
+        public int? PropertyLimit { get; set; }
     }
 }
