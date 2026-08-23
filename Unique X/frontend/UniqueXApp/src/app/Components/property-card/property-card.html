@@ -3,7 +3,7 @@
      style="cursor: pointer;">
     <div class="position-relative">
     <!-- الصورة الرئيسية -->
-    <img [src]="property.photos[0]?.url || 'assets/placeholder.jpg'" 
+    <img [src]="getThumbUrl(property.photos[0]?.url)" 
          class="card-img-top object-fit-cover" 
          style="height: 200px;" alt="Property Image">
     

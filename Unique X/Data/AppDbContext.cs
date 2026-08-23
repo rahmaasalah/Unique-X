@@ -28,6 +28,7 @@ namespace Unique_X.Data
         public DbSet<Campaign> Campaigns { get; set; }
         public DbSet<LeadStatusHistory> LeadStatusHistories { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
+        public DbSet<JobPosting> JobPostings { get; set; }
         public DbSet<Blog> Blogs { get; set; }
         public DbSet<LeadFavorite> LeadFavorites { get; set; }
 
@@ -42,6 +43,7 @@ namespace Unique_X.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<Region> Regions { get; set; }
         public DbSet<Article> Articles { get; set; }
+        public DbSet<SearchLog> SearchLogs { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -56,7 +58,21 @@ namespace Unique_X.Data
             builder.Entity<Property>()
                 .HasIndex(p => p.City);
 
-           
+            // 🟢 Performance: كل بحث تقريبًا بيفلتر بالـ 3 حقول دول مع بعض (الوحدة نشطة/معتمدة/مش متباعة)،
+            // فـ composite index بيسرّع الفلترة دي جدًا بدل full table scan في كل عملية بحث
+            builder.Entity<Property>()
+                .HasIndex(p => new { p.IsActive, p.IsApproved, p.IsSold });
+
+            // 🟢 Performance: ListingType (Resale/Rent/Primary) و PropertyType و BrokerId
+            // من أكتر الحقول اللي بيتفلتر بيها في البحث وصفحة My Properties وإعادة التعيين
+            builder.Entity<Property>()
+                .HasIndex(p => p.ListingType);
+
+            builder.Entity<Property>()
+                .HasIndex(p => p.PropertyType);
+
+
+
             builder.Entity<Property>()
                 .HasMany(p => p.Photos)
                 .WithOne(p => p.Property)

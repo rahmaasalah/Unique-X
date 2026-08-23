@@ -56,22 +56,56 @@
             }
           </div>
           
-          <!-- أزرار Copy Link / Download Photos: جروب لوحدها عشان تلف تحت بعض في الموبايل من غير ما تتداخل مع العنوان -->
-          <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-light border rounded-pill shadow-sm px-3 py-1 text-dark d-flex align-items-center gap-2" 
-                    (click)="copyLink()" 
-                    title="Copy Property Link">
-              <i class="bi bi-link-45deg fs-5"></i> 
-              <span class="small fw-bold">Copy Link</span>
-            </button>
-
-            @if(isBroker()) {
+          <!-- أزرار Copy Link / Download Photos -->
+          <div class="d-flex flex-column gap-2">
+            <div class="d-flex flex-wrap gap-2">
               <button class="btn btn-light border rounded-pill shadow-sm px-3 py-1 text-dark d-flex align-items-center gap-2" 
-                    (click)="downloadPhotos()" 
-                    title="Download Photos">
-              <i class="bi bi-download fs-5"></i> 
-              <span class="small fw-bold">Download Photos</span>
-            </button>
+                      (click)="copyLink()" 
+                      title="Copy Property Link">
+                <i class="bi bi-link-45deg fs-5"></i> 
+                <span class="small fw-bold">Copy Link</span>
+              </button>
+
+              @if(isBroker()) {
+                <button class="btn btn-light border rounded-pill shadow-sm px-3 py-1 text-dark d-flex align-items-center gap-2" 
+                      (click)="downloadPhotos()" 
+                      title="Download Photos">
+                <i class="bi bi-download fs-5"></i> 
+                <span class="small fw-bold">Download Photos</span>
+              </button>
+              }
+            </div>
+
+            <!-- أزرار Wishlist / Shortlist / Visit List - تحت Copy Link/Download Photos مباشرة، وبتلف تحت بعض في الموبايل زيهم بالظبط -->
+            @if (authService.loggedIn()) {
+              <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-light border rounded-pill shadow-sm px-3 py-1 d-flex align-items-center gap-2"
+                        [class.text-danger]="isLiked()"
+                        [class.text-dark]="!isLiked()"
+                        (click)="onToggleWishlist()"
+                        title="Add to Wishlist">
+                  <i class="bi fs-5" [class.bi-heart-fill]="isLiked()" [class.bi-heart]="!isLiked()"></i>
+                  <span class="small fw-bold">Wishlist</span>
+                </button>
+
+                <button class="btn btn-light border rounded-pill shadow-sm px-3 py-1 d-flex align-items-center gap-2"
+                        [class.text-warning]="isShortlisted()"
+                        [class.text-dark]="!isShortlisted()"
+                        (click)="onToggleShortlist()"
+                        title="Add to Shortlist">
+                  <i class="bi fs-5" [class.bi-bookmark-fill]="isShortlisted()" [class.bi-bookmark]="!isShortlisted()"></i>
+                  <span class="small fw-bold">Shortlist</span>
+                </button>
+
+                <button class="btn btn-light border rounded-pill shadow-sm px-3 py-1 d-flex align-items-center gap-2"
+                        [class.text-primary]="isVisitListed()"
+                        [class.text-dark]="!isVisitListed()"
+                        (click)="onToggleVisitList()"
+                        title="Mark to Visit">
+                  <i class="bi fs-5" [class.bi-geo-alt-fill]="isVisitListed()" [class.bi-geo-alt]="!isVisitListed()"></i>
+                  <span class="small fw-bold">Visit List</span>
+                </button>
+              </div>
             }
           </div>
         </div>

@@ -5,6 +5,7 @@ using Unique_X.Data;
 using Unique_X.DTOs;
 using Unique_X.Models;
 using Unique_X.Services.Interface;
+using Unique_X.Services;
 using static Unique_X.Models.PropEnums;
 
 namespace Unique_X.Services.Implementation
@@ -44,6 +45,18 @@ namespace Unique_X.Services.Implementation
         // 1. إضافة عقار جديد
         public async Task<PropertyResponseDto> AddPropertyAsync(PropertyFormDto dto, string brokerId)
         {
+            // 🟢 التحقق من الـ Limit بتاع البروكر قبل أي حاجة تانية (بنعد الوحدات النشطة/الغير مباعة بتاعته)
+            var broker = await _context.Users.FirstOrDefaultAsync(u => u.Id == brokerId);
+            if (broker?.PropertyLimit != null)
+            {
+                var currentCount = await _context.Properties.CountAsync(p => p.BrokerId == brokerId && !p.IsSold);
+                if (currentCount >= broker.PropertyLimit.Value)
+                {
+                    throw new PropertyLimitExceededException(
+                        $"You have reached your maximum limit of {broker.PropertyLimit.Value} properties. Please contact the admin to increase it.");
+                }
+            }
+
             var property = new Property
             {
                 Title = dto.Title ?? string.Empty,
@@ -123,6 +136,7 @@ namespace Unique_X.Services.Implementation
                 HasGasMeter = dto.HasGasMeter ?? false,
 
                 BrokerId = brokerId,
+                AddedByBrokerId = brokerId,
                 IsActive = false,
                 IsApproved = false,
                 RejectionReason = null,
@@ -199,6 +213,7 @@ namespace Unique_X.Services.Implementation
             }
 
             var query = _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -313,9 +328,26 @@ namespace Unique_X.Services.Implementation
                 }
             }
 
-            var properties = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
+            var orderedQuery = query.OrderByDescending(p => p.CreatedAt);
 
-            return properties.Select(p => {
+            // 🟢 Pagination اختيارية بالكامل: لو محدّش بعت PageSize، بترجع كل النتائج زي ما هي دلوقتي بالظبط
+            // (عشان صفحة الهوم بتعتمد على إنها تجيب كل النتائج مرة واحدة وتقسمها بالنوع على الفرونت إند)
+            // أي صفحة جديدة عايزة صفحات (Pagination) هتبعت PageNumber/PageSize في الرابط وبس
+            List<Property> allProperties;
+            if (filter.PageSize.HasValue && filter.PageSize.Value > 0)
+            {
+                var pageNumber = filter.PageNumber.HasValue && filter.PageNumber.Value > 0 ? filter.PageNumber.Value : 1;
+                allProperties = await orderedQuery
+                    .Skip((pageNumber - 1) * filter.PageSize.Value)
+                    .Take(filter.PageSize.Value)
+                    .ToListAsync();
+            }
+            else
+            {
+                allProperties = await orderedQuery.ToListAsync();
+            }
+
+            return allProperties.Select(p => {
                 var dto = MapToResponseDto(p);
                 dto.IsFavorite = userFavorites.Contains(p.Id);
                 dto.IsShortlisted = userShortlisted.Contains(p.Id);
@@ -362,6 +394,7 @@ namespace Unique_X.Services.Implementation
         public async Task<IEnumerable<PropertyResponseDto>> GetBrokerPropertiesAsync(string brokerId)
         {
             var properties = await _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -378,6 +411,7 @@ namespace Unique_X.Services.Implementation
         {
             // 1. جلب العقار أولاً
             var property = await _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -728,6 +762,7 @@ namespace Unique_X.Services.Implementation
             var hotDealIds = await _context.HotDeals.Select(h => h.PropertyId).ToListAsync();
 
             var properties = await _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -742,6 +777,7 @@ namespace Unique_X.Services.Implementation
             var recommendedIds = await _context.RecommendedVisits.Select(r => r.PropertyId).ToListAsync();
 
             var properties = await _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -882,6 +918,7 @@ namespace Unique_X.Services.Implementation
         public async Task<PropertyResponseDto> GetPropertyByCodeAsync(string code)
         {
             var property = await _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.PaymentPlans)
                 .FirstOrDefaultAsync(p => p.Code == code);

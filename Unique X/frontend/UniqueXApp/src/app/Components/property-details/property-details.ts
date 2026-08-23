@@ -39,6 +39,11 @@ export class PropertyDetailsComponent implements OnInit {
   currentSlideIndex = signal(0);
   isDescriptionExpanded = signal(false);
 
+  // 🟢 حالة أزرار Wishlist / Shortlist / Visit List - نفس منطق property-card.ts بالظبط
+  isLiked = signal(false);
+  isShortlisted = signal(false);
+  isVisitListed = signal(false);
+
 
   private crmService = inject(CrmService);
   private reviewService = inject(ReviewService);
@@ -129,9 +134,10 @@ export class PropertyDetailsComponent implements OnInit {
     this.propertyService.getPropertyById(id).subscribe({
       next: (data) => {
         this.property.set(data);
-        
-        // تجميع تفاصيل العقار الإنجليزية لعمل لينك احترافي (النوع + الحالة + المنطقة + الكود)
-        // مثال: Apartment Resale Loran AR123
+        this.isLiked.set(data.isFavorite ?? false);
+        this.isShortlisted.set(data.isShortlisted ?? false);
+        this.isVisitListed.set(data.isVisitListed ?? false);
+        this.adminService.trackAction('PropertyView', data.id).subscribe();
         const slugText = `${data.propertyType} ${data.listingType} ${data.region} ${data.code || ''}`;
         
         // تحويل النص للينك
@@ -519,5 +525,56 @@ downloadPhotos() {
     });
   }
 
-  
+  // ===================== Wishlist / Shortlist / Visit List (نفس منطق property-card.ts بالظبط) =====================
+
+  onToggleWishlist() {
+    if (!this.authService.loggedIn()) { this.router.navigate(['/login']); return; }
+    const prop = this.property();
+    if (!prop) return;
+
+    this.isLiked.set(!this.isLiked());
+
+    this.propertyService.toggleWishlist(prop.id).subscribe({
+      next: (res: any) => {
+        this.isLiked.set(res.isFavorite ?? res.IsFavorite);
+      },
+      error: () => {
+        this.isLiked.set(!this.isLiked());
+      }
+    });
+  }
+
+  onToggleShortlist() {
+    if (!this.authService.loggedIn()) { this.router.navigate(['/login']); return; }
+    const prop = this.property();
+    if (!prop) return;
+
+    this.isShortlisted.set(!this.isShortlisted());
+
+    this.propertyService.toggleShortlist(prop.id).subscribe({
+      next: (res: any) => {
+        this.isShortlisted.set(res.isShortlisted ?? res.IsShortlisted);
+      },
+      error: () => {
+        this.isShortlisted.set(!this.isShortlisted());
+      }
+    });
+  }
+
+  onToggleVisitList() {
+    if (!this.authService.loggedIn()) { this.router.navigate(['/login']); return; }
+    const prop = this.property();
+    if (!prop) return;
+
+    this.isVisitListed.set(!this.isVisitListed());
+
+    this.propertyService.toggleVisitList(prop.id).subscribe({
+      next: (res: any) => {
+        this.isVisitListed.set(res.isVisitListed ?? res.IsVisitListed);
+      },
+      error: () => {
+        this.isVisitListed.set(!this.isVisitListed());
+      }
+    });
+  }
 }

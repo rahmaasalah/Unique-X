@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './Guards/auth-guard';
 import { guestGuard } from './Guards/guest-guard';
 import { adminGuard } from './Guards/admin-guard';
+import { leadFeedbackGuard } from './Guards/lead-feedback-guard';
 import { InvestmentCalculatorComponent } from './Components/investment-calculator/investment-calculator';
 import { LaunchDetailComponent } from './Components/launch-detail/launch-detail';
 import { LaunchListComponent } from './Components/launch-list/launch-list';
@@ -49,7 +50,7 @@ export const routes: Routes = [
 { path: 'launch/:id/:slug', component: LaunchDetailComponent },
   // ===== CRM =====
   { path: 'crm/leads', loadComponent: () => import('./Components/CRM/leads-dashboard/leads-dashboard').then(m => m.LeadsDashboardComponent) },
-  { path: 'crm/leads/:id', loadComponent: () => import('./Components/CRM/lead-details/lead-details').then(m => m.LeadDetailsComponent) },
+  { path: 'crm/leads/:id', loadComponent: () => import('./Components/CRM/lead-details/lead-details').then(m => m.LeadDetailsComponent), canDeactivate: [leadFeedbackGuard] },
   { path: 'crm/leads/:id/edit', loadComponent: () => import('./Components/CRM/edit-request/edit-request').then(m => m.EditRequestComponent) },
   { path: 'crm/dashboard', loadComponent: () => import('./Components/CRM/crm-dashboard/crm-dashboard').then(m => m.CrmDashboardComponent) },
   { path: 'crm/profile', loadComponent: () => import('./Components/CRM/broker-profile/broker-profile').then(m => m.BrokerProfileComponent) },

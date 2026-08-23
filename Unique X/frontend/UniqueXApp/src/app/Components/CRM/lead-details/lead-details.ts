@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
 import { AdminService } from '../../../Services/admin';
+import { CanComponentDeactivate } from '../../../Guards/lead-feedback-guard';
 
 
 
@@ -27,7 +28,7 @@ export function futureDateValidator(): ValidatorFn {
   styleUrls: ['./lead-details.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LeadDetailsComponent implements OnInit {
+export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
   private crmService = inject(CrmService);
@@ -70,7 +71,11 @@ export class LeadDetailsComponent implements OnInit {
   actionFeedbackForm!: FormGroup;
   generalNoteForm!: FormGroup;
 
-  stages =[
+  // 🟢 الليستة الكاملة القديمة - بنسيبها موجودة بس كمرجع (مش بتتعرض في أي Dropdown دلوقتي)
+  // أي Stage هنا مش موجودة في qualifiedStages ولا unqualifiedStages بقت "يتيمة":
+  // لو عميل حالته الحالية واحدة منها، هتفضل معروضة زي ما هي كـ Label لحد ما البروكر يختار Qualified/Unqualified
+  // ويحدد حالة جديدة من الليستة الجديدة - وبعدها مش هترجعله تاني.
+  allStages = [
     { id: 1, name: 'New "To Call"' }, { id: 2, name: 'Waiting response on wtp msg' }, { id: 3, name: 'Request call another time' },
     { id: 4, name: 'Calls (request)' }, { id: 5, name: 'Waiting Client Feedback on unit' }, { id: 6, name: 'Follow Up For Visit' },
     { id: 7, name: 'Visit scheduled' }, { id: 8, name: 'Follow up After visit' }, { id: 9, name: 'Waiting feedback on project' },
@@ -81,6 +86,48 @@ export class LeadDetailsComponent implements OnInit {
     { id: 22, name: 'Lost Not interested' }, { id: 23, name: 'Low Budget' }, { id: 24, name: 'Number Issue' },
     { id: 25, name: 'Broker' }, { id: 26, name: 'Recommend to shift' }
   ];
+
+  // 🟢 الحالات اللي بتظهر لو البروكر دوس Qualified
+  qualifiedStages = [
+    { id: 1, name: 'New "To Call"' },
+    { id: 4, name: 'Calls (request)' },
+    { id: 6, name: 'Follow Up For Visit' },
+    { id: 10, name: 'Follow up for Meeting' },
+    { id: 7, name: 'Visit scheduled' },
+    { id: 11, name: 'Meeting Scheduled' },
+    { id: 8, name: 'Follow up After visit' },
+    { id: 18, name: 'Follow up for closing' },
+    { id: 19, name: 'Deal closed' }
+  ];
+
+  // 🟢 الحالات اللي بتظهر لو البروكر دوس Unqualified
+  unqualifiedStages = [
+    { id: 23, name: 'Low Budget' },
+    { id: 22, name: 'Lost Not interested' },
+    { id: 24, name: 'Number Issue' },
+    { id: 21, name: 'N/A "unreachable"' },
+    { id: 25, name: 'Broker' },
+    { id: 26, name: 'Recommend to shift' }
+  ];
+
+  // 🟢 الحالة المختارة دلوقتي: Qualified / Unqualified / null (لسه محددش أو حالته يتيمة)
+  leadQualification = signal<'qualified' | 'unqualified' | null>(null);
+
+  // الليستة اللي هتتعرض فعليًا في الـ Dropdown حسب الاختيار
+  get visibleStages() {
+    if (this.leadQualification() === 'qualified') return this.qualifiedStages;
+    if (this.leadQualification() === 'unqualified') return this.unqualifiedStages;
+    return [];
+  }
+
+  // هل الحالة الحالية للعميل "يتيمة" (مش موجودة في أي من الليستين الجديدة)؟
+  get isOrphanStatus(): boolean {
+    const statusId = this.leadInfo()?.statusId;
+    if (statusId == null) return false;
+    const inQualified = this.qualifiedStages.some(s => s.id === statusId);
+    const inUnqualified = this.unqualifiedStages.some(s => s.id === statusId);
+    return !inQualified && !inUnqualified;
+  }
 
   zones =[{ id: 1, name: 'Cairo' }, { id: 2, name: 'Alexandria' }, { id: 3, name: 'North Coast' }];
 
@@ -122,6 +169,29 @@ export class LeadDetailsComponent implements OnInit {
   adminName = signal<string>('');
   adminId = signal<string>('');
 
+  // 🟢 نظام الـ Feedback الإجباري: لو أدمن أو صاحب الليد، لازم يضيف فيدباك قبل ما يخرج من الصفحة
+  feedbackAddedThisVisit = signal<boolean>(false);
+
+  // بيحدد هل شرط الفيدباك الإجباري لازم يتفعل مع الليد ده ولا لأ
+  get requiresMandatoryFeedback(): boolean {
+    const info = this.leadInfo();
+    if (!info) return false;
+    return this.isAdmin() || info.brokerId === this.currentBrokerId;
+  }
+
+  // عدد الفيدباكات الكلي المسجلة على الليد ده (مستخرج من نفس الحقل الموجود بالفعل)
+  get feedbackCount(): number {
+    const info = this.leadInfo();
+    if (!info || !info.generalFeedback) return 0;
+    return this.parseFeedbacks(info.generalFeedback).length;
+  }
+
+  // بيبان تنبيه/هايلايت لما العدد يوصل لمضاعف 6 (6, 12, 18...)
+  get isFeedbackCountAlert(): boolean {
+    const count = this.feedbackCount;
+    return count > 0 && count % 6 === 0;
+  }
+
 
    ngOnInit() {
     const userString = localStorage.getItem('user');
@@ -152,11 +222,39 @@ export class LeadDetailsComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       this.leadId = Number(params.get('id'));
       if (this.leadId) {
+        this.feedbackAddedThisVisit.set(false); // 🟢 كل ما نفتح ليد جديد (حتى لو من جوه نفس الكومبوننت)، لازم فيدباك جديد
         this.checkPagination(); 
         this.initForms(); 
         this.loadLeadData(this.leadId); 
       }
     });
+  }
+
+  // 🟢 لو حاول يقفل التاب أو يعمل Refresh وهو لسه محتاج يضيف فيدباك، المتصفح هيوريه تحذيره الافتراضي
+  @HostListener('window:beforeunload', ['$event'])
+  handleBeforeUnload(event: BeforeUnloadEvent) {
+    if (this.requiresMandatoryFeedback && !this.feedbackAddedThisVisit()) {
+      event.preventDefault();
+      event.returnValue = ''; // لازم السطر ده عشان أغلب المتصفحات تعرض التحذير
+    }
+  }
+
+  // 🟢 الدالة اللي بيسألها الـ Guard قبل ما يسمح بأي تنقل جوه التطبيق
+  canDeactivate(): boolean {
+    if (!this.requiresMandatoryFeedback || this.feedbackAddedThisVisit()) {
+      return true;
+    }
+    this.alertService.warning(
+      'You must add a Feedback for this lead before leaving the page.',
+      'Feedback Required'
+    );
+    // نفتحله المودال بنفسنا عشان يبقى سهل يضيف الفيدباك على طول
+    const bootstrap = (window as any).bootstrap;
+    const modalEl = document.getElementById('generalNoteModal');
+    if (bootstrap && modalEl) {
+      new bootstrap.Modal(modalEl).show();
+    }
+    return false;
   }
 
   submitTransfer() {
@@ -377,6 +475,16 @@ export class LeadDetailsComponent implements OnInit {
         // حفظ الداتا 
         this.leadInfo.set(res.leadInfo);
         this.requestDetails.set(res.requestDetails);
+
+        // 🟢 تحديد هل الحالة الحالية Qualified ولا Unqualified ولا يتيمة (لسه محددش)
+        const currentStatusId = res.leadInfo?.statusId;
+        if (this.qualifiedStages.some(s => s.id === currentStatusId)) {
+          this.leadQualification.set('qualified');
+        } else if (this.unqualifiedStages.some(s => s.id === currentStatusId)) {
+          this.leadQualification.set('unqualified');
+        } else {
+          this.leadQualification.set(null); // حالة يتيمة - تفضل زي ما هي لحد ما البروكر يختار
+        }
         this.visits.set(res.visits ||[]);
         this.activities.set(res.activities ||[]);
         this.statusHistory.set(res.statusHistory ||[]);
@@ -406,6 +514,11 @@ export class LeadDetailsComponent implements OnInit {
       next: (recs) => { this.recommendations.set(recs); this.cdr.markForCheck(); },
       error: (err) => console.error('Error fetching recommendations', err)
     });
+  }
+
+  // 👇 دالة اختيار Qualified / Unqualified - بس بتغيّر الليستة المعروضة، مش بتحدث حالة العميل لحد ما يختار Stage فعلي
+  selectQualification(type: 'qualified' | 'unqualified') {
+    this.leadQualification.set(type);
   }
 
   // 👇 الدالة الجديدة لتغيير الحالة من الـ Dropdown
@@ -728,10 +841,27 @@ isAdminAction(item: any): boolean {
       this.crmService.addGeneralNote(this.leadId, this.currentBrokerId, this.generalNoteForm.value.note).subscribe({
         next: () => {
           this.alertService.close();
+
+          // 🟢 تم إضافة الفيدباك المطلوب - يقدر يخرج من الصفحة دلوقتي
+          this.feedbackAddedThisVisit.set(true);
+
+          // 🟢 +1 لأن الداتا القديمة لسه في الذاكرة والريكوست الجديد لسه بيترفريشها
+          const newCount = this.feedbackCount + 1;
+
           this.alertService.success('Feedback saved successfully!');
           this.generalNoteForm.reset();
           this.loadLeadData(this.leadId);
           document.getElementById('closeGeneralNoteModal')?.click();
+
+          // 🟢 لما يوصل مضاعف 6 (6, 12, 18...)، ننبه البروكر إن العميل ده أخد وقت طويل
+          if (newCount > 0 && newCount % 6 === 0) {
+            setTimeout(() => {
+              this.alertService.warning(
+                `This lead has reached ${newCount} Feedback entries - it's been taking a long time to follow up on. You may want to review your plan for this lead.`,
+                'Lead Needs Attention'
+              );
+            }, 3200);
+          }
         }
       });
     }
