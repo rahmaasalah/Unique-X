@@ -310,7 +310,10 @@
 
             <label class="text-muted small fw-bold">Property Type</label>
 
-            <p class="fw-bold text-dark">{{ requestDetails().propertyType || 'N/A' }}</p>
+            <p class="fw-bold text-dark" *ngIf="!requestDetails().propertyType">N/A</p>
+            <div class="d-flex flex-wrap gap-1" *ngIf="requestDetails().propertyType">
+              <span class="badge bg-dark" *ngFor="let pt of splitCsv(requestDetails().propertyType)">{{ pt }}</span>
+            </div>
 
           </div>
 
@@ -318,7 +321,10 @@
 
             <label class="text-muted small fw-bold">Listing Type</label>
 
-            <p class="fw-bold text-dark">{{ requestDetails().purpose || 'N/A' }}</p>
+            <p class="fw-bold text-dark" *ngIf="!requestDetails().purpose">N/A</p>
+            <div class="d-flex flex-wrap gap-1" *ngIf="requestDetails().purpose">
+              <span class="badge bg-success" *ngFor="let p of splitCsv(requestDetails().purpose)">{{ p }}</span>
+            </div>
 
           </div>
 
@@ -327,6 +333,33 @@
             <label class="text-muted small fw-bold">Budget</label>
 
             <p class="fw-bold text-dark fs-5">{{ requestDetails().totalAmount > 0 ? (requestDetails().totalAmount | currency:'EGP ') : 'N/A' }}</p>
+
+          </div>
+
+          <!-- 🟢 حقول Get Recommendation الجديدة -->
+          <div class="col-md-4" *ngIf="requestDetails().selectedCities">
+
+            <label class="text-muted small fw-bold">Preferred Cities</label>
+
+            <div class="d-flex flex-wrap gap-1">
+              <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle" *ngFor="let c of splitCsv(requestDetails().selectedCities)">{{ c }}</span>
+            </div>
+
+          </div>
+
+          <div class="col-md-4" *ngIf="requestDetails().minRooms || requestDetails().maxRooms">
+
+            <label class="text-muted small fw-bold">Rooms</label>
+
+            <p class="fw-bold text-dark">{{ requestDetails().minRooms || '?' }} - {{ requestDetails().maxRooms || '?' }}</p>
+
+          </div>
+
+          <div class="col-md-4" *ngIf="requestDetails().minBathrooms || requestDetails().maxBathrooms">
+
+            <label class="text-muted small fw-bold">Bathrooms</label>
+
+            <p class="fw-bold text-dark">{{ requestDetails().minBathrooms || '?' }} - {{ requestDetails().maxBathrooms || '?' }}</p>
 
           </div>
 
@@ -514,9 +547,41 @@
 
        <div class="card shadow-sm mb-4 mt-4 " *ngIf="combinedTimeline().length > 0">
 
-        <div class="card-header bg-white fw-bold py-3 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-white fw-bold py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
 
           <span class="fs-5"><i class="bi bi-list-task text-dark me-2"></i>Action Plan</span>
+
+
+
+          <!-- 👇 فلترة Late/Too Late -->
+
+          <div class="btn-group btn-group-sm" role="group">
+
+            <button type="button" class="btn"
+
+                    [class.btn-dark]="timelineFilter() === 'all'"
+
+                    [class.btn-outline-dark]="timelineFilter() !== 'all'"
+
+                    (click)="timelineFilter.set('all')">All</button>
+
+            <button type="button" class="btn"
+
+                    [class.btn-warning]="timelineFilter() === 'Late'"
+
+                    [class.btn-outline-warning]="timelineFilter() !== 'Late'"
+
+                    (click)="timelineFilter.set('Late')">Late</button>
+
+            <button type="button" class="btn"
+
+                    [class.btn-danger]="timelineFilter() === 'TooLate'"
+
+                    [class.btn-outline-danger]="timelineFilter() !== 'TooLate'"
+
+                    (click)="timelineFilter.set('TooLate')">Too Late</button>
+
+          </div>
 
         </div>
 
@@ -524,7 +589,7 @@
 
           <div class="row align-items-center border-bottom pb-3 mb-3" 
 
-               *ngFor="let item of combinedTimeline(); let last = last"[class.border-bottom-0]="last" [class.mb-0]="last">
+               *ngFor="let item of filteredTimeline; let last = last"[class.border-bottom-0]="last" [class.mb-0]="last">
 
             
 
@@ -543,6 +608,26 @@
   </span>
 
   <span class="fw-bold text-dark fs-6">{{ item.location || item.summary }}</span>
+
+
+
+  <!-- 👇 Late / Too Late badge - بتتحدث لحظيًا من الباك إند -->
+
+  <span *ngIf="item.lateStatus === 'Late'"
+
+      class="badge bg-warning text-dark" style="font-size: 0.7rem;">
+
+  <i class="bi bi-exclamation-circle-fill me-1"></i> Late
+
+</span>
+
+  <span *ngIf="item.lateStatus === 'TooLate'"
+
+      class="badge bg-danger" style="font-size: 0.7rem;">
+
+  <i class="bi bi-exclamation-triangle-fill me-1"></i> Too Late
+
+</span>
 
   
 

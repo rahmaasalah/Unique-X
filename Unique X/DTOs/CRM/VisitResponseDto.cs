@@ -21,5 +21,8 @@
         public string ListingType { get; set; }
         public string? Region { get; set; }
         public string? Project { get; set; }
+
+        // 🟢 Today / Late / TooLate - بتتحسب لحظيًا في الـ Controller، مش مخزنة في الداتابيز
+        public string? LateStatus { get; set; }
     }
 }

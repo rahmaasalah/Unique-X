@@ -21,6 +21,11 @@ export class CrmNavbarComponent implements OnInit {
   brokerName = signal<string>('');
   brokerImage = signal<string>('https://cdn-icons-png.flaticon.com/512/149/149071.png');
   notifications = signal<any[]>([]); 
+
+  // 🟢 الإشعارات بقت 3 categories: Today / Late / Too Late
+  todayCount = signal<number>(0);
+  lateCount = signal<number>(0);
+  tooLateCount = signal<number>(0);
   
   private pollingInterval: any; // مؤقت التحديث التلقائي
   private alertedItems = new Set<string>();
@@ -97,48 +102,41 @@ export class CrmNavbarComponent implements OnInit {
 
   loadNotifications(brokerId: string) {
     this.crmService.getBrokerDashboard(brokerId).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         if (res) {
-          
-          // 1. دمج المهام وضبط فرق التوقيت (استخدمنا t: any عشان نحل الإيرور)
-          const tasks = (res.pendingTasksList ||[]).map((t: any) => {
+          // 🟢 عدد كل category - جاهز من الباك إند
+          this.todayCount.set(res.todayCount || 0);
+          this.lateCount.set(res.lateCount || 0);
+          this.tooLateCount.set(res.tooLateCount || 0);
+
+          // بنحول كل الأنشطة/الزيارات (من الـ 3 categories) لشكل موحد عشان البوب أب بتاع التذكير
+          const mapTask = (t: any) => {
             let dStr = t.dueDate;
             if (dStr && typeof dStr === 'string' && !dStr.endsWith('Z')) dStr += 'Z';
             return {
-              id: 'task_' + t.id,
-              leadId: t.leadId,
-              leadName: t.leadName,
-              type: t.activityType,
-              summary: t.summary,
-              date: new Date(dStr)
+              id: 'task_' + t.id, leadId: t.leadId, leadName: t.leadName,
+              type: t.activityType, summary: t.summary, date: new Date(dStr)
             };
-          });
-
-          // 2. دمج الزيارات وضبط فرق التوقيت (استخدمنا v: any عشان نحل الإيرور)
-          const visits = (res.pendingVisitsList ||[]).map((v: any) => {
+          };
+          const mapVisit = (v: any) => {
             let dStr = v.visitDate;
             if (dStr && typeof dStr === 'string' && !dStr.endsWith('Z')) dStr += 'Z';
             return {
-              id: 'visit_' + v.id,
-              leadId: v.leadId,
-              leadName: v.leadName,
-              type: 'Visit',
-              summary: 'Location: ' + v.location,
-              date: new Date(dStr)
+              id: 'visit_' + v.id, leadId: v.leadId, leadName: v.leadName,
+              type: 'Visit', summary: 'Location: ' + v.location, date: new Date(dStr)
             };
-          });
+          };
 
-          // 3. 🟢 الفلترة السحرية: متظهرش المهمة إلا لو وقتها جه أو عدى!
-          const now = new Date().getTime();
-          
-          const allNotifs =[...tasks, ...visits]
-            .filter(item => item.date.getTime() <= now) // 👈 لو وقت المهمة أصغر من أو يساوي وقتك الحالي، تظهر
-            .sort((a, b) => b.date.getTime() - a.date.getTime()); // الأحدث يظهر فوق
+          const allNotifs = [
+            ...(res.todayTasks || []).map(mapTask),
+            ...(res.lateTasks || []).map(mapTask),
+            ...(res.tooLateTasks || []).map(mapTask),
+            ...(res.todayVisits || []).map(mapVisit),
+            ...(res.lateVisits || []).map(mapVisit),
+            ...(res.tooLateVisits || []).map(mapVisit),
+          ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
-          // 4. تحديث الجرس
           this.notifications.set(allNotifs);
-
-          // 5. بوب أب التنبيهات
           this.checkForImmediateAlerts(allNotifs);
         }
       }

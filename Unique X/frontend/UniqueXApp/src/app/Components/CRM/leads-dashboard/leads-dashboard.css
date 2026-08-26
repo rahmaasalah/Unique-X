@@ -1,3 +1,40 @@
+/* 🟢 نفس فكرة Hot Deals في صفحة الهوم بالظبط - كل حالة قسم لوحده، وتحته كروت بتتحرك أفقي بأسهم */
+.h-scroll-wrap { position: relative; padding: 0 46px; }
+.h-scroll {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  align-items: stretch;
+}
+.h-scroll::-webkit-scrollbar { display: none; }
+.h-scroll-item { flex: 0 0 auto; scroll-snap-align: start; }
+.h-scroll-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  box-shadow: 0 4px 14px rgba(0,0,0,.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dc3545;
+  cursor: pointer;
+}
+.h-scroll-arrow:hover { background: #dc3545; color: #fff; }
+.h-scroll-arrow.left { left: 0; }
+.h-scroll-arrow.right { right: 0; }
+@media (max-width: 767.98px) {
+  .h-scroll-arrow { display: none; }
+  .h-scroll-wrap { padding: 0; }
+}
+
 .lead-card {
   cursor: grab;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -48,5 +85,3 @@
 .kanban-drop-list.cdk-drop-list-dragging .lead-card:not(.cdk-drag-placeholder) {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
-
-

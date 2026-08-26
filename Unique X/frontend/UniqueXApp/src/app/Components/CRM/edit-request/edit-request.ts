@@ -139,13 +139,16 @@ export class EditRequestComponent implements OnInit {
       campaignName: [''],
       referredBy: [''],
       
-      propertyType: ['', Validators.required],
-      purpose: ['', Validators.required],
+      propertyType: [[], Validators.required], // 🟢 بقت Array - Multi-select زي مودال Get Recommendation
+      purpose: [[], Validators.required], // 🟢 بقت Array - Multi-select
       totalAmount: [''], 
       paymentMethod: ['Cash'],
       zoneId: [''],
       selectedRegions: [[]],
       selectedProjects: [[]],
+      selectedCities: [[]], // 🟢 جديد - Multi-select زي مودال Get Recommendation
+      minRooms: [''], maxRooms: [''], // 🟢 جديد
+      minBathrooms: [''], maxBathrooms: [''], // 🟢 جديد
       downPayment: ['', Validators.min(0)],
       installmentYears: ['', Validators.min(1)],
       quarterlyInstallment: [0, [Validators.min(0)]],
@@ -168,9 +171,13 @@ export class EditRequestComponent implements OnInit {
 
           const regionsArr = req.selectedRegions ? req.selectedRegions.split(', ').filter((x:any)=>x) :[];
           const projectsArr = req.selectedProjects ? req.selectedProjects.split(', ').filter((x:any)=>x) :[];
+          // 🟢 PropertyType/Purpose/Cities بقوا Comma-separated من الباك إند - بنحولهم لـ Array هنا
+          const propertyTypeArr = req.propertyType ? req.propertyType.split(',').map((x:string)=>x.trim()).filter((x:any)=>x) :[];
+          const purposeArr = req.purpose ? req.purpose.split(',').map((x:string)=>x.trim()).filter((x:any)=>x) :[];
+          const citiesArr = req.selectedCities ? req.selectedCities.split(',').map((x:string)=>x.trim()).filter((x:any)=>x) :[];
 
-          // 🟢 جلب أكواد المشاريع الخاصة بالعميل ده عشان الداتا تنزل متعلمة جاهزة
-          this.fetchPropertyCodes(req.purpose, () => {
+          // 🟢 جلب أكواد المشاريع الخاصة بالعميل ده عشان الداتا تنزل متعلمة جاهزة (بناخد أول Purpose مختار)
+          this.fetchPropertyCodes(purposeArr[0] || '', () => {
             this.editRequestForm.patchValue({
               fullName: info.fullName,
               phoneNumber: info.phoneNumber,
@@ -182,8 +189,13 @@ export class EditRequestComponent implements OnInit {
               campaignName: info.campaignName || '',
               referredBy: info.referredBy || '',
 
-              propertyType: req.propertyType,
-              purpose: req.purpose,
+              propertyType: propertyTypeArr,
+              purpose: purposeArr,
+              selectedCities: citiesArr,
+              minRooms: req.minRooms ?? '',
+              maxRooms: req.maxRooms ?? '',
+              minBathrooms: req.minBathrooms ?? '',
+              maxBathrooms: req.maxBathrooms ?? '',
               paymentMethod: req.paymentMethod || 'Cash',
               zoneId: req.zoneId || '',
               selectedRegions: regionsArr,
@@ -223,9 +235,9 @@ export class EditRequestComponent implements OnInit {
       this.updateAvailableProjects(zoneId); 
     });
 
-    this.editRequestForm.get('purpose')?.valueChanges.subscribe(purpose => {
+    this.editRequestForm.get('purpose')?.valueChanges.subscribe((purpose: string[]) => {
       this.editRequestForm.patchValue({ selectedRegions: [], selectedProjects:[], downPayment: '', installmentYears: '', campaignName: '' });
-      this.fetchPropertyCodes(purpose); // 👈 تحديث أكواد العقارات لو الغرض اتغير
+      this.fetchPropertyCodes(purpose?.[0] || ''); // 👈 تحديث أكواد العقارات لو الغرض اتغير (بناخد أول Purpose مختار)
     });
     
     this.editRequestForm.get('paymentMethod')?.valueChanges.subscribe(() => {
@@ -263,23 +275,36 @@ export class EditRequestComponent implements OnInit {
     }
   }
 
+  // 🟢 دوال الـ Multi-select الجديدة - نفس فكرة toggleRecommendationValue في مودال الهوم بالظبط
+  toggleMultiValue(controlName: string, value: string): void {
+    const current = (this.editRequestForm.get(controlName)?.value || []) as string[];
+    const idx = current.indexOf(value);
+    const updated = idx > -1 ? current.filter(v => v !== value) : [...current, value];
+    this.editRequestForm.patchValue({ [controlName]: updated });
+  }
+
+  isMultiValueSelected(controlName: string, value: string): boolean {
+    const current = (this.editRequestForm.get(controlName)?.value || []) as string[];
+    return current.includes(value);
+  }
+
   get showRegionSelection() {
-    const purpose = this.editRequestForm.get('purpose')?.value;
-    return ['Resale', 'Rent'].includes(purpose); 
+    const purpose = (this.editRequestForm.get('purpose')?.value || []) as string[];
+    return purpose.some(p => ['Resale', 'Rent'].includes(p));
   }
 
   get showProjectSelection() {
-    const purpose = this.editRequestForm.get('purpose')?.value;
-    return ['Primary', 'Resale Project', 'Rent'].includes(purpose);
+    const purpose = (this.editRequestForm.get('purpose')?.value || []) as string[];
+    return purpose.some(p => ['Primary', 'Resale Project', 'Rent'].includes(p));
   }
 
   get showFinancialDetails() {
     if (!this.editRequestForm) return false;
-    const purpose = this.editRequestForm.get('purpose')?.value;
+    const purpose = (this.editRequestForm.get('purpose')?.value || []) as string[];
     const payment = this.editRequestForm.get('paymentMethod')?.value;
     
-    // 🟢 التعديل هنا: هتظهر دايماً مع التقسيط بشرط إن الغرض ميكونش "إيجار"
-    return payment === 'Installment' && purpose !== 'Rent'; 
+    // 🟢 هتظهر دايماً مع التقسيط بشرط إن الغرض ميكونش "إيجار" بس
+    return payment === 'Installment' && !purpose.every(p => p === 'Rent') && purpose.length > 0;
   }
 
   // 👇 دالة تنسيق الأرقام بـفواصل (12,000,000)
@@ -301,6 +326,14 @@ export class EditRequestComponent implements OnInit {
 
     submitData.selectedRegions = submitData.selectedRegions.join(', ');
     submitData.selectedProjects = submitData.selectedProjects.join(', ');
+    // 🟢 propertyType/purpose/selectedCities بقوا Arrays (Multi-select) - نحولهم لـ Comma string قبل الإرسال للباك إند
+    submitData.propertyType = (submitData.propertyType || []).join(',');
+    submitData.purpose = (submitData.purpose || []).join(',');
+    submitData.selectedCities = (submitData.selectedCities || []).join(',');
+    submitData.minRooms = submitData.minRooms ? Number(submitData.minRooms) : null;
+    submitData.maxRooms = submitData.maxRooms ? Number(submitData.maxRooms) : null;
+    submitData.minBathrooms = submitData.minBathrooms ? Number(submitData.minBathrooms) : null;
+    submitData.maxBathrooms = submitData.maxBathrooms ? Number(submitData.maxBathrooms) : null;
     submitData.totalAmount = submitData.totalAmount ? parseInt(String(submitData.totalAmount).replace(/,/g, ''), 10) : 0;
     submitData.downPayment = submitData.downPayment ? parseInt(String(submitData.downPayment).replace(/,/g, ''), 10) : 0;
     submitData.quarterlyInstallment = submitData.quarterlyInstallment ? parseInt(String(submitData.quarterlyInstallment).replace(/,/g, ''), 10) : 0;

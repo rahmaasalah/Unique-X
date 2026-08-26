@@ -39,5 +39,23 @@
         public string? OriginalBrokerName { get; set; }
         // اسم البروكر اللي طلب إضافة العميل للمرة التانية
         public string? DuplicateRequestedByBrokerName { get; set; }
+
+        // ============================================================
+        // 🟢 نظام السحب التلقائي (Auto Reassignment) - Late/Too Late
+        // ============================================================
+
+        // هل العميل ده اتسحب من البروكر بتاعه بسبب عدم الرد لمدة 72 ساعة؟
+        public bool IsUnassigned { get; set; } = false;
+
+        // معرف البروكر اللي اتسحب منه العميل (عشان نعرض اسم العميل عنده كـ "Disappeared")
+        public string? PreviousBrokerId { get; set; }
+
+        // إمتى اتسحب العميل بالظبط
+        public DateTime? UnassignedAt { get; set; }
+
+        // 🟢 نقطة تصفير عداد الفيدباك: لما البروكر الجديد ياخد العميل، بنسجل الوقت هنا
+        // وعداد الفيدباك (في الفرونت) بيحسب بس الفيدباكات اللي اتضافت بعد التاريخ ده
+        // (الفيدباكات القديمة بتفضل موجودة في GeneralFeedback كتاريخ، بس مش بتتحسب في العداد)
+        public DateTime? FeedbackCounterResetAt { get; set; }
     }
 }

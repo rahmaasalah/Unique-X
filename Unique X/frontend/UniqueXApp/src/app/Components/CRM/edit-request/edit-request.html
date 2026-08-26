@@ -107,26 +107,65 @@
         <hr class="my-3 text-muted">
 
         <!-- 3. تفاصيل العقار -->
-        <div class="col-md-4">
-          <label class="form-label small fw-bold text-dark">Property Type</label>
-          <select class="form-select bg-light border-0 rounded-3" formControlName="propertyType">
-            <option value="Apartment">Apartment</option>
-            <option value="Villa">Villa</option>
-            <option value="Chalet">Chalet</option>
-            <option value="Shop">Shop</option>
-            <option value="Office">Office</option>
-            <option value="Full Floor">Full Floor</option>
-          </select>
+        <div class="col-md-6">
+          <label class="form-label small fw-bold text-dark d-block mb-2">Property Type <span class="text-muted fw-normal">(Multi-select)</span></label>
+          <div class="d-flex flex-wrap gap-2">
+            @for (opt of ['Apartment', 'Villa', 'Chalet', 'Shop', 'Office', 'Full Floor']; track opt) {
+              <button type="button" class="btn btn-sm rounded-pill px-3"
+                      [class.btn-danger]="isMultiValueSelected('propertyType', opt)"
+                      [class.btn-outline-secondary]="!isMultiValueSelected('propertyType', opt)"
+                      (click)="toggleMultiValue('propertyType', opt)">
+                {{ opt }}
+              </button>
+            }
+          </div>
         </div>
         
-        <div class="col-md-4">
-          <label class="form-label small fw-bold text-dark">Purpose</label>
-          <select class="form-select bg-light border-0 rounded-3" formControlName="purpose">
-           <option value="Resale">Resale</option>
-            <option value="Primary">Primary</option>
-            <option value="Resale Project">Resale Project</option>
-            <option value="Rent">Rent</option>
-          </select>
+        <div class="col-md-6">
+          <label class="form-label small fw-bold text-dark d-block mb-2">Purpose <span class="text-muted fw-normal">(Multi-select)</span></label>
+          <div class="d-flex flex-wrap gap-2">
+            @for (opt of ['Resale', 'Primary', 'Resale Project', 'Rent']; track opt) {
+              <button type="button" class="btn btn-sm rounded-pill px-3"
+                      [class.btn-danger]="isMultiValueSelected('purpose', opt)"
+                      [class.btn-outline-secondary]="!isMultiValueSelected('purpose', opt)"
+                      (click)="toggleMultiValue('purpose', opt)">
+                {{ opt }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- 🟢 Cities (جديد - نفس فكرة مودال Get Recommendation) -->
+        <div class="col-md-6">
+          <label class="form-label small fw-bold text-dark d-block mb-2">Preferred Cities <span class="text-muted fw-normal">(Multi-select)</span></label>
+          <div class="d-flex flex-wrap gap-2">
+            @for (opt of ['Cairo', 'Alexandria', 'North Coast']; track opt) {
+              <button type="button" class="btn btn-sm rounded-pill px-3"
+                      [class.btn-danger]="isMultiValueSelected('selectedCities', opt)"
+                      [class.btn-outline-secondary]="!isMultiValueSelected('selectedCities', opt)"
+                      (click)="toggleMultiValue('selectedCities', opt)">
+                {{ opt }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- 🟢 Rooms / Bathrooms range (جديد) -->
+        <div class="col-md-3">
+          <label class="form-label small fw-bold text-dark">Min Rooms</label>
+          <input type="number" min="0" class="form-control bg-light border-0 rounded-3" formControlName="minRooms">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-bold text-dark">Max Rooms</label>
+          <input type="number" min="0" class="form-control bg-light border-0 rounded-3" formControlName="maxRooms">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-bold text-dark">Min Bathrooms</label>
+          <input type="number" min="0" class="form-control bg-light border-0 rounded-3" formControlName="minBathrooms">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-bold text-dark">Max Bathrooms</label>
+          <input type="number" min="0" class="form-control bg-light border-0 rounded-3" formControlName="maxBathrooms">
         </div>
 
         <div class="col-md-4">

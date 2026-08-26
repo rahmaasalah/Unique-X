@@ -11,9 +11,13 @@ import { AdminService } from '../../Services/admin';
 import { BlogService } from '../../Services/blog.service';
 import { ArticleService } from '../../Services/article.service';
 import { RecommendationModalService } from '../../Services/recommendation-modal.service';
+import { CrmService } from '../../Services/crm.services';
+import { RecommendationLeadDto } from '../../Models/crm.models';
 import { LaunchService } from '../../Services/launch.service';
 import { GoogleAnalyticsService } from 'ngx-google-analytics';
 import { CurrencyService } from '../../Services/currency.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 
 
@@ -30,6 +34,7 @@ export class HomeComponent implements OnInit {
   ads = signal<any[]>([]);
   blogs = signal<any[]>([]);
   launches = signal<any[]>([]);
+  private http = inject(HttpClient);
 
   // 🟢 بانرات ثابتة بين قسمي Launches و Hot Deals - Array واحد مرتب حسب ترتيب الأدمن
   homeSectionBanners = signal<any[]>([]);
@@ -56,6 +61,7 @@ export class HomeComponent implements OnInit {
   private blogService = inject(BlogService);
   private articleService = inject(ArticleService);
   recommendationModalService = inject(RecommendationModalService);
+  private crmService = inject(CrmService);
   private launchService = inject(LaunchService);
   currencyService = inject(CurrencyService);
 
@@ -127,45 +133,74 @@ export class HomeComponent implements OnInit {
 
   currentListingType: string | null = null;
   currentProjectName: string | null = null;
-  //availableProjects: string[] =[];
-  availableProjectGroups: { region: string, projects: string[] }[] =[];
 
+  // 🟢 Region & Project typeahead - بيتقروا لايف من الداتا بيز (api/properties/regions-list و api/properties/projects-list)
+  // بدل الـ object الثابت اللي كان متسجل يدوي واللي مكنش بيتحدث لما الأدمن يضيف منطقة/مشروع جديد
+  allRegions = signal<any[]>([]);
+  regionSearchText = signal<string>('');
+  isRegionDropdownOpen = signal<boolean>(false);
+  selectedRegionName = signal<string>('');
 
-  projectsMapping: any = {
-    1: { // Cairo
-    'Sheikh Zayed' : ['Village West-Dorra', 'Elkarma Kay', 'Zed West-Ora', 'Skyramp-Upwyde', 'La Colina-Capital Hills', 'Ivoire West-Pre', 'Etapa-City Edge', 'Allegria-Sodic', 'Westown-Sodic', ' Bura Residence-Kafafy', 'Terrace-Hdp', '205-Arkan Palm', 'Elite West-Taj', 'Bliss Gate-Torec', 'The Harv-Dal', 'Genova West-Eastren', 'Jazal-Legacy Estates', 'Bahja-Symphony', 'Coy-Voya', 'Lien-Elysium', 'Belva-Karnak', 'Rovan-Epd', 'Guira-Kaia', 'Pavia-Taj', 'Cloudside-Hills', 'Civ West-Civilia', 'Bona Nova-Ad', 'Levent-El Diwanya', 'White Residence-Pledge', 'La Quinta-Rhd', 'Calma-Leaders', 'Via-Eagles', 'D.Mile-District 4', 'Zia Park-Hills', 'Rewaya-Siac', 'Rouh Zayed-Al Amaken'],
-    'Green belt' : ['One 50 El-Gabry','Zg2-Zg','Montania Park-Everst View','T pearl-Torec','Novella-Al Karma','Stay-Zg','Tabah West-Zg','Upove-Contact','Zayard Elite-Palmier','El Patio Vera-La Vista','Levels-Duens', 'West End','Green Plaza', 'Vert-Palmier','S7n Shades-Zg', 'Yuva-Urban Edge', 'Lake West 5-Cairo Capital', 'Menorca-Mardev', 'Montania Gardens', 'Lake West 4-Cairo Capital', 'Montania-Everst view','Ira-El Gabry', 'The 8-El Gabry', 'West Line-Living Lines', 'Isola Villas-El Masria', 'Ladera Heights-Merath','Roudy-Zaya', 'Parkwoods-Malvern', 'Solimar', 'Moon Hills 5-Sakan', 'Ladera Rose-Merath', 'Kings Way-Mountain View'],
-    '6th of October' : ['Ever-Cred', 'O/Nine-Miqqat','Jazebeya-Upwyde', 'Pyramids City 5', 'West Clay-Remal', 'Stay`n-A plus', 'Hayah-Jawad'],
-    'North Expansions' : ['Rafts-The Ark', 'Elm Tree-Elm', 'One 33-Badreldin', 'Westdays-Ilcazar', 'ICity-Mountain View', 'October Plaza-Sodic', 'Diar 2-Tameer', 'Kayan-Badreldin', 'Nyoum October-Adh', 'Boulevard Hiils-Al Amar', 'Azalea-Egy Dev', 'Abha-Srd', 'Rayat-Malaz', 'Villaria-Mirad', 'M Apartments-Mirad', 'Murooj'],
-    'October Gardens' : ['kite-Centrada', ' Belong-Centrada', 'Aqmar-Kayan', 'Tesla Residence-Tesla', 'Flw-Zg', 'Darvell-White Eagle', 'Tabeaa-Nasdaq', 'O west-Orascom', 'Ashgar City-Igi', 'River-West Way', 'Rock Eden-El Batal', 'Ixora-Jora', 'Westera-Kastorai', 'Seven-Harby', 'Sun Capital-Arabia Holding', 'Zat-Voya', 'Zaya', 'Solin-Levels', 'Jiran-A Plus', 'Vienna-Dream Hills', 'Beta Residence-Beta Egypt', 'Badya-Palm Hills', 'Mountain View kings way', 'Badya'],
-    'Eastern Expansions' : ['Cleopatra Square-Cleopatra', 'Joya-Tcc', 'Nmq-Melee', 'keeva-Al Ahly Sabbour', 'Swan Lake West-Hassan Allam', 'Palm Parks-Palm Hills', 'Upville-Wadi El Nile', 'WestVille-Binbaz 9 El Masria', '31 West-M Squared', 'Club Hills-Hpd', 'Villagio-Modon', 'Tawny-Hyde Park', 'Signature-Hyde Park', 'Garden Lakes-Hyde Park', 'The Crown-Palm Hills', 'Px-Palm Hills', 'October Park-Mountain View', 'Joulz-Inertia', 'Midgard-Orbit', 'Giza Terracas-Marakez', 'West Leaves-El Attal', 'Hadaba-Pre', 'Nyoum Pyarmids-Adh', 'Brix-Inertia', 'Fifty 7-Inertia'],
-    'New Cairo' : ['Swan Lake Residences-Hassan Allam', 'Sa`ada-Horizon', 'Capital Gardens-Palm Hills', 'Palm Hills New Cairo', '97 Hills-Palm Hills', 'Patio Oro-La Vista', 'Patio Hills-La vista', 'Hyde park New cairo', 'Solana East-Ora', 'Zed East-Ora', 'Hyde park Central', 'Patio Vida-La Vista', 'Patio Riva-La Vista', 'Crescent Walk-Marakez', 'Sa`ada Boutique-Horizon', 'District 5-Marakez', 'Kairo-One & Waterway', 'Hyde Park Views', 'Katameya Creeks-Starlight', 'El-Patio Town - La Vista', 'Al Patio 7-La Vista', 'W Signature-The Waterway', 'The View-The Waterway', 'Villette-Sodic', 'Regent`s Square - Al Dawlia', 'Fifth Square - Marasem', 'Waterway 1-The Waterway', 'Taj City-Madinet Masr', 'Stei8ht-Lmd', 'Creek Town-II Cazar',
-      'Yellow-Urbnlanes', 'Address East-Dorra', 'Telal East-Roya', 'ICity New Cairo-Mountain View', 'Mist-M Squared', 'Trio Gardens-M Squared', 'Sarai-Madinet Masr', 'Tierra-Sed', 'Glen-II Cazar', 'Roya', 'Cred-Ever', 'Midtown East-Better Home', 'The Crest-|| Cazar', 'Mountain View Hyde park', 'City Gate-Qatari Diar', 'IVoire East-Pre', 'Promenade-Wadi Degla', 'The WaterMarQ-The MarQ', 'Azad-Tameer', 'Noi-Urbnlanes', 'Galleria Moon Valley-Arabia Holding', 'Jayd-Sed', 'Mountain View 1.1', 'Ashrafieh-Arabia Holding', 'Jw Marriott Residences-Al Jazi', 'White Residence-Upwyde', 'Stone park-Royal', 'Stone Residence-Pre', 'Brooks-Pre', 'SQ1-Hdp', 'The Median-Egy Gab', 'Nile Boulevard-Nile', 'Eelaf-Erg', 'Life Wise-Eons', 'Linwood-Erg',
-      'Livair-Erg', 'Zeya-El Baron', 'Orla-ICapital', 'Peerage-Al riyadh Misr', 'Acasa Mia-Dar Al Alamia', 'Hope Memaar Al Ashraf', 'Notion-TownWriters', 'The lark-Tamayoz', 'La Colina-Capital Hills', 'Eastville - Ajna', 'Solay-Living Yards', 'Cavali-Al Basiony', 'Blue Tree-Sky Ad', 'Zomra East-Nations of Sky', 'The Red-Abm', 'Greya-El Baron', 'Kin-Imarra', 'Cattleya Arabco', 'Aster-Times', ' Boutique Village-Modon', 'Nurai-Mercon', 'Amara-New Plan', 'Isola Centra-El Masria', 'The Residence-Salam', 'True-UC', 'Avelin-Times', 'Garnet-Jadeer', '90 Avenue-Tabarak', 'The Ark', 'J East-Juzur', 'Palm East-Tg', 'Begonia-Menassat', 'Blanks-Manaj', 'Sephora Heights-Sephora', 'Jada & Blue-Aspect', 'Rock Vera-Al Batal', 'Jadie-Concrete',
-      'The Icon Gardens-Style Home', 'Valencia Valley-Ncb', 'Silvia-Ted', 'Yardin-Mass', 'Rivali-Samco Holding', 'Century city-Vantage', 'Amorada-Afaaq', 'Elen-Concrete', 'Wuud-Tharaa', 'Dijar-Azzar Reedy', 'Maliv-kulture', 'Noll-Kleek', 'Acasa Alma-Dar Al Alamia', 'Najm-Royal', 'Jiwar-Concrete', 'Home Residence-Home Town', 'Cairova-Rna', 'Lusail-Margins', 'Nest N Developments', 'Alca-Sag', 'Grounds - One / One'
-     ]
+  allProjects = signal<any[]>([]);
+  projectSearchText = signal<string>('');
+  isProjectDropdownOpen = signal<boolean>(false);
+  selectedProjectNameValue = signal<string>('');
 
-  },
-  2: { // Alexandria
-    'any': [
-      'Palm hills Alexandria', 'Sawari', 'The One', 'Muruj', 'Alex west', 'Skyline', 'Crystal towers', 
-      'Grand view', 'Twin towers', 'Valore smouha', 'Valore antoniadis', 'East towers', 
-      'Saraya gardens', 'Veranda', 'Jackranda', 'Oria city', 'Elite City',
-      'Alsafwa City', 'Vida', 'Abha hayat', 'Jewar', 'Ouruba royals', 
-      'Soly vie', 'San Stefano royals', 'Malaaz', 'Cleopatra plaza','Smoha Gate', 'Antoniades City'
-    ]
-  },
-   3: { // North Coast
-    'Ras Al Hekma': ['Ramla', 'Azha', 'Naia Bay', 'El Masyaf', 'Fouka Bay', 'Remal', 'Hacienda West', 'Seashore', 'Ogami', 'Seashell Playa', 'La Vista Ras El Hikma', 'Caesar', 'Koun', 'Caesar Bay', 'Lyv', 'Mountain View Ras El Hikma', 'Solare', 'Swan Lake', 'Seashell Ras El Hikma', 'The Med', 'Gaia', 'June', 'Direction White', 'Cali Coast', 'Hacienda Waters', 'Mar Bay', 'Jefaira', 'Sea View', 'Safia', 'Salt', 'Azzar Islands', 'Saada North Coast', 'Katamya Coast', 'Soul', 'Lvls','قرية لافيستا باي','قرية سواني','قرية الامارات هايتس','قرية قطامية كوست','قرية بالي','قرية ذا ووتر واي','قرية ذا شور','قرية سي فيو','قرية لاميرا','قرية وان علمين','قرية دايركشن وايت','قرية جون سوديك','قرية رملة','قرية ذا ميد','قرية كالي كوست','قرية سيتي ستارز','قرية رودس','قرية ذا كريبس جيفيرا','قرية ماونتن فيو الدبلوماسيين','قرية سيزر قيصر باي','قرية هاسيندا وايت','قرية جيفيرا','قرية بلوز تيفاني','قرية الجوهرة','قرية رويال بيتش','قرية لافيستا باي ايست','قرية كوست 82 سابقا المصيف حاليا','قرية فوكا كلوب','قرية المصيف','قرية نايا باي','قرية مينا كلوب','قرية ازها','قرية ملاذ سوديك','قرية كاي','قرية سيلفر ساندس','قرية وايت باي سيدي حنيش','قرية سيسيليا لاجونز','قرية اس باس سيدي حنيش','قرية ازميرالدا باي','قرية بورتو كريستال لاجونز','قرية جزر الجراولة'],
-    'Al-Dabaa': ['Dose', 'The Water Way', 'Seazen', 'La Vista Bay', 'La Vista Bay East', 'Hacienda Blue', 'La Sirena', 'D bay', 'South Med','قرية كورونادو','قرية جاي','قرية دي باي','قرية لاسيرينا','قرية سيزين','قرية دوس'],
-    'Sidi Abdulrahman': ['Telal', 'Hacienda Red', 'Hacienda White', 'Amwaj', 'Q North', 'SeaShell', 'Bianchi Ilios', 'Shamasi', 'Masaya', 'Location', 'Stella Heights', 'Alura', 'La vista Cascada', 'Maraasi', 'Stella', 'Diplo 3', 'Haceinda Bay','قرية هاسيندا باي','قرية ستيلا سيدي عبدالرحمن','قرية ليك يارد','ماراسي','قرية سكايا مراسي','قرية أجورا','قرية فرح','قرية لافيستا كاسكادا','قرية سي شيل بلايا','قرية سوان ليك','قرية ريتان','قرية مسايا','قرية اوركيديا','قرية ستيلا هايتس','قرية كاسكاديا','قرية بيانكي','قرية ستيلا مارينا','قرية أمواج','قرية بلومار','قرية هاسيندا وايت','قرية خليج غزالة','قرية زويا','قرية تلال'],
-    'Ghazala Bay': ['Playa Ghazala', 'Ghazala Bay', 'Zoya'],
-    'Al-Alamin': ['Zahra', 'Crysta', 'Plage', 'Lagoons', 'Alma', 'IL Latini', 'Downtown', 'Plam Hills North Coast', 'Mazarine', 'Golf Porto Marina', 'Marina 1', 'Marina 2', 'Marina 3', 'Marina 4', 'Marina 5', 'Marina 6', 'Marina 7', 'Marina 8','قرية مازارين','قرية مارسيليا لاند','قرية ليفير','قرية اركو لاجون','قرية فيستا مارينا','منتجع العلمين كابيتال','قرية باب البحر','قرية بلو فالي','قرية لازوردي باي','قرية بو ايلاند','قرية بو ساندس','قرية داون تاون مارينا','قرية رو مارينا','قرية بورتو مارينا','قرية سيا فيلاجيو','قرية جولف بورتو مارينا','قرية بورتو كروز'],
-    'Sahel': ['Viller', 'The Island', 'Marina 8', 'North Code', 'Wanas Master', 'London', 'Eko Mena', 'Bungalows', 'Layana', 'Glee', 'قرية المهندسين', 'فخر البحار للقوات البحرية', 'قرية سيدرا', 'قرية ريزيه', 'قرية أمون','مايوركا', 'قرية كرير باراديس','قرية ألماظة باي','قرية داليا','قرية مصر للتعمير','قرية كرير لاجون','قرية الفيروز','قرية شاطئ الشروق','قرية البنوك','قرية الأطباء','قرية الطيارين','قرية جامعة القاهرة','قرية رمسيس','قرية كازابلانكا','قرية جولدن بيتش','قرية مرسي باجوش','قرية هليو بيتش','قرية مراقيا','قرية سرايات','قرية الدبلوماسيين التجاريين','قرية زمردة','قرية روزانا','قرية غرناطة','قرية فالنسيا','قرية ديانا بيتش','قرية هايدي','قرية سيلا','قرية الريفيرا','قرية تيباروز','قرية جراند هيلز','قرية المروة','قرية سلسبيل','قرية تاهيتي',
-      'قرية التجاريين','قرية بلو باي','قرية باراديس بيتش','قرية البلاح','قرية قناة السويس','قرية ماربيلا','قرية اونديكسا','قرية روز فالي','قرية الرواد بيتش','قرية الكروان','قرية بالم بيتش','قرية كازابيانكا','قرية الروضة','قرية جامعة الدول العربية','قرية جامعة عين شمس','قرية المعمورة الجديدة','قرية الصفا','قرية بانجلوز','قرية حورس والرمال الذهبية','قرية زهرة','قرية بيلا ميرا','قرية ديمورا','قرية مارسيليا بوكية','قرية وايت ساند','قرية بانوراما بيتش','قرية عايدة','قرية المعادي','قرية مرحبا بيتش','قرية ريتال فيو','قرية كاربيان','قرية ريماس','قرية الروان','قرية المنتزة','قرية ايكو','قرية المرجان','','قرية قرطاج','قرية مارينا فلاورز','قرية أغادير','قرية سيرينا','قرية الصحفيين','قرية بلو بلاجا','قرية كوستا دل سول','قرية بيو بيلا','قرية روتندو كوست','قرية سانتوريني','قرية بدر','قرية فيرجينيا','قرية نيفادا هيلز','قرية كيلوباترا','قرية الزهور','قرية مارينا صن شاين','قرية البوسيت','قرية جرين بيتش','قرية سوميد','قرية جامعة أسيوط','قرية دياموند بيتش','قرية أتيك','قرية مارينا جاردنز','قرية اللوتس','قرية أكوا فيو','قرية باترسي','قرية بيترو بيتش','قرية مارينا فالي','قرية بيلا مارينا',
-    ]
+  filteredRegionOptions = computed(() => {
+    const search = this.regionSearchText().toLowerCase();
+    return this.allRegions().filter(r => r.name.toLowerCase().includes(search)).slice(0, 50);
+  });
+
+  filteredProjectOptions = computed(() => {
+    const search = this.projectSearchText().toLowerCase();
+    return this.allProjects().filter(p => p.name.toLowerCase().includes(search)).slice(0, 50);
+  });
+
+  // بيجيب المناطق والمشاريع من الداتا بيز، ولو city اتحددت بيفلتر عليها بس
+  loadRegionsAndProjects(cityId?: any) {
+    const cityParam = cityId ? `?city=${cityId}` : '';
+
+    this.http.get<any[]>(`${environment.apiUrl}/Properties/regions-list${cityParam}`).subscribe({
+      next: (data) => this.allRegions.set(data || []),
+      error: () => this.allRegions.set([])
+    });
+
+    this.http.get<any[]>(`${environment.apiUrl}/Properties/projects-list${cityParam}`).subscribe({
+      next: (data) => this.allProjects.set(data || []),
+      error: () => this.allProjects.set([])
+    });
   }
-  };
+
+  selectRegion(name: string) {
+    this.selectedRegionName.set(name);
+    this.regionSearchText.set(name);
+    this.isRegionDropdownOpen.set(false);
+  }
+
+  clearRegionSelection() {
+    this.selectedRegionName.set('');
+    this.regionSearchText.set('');
+  }
+
+  closeRegionDropdown() {
+    setTimeout(() => this.isRegionDropdownOpen.set(false), 200);
+  }
+
+  selectProject(name: string) {
+    this.selectedProjectNameValue.set(name);
+    this.projectSearchText.set(name);
+    this.isProjectDropdownOpen.set(false);
+  }
+
+  clearProjectSelection() {
+    this.selectedProjectNameValue.set('');
+    this.projectSearchText.set('');
+  }
+
+  closeProjectDropdown() {
+    setTimeout(() => this.isProjectDropdownOpen.set(false), 200);
+  }
+
 
 ngOnInit(): void {
   // 🟢 1. نقلنا الـ Hot Deals بره عشان تحمل مرة واحدة بس ومتبقاش بطيئة!
@@ -179,6 +214,14 @@ ngOnInit(): void {
     localStorage.removeItem('pendingRecommendationParams');
     try {
       const params = JSON.parse(pendingParams);
+      // 🟢 دلوقتي بقى مسجل دخول - نبعت نفس الطلب اللي كان ملاه قبل اللوجين كـ Lead للـ CRM
+      this.submitRecommendationToCrm({
+        cities: params.city ? params.city.split(',') : [],
+        listingTypes: params.listingType ? params.listingType.split(',') : [],
+        propertyTypes: params.propertyType ? params.propertyType.split(',') : [],
+        minRooms: params.minRooms || '', maxRooms: params.maxRooms || '',
+        minBathrooms: params.minBathrooms || '', maxBathrooms: params.maxBathrooms || ''
+      }, params.minBudget, params.maxBudget);
       this.router.navigate(['/recommendation-results'], { queryParams: params });
     } catch { }
   } else if (!this.authService.loggedIn()) {
@@ -190,7 +233,10 @@ ngOnInit(): void {
     this.currentListingType = params['listingType']?.toString() || null;
     this.currentProjectName = params['projectName'] || '';
     this.activeQueryParams.set(params);
-      
+
+    if (params['projectName']) this.selectProject(params['projectName']);
+    if (params['region']) this.selectRegion(params['region']);
+
     this.updateProjectsList(params['city']);
     this.loadProperties(params);
   });
@@ -279,6 +325,11 @@ submitRecommendation(minBudgetEl: HTMLInputElement, maxBudgetEl: HTMLInputElemen
 
   this.recommendationModalService.close();
 
+  // 🟢 لو مسجل دخول: نبعت طلبه كـ Lead للـ CRM في الخلفية (Fire & Forget - مبيأثرش على تجربة البحث العادية)
+  if (this.authService.loggedIn()) {
+    this.submitRecommendationToCrm(f, minBudget, maxBudget);
+  }
+
   // 🟢 لو مش مسجل دخول: نحفظ المواصفات اللي ملاها ونوديه يسجل دخول الأول، وبعد الرجوع هيتوجه لصفحة
   // النتائج تلقائي (اتعمل فوق في ngOnInit). لو مسجل دخول بالفعل: يروح لصفحة النتائج على طول
   if (!this.authService.loggedIn()) {
@@ -287,6 +338,37 @@ submitRecommendation(minBudgetEl: HTMLInputElement, maxBudgetEl: HTMLInputElemen
   } else {
     this.router.navigate(['/recommendation-results'], { queryParams });
   }
+}
+
+// 🟢 بتبعت مواصفات مودال "Get Recommendation" كـ Lead جديد/تحديث لليد موجود على الـ CRM
+// شغالة في الخلفية بس - مبتأثرش على تنقل المستخدم لصفحة النتائج
+private submitRecommendationToCrm(
+  f: { cities: string[]; listingTypes: string[]; propertyTypes: string[]; minRooms: string; maxRooms: string; minBathrooms: string; maxBathrooms: string; },
+  minBudget?: string, maxBudget?: string
+) {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const fullName = user.fullName || [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Website Client';
+  const phoneNumber = user.phoneNumber || user.phone || '';
+  if (!phoneNumber) return; // من غير رقم موبايل مقدرش أعمل/أحدث Lead
+
+  const dto: RecommendationLeadDto = {
+    fullName,
+    phoneNumber,
+    email: user.email || undefined,
+    cities: f.cities,
+    listingTypes: f.listingTypes,
+    propertyTypes: f.propertyTypes,
+    minRooms: f.minRooms ? Number(f.minRooms) : null,
+    maxRooms: f.maxRooms ? Number(f.maxRooms) : null,
+    minBathrooms: f.minBathrooms ? Number(f.minBathrooms) : null,
+    maxBathrooms: f.maxBathrooms ? Number(f.maxBathrooms) : null,
+    minBudget: minBudget ? Number(minBudget) : null,
+    maxBudget: maxBudget ? Number(maxBudget) : null,
+  };
+
+  this.crmService.submitRecommendationLead(dto).subscribe({
+    error: (err) => console.error('Failed to sync recommendation request to CRM', err)
+  });
 }
 
 loadBlogs() {
@@ -361,39 +443,16 @@ onBannerClick(key: string): void {
   }
 }
 
+// 🟢 بدل ما كنا بنبني الليست من object ثابت، دلوقتي بنجيبها لايف من الداتا بيز حسب المدينة المختارة
+// 🟢 بتحدّث currentListingType فورًا لحظة اختيار Listing Type (بدل ما تتحدث بس بعد الضغط على Search)
+// عشان حقل Project Name (اللي بيظهر بس مع Primary/Resale Project) يظهر فورًا زي ما المفروض
+onListingTypeChange(value: string) {
+  const listingTypeMap: any = { 'Resale': '0', 'Rent': '1', 'Primary': '2', 'ResaleProject': '3' };
+  this.currentListingType = value ? (listingTypeMap[value] ?? value) : null;
+}
+
 updateProjectsList(cityId: any) {
-    this.availableProjectGroups =[]; // تصفير القائمة
-    const id = Number(cityId);
-
-    if (id && id !== null && !isNaN(id)) {
-      // 🟢 جلب مناطق ومشاريع مدينة معينة
-      const cityData = this.projectsMapping[id];
-      if (cityData) {
-        for (const [region, projects] of Object.entries(cityData)) {
-          this.availableProjectGroups.push({
-            region: region === 'any' ? 'All Regions' : region,
-            projects: projects as string[]
-          });
-        }
-      }
-    } else {
-      // 🟢 لو مش مختار مدينة، نجيب كل المشاريع متقسمة حسب مناطقها
-      for (const [cId, cityData] of Object.entries(this.projectsMapping)) {
-        for (const [region, projects] of Object.entries(cityData as any)) {
-          const groupName = region === 'any' ? (cId === '2' ? 'Alexandria' : 'All Regions') : region;
-          this.availableProjectGroups.push({
-            region: groupName,
-            projects: projects as string[]
-          });
-        }
-      }
-    }
-
-    // ترتيب أبجدي للمناطق والمشاريع بداخلها لسهولة البحث
-    this.availableProjectGroups.sort((a, b) => a.region.localeCompare(b.region));
-    this.availableProjectGroups.forEach(g => {
-      g.projects = Array.from(new Set(g.projects)).sort();
-    });
+    this.loadRegionsAndProjects(cityId);
   }
 
   initCarousel() {
@@ -579,6 +638,7 @@ getSmartSearchTerm(term: string): string {
   const filters = {
     searchTerm: params.searchTerm || null,
     city: params.city || null,
+    region: params.region || null,
     minPrice: params.minPrice ? params.minPrice.replace(/,/g, '') : null,
     maxPrice: params.maxPrice ? params.maxPrice.replace(/,/g, '') : null,
     minPricePerMeter: params.minPricePerMeter ? params.minPricePerMeter.replace(/,/g, '') : null,

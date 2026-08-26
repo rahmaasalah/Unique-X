@@ -63,7 +63,7 @@
           <span class="input-group-text bg-white border-0"><i class="bi bi-search text-danger"></i></span>
           <input type="text" class="form-control border-0 bg-transparent" placeholder="e.g. Palm Hills, Maadi..." #searchTerm
                  (keyup.enter)="onSearch({
-                   searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: projectName.value,
+                   searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: selectedProjectNameValue(), region: selectedRegionName(),
                    code: code.value, minPrice: minPrice.value, maxPrice: maxPrice.value,
                    minPricePerMeter: minPricePerMeter.value, maxPricePerMeter: maxPricePerMeter.value,
                    listingType: propertyType.value, propertyType: propType.value,
@@ -86,7 +86,7 @@
         <button type="button" class="btn btn-danger btn-sm fw-bold w-100 shadow-sm rounded-2"
                 title="Search"
                 (click)="onSearch({
-                  searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: projectName.value,
+                  searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: selectedProjectNameValue(), region: selectedRegionName(),
                   code: code.value, minPrice: minPrice.value, maxPrice: maxPrice.value,
                   minPricePerMeter: minPricePerMeter.value, maxPricePerMeter: maxPricePerMeter.value,
                   listingType: propertyType.value, propertyType: propType.value,
@@ -105,7 +105,7 @@
       <div class="row g-2 mb-3">
         <div class="col-md-2">
           <label class="form-label x-small-bold mb-1 text-dark">Listing Type</label>
-          <select class="form-select form-select-sm border shadow-sm rounded-2" #propertyType>
+          <select class="form-select form-select-sm border shadow-sm rounded-2" #propertyType (change)="onListingTypeChange(propertyType.value)">
           <option value="">All Categories</option>
           <option value="Primary">Primary</option>
           <option value="ResaleProject">Resale Project</option>
@@ -142,23 +142,56 @@
           </select>
         </div>
 
-        <div class="col-md-3"[class.d-none]="currentListingType !== '2' && currentListingType !== '3'">
+        <div class="col-md-3 position-relative"[class.d-none]="currentListingType !== '2' && currentListingType !== '3'">
           <label class="form-label x-small-bold mb-1 text-dark">Project Name</label>
-          <select class="form-select form-select-sm border shadow-sm rounded-2 text-dark" #projectName>
-            <option value="">All Projects</option>
-
-            <!-- 🟢 عرض المشاريع متقسمة حسب المنطقة -->
-            @for (group of availableProjectGroups; track group.region) {
-              <optgroup [label]="'📍 ' + group.region" class="region-group">
-                @for (project of group.projects; track project) {
-                  <option [value]="project" [selected]="project === currentProjectName" class="project-option">
-                    {{ project }}
-                  </option>
-                }
-              </optgroup>
+          <input type="text" class="form-control form-control-sm border shadow-sm rounded-2"
+                 placeholder="Type to search projects..."
+                 [ngModel]="projectSearchText()"
+                 (ngModelChange)="projectSearchText.set($event); selectedProjectNameValue.set(''); isProjectDropdownOpen.set(true)"
+                 (focus)="isProjectDropdownOpen.set(true)"
+                 (blur)="closeProjectDropdown()">
+          <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+              [class.show]="isProjectDropdownOpen()"
+              style="max-height: 250px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1050;">
+            <li>
+              <button class="dropdown-item py-2 text-muted small" (mousedown)="clearProjectSelection()">All Projects</button>
+            </li>
+            @for (project of filteredProjectOptions(); track project.id) {
+              <li>
+                <button class="dropdown-item py-2 border-top border-light" (mousedown)="selectProject(project.name)">
+                  {{ project.name }}
+                </button>
+              </li>
+            } @empty {
+              <li><span class="dropdown-item text-muted small py-2">No projects found.</span></li>
             }
+          </ul>
+        </div>
 
-          </select>
+        <div class="col-md-3 position-relative">
+          <label class="form-label x-small-bold mb-1 text-dark">Region</label>
+          <input type="text" class="form-control form-control-sm border shadow-sm rounded-2"
+                 placeholder="Type to search regions..."
+                 [ngModel]="regionSearchText()"
+                 (ngModelChange)="regionSearchText.set($event); selectedRegionName.set(''); isRegionDropdownOpen.set(true)"
+                 (focus)="isRegionDropdownOpen.set(true)"
+                 (blur)="closeRegionDropdown()">
+          <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+              [class.show]="isRegionDropdownOpen()"
+              style="max-height: 250px; overflow-y: auto; position: absolute; top: 100%; left: 0; z-index: 1050;">
+            <li>
+              <button class="dropdown-item py-2 text-muted small" (mousedown)="clearRegionSelection()">All Regions</button>
+            </li>
+            @for (region of filteredRegionOptions(); track region.id) {
+              <li>
+                <button class="dropdown-item py-2 border-top border-light" (mousedown)="selectRegion(region.name)">
+                  {{ region.name }}
+                </button>
+              </li>
+            } @empty {
+              <li><span class="dropdown-item text-muted small py-2">No regions found.</span></li>
+            }
+          </ul>
         </div>
       </div>
 
@@ -238,7 +271,7 @@
           <div class="d-flex gap-2">
             <button class="btn btn-danger btn-sm fw-bold shadow py-2 rounded-3 flex-grow-1"
                     (click)="onSearch({
-                      searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: projectName.value,
+                      searchTerm: searchTerm.value, city: city.value, area: area.value, projectName: selectedProjectNameValue(), region: selectedRegionName(),
                       code: code.value, minPrice: minPrice.value, maxPrice: maxPrice.value,
                       minPricePerMeter: minPricePerMeter.value, maxPricePerMeter: maxPricePerMeter.value,
                       listingType: propertyType.value, propertyType: propType.value,

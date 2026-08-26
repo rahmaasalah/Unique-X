@@ -40,6 +40,15 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
   requestDetails = signal<any>(null);
   visits = signal<any[]>([]);
   activities = signal<any[]>([]);
+
+  // 🟢 فلترة الـ Action Plan: All / Late / TooLate
+  timelineFilter = signal<'all' | 'Late' | 'TooLate'>('all');
+  get filteredTimeline() {
+    const filter = this.timelineFilter();
+    const all = this.combinedTimeline();
+    if (filter === 'all') return all;
+    return all.filter((item: any) => item.lateStatus === filter);
+  }
   statusHistory = signal<any[]>([]);
 
   leadId!: number;
@@ -183,7 +192,15 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
   get feedbackCount(): number {
     const info = this.leadInfo();
     if (!info || !info.generalFeedback) return 0;
-    return this.parseFeedbacks(info.generalFeedback).length;
+    const allEntries = this.parseFeedbacks(info.generalFeedback);
+
+    // 🟢 لو العميل ده اتصفر عداده قبل كده (بعد ما اتحول لبروكر جديد)، منحسبش غير الفيدباكات
+    // اللي اتضافت بعد وقت التصفير - القديمة بتفضل موجودة في السجل بس مش بتتحسب في العداد
+    if (info.feedbackCounterResetAt) {
+      const resetTime = new Date(info.feedbackCounterResetAt).getTime();
+      return allEntries.filter((e: any) => e.date && new Date(e.date).getTime() > resetTime).length;
+    }
+    return allEntries.length;
   }
 
   // بيبان تنبيه/هايلايت لما العدد يوصل لمضاعف 6 (6, 12, 18...)
@@ -476,6 +493,13 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
         this.leadInfo.set(res.leadInfo);
         this.requestDetails.set(res.requestDetails);
 
+        // 🟢 حماية: لو العميل ده اتسحب (IsUnassigned) والمستخدم مش أدمن، منسمحش له يشوف أي بيانات
+        if (res.leadInfo?.isUnassigned && !this.isAdmin()) {
+          this.alertService.error('This lead has been reassigned and is no longer accessible to you.', 'Access Denied');
+          this.router.navigate(['/crm/leads']);
+          return;
+        }
+
         // 🟢 تحديد هل الحالة الحالية Qualified ولا Unqualified ولا يتيمة (لسه محددش)
         const currentStatusId = res.leadInfo?.statusId;
         if (this.qualifiedStages.some(s => s.id === currentStatusId)) {
@@ -611,6 +635,12 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
         });
       }
     }
+  }
+
+  // 🟢 helper بسيط لتقسيم القيم Multi-select (Comma-separated) اللي جايه من الباك إند لعرضها كـ badges
+  splitCsv(value: string): string[] {
+    if (!value) return [];
+    return value.split(',').map(v => v.trim()).filter(v => v);
   }
 
   parseFeedbacks(feedbackStr: string) {

@@ -135,6 +135,7 @@ namespace Unique_X.DTOs
         public int? BuildYear { get; set; }
         public int? Area { get; set; }
         public string? ProjectName { get; set; }
+        public string? Region { get; set; }
 
         // الحقول الجديدة (Ranges)
         public int? MinRooms { get; set; }

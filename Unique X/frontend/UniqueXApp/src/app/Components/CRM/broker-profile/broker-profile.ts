@@ -16,6 +16,12 @@ import { AdminService } from '../../../Services/admin'; // 👈 استيراد A
   styleUrls: ['./broker-profile.css']
 })
 export class BrokerProfileComponent implements OnInit, OnDestroy {
+
+  // 🟢 helper بسيط لعرض القيم Multi-select (Comma-separated) بشكل مقروء أكتر
+  csvDisplay(value: string | null | undefined): string {
+    if (!value) return '-';
+    return value.split(',').map(v => v.trim()).filter(v => v).join(', ');
+  }
   private crmService = inject(CrmService);
   private alertService = inject(AlertService);
   private authService = inject(AuthService);
@@ -133,8 +139,9 @@ const campCode = this.filterCampaignCode();
     if (minB !== null) leads = leads.filter((l: any) => l.totalAmount >= minB);
     if (maxB !== null) leads = leads.filter((l: any) => l.totalAmount <= maxB);
     if (refBy) leads = leads.filter((l: any) => l.referredBy === refBy);
-    if (propType) leads = leads.filter((l: any) => l.propertyType === propType);
-if (listType) leads = leads.filter((l: any) => l.purpose === listType);
+    // 🟢 propertyType/purpose بقوا Multi-select (Comma-separated) - بنفلتر بـ includes بدل exact match
+    if (propType) leads = leads.filter((l: any) => (l.propertyType || '').split(',').map((x: string) => x.trim()).includes(propType));
+if (listType) leads = leads.filter((l: any) => (l.purpose || '').split(',').map((x: string) => x.trim()).includes(listType));
 if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
 
     const ids = leads.map((l: any) => l.id);

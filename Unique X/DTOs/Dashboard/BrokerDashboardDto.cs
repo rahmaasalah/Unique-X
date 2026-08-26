@@ -10,6 +10,19 @@ namespace Unique_X.DTOs.Dashboard
         public int MyPendingTasksToday { get; set; } // المهام المطلوبة منه النهاردة
         public List<BrokerTaskDto> PendingTasksList { get; set; }
         public List<VisitResponseDto> PendingVisitsList { get; set; }
+
+        // 🟢 التصنيف الجديد: Today / Late / Too Late
+        public int TodayCount { get; set; }
+        public int LateCount { get; set; }
+        public int TooLateCount { get; set; }
+
+        public List<BrokerTaskDto> TodayTasks { get; set; }
+        public List<BrokerTaskDto> LateTasks { get; set; }
+        public List<BrokerTaskDto> TooLateTasks { get; set; }
+
+        public List<VisitResponseDto> TodayVisits { get; set; }
+        public List<VisitResponseDto> LateVisits { get; set; }
+        public List<VisitResponseDto> TooLateVisits { get; set; }
     }
 
     public class BrokerTaskDto
@@ -31,5 +44,8 @@ namespace Unique_X.DTOs.Dashboard
         public string? Region { get; set; }
         public string? Project { get; set; }
         public string? Notes { get; set; }
+
+        // 🟢 Today / Late / TooLate - بتتحسب لحظيًا في الـ Controller، مش مخزنة في الداتابيز
+        public string? LateStatus { get; set; }
     }
 }

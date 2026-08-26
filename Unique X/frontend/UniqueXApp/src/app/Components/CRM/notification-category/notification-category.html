@@ -1,0 +1,47 @@
+<div class="container-fluid py-4" dir="ltr">
+
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h3 class="fw-bold" [ngClass]="categoryColorClass()">
+        <i class="bi bi-clock-history me-2"></i> {{ categoryTitle() }} Reminders
+      </h3>
+      <p class="text-muted mb-0">Leads with pending Calls/Visits in this category.</p>
+    </div>
+    <a routerLink="/crm/profile" class="btn btn-outline-secondary fw-bold">
+      <i class="bi bi-arrow-left"></i> Back to Profile
+    </a>
+  </div>
+
+  <div *ngIf="isLoading()" class="text-center text-muted py-5">
+    <div class="spinner-border text-danger mb-2"></div>
+    <div>Loading...</div>
+  </div>
+
+  <div *ngIf="!isLoading() && items().length === 0" class="alert alert-light text-center border shadow-sm py-5">
+    <i class="bi bi-emoji-smile fs-1 text-muted d-block mb-2"></i>
+    Nothing here. All caught up! 🎉
+  </div>
+
+  <div class="card shadow-sm border-0" *ngIf="!isLoading() && items().length > 0">
+    <div class="list-group list-group-flush">
+      <a *ngFor="let item of items()" [routerLink]="['/crm/leads', item.leadId]"
+         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3">
+        <div>
+          <strong class="d-block"><i class="bi bi-person-circle me-1"></i> {{ item.leadName }}</strong>
+          <span class="text-muted small">{{ item.summary }}</span>
+        </div>
+        <div class="text-end">
+          <span class="badge"
+                [ngClass]="{
+                  'bg-warning text-dark': item.type === 'Call',
+                  'bg-info text-dark': item.type === 'Meeting',
+                  'bg-success': item.type === 'Visit',
+                  'bg-secondary': item.type === 'Email'
+                }">{{ item.type }}</span>
+          <div class="text-muted small mt-1">{{ item.date | date:'mediumDate' }}</div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+</div>

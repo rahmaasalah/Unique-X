@@ -42,9 +42,87 @@ namespace Unique_X.Controllers
                 u.IsActive,
                 u.PhoneNumber,
                 u.HasCrmAccess,
-                u.CreatedAt
+                u.CreatedAt,
+                u.LeadLimit
             }).ToListAsync();
             return Ok(users);
+        }
+
+        // 🟢 الأدمن بيحدد أقصى عدد عملاء مسموح بيه للبروكر - null يعني مفيش حد أقصى
+        [HttpPatch("set-broker-limit/{brokerId}")]
+        public async Task<IActionResult> SetBrokerLimit(string brokerId, [FromBody] SetBrokerLimitDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(brokerId);
+            if (user == null) return NotFound("Broker not found");
+
+            user.LeadLimit = dto.Limit;
+            await _userManager.UpdateAsync(user);
+            return Ok(new { message = "Broker limit updated successfully!", limit = user.LeadLimit });
+        }
+
+        // 🟢 إحصائيات كل بروكر: عدد العملاء، كام منقول له بالـ Transfer، كام Late/TooLate، والـ Limit بتاعه
+        [HttpGet("broker-stats")]
+        public async Task<IActionResult> GetBrokerStats()
+        {
+            var brokers = await _userManager.Users
+                .Where(u => u.UserType == 1 && u.IsActive)
+                .ToListAsync();
+
+            var lateCutoff = DateTime.UtcNow.AddHours(-24);
+            var tooLateCutoff = DateTime.UtcNow.AddHours(-48);
+
+            var tooLateLeadIds = (await _context.LeadActivities
+                    .Where(a => a.Status == "Pending" && a.DueDate <= tooLateCutoff)
+                    .Select(a => a.LeadId).Distinct().ToListAsync())
+                .Union(await _context.Visits
+                    .Where(v => v.Status == "Pending" && v.VisitDate <= tooLateCutoff)
+                    .Select(v => v.LeadId).Distinct().ToListAsync())
+                .ToHashSet();
+
+            var lateLeadIds = (await _context.LeadActivities
+                    .Where(a => a.Status == "Pending" && a.DueDate <= lateCutoff && a.DueDate > tooLateCutoff)
+                    .Select(a => a.LeadId).Distinct().ToListAsync())
+                .Union(await _context.Visits
+                    .Where(v => v.Status == "Pending" && v.VisitDate <= lateCutoff && v.VisitDate > tooLateCutoff)
+                    .Select(v => v.LeadId).Distinct().ToListAsync())
+                .ToHashSet();
+
+            var transferredInLeadIds = (await _context.LeadStatusHistories
+                    .Where(h => h.Notes != null && (h.Notes.Contains("Admin transferred") || h.Notes.Contains("Admin assigned this lead to a new broker")))
+                    .Select(h => h.LeadId).Distinct().ToListAsync())
+                .ToHashSet();
+
+            var result = new List<object>();
+
+            foreach (var broker in brokers)
+            {
+                var brokerLeads = await _context.Leads
+                    .Where(l => l.BrokerId == broker.Id && !l.IsUnassigned)
+                    .Select(l => new { l.Id, l.FullName, l.PhoneNumber })
+                    .ToListAsync();
+
+                var lateClients = brokerLeads.Where(l => lateLeadIds.Contains(l.Id))
+                    .Select(l => new { l.Id, l.FullName, l.PhoneNumber, lateStatus = "Late" }).ToList();
+                var tooLateClients = brokerLeads.Where(l => tooLateLeadIds.Contains(l.Id))
+                    .Select(l => new { l.Id, l.FullName, l.PhoneNumber, lateStatus = "TooLate" }).ToList();
+                var transferredInCount = brokerLeads.Count(l => transferredInLeadIds.Contains(l.Id));
+
+                result.Add(new
+                {
+                    id = broker.Id,
+                    fullName = broker.FirstName + " " + broker.LastName,
+                    phoneNumber = broker.PhoneNumber,
+                    totalLeads = brokerLeads.Count,
+                    leadLimit = broker.LeadLimit,
+                    transferredInCount,
+                    lateCount = lateClients.Count,
+                    tooLateCount = tooLateClients.Count,
+                    lateClients,
+                    tooLateClients
+                });
+            }
+
+            return Ok(result);
         }
 
         [HttpPatch("toggle-user/{id}")]
@@ -70,148 +148,6 @@ namespace Unique_X.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { Message = "Property reassigned successfully" });
-        }
-
-        // 🟢 لكل بروكر: عدد الوحدات اللي رفعها بنفسه، عدد الوحدات اللي اتنقلتله من بروكرز تانيين،
-        // إجمالي الوحدات المسؤول عنها دلوقتي، والـ Limit بتاعه (لو محدد)
-        [HttpGet("broker-stats")]
-        public async Task<IActionResult> GetBrokerStats()
-        {
-            var brokers = await _userManager.Users
-                .Where(u => u.UserType == 1) // Broker
-                .ToListAsync();
-
-            var properties = await _context.Properties
-                .Select(p => new { p.BrokerId, p.AddedByBrokerId, p.IsSold })
-                .ToListAsync();
-
-            var result = brokers.Select(b =>
-            {
-                var addedCount = properties.Count(p => p.AddedByBrokerId == b.Id);
-                var currentCount = properties.Count(p => p.BrokerId == b.Id);
-                var transferredCount = properties.Count(p => p.BrokerId == b.Id && p.AddedByBrokerId != b.Id);
-                var activeCount = properties.Count(p => p.BrokerId == b.Id && !p.IsSold);
-
-                return new
-                {
-                    BrokerId = b.Id,
-                    BrokerName = $"{b.FirstName} {b.LastName}".Trim(),
-                    BrokerCode = b.BrokerCode,
-                    AddedCount = addedCount,
-                    TransferredCount = transferredCount,
-                    CurrentTotal = currentCount,
-                    ActiveCount = activeCount, // ده اللي بيتحسب على الـ Limit (بيستثني المباع)
-                    PropertyLimit = b.PropertyLimit
-                };
-            })
-            .OrderByDescending(x => x.CurrentTotal)
-            .ToList();
-
-            return Ok(result);
-        }
-
-        // 🟢 تحديد/تعديل/إلغاء الـ Limit بتاع بروكر معين (null = من غير حد أقصى)
-        [HttpPatch("set-broker-limit/{brokerId}")]
-        public async Task<IActionResult> SetBrokerLimit(string brokerId, [FromBody] SetBrokerLimitDto dto)
-        {
-            var broker = await _userManager.FindByIdAsync(brokerId);
-            if (broker == null) return NotFound("Broker not found");
-
-            broker.PropertyLimit = dto.Limit;
-            await _userManager.UpdateAsync(broker);
-
-            return Ok(new { Message = "Limit updated successfully" });
-        }
-
-        // ===================== Job Postings (صفحة Join Our Team) =====================
-
-        // 🟢 عام - الوظائف المتاحة بس (اللي بتظهر لأي حد بيفتح صفحة Join Our Team)
-        [HttpGet("job-postings")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetActiveJobPostings()
-        {
-            var jobs = await _context.JobPostings
-                .Where(j => j.IsActive)
-                .OrderByDescending(j => j.CreatedAt)
-                .ToListAsync();
-            return Ok(jobs);
-        }
-
-        // 🟢 عام - تفاصيل وظيفة واحدة
-        [HttpGet("job-postings/{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetJobPostingById(int id)
-        {
-            var job = await _context.JobPostings.FindAsync(id);
-            return job != null ? Ok(job) : NotFound();
-        }
-
-        // 🟢 أدمن - كل الوظائف (شاملة الموقوفة) عشان تاب الإدارة
-        [HttpGet("job-postings/all")]
-        public async Task<IActionResult> GetAllJobPostings()
-        {
-            var jobs = await _context.JobPostings.OrderByDescending(j => j.CreatedAt).ToListAsync();
-            return Ok(jobs);
-        }
-
-        // 🟢 أدمن - إضافة وظيفة جديدة
-        [HttpPost("job-postings")]
-        public async Task<IActionResult> AddJobPosting([FromBody] JobPostingDto dto)
-        {
-            var job = new JobPosting
-            {
-                JobTitle = dto.JobTitle ?? string.Empty,
-                JobSummary = dto.JobSummary ?? string.Empty,
-                KeyResponsibilities = dto.KeyResponsibilities ?? string.Empty,
-                Qualifications = dto.Qualifications ?? string.Empty,
-                KPIs = dto.KPIs ?? string.Empty,
-                IsActive = true
-            };
-
-            _context.JobPostings.Add(job);
-            await _context.SaveChangesAsync();
-            return Ok(job);
-        }
-
-        // 🟢 أدمن - تعديل وظيفة موجودة
-        [HttpPut("job-postings/{id}")]
-        public async Task<IActionResult> UpdateJobPosting(int id, [FromBody] JobPostingDto dto)
-        {
-            var job = await _context.JobPostings.FindAsync(id);
-            if (job == null) return NotFound("Job posting not found");
-
-            job.JobTitle = dto.JobTitle ?? job.JobTitle;
-            job.JobSummary = dto.JobSummary ?? job.JobSummary;
-            job.KeyResponsibilities = dto.KeyResponsibilities ?? job.KeyResponsibilities;
-            job.Qualifications = dto.Qualifications ?? job.Qualifications;
-            job.KPIs = dto.KPIs ?? job.KPIs;
-
-            await _context.SaveChangesAsync();
-            return Ok(job);
-        }
-
-        // 🟢 أدمن - إظهار/إخفاء الوظيفة من غير ما تتمسح
-        [HttpPatch("job-postings/{id}/toggle")]
-        public async Task<IActionResult> ToggleJobPosting(int id)
-        {
-            var job = await _context.JobPostings.FindAsync(id);
-            if (job == null) return NotFound("Job posting not found");
-
-            job.IsActive = !job.IsActive;
-            await _context.SaveChangesAsync();
-            return Ok(new { job.IsActive });
-        }
-
-        // 🟢 أدمن - مسح الوظيفة نهائيًا
-        [HttpDelete("job-postings/{id}")]
-        public async Task<IActionResult> DeleteJobPosting(int id)
-        {
-            var job = await _context.JobPostings.FindAsync(id);
-            if (job == null) return NotFound("Job posting not found");
-
-            _context.JobPostings.Remove(job);
-            await _context.SaveChangesAsync();
-            return Ok(new { Message = "Job posting deleted" });
         }
 
         [HttpGet("stats")]
@@ -1270,163 +1206,5 @@ namespace Unique_X.Controllers
             return Ok(new { Message = "Deleted" });
         }
 
-        // 🟢 تسجيل كل عملية بحث بكل الفلاتر بتاعتها (Public - أي حد بيبحث بيتسجل)
-        [HttpPost("log-search")]
-        [AllowAnonymous]
-        public async Task<IActionResult> LogSearch([FromBody] SearchLogDto dto)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            var log = new SearchLog
-            {
-                SearchTerm = string.IsNullOrWhiteSpace(dto.SearchTerm) ? null : dto.SearchTerm.Trim(),
-                ProjectName = string.IsNullOrWhiteSpace(dto.ProjectName) ? null : dto.ProjectName.Trim(),
-                City = dto.City,
-                PropertyType = dto.PropertyType,
-                ListingType = dto.ListingType,
-                MinPrice = dto.MinPrice,
-                MaxPrice = dto.MaxPrice,
-                MinPricePerMeter = dto.MinPricePerMeter,
-                MaxPricePerMeter = dto.MaxPricePerMeter,
-                MinRooms = dto.MinRooms,
-                MaxRooms = dto.MaxRooms,
-                MinBathrooms = dto.MinBathrooms,
-                MaxBathrooms = dto.MaxBathrooms,
-                MinFloor = dto.MinFloor,
-                MaxFloor = dto.MaxFloor,
-                UserId = userId
-            };
-
-            _context.SearchLogs.Add(log);
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
-
-        // 🟢 كل وحدة وعندها كام View وكام Click (مترتبة من الأعلى للأقل)
-        [HttpGet("properties-analytics")]
-        public async Task<IActionResult> GetPropertiesAnalytics()
-        {
-            var records = await _context.AnalyticsRecords
-                .Where(r => (r.ActionType == "PropertyView" || r.ActionType == "PropertyClick") && r.PropertyId != null)
-                .ToListAsync();
-
-            var properties = await _context.Properties
-                .Select(p => new { p.Id, p.Title, p.Code, p.PropertyType, p.ListingType })
-                .ToListAsync();
-
-            var result = records
-                .GroupBy(r => r.PropertyId)
-                .Select(g =>
-                {
-                    var prop = properties.FirstOrDefault(p => p.Id == g.Key);
-                    var views = g.Count(r => r.ActionType == "PropertyView");
-                    var clicks = g.Count(r => r.ActionType == "PropertyClick");
-                    return new
-                    {
-                        PropertyId = g.Key,
-                        Title = prop?.Title,
-                        Code = prop?.Code,
-                        PropertyType = prop?.PropertyType,
-                        ListingType = prop?.ListingType,
-                        Views = views,
-                        Clicks = clicks,
-                        Total = views + clicks
-                    };
-                })
-                .OrderByDescending(x => x.Total)
-                .ToList();
-
-            return Ok(result);
-        }
-
-        // 🟢 تحليل الفلاتر: أكتر كلمات بحث، أكتر رينجات أسعار/متر/غرف/أدوار، أكتر أنواع
-        [HttpGet("search-analytics")]
-        public async Task<IActionResult> GetSearchAnalytics()
-        {
-            var logs = await _context.SearchLogs.ToListAsync();
-
-            var searchTerms = logs
-                .Where(l => !string.IsNullOrWhiteSpace(l.SearchTerm))
-                .GroupBy(l => l.SearchTerm!.Trim().ToLower())
-                .Select(g => new { Term = g.Key, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .ToList();
-
-            var priceRanges = logs
-                .Where(l => l.MinPrice.HasValue || l.MaxPrice.HasValue)
-                .GroupBy(l => new { l.MinPrice, l.MaxPrice })
-                .Select(g => new { g.Key.MinPrice, g.Key.MaxPrice, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .ToList();
-
-            var pricePerMeterRanges = logs
-                .Where(l => l.MinPricePerMeter.HasValue || l.MaxPricePerMeter.HasValue)
-                .GroupBy(l => new { l.MinPricePerMeter, l.MaxPricePerMeter })
-                .Select(g => new { g.Key.MinPricePerMeter, g.Key.MaxPricePerMeter, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .ToList();
-
-            var roomsRanges = logs
-                .Where(l => l.MinRooms.HasValue || l.MaxRooms.HasValue)
-                .GroupBy(l => new { l.MinRooms, l.MaxRooms })
-                .Select(g => new { g.Key.MinRooms, g.Key.MaxRooms, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .ToList();
-
-            var bathroomsRanges = logs
-                .Where(l => l.MinBathrooms.HasValue || l.MaxBathrooms.HasValue)
-                .GroupBy(l => new { l.MinBathrooms, l.MaxBathrooms })
-                .Select(g => new { g.Key.MinBathrooms, g.Key.MaxBathrooms, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .ToList();
-
-            var floorRanges = logs
-                .Where(l => l.MinFloor.HasValue || l.MaxFloor.HasValue)
-                .GroupBy(l => new { l.MinFloor, l.MaxFloor })
-                .Select(g => new { g.Key.MinFloor, g.Key.MaxFloor, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .ToList();
-
-            var propertyTypes = logs
-                .Where(l => l.PropertyType.HasValue)
-                .GroupBy(l => l.PropertyType)
-                .Select(g => new { PropertyType = g.Key, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .ToList();
-
-            var listingTypes = logs
-                .Where(l => l.ListingType.HasValue)
-                .GroupBy(l => l.ListingType)
-                .Select(g => new { ListingType = g.Key, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .ToList();
-
-            var cities = logs
-                .Where(l => l.City.HasValue)
-                .GroupBy(l => l.City)
-                .Select(g => new { City = g.Key, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .ToList();
-
-            return Ok(new
-            {
-                TotalSearches = logs.Count,
-                SearchTerms = searchTerms,
-                PriceRanges = priceRanges,
-                PricePerMeterRanges = pricePerMeterRanges,
-                RoomsRanges = roomsRanges,
-                BathroomsRanges = bathroomsRanges,
-                FloorRanges = floorRanges,
-                PropertyTypes = propertyTypes,
-                ListingTypes = listingTypes,
-                Cities = cities
-            });
-        }
-
-    }
-
-    public class SetBrokerLimitDto
-    {
-        public int? Limit { get; set; }
     }
 }
