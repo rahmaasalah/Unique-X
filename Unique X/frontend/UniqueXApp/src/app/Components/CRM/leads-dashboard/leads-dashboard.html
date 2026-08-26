@@ -1,63 +1,111 @@
 <div class="container-fluid mt-4 px-4" dir="ltr">
+
   
+
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+
     <div class="d-flex align-items-center gap-3">
+
       <h2 class="m-0 fw-bold"><i class="bi bi-kanban text-danger me-2"></i>My Pipeline</h2>
+
       
+
       <!-- زراير التبديل (List / Kanban) -->
+
       <div class="btn-group shadow-sm" role="group">
+
         <button type="button" class="btn" [class.btn-dark]="viewMode() === 'kanban'" [class.btn-outline-dark]="viewMode() !== 'kanban'" (click)="viewMode.set('kanban')">
+
           <i class="bi bi-layout-three-columns me-1"></i> Board
+
         </button>
+
         <button type="button" class="btn" [class.btn-dark]="viewMode() === 'list'" [class.btn-outline-dark]="viewMode() !== 'list'" (click)="viewMode.set('list')">
+
           <i class="bi bi-list-ul me-1"></i> List
+
         </button>
+
       </div>
+
     </div>
+
     
+
     <div class="d-flex gap-2">
+
       <!-- 👈 زرار الذهاب لصفحة إضافة العميل -->
+
       <button class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" routerLink="/crm/add-lead">
+
         <i class="bi bi-plus-lg me-1"></i> Add Lead
+
       </button>
+
+
 
       <button *ngIf="isAdmin()" class="btn rounded-pill px-4 fw-bold shadow-sm"
+
               [ngClass]="showHiddenLeads() ? 'btn-dark' : 'btn-outline-dark'"
+
               (click)="showHiddenLeads.set(!showHiddenLeads()); applyFilters(false)">
+
         <i class="bi" [ngClass]="showHiddenLeads() ? 'bi-eye' : 'bi-eye-slash'"></i> 
+
         {{ showHiddenLeads() ? 'Hide All' : 'Show Hidden' }}
+
       </button>
+
     </div>
+
   </div>
 
-  <!-- ================= طريقة العرض: Kanban (Grid Layout) ================= -->
-  @if(viewMode() === 'kanban') {
-    <div class="row g-3 pb-4" cdkDropListGroup>
-      
-      <div class="col-12 col-md-6 col-xl-3" *ngFor="let col of boardColumns()">
-        
-        <div class="bg-light rounded-4 p-2 shadow-sm border d-flex flex-column h-100">
-          
-          <div class="column-header d-flex justify-content-between align-items-center mb-3 p-2 border-bottom">
-            <h6 class="m-0 fw-bold text-dark text-truncate"[title]="col.name">{{ col.name }}</h6>
-            <span class="badge bg-danger rounded-pill">{{ col.leads.length }}</span>
-          </div>
 
-          <div 
-            cdkDropList 
-            [cdkDropListData]="col.leads" 
-            (cdkDropListDropped)="drop($event, col.id)" 
-            class="kanban-drop-list flex-grow-1"
-            style="min-height: 150px;">
-            
+
+  <!-- ================= طريقة العرض: Kanban (زي كروت الهوم: كل حالة قسم، وتحتها كروت بتتحرك أفقي) ================= -->
+  @if(viewMode() === 'kanban') {
+    <div class="pb-4" cdkDropListGroup>
+
+      <div class="stage-section mb-4" *ngFor="let col of boardColumns()">
+
+        <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+          {{ col.name }}
+          <span class="badge bg-danger rounded-pill">{{ col.leads.length }}</span>
+        </h5>
+
+        <div class="h-scroll-wrap">
+          <button class="h-scroll-arrow left" (click)="scrollH(stageScroll, -1)" aria-label="Scroll left" *ngIf="col.leads.length > 0">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+
+          <div
+            cdkDropList
+            [cdkDropListData]="col.leads"
+            (cdkDropListDropped)="drop($event, col.id)"
+            class="d-flex h-scroll gap-3 pb-2"
+            #stageScroll
+            style="min-height: 60px;">
+
             <!-- كارت العميل -->
             <!-- 🟢 ضفنا cdkDragStartDelay عشان نمنع السحب العشوائي في الموبايل أثناء السكرول -->
-            <div class="lead-card bg-white p-3 mb-2 rounded-3 shadow-sm border-start border-4 border-danger" 
-                 *ngFor="let lead of col.leads" 
+            <div class="h-scroll-item lead-card bg-white p-3 rounded-3 shadow-sm border-start border-4"
+                 [class.border-danger]="!lead.isDisappeared"
+                 [class.border-secondary]="lead.isDisappeared"
+                 [class.opacity-50]="lead.isDisappeared"
+                 style="width: 280px;"
+                 *ngFor="let lead of col.leads"
                  [hidden]="!isAdmin() && lead.isDuplicate && !lead.isApprovedDuplicate"
                  cdkDrag
+                 [cdkDragDisabled]="lead.isDisappeared"
                  [cdkDragStartDelay]="{ touch: 200, mouse: 0 }">
-              
+
+              <!-- 🟢 كارت مختصر بس لعميل اتسحب من البروكر ده (Disappeared) - اسم بس من غير أي بيانات ولا إمكانية فتح -->
+              <div *ngIf="lead.isDisappeared" class="text-center py-3">
+                <div class="fw-bold text-muted mb-1"><i class="bi bi-person-x-fill me-1"></i> {{ lead.fullName }}</div>
+                <span class="badge bg-secondary"><i class="bi bi-eye-slash-fill me-1"></i> Disappeared</span>
+              </div>
+
+              <ng-container *ngIf="!lead.isDisappeared">
               <!-- 🟢 التعديل: فصلنا اسم العميل وحطينا جنبه مقبض السحب (Drag Handle) -->
               <div class="d-flex justify-content-between align-items-start mb-1" [class.opacity-50]="hiddenLeads().includes(lead.id)">
   <div class="fw-bold text-dark pe-2">{{ lead.fullName }}</div>
@@ -89,11 +137,11 @@
                 </span>
                 
                 <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle rounded-pill" style="font-size: 0.65rem;">
-                  <i class="bi bi-building me-1"></i> {{ lead.propertyType }}
+                  <i class="bi bi-building me-1"></i> {{ csvDisplay(lead.propertyType) }}
                 </span>
 
                 <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill" style="font-size: 0.65rem;">
-                  <i class="bi bi-tag-fill me-1"></i> {{ lead.purpose }}
+                  <i class="bi bi-tag-fill me-1"></i> {{ csvDisplay(lead.purpose) }}
                 </span>
               </div>
 
@@ -108,306 +156,616 @@
                 </span>
                 <button class="btn btn-sm btn-outline-danger rounded-pill px-3" [routerLink]="['/crm/leads', lead.id]">Details</button>
               </div>
+            </ng-container>
             </div>
 
-            <!-- رسالة لو العمود فاضي -->
-            <div class="text-center text-muted small py-4" *ngIf="col.leads.length === 0">
+            <!-- رسالة لو الحالة فاضية - وبرضه بتفضل Drop target عشان السحب يشتغل -->
+            <div class="text-center text-muted small py-4 flex-grow-1" *ngIf="col.leads.length === 0">
               Drop leads here
             </div>
 
           </div>
+
+          <button class="h-scroll-arrow right" (click)="scrollH(stageScroll, 1)" aria-label="Scroll right" *ngIf="col.leads.length > 0">
+            <i class="bi bi-chevron-right"></i>
+          </button>
         </div>
       </div>
-      
+
     </div>
   }
-
   <!-- ================= طريقة العرض: List ================= -->
+
  @if(viewMode() === 'list') {
+
     
+
     <!-- 🟢 الكونتر -->
+
     <div class="d-flex align-items-center gap-2 mb-3">
+
       <span class="badge bg-dark rounded-pill px-3 py-2 fs-6">
+
         <i class="bi bi-people-fill me-1"></i> {{ filteredLeadsCount() }} Leads
+
       </span>
+
     </div>
+
+
 
     <!-- 🟢 شريط الفلاتر بيظهر هنا بس مع الـ List -->
+
     <div class="row g-2 mb-4 p-3 bg-light rounded-3 border animate__animated animate__fadeIn">
+
       <div class="col-md-3">
+
         <input type="text" class="form-control form-control-sm" placeholder="Search Name/Phone..."[ngModel]="searchText()" (ngModelChange)="searchText.set($event); applyFilters(true)">
+
       </div>
+
       <div class="col-md-2">
+
         <select class="form-select form-select-sm" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); applyFilters(true)">
+
           <option value="">All Stages</option>
+
           <option value="1">New "To Call"</option>
+
             <option value="2">Wait response on wtp msg</option>
+
             <option value="3">Request call another time</option>
+
             <option value="4">Calls (request)</option>
+
             <option value="5">Wait Client Feedback on unit</option>
+
             <option value="6">Follow Up For Visit</option>
+
             <option value="7">Visit scheduled</option>
+
             <option value="8">Follow up After visit</option>
+
             <option value="9">Wait feedback on project</option>
+
             <option value="10">Follow up for Meeting</option>
+
             <option value="11">Meeting Scheduled</option>
+
             <option value="12">Follow up after meeting</option>
+
             <option value="13">Follow up for developer meeting</option>
+
             <option value="14">Follow up for site visit</option>
+
             <option value="15">Site visit scheduled</option>
+
             <option value="16">Follow up for event</option>
+
             <option value="17">Follow up after event</option>
+
             <option value="18">Follow up for closing</option>
+
             <option value="19">Deal closed</option>
+
             <option value="20">Follow up, not now</option>
+
             <option value="21">N/A "unreachable"</option>
+
             <option value="22">Lost Not interested</option>
+
             <option value="23">Low Budget</option>
+
             <option value="24">Number Issue</option>
+
             <option value="25">Broker</option>
+
             <option value="26">Recommend to shift</option>
+
         </select>
+
       </div>
+
       <div class="col-md-2 position-relative">
+
   <input type="text" class="form-control form-control-sm"
+
          placeholder="Campaign code..."
+
          [ngModel]="searchCampaignCode()" 
+
          (ngModelChange)="searchCampaignCode.set($event); filterCampaignCode.set(''); isCampaignDropdownOpen.set(true)"
+
          (focus)="isCampaignDropdownOpen.set(true)"
+
          (blur)="closeCampaignDropdown()">
+
   <ul class="dropdown-menu w-100 shadow-lg border-0 mt-1" 
+
       [class.show]="isCampaignDropdownOpen()" 
+
       style="max-height: 200px; overflow-y: auto; position: absolute; z-index: 1050;">
+
     <li>
+
       <button type="button" class="dropdown-item py-2 text-muted small" 
+
               (mousedown)="selectCampaign(''); searchCampaignCode.set('')">
+
         All Campaigns
+
       </button>
+
     </li>
+
     @for (code of filteredCampaignCodes(); track code) {
+
       <li>
+
         <button type="button" class="dropdown-item py-2 fw-bold" 
+
                 (mousedown)="selectCampaign(code)">{{ code }}</button>
+
       </li>
+
     } @empty {
+
       <li><span class="dropdown-item text-muted small">No codes found</span></li>
+
     }
+
   </ul>
+
 </div>
 
+
+
 <div class="col-md-2">
+
   <select class="form-select form-select-sm" 
+
           [ngModel]="filterPropertyType()" 
+
           (ngModelChange)="filterPropertyType.set($event); applyFilters(true)">
+
     <option value="">All Property Types</option>
+
     <option value="Apartment">Apartment</option>
+
     <option value="Villa">Villa</option>
+
     <option value="Chalet">Chalet</option>
+
     <option value="Office">Office</option>
+
     <option value="Shop">Shop</option>
+
     <option value="Full Floor">Full Floor</option>
+
   </select>
+
 </div>
+
+
 
 <!-- Listing Type (Primary / Resale) -->
+
 <div class="col-md-2">
+
   <select class="form-select form-select-sm"
+
           [ngModel]="filterListingType()" 
+
           (ngModelChange)="filterListingType.set($event); applyFilters(true)">
+
     <option value="">All Listing Types</option>
+
     <option value="Primary">Primary</option>
+
     <option value="Resale">Resale</option>
+
     <option value="Resale Project">Resale Project</option>
+
     <option value="Rent">Rent</option>
+
   </select>
+
 </div>
 
-      <div class="col-md-2" *ngIf="isAdmin()">
-        <select class="form-select form-select-sm" [ngModel]="filterBroker()" (ngModelChange)="filterBroker.set($event); applyFilters(true)">
-          <option value="">All Sales Persons</option>
-          <option *ngFor="let b of brokersList()" [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
-        </select>
-      </div>
+
 
       <div class="col-md-2" *ngIf="isAdmin()">
+
+        <select class="form-select form-select-sm" [ngModel]="filterBroker()" (ngModelChange)="filterBroker.set($event); applyFilters(true)">
+
+          <option value="">All Sales Persons</option>
+
+          <option *ngFor="let b of brokersList()" [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
+
+        </select>
+
+      </div>
+
+
+
+      <div class="col-md-2" *ngIf="isAdmin()">
+
         <select class="form-select form-select-sm" [ngModel]="filterReferredBy()" (ngModelChange)="filterReferredBy.set($event); applyFilters(true)">
+
           <option value="">All Broker Codes</option>
+
           @for (broker of brokerCodes(); track broker.code) { 
+
             <option [value]="broker.code">{{ broker.name }} ({{ broker.code }})</option> 
+
           }
+
         </select>
+
       </div>
+
       <div class="col-md-2">
+
         <select class="form-select form-select-sm" [ngModel]="filterZone()" (ngModelChange)="filterZone.set($event); applyFilters(true)">
+
           <option value="">All Zones</option>
+
           <option *ngFor="let zone of zones" [value]="zone.name">{{ zone.name }}</option>
+
         </select>
+
       </div>
+
       <div class="col-md-3 d-flex gap-1">
+
         <input type="number" class="form-control form-control-sm" placeholder="Min Budget" [ngModel]="filterMinBudget()" (ngModelChange)="filterMinBudget.set($event); applyFilters(true)">
+
         <input type="number" class="form-control form-control-sm" placeholder="Max Budget" [ngModel]="filterMaxBudget()" (ngModelChange)="filterMaxBudget.set($event); applyFilters(true)">
+
       </div>
+
       <div class="col-md-4 d-flex align-items-center gap-2 mt-2">
+
         <label class="small text-muted mb-0 text-nowrap">Created:</label>
+
         <input type="date" class="form-control form-control-sm" [ngModel]="filterCreationDate()" (ngModelChange)="filterCreationDate.set($event); applyFilters(true)">
+
       </div>
+
       <div class="col-md-4 d-flex align-items-center gap-2 mt-2">
+
         <label class="small text-muted mb-0 text-nowrap">Updated:</label>
+
         <input type="date" class="form-control form-control-sm"[ngModel]="filterLastUpdate()" (ngModelChange)="filterLastUpdate.set($event); applyFilters(true)">
+
       </div>
+
       <div class="col-md-4 mt-2 text-end">
+
         <!-- 🟢 زرار Clear Filters اتنقل هنا -->
+
         <button class="btn btn-sm btn-outline-danger fw-bold w-100" (click)="clearFilters()">
+
           <i class="bi bi-x-circle me-1"></i> Clear Filters
+
         </button>
+
       </div>
+
     </div>
 
+
+
     <!-- جدول الـ List -->
+
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden animate__animated animate__fadeIn">
+
       <div class="table-responsive">
+
         <table class="table table-hover align-middle mb-0">
+
           <thead class="table-light">
+
             <tr>
+
               <th class="ps-4">Client</th>
+
               <th *ngIf="isAdmin()">Broker</th>
+
               <th>Stage</th>
+
               <th>Activity Stats</th>
+
               <th>Campaign</th>
+
               <th>Zone</th>
+
               <th>Property Info</th>
+
               <th>Budget</th>
+
               <th>Created Date</th>
+
               <th>Last Update</th>
+
               <th class="text-end pe-4">Action</th>
+
             </tr>
+
           </thead>
+
           <tbody>
+
             @for (lead of filteredLeadsForList(); track lead.id) {
+
+             @if (lead.isDisappeared) {
+
+               <tr class="bg-light">
+
+                 <td colspan="9" class="text-center text-muted py-3">
+
+                   <i class="bi bi-person-x-fill me-1"></i> {{ lead.fullName }}
+
+                   <span class="badge bg-secondary ms-2"><i class="bi bi-eye-slash-fill me-1"></i> Disappeared</span>
+
+                 </td>
+
+               </tr>
+
+             } @else {
+
              <tr [ngClass]="{'bg-danger-subtle': lead.isDuplicate && !lead.isApprovedDuplicate}">
+
                 <td class="ps-4">
+
                   <div class="fw-bold text-dark">{{ lead.fullName }}</div>
+
                   <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ lead.phoneNumber }}</small>
+
                   
+
                 </td>
+
+
 
                  <td *ngIf="isAdmin()">
+
                   <span class="fw-bold text-primary small"><i class="bi bi-person-badge-fill me-1"></i>{{ lead.brokerName }}</span>
+
                 </td>
+
                 
+
                 <td><span class="badge bg-dark">{{ lead.statusName }}</span></td>
 
+
+
                 <td>
+
                   <div class="d-flex flex-column gap-1" style="font-size: 0.75rem;">
+
                     <span class="text-muted fw-bold"><i class="bi bi-telephone-fill text-dark me-1"></i> Calls: {{ lead.activitiesCount || 0 }}</span>
+
                     <span class="text-muted fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Visits: {{ lead.visitsCount || 0 }}</span>
+
                     <span *ngIf="lead.closedDealsCount > 0" class="badge bg-success rounded-pill mt-1 w-auto d-inline-block">
+
                       <i class="bi bi-check-circle-fill me-1"></i> {{ lead.closedDealsCount }} Closed Deal(s)
+
                     </span>
-                  </div>
-                </td>
-                
-                <td class="text-nowrap">
-                  <!-- اسم الحملة -->
-                  <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm d-inline-block mb-1">
-                    <i class="bi"[ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
-                    {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
-                  </span>
-                  
-                  <!-- مصدر الحملة (يظهر لو موجود) -->
-                  <div *ngIf="lead.campaignSource" class="text-muted fw-bold" style="font-size: 0.65rem;">
-                    <i class="bi bi-funnel-fill me-1"></i>{{ lead.campaignSource }}
+
                   </div>
 
-                  <!-- كود البروكر (يظهر لو موجود) -->
-                  <div *ngIf="lead.referredBy" class="text-danger fw-bold mt-1" style="font-size: 0.65rem;">
-                    <i class="bi bi-person-bounding-box me-1"></i>Ref: {{ lead.referredBy }}
-                  </div>
                 </td>
+
+                
+
+                <td class="text-nowrap">
+
+                  <!-- اسم الحملة -->
+
+                  <span class="badge bg-info-subtle text-info-emphasis border rounded-pill px-2 py-1 shadow-sm d-inline-block mb-1">
+
+                    <i class="bi"[ngClass]="lead.campaignName === 'No Campaign' ? 'bi-globe' : 'bi-megaphone-fill'"></i> 
+
+                    {{ lead.campaignName === 'No Campaign' ? 'Website' : lead.campaignName }}
+
+                  </span>
+
+                  
+
+                  <!-- مصدر الحملة (يظهر لو موجود) -->
+
+                  <div *ngIf="lead.campaignSource" class="text-muted fw-bold" style="font-size: 0.65rem;">
+
+                    <i class="bi bi-funnel-fill me-1"></i>{{ lead.campaignSource }}
+
+                  </div>
+
+
+
+                  <!-- كود البروكر (يظهر لو موجود) -->
+
+                  <div *ngIf="lead.referredBy" class="text-danger fw-bold mt-1" style="font-size: 0.65rem;">
+
+                    <i class="bi bi-person-bounding-box me-1"></i>Ref: {{ lead.referredBy }}
+
+                  </div>
+
+                </td>
+
+
 
                 <td><span class="fw-bold small text-secondary">{{ lead.zoneName }}</span></td>
 
+
+
                 <td>
-                  <div class="fw-bold small text-dark">{{ lead.propertyType }}</div>
+
+                  <div class="fw-bold small text-dark">{{ csvDisplay(lead.propertyType) }}</div>
+
                   <div class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill mt-1" style="font-size: 0.65rem;">
-                    {{ lead.purpose }}
+
+                    {{ csvDisplay(lead.purpose) }}
+
                   </div>
+
                 </td>
+
                 
+
                 <td class="fw-bold text-success text-nowrap">
+
                   {{ lead.totalAmount > 0 ? 'EGP ' + (lead.totalAmount | number:'1.0-0') : 'N/A' }}
 
+
+
                   <div *ngIf="lead.paymentMethod === 'Installment'" class="mt-1 text-muted" style="font-size: 0.65rem; font-weight: 600;">
+
   DP: <span class="text-dark">{{ lead.downPayment | currency:'EGP ':'symbol':'1.0-0' }}</span><br>
+
   Q. Inst: <span class="text-primary">{{ lead.quarterlyInstallment | currency:'EGP ':'symbol':'1.0-0' }}</span><br>
+
   Years: <span class="text-danger">{{ lead.installmentYears }}</span>
+
 </div>
+
                 </td>
 
+
+
                 <td class="text-nowrap">
+
                   <div class="small fw-bold text-dark">{{ lead.createdAt | date:'mediumDate' }}</div>
+
                 </td>
+
                 
+
                 <td class="text-nowrap">
+
                   <div class="small fw-bold text-danger bg-danger-subtle px-2 py-1 rounded d-inline-block">
+
                     <i class="bi bi-clock-history me-1"></i> {{ lead.updatedAt | date:'MMM d, h:mm a' }}
+
                   </div>
+
                 </td>
+
+
 
                 <td class="text-end pe-4">
+
                   <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" [routerLink]="['/crm/leads', lead.id]">
+
                     Details &rarr;
+
                   </button>
 
+
+
                   <button *ngIf="isAdmin()" class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm me-2" 
+
           [ngClass]="hiddenLeads().includes(lead.id) ? 'btn-success' : 'btn-outline-secondary'"
+
           (click)="toggleHideLead(lead.id)">
+
     <i class="bi" [ngClass]="hiddenLeads().includes(lead.id) ? 'bi-eye-fill' : 'bi-eye-slash'"></i>
+
   </button>
+
                   
+
                 </td>
+
               </tr>
-            } @empty {
-              <tr><td colspan="9" class="text-center py-5 text-muted">No leads found.</td></tr>
+
             }
+
+            } @empty {
+
+              <tr><td colspan="9" class="text-center py-5 text-muted">No leads found.</td></tr>
+
+            }
+
           </tbody>
+
         </table>
+
       </div>
+
     </div>
+
   }
 
+
+
 </div>
+
+
+
+
 
 
 
 <!-- 🟢 Modal: Quick Request Details (يظهر للأدمن فقط) -->
+
 <div class="modal fade" id="requestModal" tabindex="-1" aria-hidden="true">
+
   <div class="modal-dialog modal-dialog-centered">
+
     <div class="modal-content border-0 shadow-lg rounded-4" *ngIf="selectedRequest() as req">
+
       <div class="modal-header border-0 bg-primary text-white rounded-top-4 p-4">
+
         <h5 class="modal-title fw-bold"><i class="bi bi-card-list me-2"></i>Client Request Overview</h5>
+
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+
       </div>
+
       <div class="modal-body p-4 bg-light">
+
         <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">{{ req.fullName }}'s Requirements</h6>
+
         <div class="row g-3">
+
           <div class="col-6">
+
             <span class="d-block small text-muted fw-bold text-uppercase">Property Type</span>
-            <span class="fw-bold text-dark fs-6">{{ req.propertyType || '-' }}</span>
+
+            <span class="fw-bold text-dark fs-6">{{ csvDisplay(req.propertyType) }}</span>
+
           </div>
+
           <div class="col-6">
+
             <span class="d-block small text-muted fw-bold text-uppercase">Purpose</span>
+
             <span class="badge bg-primary-subtle text-primary-emphasis border px-2 py-1">{{ req.purpose || '-' }}</span>
+
           </div>
+
           <div class="col-12 mt-3">
+
             <span class="d-block small text-muted fw-bold text-uppercase">Budget</span>
+
             <span class="fw-bold text-success fs-4">{{ req.totalAmount > 0 ? (req.totalAmount | currency:'EGP ') : 'Not Specified' }}</span>
+
           </div>
+
         </div>
+
       </div>
+
       <div class="modal-footer border-0 p-3 bg-white rounded-bottom-4">
+
         <button type="button" class="btn btn-secondary rounded-pill px-5 fw-bold w-100" data-bs-dismiss="modal">Close</button>
+
       </div>
+
     </div>
+
   </div>
+
 </div>

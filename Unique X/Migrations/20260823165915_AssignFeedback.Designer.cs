@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Unique_X.Data;
 
@@ -11,9 +12,11 @@ using Unique_X.Data;
 namespace Unique_X.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260823165915_AssignFeedback")]
+    partial class AssignFeedback
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -225,9 +228,6 @@ namespace Unique_X.Migrations
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("LeadLimit")
-                        .HasColumnType("int");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -1195,23 +1195,11 @@ namespace Unique_X.Migrations
                     b.Property<int>("LeadId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("MaxBathrooms")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("MaxBudget")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("MaxRooms")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("MinBathrooms")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("MinBudget")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<int?>("MinRooms")
-                        .HasColumnType("int");
 
                     b.Property<string>("Notes")
                         .IsRequired()
@@ -1238,9 +1226,6 @@ namespace Unique_X.Migrations
 
                     b.Property<decimal?>("QuarterlyInstallment")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("SelectedCities")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SelectedProjects")
                         .HasColumnType("nvarchar(max)");

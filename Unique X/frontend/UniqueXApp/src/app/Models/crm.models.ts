@@ -27,6 +27,29 @@ export interface LeadResponseDto {
   isDuplicate: boolean;
   isApprovedDuplicate: boolean;
   closedDealsCount: number;
+  // 🟢 Get Recommendation
+  selectedCities?: string;
+  minRooms?: number;
+  maxRooms?: number;
+  minBathrooms?: number;
+  maxBathrooms?: number;
+  isNewFromWebsite?: boolean;
+}
+
+// 🟢 مودال "Get Recommendation" في الهوم/الناف بار - بيتبعت لما العميل يملى المودال ويكون مسجل دخول
+export interface RecommendationLeadDto {
+  fullName: string;
+  phoneNumber: string;
+  email?: string;
+  cities: string[];
+  listingTypes: string[];
+  propertyTypes: string[];
+  minRooms?: number | null;
+  maxRooms?: number | null;
+  minBathrooms?: number | null;
+  maxBathrooms?: number | null;
+  minBudget?: number | null;
+  maxBudget?: number | null;
 }
 
 export interface AdminDashboardDto {

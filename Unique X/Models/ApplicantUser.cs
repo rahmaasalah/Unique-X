@@ -19,5 +19,6 @@ namespace Unique_X.Models
 
         // 🟢 الحد الأقصى لعدد الوحدات (النشطة/الغير مباعة) اللي البروكر يقدر يضيفها. null = من غير حد أقصى، الأدمن هو اللي بيحددها
         public int? PropertyLimit { get; set; }
+        public int? LeadLimit { get; set; } = null;
     }
 }

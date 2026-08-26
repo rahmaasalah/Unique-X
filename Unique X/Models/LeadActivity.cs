@@ -1,4 +1,6 @@
-﻿namespace Unique_X.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Unique_X.Models
 {
     public class LeadActivity
     {
@@ -25,5 +27,20 @@
         public string Status { get; set; } = "Pending"; // Pending, Completed, Cancelled, Rescheduled
         public bool IsDone { get; set; } = false; // اتعملت ولا لسه
         public bool IsAdminAction { get; set; } = false;
+
+        // 🟢 محسوبة لحظيًا - مش متخزنة في الداتابيز - بتتحدث كل ما حد يجيبها
+        // Pending + عدى عليها 48 ساعة = TooLate | Pending + عدى عليها 24 ساعة = Late | غير كده = OnTime
+        [NotMapped]
+        public string LateStatus
+        {
+            get
+            {
+                if (Status != "Pending") return "None";
+                var hoursOverdue = (DateTime.UtcNow - DueDate).TotalHours;
+                if (hoursOverdue >= 48) return "TooLate";
+                if (hoursOverdue >= 24) return "Late";
+                return "OnTime";
+            }
+        }
     }
 }

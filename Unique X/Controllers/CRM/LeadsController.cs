@@ -88,10 +88,10 @@ namespace Unique_X.Controllers.CRM
                 .Include(l => l.Campaign)
                 .AsQueryable();
 
-            // فلتر بالبروكر
+            // فلتر بالبروكر: بنجيب عملاء البروكر الحاليين + العملاء اللي اتسحبوا منه قبل كده (عشان يظهروا كـ Disappeared)
             if (!string.IsNullOrEmpty(brokerId))
             {
-                query = query.Where(l => l.BrokerId == brokerId);
+                query = query.Where(l => l.BrokerId == brokerId || l.PreviousBrokerId == brokerId);
             }
 
             // فلتر بالحالة
@@ -152,8 +152,74 @@ namespace Unique_X.Controllers.CRM
                 CompletedActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Completed"),
                 PendingActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Pending"),
                 CancelledActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Cancelled"),
-                RescheduledActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Rescheduled")
+                RescheduledActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Rescheduled"),
+
+                BrokerId = l.BrokerId,
+                PreviousBrokerId = l.PreviousBrokerId,
+                IsUnassigned = l.IsUnassigned,
+
+                // 🟢 حقول Get Recommendation
+                SelectedCities = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).SelectedCities : "",
+                MinRooms = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).MinRooms,
+                MaxRooms = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).MaxRooms,
+                MinBathrooms = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).MinBathrooms,
+                MaxBathrooms = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).MaxBathrooms,
+
+                // 🟢 لسه على الأكاونت المؤقت (عبدالرحمن أشرف) ولسه محددش بروكر حقيقي
+                IsNewFromWebsite = l.Broker.Email == "uniquexxxxxxx@gmail.com"
             }).ToListAsync();
+
+            // ============================================================
+            // 🟢 حساب Late/TooLate + هل العميل جاله Transfer من الأدمن قبل كده
+            // (بنعملها في خطوة منفصلة بسيطة وسريعة بدل Subqueries معقدة جوه الـ Select)
+            // ============================================================
+            var lateCutoff = DateTime.UtcNow.AddHours(-24);
+            var tooLateCutoff = DateTime.UtcNow.AddHours(-48);
+
+            var tooLateLeadIds = (await _context.LeadActivities
+                    .Where(a => a.Status == "Pending" && a.DueDate <= tooLateCutoff)
+                    .Select(a => a.LeadId).Distinct().ToListAsync())
+                .Union(await _context.Visits
+                    .Where(v => v.Status == "Pending" && v.VisitDate <= tooLateCutoff)
+                    .Select(v => v.LeadId).Distinct().ToListAsync())
+                .ToHashSet();
+
+            var lateLeadIds = (await _context.LeadActivities
+                    .Where(a => a.Status == "Pending" && a.DueDate <= lateCutoff && a.DueDate > tooLateCutoff)
+                    .Select(a => a.LeadId).Distinct().ToListAsync())
+                .Union(await _context.Visits
+                    .Where(v => v.Status == "Pending" && v.VisitDate <= lateCutoff && v.VisitDate > tooLateCutoff)
+                    .Select(v => v.LeadId).Distinct().ToListAsync())
+                .ToHashSet();
+
+            var transferredInLeadIds = (await _context.LeadStatusHistories
+                    .Where(h => h.Notes != null && (h.Notes.Contains("Admin transferred") || h.Notes.Contains("Admin assigned this lead to a new broker")))
+                    .Select(h => h.LeadId).Distinct().ToListAsync())
+                .ToHashSet();
+
+            foreach (var l in leads)
+            {
+                l.LateStatus = tooLateLeadIds.Contains(l.Id) ? "TooLate" : (lateLeadIds.Contains(l.Id) ? "Late" : "OnTime");
+                l.IsTransferredIn = transferredInLeadIds.Contains(l.Id);
+            }
+
+            // لو بنجيب ليستة بروكر معين، أي عميل اتسحب منه (PreviousBrokerId == هو) وبقى دلوقتي عند بروكر تاني (BrokerId != هو)
+            // لازم يظهر عنده كـ "Disappeared" بس - اسم فقط من غير أي بيانات
+            if (!string.IsNullOrEmpty(brokerId))
+            {
+                leads = leads.Select(l =>
+                {
+                    bool isDisappearedForCaller = l.PreviousBrokerId == brokerId && l.BrokerId != brokerId;
+                    if (!isDisappearedForCaller) return l;
+
+                    return new LeadResponseDto
+                    {
+                        Id = l.Id,
+                        FullName = l.FullName,
+                        IsDisappeared = true
+                    };
+                }).ToList();
+            }
 
             return Ok(leads);
         }
@@ -385,6 +451,170 @@ namespace Unique_X.Controllers.CRM
             return Ok(new { message = "Visit request received successfully!", leadId, visitId = visit.Id });
         }
 
+        // ============================================================
+        // 🟢 Endpoint: مودال "Get Recommendation" في الهوم/الناف بار
+        // العميل بيملى مواصفاته العامة (مش عن وحدة معينة زي website-inquiry) - بيتسجل كـ Lead
+        // ولو موجود بالفعل، بيتحدث الـ Request بتاعه (Merge) بدل ما ننشئ Lead جديد
+        // ============================================================
+        [HttpPost("website-recommendation")]
+        public async Task<IActionResult> ReceiveRecommendationLead([FromBody] RecommendationLeadDto dto)
+        {
+            // 🟢 خرائط تحويل الكودات القادمة من المودال لأسماء واضحة تتخزن في الـ CRM
+            var cityMap = new Dictionary<string, string> { { "1", "Cairo" }, { "2", "Alexandria" }, { "3", "North Coast" } };
+            var listingTypeMap = new Dictionary<string, string> { { "0", "Resale" }, { "1", "Rent" }, { "2", "Primary" }, { "3", "Resale Project" } };
+            var propertyTypeMap = new Dictionary<string, string> { { "0", "Apartment" }, { "1", "Villa" }, { "2", "Shop" }, { "3", "Office" }, { "4", "Chalet" }, { "5", "Full Floor" } };
+
+            var newCities = (dto.Cities ?? new List<string>()).Select(c => cityMap.GetValueOrDefault(c, c)).Distinct().ToList();
+            var newListingTypes = (dto.ListingTypes ?? new List<string>()).Select(l => listingTypeMap.GetValueOrDefault(l, l)).Distinct().ToList();
+            var newPropertyTypes = (dto.PropertyTypes ?? new List<string>()).Select(p => propertyTypeMap.GetValueOrDefault(p, p)).Distinct().ToList();
+
+            // 🟢 دالة صغيرة بتدمج قيمة Comma-separated قديمة مع ليستة جديدة من غير تكرار
+            List<string> MergeCsv(string? existingCsv, List<string> newValues)
+            {
+                var existing = string.IsNullOrWhiteSpace(existingCsv)
+                    ? new List<string>()
+                    : existingCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+                return existing.Union(newValues).Distinct().ToList();
+            }
+
+            var lead = await _context.Leads.FirstOrDefaultAsync(l => l.PhoneNumber == dto.PhoneNumber);
+            int leadId;
+            bool isNewLead = lead == null;
+
+            if (isNewLead)
+            {
+                // 🟢 نلاقي أكاونت "عبدالرحمن أشرف" - كل الليدز الجديدة من المودال بتتسجل عليه مؤقتًا
+                // لحد ما الأدمن يوزعها من تاب "New Leads"
+                var placeholderBroker = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == "uniquexxxxxxx@gmail.com" || u.PhoneNumber == "01200394564") as ApplicantUser;
+
+                if (placeholderBroker == null)
+                    return BadRequest("Placeholder broker account not found. Please contact support.");
+
+                var newLead = new Lead
+                {
+                    FullName = dto.FullName,
+                    PhoneNumber = dto.PhoneNumber,
+                    Email = dto.Email,
+                    BrokerId = placeholderBroker.Id,
+                    LeadStatusId = 1, // New "To Call"
+                    CampaignSource = "Recommendation",
+                    CampaignName = "Get Recommendation",
+                    CreatedAt = DateTime.UtcNow,
+                    LastActionBy = "client"
+                };
+                _context.Leads.Add(newLead);
+                await _context.SaveChangesAsync();
+                leadId = newLead.Id;
+
+                _context.LeadStatusHistories.Add(new LeadStatusHistory
+                {
+                    LeadId = leadId,
+                    OldStatusId = 0,
+                    NewStatusId = 1,
+                    ChangedById = placeholderBroker.Id,
+                    Notes = "Lead created automatically from website 'Get Recommendation' request",
+                    ChangedAt = DateTime.UtcNow
+                });
+
+                var newRequest = new LeadRequest
+                {
+                    LeadId = leadId,
+                    PropertyType = string.Join(",", newPropertyTypes),
+                    Purpose = string.Join(",", newListingTypes),
+                    SelectedCities = string.Join(",", newCities),
+                    MinBudget = dto.MinBudget ?? 0,
+                    MaxBudget = dto.MaxBudget ?? 0,
+                    MinRooms = dto.MinRooms,
+                    MaxRooms = dto.MaxRooms,
+                    MinBathrooms = dto.MinBathrooms,
+                    MaxBathrooms = dto.MaxBathrooms,
+                    PaymentMethod = "",
+                    PreferredLocation = "",
+                    Notes = "Submitted via website 'Get Recommendation' form."
+                };
+                _context.LeadRequests.Add(newRequest);
+            }
+            else
+            {
+                leadId = lead.Id;
+                lead.UpdatedAt = DateTime.UtcNow;
+                lead.LastActionBy = "client";
+                // لو ملوش إيميل متسجل وبعت واحد دلوقتي، نضيفه
+                if (string.IsNullOrEmpty(lead.Email) && !string.IsNullOrEmpty(dto.Email)) lead.Email = dto.Email;
+
+                var request = await _context.LeadRequests.FirstOrDefaultAsync(r => r.LeadId == leadId);
+                if (request == null)
+                {
+                    request = new LeadRequest { LeadId = leadId, PropertyType = "", Purpose = "", PaymentMethod = "", PreferredLocation = "", Notes = "" };
+                    _context.LeadRequests.Add(request);
+                }
+
+                // 🟢 دمج (Merge) مش استبدال - أي بيانات جديدة برا بتتضاف على اللي موجود جوا من غير ما نمسح حاجة
+                request.PropertyType = string.Join(",", MergeCsv(request.PropertyType, newPropertyTypes));
+                request.Purpose = string.Join(",", MergeCsv(request.Purpose, newListingTypes));
+                request.SelectedCities = string.Join(",", MergeCsv(request.SelectedCities, newCities));
+
+                if (dto.MinRooms.HasValue) request.MinRooms = request.MinRooms.HasValue ? Math.Min(request.MinRooms.Value, dto.MinRooms.Value) : dto.MinRooms;
+                if (dto.MaxRooms.HasValue) request.MaxRooms = request.MaxRooms.HasValue ? Math.Max(request.MaxRooms.Value, dto.MaxRooms.Value) : dto.MaxRooms;
+                if (dto.MinBathrooms.HasValue) request.MinBathrooms = request.MinBathrooms.HasValue ? Math.Min(request.MinBathrooms.Value, dto.MinBathrooms.Value) : dto.MinBathrooms;
+                if (dto.MaxBathrooms.HasValue) request.MaxBathrooms = request.MaxBathrooms.HasValue ? Math.Max(request.MaxBathrooms.Value, dto.MaxBathrooms.Value) : dto.MaxBathrooms;
+                if (dto.MinBudget.HasValue) request.MinBudget = request.MinBudget > 0 ? Math.Min(request.MinBudget, dto.MinBudget.Value) : dto.MinBudget.Value;
+                if (dto.MaxBudget.HasValue) request.MaxBudget = request.MaxBudget > 0 ? Math.Max(request.MaxBudget, dto.MaxBudget.Value) : dto.MaxBudget.Value;
+
+                _context.LeadStatusHistories.Add(new LeadStatusHistory
+                {
+                    LeadId = leadId,
+                    OldStatusId = lead.LeadStatusId,
+                    NewStatusId = lead.LeadStatusId,
+                    ChangedById = lead.BrokerId,
+                    Notes = "Client submitted a new 'Get Recommendation' request from the website - request details updated.",
+                    ChangedAt = DateTime.UtcNow
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Request received successfully!", leadId, isNewLead });
+        }
+
+        // ============================================================
+        // 🟢 Endpoint: تاب "New Leads" في crm-dashboard - الليدز الجاية من المودال ولسه معلقة عند الأكاونت المؤقت
+        // ============================================================
+        [HttpGet("new-leads")]
+        public async Task<IActionResult> GetNewLeads()
+        {
+            var leads = await _context.Leads
+                .Include(l => l.Broker)
+                .Include(l => l.Status)
+                .Where(l => l.Broker.Email == "uniquexxxxxxx@gmail.com" && !l.IsUnassigned)
+                .OrderByDescending(l => l.CreatedAt)
+                .Select(l => new
+                {
+                    l.Id,
+                    l.FullName,
+                    l.PhoneNumber,
+                    l.Email,
+                    StatusName = l.Status.Name,
+                    l.CampaignSource,
+                    l.CreatedAt,
+                    Request = _context.LeadRequests.Where(r => r.LeadId == l.Id).Select(r => new
+                    {
+                        r.PropertyType,
+                        r.Purpose,
+                        r.SelectedCities,
+                        r.MinBudget,
+                        r.MaxBudget,
+                        r.MinRooms,
+                        r.MaxRooms,
+                        r.MinBathrooms,
+                        r.MaxBathrooms
+                    }).FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return Ok(leads);
+        }
+
         // 5. Endpoint: جلب كل تفاصيل العميل (Lead Details)
         // GET: api/crm/leads/{id}
         [HttpGet("{id}")]
@@ -423,6 +653,9 @@ namespace Unique_X.Controllers.CRM
                     lead.Email,
                     // 👇 محتاجينه في الفرونت إند عشان نتأكد هل الليد ده بتاع البروكر اللي فاتح الصفحة ولا لأ
                     lead.BrokerId,
+                    lead.IsUnassigned,
+                    lead.PreviousBrokerId,
+                    lead.FeedbackCounterResetAt,
                     // 👇 التعديل الأول: عرض اسم البروكر بدل الإيميل
                     BrokerName = lead.Broker.FirstName + " " + lead.Broker.LastName,
                     StatusId = lead.LeadStatusId,
@@ -449,7 +682,14 @@ namespace Unique_X.Controllers.CRM
                     request?.SelectedRegions,
                     request?.SelectedProjects,
                     request?.PreferredLocation,
-                    request?.Notes
+                    request?.Notes,
+                    // 🟢 حقول Get Recommendation
+                    request?.SelectedCities,
+                    request?.MinRooms,
+                    request?.MaxRooms,
+                    request?.MinBathrooms,
+                    request?.MaxBathrooms,
+                    request?.MinBudget
                 },
                 Visits = visits,
                 Activities = activities,
@@ -581,6 +821,13 @@ namespace Unique_X.Controllers.CRM
                 request.QuarterlyInstallment = dto.QuarterlyInstallment;
                 request.PreferredLocation = dto.PreferredLocation ?? "";
                 request.Notes = dto.Notes ?? "";
+
+                // 🟢 حقول Get Recommendation - بتتحفظ زي ما هي جايه من صفحة Edit Request (Multi-select محول لـ Comma string)
+                request.SelectedCities = dto.SelectedCities ?? request.SelectedCities;
+                request.MinRooms = dto.MinRooms;
+                request.MaxRooms = dto.MaxRooms;
+                request.MinBathrooms = dto.MinBathrooms;
+                request.MaxBathrooms = dto.MaxBathrooms;
 
                 _context.LeadRequests.Update(request);
             }
@@ -847,6 +1094,17 @@ namespace Unique_X.Controllers.CRM
             var lead = await _context.Leads.FindAsync(id);
             if (lead == null) return NotFound("Lead not found");
 
+            // 🟢 نتأكد إن البروكر الجديد معداش الـ Lead Limit بتاعه قبل ما ننقله
+            var newBroker = await _context.Users.FindAsync(dto.NewBrokerId) as ApplicantUser;
+            if (newBroker?.LeadLimit != null)
+            {
+                var currentCount = await _context.Leads.CountAsync(l => l.BrokerId == dto.NewBrokerId && !l.IsUnassigned);
+                if (currentCount >= newBroker.LeadLimit)
+                {
+                    return BadRequest($"This broker has reached their lead limit ({newBroker.LeadLimit}). Please increase the limit or choose another broker.");
+                }
+            }
+
             lead.BrokerId = dto.NewBrokerId;
             lead.UpdatedAt = DateTime.UtcNow;
             lead.LastActionBy = "admin";
@@ -907,21 +1165,15 @@ namespace Unique_X.Controllers.CRM
         }
 
         // GET: api/crm/leads/pending-clients
-        // العملاء اللي UpdatedAt بتاعهم +48 ساعة من غير أي تغيير
+        // 🟢 العملاء اللي اتسحبوا تلقائيًا من البروكر بتاعهم (IsUnassigned = true) وعايزين بروكر جديد
         [HttpGet("pending-clients")]
         public async Task<IActionResult> GetPendingClients()
         {
-            var cutoff = DateTime.UtcNow.AddHours(-48);
-
             var pendingLeads = await _context.Leads
                 .Include(l => l.Broker)
                 .Include(l => l.Status)
-                .Where(l => (l.UpdatedAt ?? l.CreatedAt) <= cutoff
-                         && l.LeadStatusId != 19  // مش Deal Closed
-                         && l.LeadStatusId != 22  // مش Lost
-                         && l.LeadStatusId != 23  // مش Low Budget
-                         && l.LeadStatusId != 24) // مش Number Issue
-                .OrderBy(l => l.UpdatedAt ?? l.CreatedAt)
+                .Where(l => l.IsUnassigned)
+                .OrderBy(l => l.UnassignedAt)
                 .Select(l => new
                 {
                     l.Id,
@@ -929,14 +1181,64 @@ namespace Unique_X.Controllers.CRM
                     l.PhoneNumber,
                     StatusName = l.Status.Name,
                     StatusId = l.LeadStatusId,
-                    BrokerId = l.BrokerId,
-                    BrokerName = l.Broker != null ? l.Broker.FirstName + " " + l.Broker.LastName : "Unknown",
-                    LastUpdate = l.UpdatedAt ?? l.CreatedAt,
-                    HoursSinceUpdate = (int)(DateTime.UtcNow - (l.UpdatedAt ?? l.CreatedAt)).TotalHours
+                    PreviousBrokerId = l.PreviousBrokerId,
+                    // 👇 اسم البروكر اللي اتسحب منه العميل (البروكر القديم)
+                    PreviousBrokerName = l.Broker != null ? l.Broker.FirstName + " " + l.Broker.LastName : "Unknown",
+                    UnassignedAt = l.UnassignedAt,
+                    HoursSinceUnassigned = l.UnassignedAt.HasValue ? (int)(DateTime.UtcNow - l.UnassignedAt.Value).TotalHours : 0
                 })
                 .ToListAsync();
 
             return Ok(pendingLeads);
+        }
+
+        // PUT: api/crm/leads/{id}/assign-new-broker
+        // 🟢 الأدمن بيدي العميل المسحوب لبروكر جديد من تاب Pending Clients
+        // بيصفر كل العدادات (الفيدباك) بس بيسيب الفيدباكات القديمة موجودة في السجل كتاريخ
+        [HttpPut("{id}/assign-new-broker")]
+        public async Task<IActionResult> AssignNewBroker(int id, [FromBody] AssignNewBrokerDto dto)
+        {
+            var lead = await _context.Leads.FindAsync(id);
+            if (lead == null) return NotFound("Lead not found");
+            if (!lead.IsUnassigned) return BadRequest("This lead is not in the pending pool.");
+
+            // 🟢 نتأكد إن البروكر الجديد معداش الـ Lead Limit بتاعه قبل ما نديله العميل
+            var newBrokerUser = await _context.Users.FindAsync(dto.NewBrokerId) as ApplicantUser;
+            if (newBrokerUser?.LeadLimit != null)
+            {
+                var currentCount = await _context.Leads.CountAsync(l => l.BrokerId == dto.NewBrokerId && !l.IsUnassigned);
+                if (currentCount >= newBrokerUser.LeadLimit)
+                {
+                    return BadRequest($"This broker has reached their lead limit ({newBrokerUser.LeadLimit}). Please increase the limit or choose another broker.");
+                }
+            }
+
+            // 🟢 نسجل مين كان البروكر القديم عشان يفضل شايف العميل كـ Disappeared عنده
+            lead.PreviousBrokerId = lead.BrokerId;
+
+            // 🟢 تعيين البروكر الجديد
+            lead.BrokerId = dto.NewBrokerId;
+            lead.IsUnassigned = false;
+            lead.LastActionBy = "admin";
+            lead.UpdatedAt = DateTime.UtcNow;
+
+            // 🟢 تصفير عداد الفيدباك - الفيدباكات القديمة بتفضل في GeneralFeedback كتاريخ
+            // بس مش هتتحسب في العداد بعد التاريخ ده
+            lead.FeedbackCounterResetAt = DateTime.UtcNow;
+
+            // تسجيل حركة التعيين الجديد في الـ History
+            _context.LeadStatusHistories.Add(new LeadStatusHistory
+            {
+                LeadId = lead.Id,
+                OldStatusId = lead.LeadStatusId,
+                NewStatusId = lead.LeadStatusId,
+                ChangedById = dto.AdminId,
+                Notes = "Admin assigned this lead to a new broker after it was auto-unassigned (no action for 72 hours).",
+                ChangedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Lead assigned to new broker successfully! All counters have been reset." });
         }
 
         [HttpPut("bulk-transfer")]

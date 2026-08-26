@@ -51,6 +51,7 @@ export const routes: Routes = [
   // ===== CRM =====
   { path: 'crm/leads', loadComponent: () => import('./Components/CRM/leads-dashboard/leads-dashboard').then(m => m.LeadsDashboardComponent) },
   { path: 'crm/leads/:id', loadComponent: () => import('./Components/CRM/lead-details/lead-details').then(m => m.LeadDetailsComponent), canDeactivate: [leadFeedbackGuard] },
+  { path: 'crm/notifications/:category', loadComponent: () => import('./Components/CRM/notification-category/notification-category').then(m => m.NotificationCategoryComponent) },
   { path: 'crm/leads/:id/edit', loadComponent: () => import('./Components/CRM/edit-request/edit-request').then(m => m.EditRequestComponent) },
   { path: 'crm/dashboard', loadComponent: () => import('./Components/CRM/crm-dashboard/crm-dashboard').then(m => m.CrmDashboardComponent) },
   { path: 'crm/profile', loadComponent: () => import('./Components/CRM/broker-profile/broker-profile').then(m => m.BrokerProfileComponent) },

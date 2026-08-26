@@ -24,6 +24,12 @@
         public int? InstallmentYears { get; set; }
         public string PreferredLocation { get; set; }
         public string Notes { get; set; }
+
+        // 🟢 حقول Get Recommendation - PropertyType و Purpose بقوا Comma-separated (Multi-select)
+        public string? SelectedCities { get; set; }
+        public int? MinRooms { get; set; }
+        public int? MaxRooms { get; set; }
+        public int? MinBathrooms { get; set; }
+        public int? MaxBathrooms { get; set; }
     }
 }
-

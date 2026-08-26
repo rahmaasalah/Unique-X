@@ -213,7 +213,6 @@ namespace Unique_X.Services.Implementation
             }
 
             var query = _context.Properties
-                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -298,6 +297,13 @@ namespace Unique_X.Services.Implementation
                 }
             }
 
+            // 🟢 فلترة بالمنطقة (Region) - نفس فكرة ProjectName بالظبط
+            if (!string.IsNullOrEmpty(filter.Region))
+            {
+                var region = filter.Region.ToLower();
+                query = query.Where(p => p.Region != null && p.Region.ToLower().Contains(region));
+            }
+
             if (filter.ListingType.HasValue)
             {
                 query = query.Where(p => p.ListingType == (ListingType)filter.ListingType.Value);
@@ -328,26 +334,9 @@ namespace Unique_X.Services.Implementation
                 }
             }
 
-            var orderedQuery = query.OrderByDescending(p => p.CreatedAt);
+            var properties = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
 
-            // 🟢 Pagination اختيارية بالكامل: لو محدّش بعت PageSize، بترجع كل النتائج زي ما هي دلوقتي بالظبط
-            // (عشان صفحة الهوم بتعتمد على إنها تجيب كل النتائج مرة واحدة وتقسمها بالنوع على الفرونت إند)
-            // أي صفحة جديدة عايزة صفحات (Pagination) هتبعت PageNumber/PageSize في الرابط وبس
-            List<Property> allProperties;
-            if (filter.PageSize.HasValue && filter.PageSize.Value > 0)
-            {
-                var pageNumber = filter.PageNumber.HasValue && filter.PageNumber.Value > 0 ? filter.PageNumber.Value : 1;
-                allProperties = await orderedQuery
-                    .Skip((pageNumber - 1) * filter.PageSize.Value)
-                    .Take(filter.PageSize.Value)
-                    .ToListAsync();
-            }
-            else
-            {
-                allProperties = await orderedQuery.ToListAsync();
-            }
-
-            return allProperties.Select(p => {
+            return properties.Select(p => {
                 var dto = MapToResponseDto(p);
                 dto.IsFavorite = userFavorites.Contains(p.Id);
                 dto.IsShortlisted = userShortlisted.Contains(p.Id);
@@ -394,7 +383,6 @@ namespace Unique_X.Services.Implementation
         public async Task<IEnumerable<PropertyResponseDto>> GetBrokerPropertiesAsync(string brokerId)
         {
             var properties = await _context.Properties
-                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -411,7 +399,6 @@ namespace Unique_X.Services.Implementation
         {
             // 1. جلب العقار أولاً
             var property = await _context.Properties
-                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -762,7 +749,6 @@ namespace Unique_X.Services.Implementation
             var hotDealIds = await _context.HotDeals.Select(h => h.PropertyId).ToListAsync();
 
             var properties = await _context.Properties
-                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -777,7 +763,6 @@ namespace Unique_X.Services.Implementation
             var recommendedIds = await _context.RecommendedVisits.Select(r => r.PropertyId).ToListAsync();
 
             var properties = await _context.Properties
-                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -918,7 +903,6 @@ namespace Unique_X.Services.Implementation
         public async Task<PropertyResponseDto> GetPropertyByCodeAsync(string code)
         {
             var property = await _context.Properties
-                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.PaymentPlans)
                 .FirstOrDefaultAsync(p => p.Code == code);

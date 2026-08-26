@@ -65,16 +65,17 @@ namespace Unique_X.Controllers.CRM
         [HttpGet("broker/{brokerId}")]
         public async Task<IActionResult> GetBrokerDashboard(string brokerId)
         {
-            var myLeads = await _context.Leads.Where(l => l.BrokerId == brokerId).CountAsync();
+            var myLeads = await _context.Leads.Where(l => l.BrokerId == brokerId && !l.IsUnassigned).CountAsync();
             var myClosedDeals = await _context.Leads.Where(l => l.BrokerId == brokerId && l.LeadStatusId == 5).CountAsync();
             var myRevenue = await _context.Leads.Where(l => l.BrokerId == brokerId).SumAsync(l => l.ExpectedRevenue ?? 0);
 
-            // بنجيب المهام (المكالمات أو المواعيد) اللي المفروض البروكر يعملها النهاردة أو متأخرة عليه
-            var today = DateTime.UtcNow.AddHours(3).Date;
-            var pendingTasksList = await _context.LeadActivities
+            // 🟢 نجيب كل الأنشطة/الزيارات المعلقة (Pending) بتاعت البروكر - وبعدين نصنفهم Today/Late/Too Late في الميموري
+            var now = DateTime.UtcNow;
+            var todayLocal = now.AddHours(3).Date; // توقيت مصر
+
+            var pendingTasksRaw = await _context.LeadActivities
                 .Include(a => a.Lead)
-                // 👇 التعديل هنا: بنعتمد على Status == "Pending"
-                .Where(a => a.AssignedToId == brokerId && a.Status == "Pending" && a.DueDate.Date <= today)
+                .Where(a => a.AssignedToId == brokerId && a.Status == "Pending" && !a.Lead.IsUnassigned)
                 .OrderBy(a => a.DueDate)
                 .Select(a => new BrokerTaskDto
                 {
@@ -84,8 +85,7 @@ namespace Unique_X.Controllers.CRM
                     ActivityType = a.ActivityType,
                     Summary = a.Summary,
                     IsDone = a.IsDone,
-
-                    // 👇 ضفنا قراءة الحقول دي من الداتابيز عشان تتبعت للجدول
+                    DueDate = a.DueDate,
                     PropertyCode = a.PropertyCode,
                     PropertyName = a.PropertyName,
                     BrokerPhone = a.BrokerPhone,
@@ -96,10 +96,9 @@ namespace Unique_X.Controllers.CRM
                     Notes = a.Notes
                 }).ToListAsync();
 
-            var pendingVisitsList = await _context.Visits
+            var pendingVisitsRaw = await _context.Visits
                 .Include(v => v.Lead)
-                // 👇 التعديل هنا: بنعتمد على Status == "Pending"
-                .Where(v => v.BrokerId == brokerId && v.Status == "Pending" && v.VisitDate.Date <= today)
+                .Where(v => v.BrokerId == brokerId && v.Status == "Pending" && !v.Lead.IsUnassigned)
                 .OrderBy(v => v.VisitDate)
                 .Select(v => new VisitResponseDto
                 {
@@ -122,14 +121,48 @@ namespace Unique_X.Controllers.CRM
                     Status = v.Status
                 }).ToListAsync();
 
+            // 🟢 دالة التصنيف: Today / Late (عدى عليه 24 ساعة) / Too Late (عدى عليه 48 ساعة)
+            string Categorize(DateTime dueDate)
+            {
+                var hoursOverdue = (now - dueDate).TotalHours;
+                if (hoursOverdue >= 48) return "TooLate";
+                if (hoursOverdue >= 24) return "Late";
+                return "Today"; // شامل أي حاجة لسه معلقة ووقتها جه أو النهاردة
+            }
+
+            foreach (var t in pendingTasksRaw) t.LateStatus = Categorize(t.DueDate);
+            foreach (var v in pendingVisitsRaw) v.LateStatus = Categorize(v.VisitDate);
+
+            // 🟢 بنعرض بس اللي وصل وقته فعلًا (النهاردة أو فات معاده) - نفس فلسفة الجرس القديمة
+            var todayTasks = pendingTasksRaw.Where(t => t.DueDate.Date <= todayLocal && t.LateStatus == "Today").ToList();
+            var lateTasks = pendingTasksRaw.Where(t => t.LateStatus == "Late").ToList();
+            var tooLateTasks = pendingTasksRaw.Where(t => t.LateStatus == "TooLate").ToList();
+
+            var todayVisits = pendingVisitsRaw.Where(v => v.VisitDate.Date <= todayLocal && v.LateStatus == "Today").ToList();
+            var lateVisits = pendingVisitsRaw.Where(v => v.LateStatus == "Late").ToList();
+            var tooLateVisits = pendingVisitsRaw.Where(v => v.LateStatus == "TooLate").ToList();
+
             var result = new BrokerDashboardDto
             {
                 TotalMyLeads = myLeads,
                 MyClosedDeals = myClosedDeals,
                 MyExpectedRevenue = myRevenue,
-                MyPendingTasksToday = pendingTasksList.Count, // العدد
-                PendingTasksList = pendingTasksList,
-                PendingVisitsList = pendingVisitsList
+                MyPendingTasksToday = todayTasks.Count + todayVisits.Count,
+
+                // 🟢 للتوافق مع الكود القديم (لو مستخدم في مكان تاني)
+                PendingTasksList = pendingTasksRaw,
+                PendingVisitsList = pendingVisitsRaw,
+
+                // 🟢 التصنيف الجديد بالـ 3 categories
+                TodayCount = todayTasks.Count + todayVisits.Count,
+                LateCount = lateTasks.Count + lateVisits.Count,
+                TooLateCount = tooLateTasks.Count + tooLateVisits.Count,
+                TodayTasks = todayTasks,
+                LateTasks = lateTasks,
+                TooLateTasks = tooLateTasks,
+                TodayVisits = todayVisits,
+                LateVisits = lateVisits,
+                TooLateVisits = tooLateVisits
             };
 
             return Ok(result);
@@ -207,23 +240,23 @@ namespace Unique_X.Controllers.CRM
     .OrderByDescending(v => v.VisitDate)
     .Select(v => new VisitResponseDto
     {
-                    Id = v.Id,
-                    LeadName = v.Lead.FullName,
-                    LeadPhone = v.Lead.PhoneNumber,
-                    PropertyCode = v.PropertyCode,
-                    PropertyName = v.PropertyName,
-                    BrokerPhone = v.BrokerPhone,
-                    ZoneId = v.ZoneId,
-                    VisitType = v.VisitType,
-                    ListingType = v.ListingType,
-                    Notes = v.Notes,
-                    Region = v.Region,
-                    Project = v.Project,
-                    VisitDate = v.VisitDate,
-                    Location = v.Location,
-                    Feedback = v.Feedback,
-                    Status = v.Status
-                }).ToListAsync();
+        Id = v.Id,
+        LeadName = v.Lead.FullName,
+        LeadPhone = v.Lead.PhoneNumber,
+        PropertyCode = v.PropertyCode,
+        PropertyName = v.PropertyName,
+        BrokerPhone = v.BrokerPhone,
+        ZoneId = v.ZoneId,
+        VisitType = v.VisitType,
+        ListingType = v.ListingType,
+        Notes = v.Notes,
+        Region = v.Region,
+        Project = v.Project,
+        VisitDate = v.VisitDate,
+        Location = v.Location,
+        Feedback = v.Feedback,
+        Status = v.Status
+    }).ToListAsync();
 
             //var activities = await _context.LeadActivities
             //    .Include(a => a.Lead)
@@ -237,25 +270,25 @@ namespace Unique_X.Controllers.CRM
     .OrderByDescending(a => a.DueDate)
     .Select(a => new BrokerTaskDto
     {
-                    Id = a.Id,
-                    LeadId = a.LeadId,
-                    LeadName = a.Lead.FullName,
-                    ActivityType = a.ActivityType,
-                    Summary = a.Summary,
-                    DueDate = a.DueDate,
-                    Status = a.Status,
-                    IsDone = a.IsDone,
+        Id = a.Id,
+        LeadId = a.LeadId,
+        LeadName = a.Lead.FullName,
+        ActivityType = a.ActivityType,
+        Summary = a.Summary,
+        DueDate = a.DueDate,
+        Status = a.Status,
+        IsDone = a.IsDone,
 
-                    // 👇 ضفنا قراءة الحقول دي من الداتابيز عشان تتبعت للجدول
-                    PropertyCode = a.PropertyCode,
-                    PropertyName = a.PropertyName,
-                    BrokerPhone = a.BrokerPhone,
-                    ZoneId = a.ZoneId,
-                    ListingType = a.ListingType ?? "",
-                    Region = a.Region,
-                    Project = a.Project,
-                    Notes = a.Notes
-                }).ToListAsync();
+        // 👇 ضفنا قراءة الحقول دي من الداتابيز عشان تتبعت للجدول
+        PropertyCode = a.PropertyCode,
+        PropertyName = a.PropertyName,
+        BrokerPhone = a.BrokerPhone,
+        ZoneId = a.ZoneId,
+        ListingType = a.ListingType ?? "",
+        Region = a.Region,
+        Project = a.Project,
+        Notes = a.Notes
+    }).ToListAsync();
 
             return Ok(new BrokerProfileDataDto { Leads = leads, Visits = visits, Activities = activities });
         }

@@ -57,6 +57,9 @@ builder.Services.AddScoped<IPropertiesService, PropertiesService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// 🟢 خدمة السحب التلقائي للعملاء اللي معملهاش أكشن لـ 72 ساعة (Late/Too Late system)
+builder.Services.AddHostedService<LeadAutoReassignmentService>();
+
 
 builder.Services.AddCors(options =>
 {
@@ -165,13 +168,13 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(); 
+    app.UseSwaggerUI();
 }
 app.UseCors("AllowAngularApp");
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication(); 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

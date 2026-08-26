@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { CreateLeadDto, LeadResponseDto, AdminDashboardDto, BrokerDashboardDto, WebsiteInquiryDto, BrokerProfileDataDto, RequestVisitDto } from '../Models/crm.models';
+import { CreateLeadDto, LeadResponseDto, AdminDashboardDto, BrokerDashboardDto, WebsiteInquiryDto, BrokerProfileDataDto, RequestVisitDto, RecommendationLeadDto } from '../Models/crm.models';
 import { environment } from '../../environments/environment'; // تأكدي إن المسار ده صح حسب مكان ملف الـ environment عندك
 
 @Injectable({
@@ -225,6 +225,11 @@ getPendingClients(): Observable<any[]> {
   return this.http.get<any[]>(`${this.apiUrl}/leads/pending-clients`);
 }
 
+// 🟢 تعيين بروكر جديد لعميل اتسحب تلقائيًا (بيصفر كل العدادات على السيرفر)
+assignNewBroker(leadId: number, newBrokerId: string, adminId: string): Observable<any> {
+  return this.http.put(`${this.apiUrl}/leads/${leadId}/assign-new-broker`, { newBrokerId, adminId });
+}
+
 getBrokerReport(brokerId: string, from?: string, to?: string): Observable<any> {
   let url = `${this.apiUrl}/dashboard/broker-report/${brokerId}`;
   const params: string[] = [];
@@ -232,5 +237,15 @@ getBrokerReport(brokerId: string, from?: string, to?: string): Observable<any> {
   if (to) params.push(`to=${to}`);
   if (params.length > 0) url += '?' + params.join('&');
   return this.http.get<any>(url);
+}
+
+// 🟢 مودال "Get Recommendation" - بيبعت طلب العميل ويتسجل/يتحدث كـ Lead في الـ CRM
+submitRecommendationLead(dto: RecommendationLeadDto): Observable<any> {
+  return this.http.post(`${this.apiUrl}/leads/website-recommendation`, dto);
+}
+
+// 🟢 تاب "New Leads" في crm-dashboard - الليدز الجاية من المودال ولسه معلقة عند الأكاونت المؤقت
+getNewLeads(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/leads/new-leads`);
 }
 }

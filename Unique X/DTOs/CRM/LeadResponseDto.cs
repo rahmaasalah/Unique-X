@@ -50,5 +50,34 @@
         public string SelectedRegions { get; set; }
         public string SelectedProjects { get; set; }
         public string Notes { get; set; }
+
+        // ============================================================
+        // 🟢 نظام السحب التلقائي (Auto Reassignment)
+        // ============================================================
+        public string? BrokerId { get; set; }
+        public string? PreviousBrokerId { get; set; }
+        public bool IsUnassigned { get; set; }
+
+        // 🟢 لو true، الفرونت لازم يعرض السطر ده كـ "Disappeared" بس - من غير أي بيانات تانية
+        // (بيتحسب بس لما بنجيب الليستة لبروكر معين وكان هو البروكر القديم بتاع عميل اتسحب منه)
+        public bool IsDisappeared { get; set; }
+
+        // 🟢 Today / Late / TooLate - محسوبة من أقدم Call/Visit لسه Pending على العميل ده
+        public string? LateStatus { get; set; }
+
+        // 🟢 هل العميل ده اتنقل للبروكر الحالي بواسطة الأدمن (Transfer) في أي وقت؟
+        public bool IsTransferredIn { get; set; }
+
+        // ============================================================
+        // 🟢 حقول "Get Recommendation" الجديدة - PropertyType و Purpose بقوا Multi-select (Comma-separated)
+        // ============================================================
+        public string? SelectedCities { get; set; }
+        public int? MinRooms { get; set; }
+        public int? MaxRooms { get; set; }
+        public int? MinBathrooms { get; set; }
+        public int? MaxBathrooms { get; set; }
+
+        // 🟢 true لو الليد ده جاي من مودال Get Recommendation ولسه ما اتوزعش على بروكر حقيقي
+        public bool IsNewFromWebsite { get; set; }
     }
 }
