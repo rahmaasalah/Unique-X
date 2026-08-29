@@ -689,7 +689,8 @@ namespace Unique_X.Controllers.CRM
                     request?.MaxRooms,
                     request?.MinBathrooms,
                     request?.MaxBathrooms,
-                    request?.MinBudget
+                    request?.MinBudget,
+                    request?.MaxBudget
                 },
                 Visits = visits,
                 Activities = activities,
@@ -869,36 +870,45 @@ namespace Unique_X.Controllers.CRM
         public async Task<IActionResult> GetRecommendations(int id)
         {
             var request = await _context.LeadRequests.FirstOrDefaultAsync(r => r.LeadId == id);
+            if (request == null) return Ok(new List<object>());
 
-            // لو مفيش طلب أو مفيش ميزانية، نرجع لستة فاضية
-            if (request == null || !request.TotalAmount.HasValue || request.TotalAmount.Value <= 0)
-                return Ok(new List<object>());
-
-            decimal baseAmount = request.TotalAmount.Value;
             decimal minBudget;
             decimal maxBudget;
 
-            // 🟢 التعديل السحري هنا: فحص لو نوع العقار "فيلا"
-            if (!string.IsNullOrEmpty(request.PropertyType) && request.PropertyType.Replace(" ", "").Equals("Villa", StringComparison.OrdinalIgnoreCase))
+            // 🟢 لو عنده ميزانية محددة (Budget Range جاي من مودال Get Recommendation مثلاً) بنستخدمها زي ما هي
+            if (request.MinBudget > 0 || request.MaxBudget > 0)
             {
-                minBudget = baseAmount - 5000000m; // أقل بـ 5 مليون للفيلا
-                maxBudget = baseAmount + 5000000m; // أكثر بـ 5 مليون للفيلا
+                minBudget = request.MinBudget;
+                maxBudget = request.MaxBudget > 0 ? request.MaxBudget : decimal.MaxValue;
+            }
+            // 🟢 وإلا بنرجع للطريقة القديمة (Budget واحد ثابت + هامش حواليه)
+            else if (request.TotalAmount.HasValue && request.TotalAmount.Value > 0)
+            {
+                decimal baseAmount = request.TotalAmount.Value;
+                bool isVilla = !string.IsNullOrEmpty(request.PropertyType) && request.PropertyType.Replace(" ", "").Contains("Villa", StringComparison.OrdinalIgnoreCase);
+                if (isVilla)
+                {
+                    minBudget = baseAmount - 5000000m;
+                    maxBudget = baseAmount + 5000000m;
+                }
+                else
+                {
+                    minBudget = baseAmount - 200000m;
+                    maxBudget = baseAmount + 600000m;
+                }
+                if (minBudget < 0) minBudget = 0;
             }
             else
             {
-                // الرينج العادي لباقي أنواع العقارات
-                minBudget = baseAmount - 200000m;
-                maxBudget = baseAmount + 600000m;
+                // مفيش أي ميزانية خالص - نرجع ليستة فاضية زي الأول
+                return Ok(new List<object>());
             }
-
-            if (minBudget < 0) minBudget = 0;
 
             // بنجيب العقارات اللي البروكر اقترحها قبل كده
             var proposedIds = string.IsNullOrEmpty(request.ProposedPropertyIds)
                 ? new List<string>()
                 : request.ProposedPropertyIds.Split(',').ToList();
 
-            // البناء الديناميكي للبحث بصرامة (Strict Matching)
             var query = _context.Properties.Where(p => p.IsActive && p.IsApproved && !p.IsSold);
 
             // -- أ) فلتر الميزانية (Range)
@@ -909,57 +919,64 @@ namespace Unique_X.Controllers.CRM
             {
                 query = query.Where(p => p.PaymentMethod == request.PaymentMethod);
 
-                // 🟢 التعديل الجديد: الفلتر المالي الدقيق (المقدم والقسط) في حالة التقسيط
                 if (request.PaymentMethod == "Installment")
                 {
-                    // 1. فلتر المقدم (Down Payment): أكبر أو أقل بـ 400,000
                     if (request.DownPayment.HasValue && request.DownPayment.Value > 0)
                     {
-                        decimal minDp = Math.Max(0, request.DownPayment.Value - 400000m); // Math.Max عشان الرقم مينزلش تحت الصفر
+                        decimal minDp = Math.Max(0, request.DownPayment.Value - 400000m);
                         decimal maxDp = request.DownPayment.Value + 400000m;
-
-                        // بنبحث جوه خطط الدفع بتاعت العقار
                         query = query.Where(p => p.PaymentPlans.Any(plan => plan.DownPayment >= minDp && plan.DownPayment <= maxDp));
                     }
-
-                    // 2. فلتر القسط الربع سنوي (Quarterly Installment): أكبر أو أقل بـ 70,000
                     if (request.QuarterlyInstallment.HasValue && request.QuarterlyInstallment.Value > 0)
                     {
                         decimal minQi = Math.Max(0, request.QuarterlyInstallment.Value - 70000m);
                         decimal maxQi = request.QuarterlyInstallment.Value + 70000m;
-
-                        // بنبحث جوه خطط الدفع بتاعت العقار
                         query = query.Where(p => p.PaymentPlans.Any(plan => plan.QuarterInstallment >= minQi && plan.QuarterInstallment <= maxQi));
                     }
                 }
             }
 
-            // -- ج) فلتر الغرض / نوع العرض (Primary, Resale, Rent)
+            // -- ج) فلتر الغرض / نوع العرض (بقى Multi-select - Comma-separated - بنعمل OR بين كل القيم المختارة)
             if (!string.IsNullOrEmpty(request.Purpose))
             {
-                string purposeClean = request.Purpose.Replace(" ", "");
-                if (Enum.TryParse(typeof(PropEnums.ListingType), purposeClean, true, out var parsedListingType))
+                var purposeEnums = new List<PropEnums.ListingType>();
+                foreach (var p in request.Purpose.Split(',', StringSplitOptions.RemoveEmptyEntries))
                 {
-                    var listingEnum = (PropEnums.ListingType)parsedListingType;
-                    query = query.Where(p => p.ListingType == listingEnum);
+                    var clean = p.Replace(" ", "").Trim();
+                    if (Enum.TryParse(typeof(PropEnums.ListingType), clean, true, out var parsed))
+                        purposeEnums.Add((PropEnums.ListingType)parsed);
                 }
+                if (purposeEnums.Any())
+                    query = query.Where(p => purposeEnums.Contains(p.ListingType));
             }
 
-            // -- د) فلتر نوع العقار (تطابق تام - Apartment, Villa, etc)
+            // -- د) فلتر نوع العقار (بقى Multi-select - Comma-separated - بنعمل OR بين كل القيم المختارة)
             if (!string.IsNullOrEmpty(request.PropertyType))
             {
-                string typeClean = request.PropertyType.Replace(" ", "");
-                if (Enum.TryParse(typeof(PropEnums.PropertyType), typeClean, true, out var parsedType))
+                var typeEnums = new List<PropEnums.PropertyType>();
+                foreach (var t in request.PropertyType.Split(',', StringSplitOptions.RemoveEmptyEntries))
                 {
-                    var typeEnum = (PropEnums.PropertyType)parsedType;
-                    query = query.Where(p => p.PropertyType == typeEnum);
+                    var clean = t.Replace(" ", "").Trim();
+                    if (Enum.TryParse(typeof(PropEnums.PropertyType), clean, true, out var parsed))
+                        typeEnums.Add((PropEnums.PropertyType)parsed);
                 }
+                if (typeEnums.Any())
+                    query = query.Where(p => typeEnums.Contains(p.PropertyType));
             }
 
-            // -- هـ) فلتر المحافظة (الـ Zone) 
+            // -- هـ) فلتر المحافظة (الـ Zone القديم - بروكر بيحدده يدوي) أو المدن (Cities - جايه من مودال Get Recommendation)
             if (request.ZoneId.HasValue && request.ZoneId.Value > 0)
             {
                 query = query.Where(p => (int)p.City == request.ZoneId.Value);
+            }
+            else if (!string.IsNullOrEmpty(request.SelectedCities))
+            {
+                var cityNameToId = new Dictionary<string, int> { { "Cairo", 1 }, { "Alexandria", 2 }, { "North Coast", 3 } };
+                var cityIds = request.SelectedCities.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(c => cityNameToId.GetValueOrDefault(c.Trim(), 0))
+                    .Where(id => id > 0).ToList();
+                if (cityIds.Any())
+                    query = query.Where(p => cityIds.Contains((int)p.City));
             }
 
             // -- و) فلتر المناطق والمشاريع (تطابق تام في النطاق المحدد)
@@ -979,11 +996,12 @@ namespace Unique_X.Controllers.CRM
                 );
             }
 
-            // 🟢 مبقاش بنستبعد العقارات المقترحة قبل كده - بنسيبها في الليستة وبس بنعلّم عليها بـ IsProposed
-            // (كان في فلتر هنا بيشيلها خالص من الـ query، وده اللي كان بيخلي عدد المطابقات يقل مع كل Refresh
-            // وكان بيخلي التلوين الأخضر يختفي - لأن العقار نفسه كان بيتشال من النتائج، مش إن التلوين بس بيروح)
+            // -- ز) فلتر الغرف والحمامات (لو متاحة - جايه من مودال Get Recommendation)
+            if (request.MinRooms.HasValue) query = query.Where(p => p.Rooms >= request.MinRooms.Value);
+            if (request.MaxRooms.HasValue) query = query.Where(p => p.Rooms <= request.MaxRooms.Value);
+            if (request.MinBathrooms.HasValue) query = query.Where(p => p.Bathrooms >= request.MinBathrooms.Value);
+            if (request.MaxBathrooms.HasValue) query = query.Where(p => p.Bathrooms <= request.MaxBathrooms.Value);
 
-            // 4. ترتيب وتجهيز الخرج للفرونت إند
             var recommendations = await query
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(12)
