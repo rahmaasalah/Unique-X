@@ -239,7 +239,10 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
     this.route.paramMap.subscribe(params => {
       this.leadId = Number(params.get('id'));
       if (this.leadId) {
-        this.feedbackAddedThisVisit.set(false); // 🟢 كل ما نفتح ليد جديد (حتى لو من جوه نفس الكومبوننت)، لازم فيدباك جديد
+        // 🟢 لو سبق وحطيت فيدباك على العميل ده في نفس الجلسة (حتى لو راح صفحة تعديل ورجع)، منطلبوش تاني
+        // (بيتصفر تلقائي لما يقفل التاب/يفتح تاب جديد - مش محتاجين نمسحه يدوي)
+        const alreadyGivenThisSession = sessionStorage.getItem('feedbackGiven_' + this.leadId) === '1';
+        this.feedbackAddedThisVisit.set(alreadyGivenThisSession);
         this.checkPagination(); 
         this.initForms(); 
         this.loadLeadData(this.leadId); 
@@ -858,7 +861,31 @@ cleanAdminPrefix(text: string | null): string | null {
   return text.replace(/^\[Admin:[^\]]*\]\s?/, '');
 }
 
-isAdminAction(item: any): boolean {
+  // 🟢 بعد إضافة الفيدباك، لازم يختار Next Action (Activity أو Visit) قبل ما يكمل
+  showNextActionPrompt = signal<boolean>(false);
+
+  chooseNextAction(type: 'visit' | 'activity') {
+    this.showNextActionPrompt.set(false);
+    const bootstrap = (window as any).bootstrap;
+
+    // نقفل مودال اختيار الـ Next Action لو لسه فاتح
+    const promptEl = document.getElementById('nextActionModal');
+    if (bootstrap && promptEl) {
+      const promptInstance = bootstrap.Modal.getInstance(promptEl) || new bootstrap.Modal(promptEl);
+      promptInstance.hide();
+    }
+
+    // نفتح نفس مودال الـ Activity/Visit العادي ونجهزه زي ما بيحصل بالظبط من زرار +Add
+    this.openNewModal(type);
+    setTimeout(() => {
+      const targetEl = document.getElementById(type === 'visit' ? 'visitModal' : 'activityModal');
+      if (bootstrap && targetEl) {
+        new bootstrap.Modal(targetEl).show();
+      }
+    }, 300); // 👈 استنى قفل المودال اللي قبله الأول عشان مايحصلش تصادم بين المودالز
+  }
+
+  isAdminAction(item: any): boolean {
   if (item.notes?.startsWith('[Admin:')) return true;
   // بنقارن الـ brokerId أو assignedToId بالـ admin ID
   const itemOwnerId = item.brokerId || item.assignedToId || '';
@@ -872,8 +899,9 @@ isAdminAction(item: any): boolean {
         next: () => {
           this.alertService.close();
 
-          // 🟢 تم إضافة الفيدباك المطلوب - يقدر يخرج من الصفحة دلوقتي
+          // 🟢 تم إضافة الفيدباك المطلوب - يقدر يخرج من الصفحة دلوقتي (طول الجلسة، حتى لو راح صفحة تانية ورجع)
           this.feedbackAddedThisVisit.set(true);
+          sessionStorage.setItem('feedbackGiven_' + this.leadId, '1');
 
           // 🟢 +1 لأن الداتا القديمة لسه في الذاكرة والريكوست الجديد لسه بيترفريشها
           const newCount = this.feedbackCount + 1;
@@ -882,6 +910,16 @@ isAdminAction(item: any): boolean {
           this.generalNoteForm.reset();
           this.loadLeadData(this.leadId);
           document.getElementById('closeGeneralNoteModal')?.click();
+
+          // 🟢 بعد ما يقفل مودال الفيدباك، لازم يختار Next Action (Activity أو Visit) فورًا
+          setTimeout(() => {
+            this.showNextActionPrompt.set(true);
+            const bootstrap = (window as any).bootstrap;
+            const promptEl = document.getElementById('nextActionModal');
+            if (bootstrap && promptEl) {
+              new bootstrap.Modal(promptEl, { backdrop: 'static', keyboard: false }).show();
+            }
+          }, 400);
 
           // 🟢 لما يوصل مضاعف 6 (6, 12, 18...)، ننبه البروكر إن العميل ده أخد وقت طويل
           if (newCount > 0 && newCount % 6 === 0) {
