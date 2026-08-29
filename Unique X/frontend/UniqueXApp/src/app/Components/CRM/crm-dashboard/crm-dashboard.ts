@@ -61,6 +61,21 @@ export class CrmDashboardComponent implements OnInit {
     });
   }
 
+  // 🟢 بترجع نسخة محدّثة بس من allLeads (من غير ما نعيد تحميل البروكرز والكالندر زي loadAdminData الكاملة)
+  // مستخدمة بعد أي عملية بتغيّر البروكر بتاع Lead من تاب تاني (زي New Leads) عشان تاب All Clients Data يعكس التغيير فورًا
+  refreshAllLeads() {
+    this.crmService.getLeads('').subscribe({
+      next: (leads: any[]) => {
+        leads.forEach((lead: any) => {
+          if (lead.createdAt && !lead.createdAt.endsWith('Z')) lead.createdAt += 'Z';
+          if (lead.updatedAt && !lead.updatedAt.endsWith('Z')) lead.updatedAt += 'Z';
+        });
+        this.allLeads.set(leads);
+      },
+      error: (err) => console.error('Error refreshing all leads', err)
+    });
+  }
+
   assignNewLeadToBroker(leadId: number) {
     const newBrokerId = this.newLeadsSelectedBroker[leadId];
     if (!newBrokerId) { this.alertService.error('Please select a broker first.'); return; }
@@ -71,6 +86,7 @@ export class CrmDashboardComponent implements OnInit {
         this.alertService.close();
         this.alertService.success('Lead assigned successfully!');
         this.loadNewLeads();
+        this.refreshAllLeads(); // 🟢 السطر الجديد - عشان الليد يظهر فورًا في All Clients Data وفلتر البروكر
       },
       error: () => {
         this.alertService.close();
@@ -1603,6 +1619,8 @@ hiddenLeads = signal<number[]>([]);
           this.alertService.success('Client assigned to the new broker successfully! All counters were reset.');
 
           this.loadPendingClients();
+
+          this.refreshAllLeads(); // 🟢 السطر الجديد - نفس إصلاح تاب New Leads
 
         },
 
