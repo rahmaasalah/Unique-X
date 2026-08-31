@@ -2753,7 +2753,15 @@
 
 
 
-              <td><span class="fw-bold small text-secondary">{{ lead.zoneName }}</span></td>
+              <td>
+                @if (lead.zoneName && lead.zoneName !== 'N/A') {
+                  <span class="fw-bold small text-secondary">{{ lead.zoneName }}</span>
+                } @else if (lead.selectedCities) {
+                  <span class="fw-bold small text-secondary">{{ lead.selectedCities }}</span>
+                } @else {
+                  <span class="text-muted small">N/A</span>
+                }
+              </td>
 
 
 
@@ -2771,7 +2779,13 @@
 
               <td class="fw-bold text-success text-nowrap">
 
-                {{ lead.totalAmount > 0 ? 'EGP ' + (lead.totalAmount | number:'1.0-0') : 'N/A' }}
+                @if (lead.totalAmount > 0) {
+                  EGP {{ lead.totalAmount | number:'1.0-0' }}
+                } @else if (lead.minBudget > 0 || lead.maxBudget > 0) {
+                  EGP {{ lead.minBudget | number:'1.0-0' }} - {{ lead.maxBudget | number:'1.0-0' }}
+                } @else {
+                  N/A
+                }
 
                 <div *ngIf="lead.paymentMethod === 'Installment'" class="mt-1 text-muted" style="font-size: 0.65rem; font-weight: 600;">
 
@@ -4070,7 +4084,14 @@
                   <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                       <div>
-                        <h6 class="fw-bold mb-0">{{ client.fullName }}</h6>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                          <h6 class="fw-bold mb-0">{{ client.fullName }}</h6>
+                          <!-- 🟢 هل اللي بعت الطلب ده عميل ولا بروكر (بمطابقة رقم الموبايل مع حسابات النظام) -->
+                          <span class="badge rounded-pill" [ngClass]="client.personType === 'Broker' ? 'bg-primary' : 'bg-success'">
+                            <i class="bi" [ngClass]="client.personType === 'Broker' ? 'bi-person-badge-fill' : 'bi-person-fill'"></i>
+                            {{ client.personType }}
+                          </span>
+                        </div>
                         <span class="text-muted small"><i class="bi bi-telephone-fill me-1"></i>{{ client.phoneNumber }}</span>
                         <span class="text-muted small d-block" *ngIf="client.email"><i class="bi bi-envelope-fill me-1"></i>{{ client.email }}</span>
                       </div>

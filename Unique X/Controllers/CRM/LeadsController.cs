@@ -163,6 +163,8 @@ namespace Unique_X.Controllers.CRM
                 MinRooms = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).MinRooms,
                 MaxRooms = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).MaxRooms,
                 MinBathrooms = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).MinBathrooms,
+                MaxBudget = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).MaxBudget : null,
+                MinBudget = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).MinBudget : null,
                 MaxBathrooms = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).MaxBathrooms,
 
                 // 🟢 لسه على الأكاونت المؤقت (عبدالرحمن أشرف) ولسه محددش بروكر حقيقي
@@ -612,7 +614,32 @@ namespace Unique_X.Controllers.CRM
                 })
                 .ToListAsync();
 
-            return Ok(leads);
+            // 🟢 نحدد هل اللي بعت الطلب ده "Client" ولا "Broker" - بمطابقة رقم الموبايل مع حسابات المستخدمين المسجلة
+            var phoneNumbers = leads.Select(l => l.PhoneNumber).Distinct().ToList();
+            var matchedUsers = await _context.Users
+                .Where(u => phoneNumbers.Contains(u.PhoneNumber))
+                .Select(u => new { u.PhoneNumber, u.UserType })
+                .ToListAsync();
+
+            var result = leads.Select(l =>
+            {
+                var matched = matchedUsers.FirstOrDefault(u => u.PhoneNumber == l.PhoneNumber);
+                string personType = (matched != null && matched.UserType == 1) ? "Broker" : "Client";
+                return new
+                {
+                    l.Id,
+                    l.FullName,
+                    l.PhoneNumber,
+                    l.Email,
+                    l.StatusName,
+                    l.CampaignSource,
+                    l.CreatedAt,
+                    l.Request,
+                    PersonType = personType
+                };
+            }).ToList();
+
+            return Ok(result);
         }
 
         // 5. Endpoint: جلب كل تفاصيل العميل (Lead Details)
