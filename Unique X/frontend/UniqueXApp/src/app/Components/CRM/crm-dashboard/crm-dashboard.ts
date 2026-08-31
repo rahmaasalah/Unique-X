@@ -817,25 +817,21 @@ if (campCode) leads = leads.filter(l => l.campaignName === campCode);
 
 
   stages =[
-
-    { id: 1, name: 'New "To Call"' }, { id: 2, name: 'Waiting response on wtp msg' }, { id: 3, name: 'Request call another time' },
-
-    { id: 4, name: 'Calls (request)' }, { id: 5, name: 'Waiting Client Feedback on unit' }, { id: 6, name: 'Follow Up For Visit' },
-
-    { id: 7, name: 'Visit scheduled' }, { id: 8, name: 'Follow up After visit' }, { id: 9, name: 'Waiting feedback on project' },
-
-    { id: 10, name: 'Follow up for Meeting' }, { id: 11, name: 'Meeting Scheduled' }, { id: 12, name: 'Follow up after meeting' },
-
-    { id: 13, name: 'Follow up for developer meeting' }, { id: 14, name: 'Follow up for site visit' }, { id: 15, name: 'Site visit scheduled' },
-
-    { id: 16, name: 'Follow up for event' }, { id: 17, name: 'Follow up after event' }, { id: 18, name: 'Follow up for closing' },
-
-    { id: 19, name: 'Deal closed' }, { id: 20, name: 'Follow up, not now' }, { id: 21, name: 'N/A "unreachable"' },
-
-    { id: 22, name: 'Lost Not interested' }, { id: 23, name: 'Low Budget' }, { id: 24, name: 'Number Issue' },
-
-    { id: 25, name: 'Broker' }, { id: 26, name: 'Recommend to shift' }
-
+    { id: 1, name: 'New "To Call"' },
+    { id: 4, name: 'Calls (request)' },
+    { id: 6, name: 'Follow Up For Visit' },
+    { id: 7, name: 'Visit scheduled' },
+    { id: 10, name: 'Follow up for Meeting' },
+    { id: 11, name: 'Meeting Scheduled' },
+    { id: 8, name: 'Follow up After visit' },
+    { id: 18, name: 'Follow up for closing' },
+    { id: 19, name: 'Deal closed' },
+    { id: 23, name: 'Low Budget' },
+    { id: 22, name: 'Lost Not interested' },
+    { id: 24, name: 'Number Issue' },
+    { id: 21, name: 'N/A "unreachable"' },
+    { id: 25, name: 'Broker' },
+    { id: 26, name: 'Recommend to shift' }
   ];
 
   

@@ -347,7 +347,8 @@ private submitRecommendationToCrm(
   minBudget?: string, maxBudget?: string
 ) {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const fullName = user.fullName || [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Website Client';
+  // 🟢 AuthModel بيرجع "username" بس (مفيش fullName ولا firstName/lastName) - كان بيفشل دايمًا ويرجع لـ "Website Client"
+  const fullName = user.username || 'Website Client';
   const phoneNumber = user.phoneNumber || user.phone || '';
   if (!phoneNumber) return; // من غير رقم موبايل مقدرش أعمل/أحدث Lead
 

@@ -76,6 +76,8 @@
         public int? MaxRooms { get; set; }
         public int? MinBathrooms { get; set; }
         public int? MaxBathrooms { get; set; }
+        public decimal? MinBudget { get; set; }
+        public decimal? MaxBudget { get; set; }
 
         // 🟢 true لو الليد ده جاي من مودال Get Recommendation ولسه ما اتوزعش على بروكر حقيقي
         public bool IsNewFromWebsite { get; set; }
