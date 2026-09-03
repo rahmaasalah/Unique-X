@@ -92,7 +92,101 @@
       </div>
     }
 
-    <!-- ===================== 3. فورم التقديم ===================== -->
+    <!-- ===================== 3. الفورم الديناميكية (خاصة بالوظيفة المختارة) ===================== -->
+    @if (viewMode() === 'dynamicForm' && dynamicSections()) {
+
+      <button class="btn btn-sm btn-outline-secondary rounded-pill mb-3" style="width: fit-content;" (click)="backToDetail()">
+        <i class="bi bi-arrow-right me-1"></i> Back to job details
+      </button>
+
+      <form [formGroup]="dynamicForm" (ngSubmit)="onDynamicSubmit()" novalidate>
+
+        @for (section of dynamicSections(); track section.title) {
+          <div class="card shadow-sm border-0 rounded-4 p-4 mb-4">
+            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-folder-fill me-2"></i>{{ section.title }}</h6>
+            <div class="row g-3">
+
+              @for (q of section.questions; track q.id) {
+                <div class="col-12" [ngClass]="q.type === 'text' ? 'col-md-6' : ''">
+
+                  <label class="form-label fw-semibold">
+                    {{ q.label }}
+                    @if (q.required !== false) { <span class="text-danger">*</span> }
+                  </label>
+
+                  <!-- نص قصير -->
+                  @if (q.type === 'text') {
+                    <input type="text" class="form-control rounded-3" [formControlName]="q.id"
+                           [class.is-invalid]="isDynamicInvalid(q.id)">
+                    <div class="invalid-feedback">Required</div>
+                  }
+
+                  <!-- نص طويل -->
+                  @if (q.type === 'textarea') {
+                    <textarea class="form-control rounded-3" rows="3" [formControlName]="q.id"
+                              [class.is-invalid]="isDynamicInvalid(q.id)"></textarea>
+                    <div class="invalid-feedback">Required</div>
+                  }
+
+                  <!-- اختيار واحد (Radio) -->
+                  @if (q.type === 'radio') {
+                    <div class="d-flex flex-wrap gap-3 mt-1">
+                      @for (opt of q.options; track opt) {
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" [formControlName]="q.id" [value]="opt" [id]="q.id + '_' + opt">
+                          <label class="form-check-label" [for]="q.id + '_' + opt">{{ opt }}</label>
+                        </div>
+                      }
+                    </div>
+                    @if (isDynamicInvalid(q.id)) {
+                      <div class="text-danger small mt-1">Required</div>
+                    }
+                  }
+
+                  <!-- اختيار متعدد (Checkbox) -->
+                  @if (q.type === 'checkbox') {
+                    <div class="d-flex flex-wrap gap-2 mt-1">
+                      @for (opt of q.options; track opt) {
+                        <button type="button" class="btn btn-sm rounded-pill px-3"
+                                [class.btn-danger]="isDynamicCheckboxSelected(q.id, opt)"
+                                [class.btn-outline-secondary]="!isDynamicCheckboxSelected(q.id, opt)"
+                                (click)="toggleDynamicCheckbox(q.id, opt)">
+                          {{ opt }}
+                        </button>
+                      }
+                    </div>
+                    @if (isDynamicInvalid(q.id)) {
+                      <div class="text-danger small mt-1">Please select at least one option</div>
+                    }
+                  }
+
+                </div>
+              }
+
+            </div>
+          </div>
+        }
+
+        <!-- رفع الـ CV -->
+        <div class="card shadow-sm border-0 rounded-4 p-4 mb-4">
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-file-earmark-arrow-up-fill me-2"></i>Upload CV</h6>
+          <input type="file" class="form-control rounded-3" accept=".pdf,.doc,.docx" (change)="onFileChange($event)">
+        </div>
+
+        <div class="text-center">
+          <button type="submit" class="btn btn-danger px-5 py-2 rounded-pill fw-bold shadow" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              <span class="spinner-border spinner-border-sm me-2"></span> Submitting...
+            } @else {
+              Submit Application
+            }
+          </button>
+        </div>
+
+      </form>
+    }
+
+    <!-- ===================== 4. فورم التقديم القديمة (Fallback لأي وظيفة مفيهاش أسئلة مخصصة لسه) ===================== -->
     @if (viewMode() === 'form') {
 
       <button class="btn btn-sm btn-outline-secondary rounded-pill mb-3" style="width: fit-content;" (click)="backToDetail()">

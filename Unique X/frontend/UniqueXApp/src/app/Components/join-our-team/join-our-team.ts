@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { AlertService } from '../../Services/alert';
 import { AdminService } from '../../Services/admin';
 import { environment } from '../../../environments/environment';
+import { getJobQuestions, JobSection } from './job-questions.data';
 
 @Component({
   selector: 'app-join-our-team',
@@ -27,8 +28,12 @@ export class JoinOurTeamComponent implements OnInit {
   jobs = signal<any[]>([]);
   jobsLoading = signal(true);
   selectedJob = signal<any>(null);
-  // list = كروت الوظائف، detail = تفاصيل وظيفة واحدة، form = الفورم اللي كانت موجودة أصلاً
-  viewMode = signal<'list' | 'detail' | 'form'>('list');
+  // list = كروت الوظائف، detail = تفاصيل وظيفة واحدة، form = الفورم القديمة (fallback)، dynamicForm = الفورم الجديدة الخاصة بالوظيفة
+  viewMode = signal<'list' | 'detail' | 'form' | 'dynamicForm'>('list');
+
+  // ===================== نظام الأسئلة الديناميكية (8/9 وظائف بأسئلة مختلفة) =====================
+  dynamicSections = signal<JobSection[] | null>(null);
+  dynamicForm: FormGroup = this.fb.group({});
 
   ngOnInit() {
     this.adminService.getActiveJobPostings().subscribe({
@@ -54,8 +59,117 @@ export class JoinOurTeamComponent implements OnInit {
     this.viewMode.set('detail');
   }
 
+  // 🟢 لو الوظيفة دي من ضمن الـ 9 اللي عندها أسئلة خاصة، نبني الفورم الديناميكية ليها
+  // غير كده، نرجع للفورم القديمة كـ fallback عشان أي وظيفة جديدة تتضاف قبل ما نجهزلها أسئلة
   openApplyForm() {
-    this.viewMode.set('form');
+    const job = this.selectedJob();
+    const sections = job ? getJobQuestions(job.jobTitle) : null;
+
+    if (sections) {
+      this.buildDynamicForm(sections);
+      this.viewMode.set('dynamicForm');
+    } else {
+      this.viewMode.set('form');
+    }
+  }
+
+  buildDynamicForm(sections: JobSection[]) {
+    this.dynamicSections.set(sections);
+    const group: { [key: string]: any } = {};
+
+    for (const section of sections) {
+      for (const q of section.questions) {
+        const validators = q.required === false ? [] : [Validators.required];
+        group[q.id] = q.type === 'checkbox'
+          ? this.fb.control<string[]>([], validators)
+          : this.fb.control('', validators);
+      }
+    }
+
+    this.dynamicForm = this.fb.group(group);
+  }
+
+  // 🟢 دوال الـ Checkbox الخاصة بالفورم الديناميكية
+  toggleDynamicCheckbox(qid: string, option: string) {
+    const ctrl = this.dynamicForm.get(qid);
+    const current: string[] = ctrl?.value || [];
+    const updated = current.includes(option)
+      ? current.filter(v => v !== option)
+      : [...current, option];
+    ctrl?.setValue(updated);
+  }
+
+  isDynamicCheckboxSelected(qid: string, option: string): boolean {
+    return (this.dynamicForm.get(qid)?.value || []).includes(option);
+  }
+
+  isDynamicInvalid(qid: string): boolean {
+    const c = this.dynamicForm.get(qid);
+    return !!(c?.invalid && c?.touched);
+  }
+
+  onDynamicSubmit() {
+    if (this.dynamicForm.invalid) {
+      this.dynamicForm.markAllAsTouched();
+      this.alertService.error('Please fill all required fields.');
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    const sections = this.dynamicSections();
+
+    // 🟢 نجمع كل الإجابات في object واحد { "نص السؤال": "الإجابة" } عشان يتخزن كـ JSON
+    const answers: { [label: string]: string } = {};
+    if (sections) {
+      for (const section of sections) {
+        for (const q of section.questions) {
+          const val = this.dynamicForm.get(q.id)?.value;
+          answers[q.label] = Array.isArray(val) ? val.join(', ') : (val || '');
+        }
+      }
+    }
+
+    const formData = new FormData();
+    // 🟢 أول 8 أسئلة ثابتة في كل الوظائف (Personal Information) - بنبعتها كحقول منفصلة كمان عشان الأدمن يقدر يفلتر بيها بسهولة
+    formData.append('FullName', this.dynamicForm.get('q1')?.value || '');
+    formData.append('PhoneNumber', this.dynamicForm.get('q2')?.value || '');
+    formData.append('WhatsAppNumber', this.dynamicForm.get('q3')?.value || '');
+    formData.append('Email', this.dynamicForm.get('q4')?.value || '');
+    formData.append('Age', this.dynamicForm.get('q5')?.value || '');
+    formData.append('City', this.dynamicForm.get('q6')?.value || '');
+    formData.append('EmploymentStatus', this.dynamicForm.get('q7')?.value || '');
+    formData.append('HowHeard', this.dynamicForm.get('q8')?.value || '');
+    formData.append('JobTitle', this.selectedJob()?.jobTitle || '');
+    formData.append('AnswersJson', JSON.stringify(answers));
+
+    // 🟢 حقول الفورم القديمة مش مستخدمة هنا - بنبعتها فاضية عشان الـ DTO/Backend القديم يقبل الطلب عادي
+    formData.append('Address', '');
+    formData.append('HasJob', '');
+    formData.append('HasLaptop', '');
+    formData.append('EnglishLevel', '');
+    formData.append('CrmTools', '');
+    formData.append('CompanyType', '');
+    formData.append('ZoneWorkedOn', '');
+    formData.append('ProjectPreparation', '');
+    formData.append('VisitSite', '');
+    formData.append('DealsClosing', '');
+    formData.append('SalesLastQuarter', '');
+
+    if (this.selectedFile()) {
+      formData.append('CvFile', this.selectedFile()!);
+    }
+
+    this.http.post(`${environment.apiUrl}/jobapplications`, formData).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.alertService.success('Application submitted successfully! We will contact you soon.');
+        this.router.navigate(['/home']);
+      },
+      error: () => {
+        this.isSubmitting.set(false);
+        this.alertService.error('Failed to submit. Please try again.');
+      }
+    });
   }
 
   // 🟢 بيحول نص متعدد الأسطر (Key Responsibilities / Qualifications / KPIs) لقائمة نقاط

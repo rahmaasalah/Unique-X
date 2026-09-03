@@ -24,5 +24,17 @@
         public string SalesLastQuarter { get; set; } = string.Empty;
         public string? Notes { get; set; }
         public IFormFile? CvFile { get; set; }
+
+        // ============================================================
+        // 🟢 حقول جديدة - نظام الأسئلة الديناميكية لكل وظيفة (8 فورمات مختلفة)
+        // ============================================================
+        public string? WhatsAppNumber { get; set; }
+        public string? Email { get; set; }
+        public string? Age { get; set; }
+        public string? EmploymentStatus { get; set; } // Employed / Unemployed / Freelancer / Student / Other
+        public string? HowHeard { get; set; }
+
+        // 🟢 كل إجابات الأسئلة الخاصة بالوظيفة، كـ JSON: { "السؤال": "الإجابة" }
+        public string? AnswersJson { get; set; }
     }
 }

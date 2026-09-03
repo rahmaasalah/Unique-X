@@ -95,7 +95,15 @@ namespace Unique_X.Controllers
                 DealsClosing = dto.DealsClosing,
                 SalesLastQuarter = dto.SalesLastQuarter,
                 CvUrl = cvFileName,
-                Notes = dto.Notes
+                Notes = dto.Notes,
+
+                // 🟢 الحقول الجديدة - نظام الأسئلة الديناميكية لكل وظيفة
+                WhatsAppNumber = dto.WhatsAppNumber,
+                Email = dto.Email,
+                Age = dto.Age,
+                EmploymentStatus = dto.EmploymentStatus,
+                HowHeard = dto.HowHeard,
+                AnswersJson = dto.AnswersJson
             };
 
             _context.JobApplications.Add(application);
