@@ -4,11 +4,12 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { AuthService } from '../../Services/auth';
 import { Router, RouterModule } from '@angular/router';
 import { AlertService } from '../../Services/alert';
+import { PhoneInputComponent } from '../phone-input/phone-input';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, PhoneInputComponent],
   templateUrl: './register.html',
   styleUrl: './register.css'
 })

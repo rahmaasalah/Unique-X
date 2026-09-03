@@ -2,6 +2,7 @@ import { Component, OnInit, signal, computed, inject, effect } from '@angular/co
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { PhoneInputComponent } from '../phone-input/phone-input';
 import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
 import { AuthService } from '../../Services/auth';
@@ -18,7 +19,7 @@ Chart.register(...registerables);
 @Component({
   selector: 'app-property-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, PhoneInputComponent],
   templateUrl: './property-details.html',
   styleUrl: './property-details.css'
 })
@@ -272,10 +273,23 @@ handleContact(event: Event, method: 'call' | 'whatsapp', brokerPhone: string) {
   getWhatsAppLink(phone: string): string {
   if (!phone) return '#';
 
-  let cleanedPhone = phone.replace(/\D/g, '');
-  if (cleanedPhone.startsWith('0')) {
-    cleanedPhone = '20' + cleanedPhone.replace(/^0+/, '');
+  const trimmed = phone.trim();
+  let cleanedPhone: string;
+
+  if (trimmed.includes(' ')) {
+    // 🟢 الشكل الجديد من app-phone-input: "+20 01012345678" - كود دولة + مسافة + رقم محلي (ممكن يبدأ بصفر)
+    const [codePart, ...rest] = trimmed.split(' ');
+    const countryCode = codePart.replace(/\D/g, '');
+    const localNumber = rest.join('').replace(/\D/g, '').replace(/^0+/, '');
+    cleanedPhone = countryCode + localNumber;
+  } else {
+    // 🟢 الشكل القديم: رقم محلي مصري من غير كود دولة (بيانات قديمة قبل إضافة كود الدولة)
+    cleanedPhone = trimmed.replace(/\D/g, '');
+    if (cleanedPhone.startsWith('0')) {
+      cleanedPhone = '20' + cleanedPhone.replace(/^0+/, '');
+    }
   }
+
   const currentUrl = window.location.href;
 
   const message = encodeURIComponent(`Hello, I'm interested in your property: #${this.property()?.code}\nLink: ${currentUrl}`);

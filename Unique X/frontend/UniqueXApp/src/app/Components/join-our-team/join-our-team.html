@@ -141,6 +141,13 @@
                     @if (isDynamicInvalid(q.id)) {
                       <div class="text-danger small mt-1">Required</div>
                     }
+                    <!-- 🟢 لو اختار "Other"، خانة إجبارية يوضح فيها إيه هو -->
+                    @if (showOtherInput(q)) {
+                      <input type="text" class="form-control rounded-3 mt-2" placeholder="Please specify..."
+                             [formControlName]="q.id + '_other'"
+                             [class.is-invalid]="dynamicForm.get(q.id + '_other')?.invalid && dynamicForm.get(q.id + '_other')?.touched">
+                      <div class="invalid-feedback">Please specify</div>
+                    }
                   }
 
                   <!-- اختيار متعدد (Checkbox) -->
@@ -157,6 +164,13 @@
                     </div>
                     @if (isDynamicInvalid(q.id)) {
                       <div class="text-danger small mt-1">Please select at least one option</div>
+                    }
+                    <!-- 🟢 لو اختار "Other" ضمن الاختيارات، خانة إجبارية يوضح فيها إيه هو -->
+                    @if (showOtherInput(q)) {
+                      <input type="text" class="form-control rounded-3 mt-2" placeholder="Please specify..."
+                             [formControlName]="q.id + '_other'"
+                             [class.is-invalid]="dynamicForm.get(q.id + '_other')?.invalid && dynamicForm.get(q.id + '_other')?.touched">
+                      <div class="invalid-feedback">Please specify</div>
                     }
                   }
 

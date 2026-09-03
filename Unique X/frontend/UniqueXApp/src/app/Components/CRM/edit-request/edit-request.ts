@@ -5,11 +5,12 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
 import { AdminService } from '../../../Services/admin';
+import { PhoneInputComponent } from '../../phone-input/phone-input';
 
 @Component({
   selector: 'app-edit-request',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, PhoneInputComponent],
   templateUrl: './edit-request.html'
 })
 export class EditRequestComponent implements OnInit {
@@ -152,7 +153,7 @@ export class EditRequestComponent implements OnInit {
   initForm() {
     this.editRequestForm = this.fb.group({
       fullName: ['', Validators.required],
-      phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^\+\d{1,4}\s?\d{6,12}$/)]],
       email: [''],
       leadStatusId: [1, Validators.required],
       

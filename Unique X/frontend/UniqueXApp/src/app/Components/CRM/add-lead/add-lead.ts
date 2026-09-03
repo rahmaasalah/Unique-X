@@ -7,11 +7,12 @@ import { Router } from '@angular/router';
 import { AdminService } from '../../../Services/admin';
 import { forkJoin } from 'rxjs';
 import * as XLSX from 'xlsx';
+import { PhoneInputComponent } from '../../phone-input/phone-input';
 
 @Component({
   selector: 'app-add-lead',
   standalone: true,
-  imports:[CommonModule, FormsModule, ReactiveFormsModule],
+  imports:[CommonModule, FormsModule, ReactiveFormsModule, PhoneInputComponent],
   templateUrl: './add-lead.html'
 })
 export class AddLeadComponent implements OnInit {
@@ -103,7 +104,7 @@ export class AddLeadComponent implements OnInit {
   initForm() {
     this.leadForm = this.fb.group({
       fullName: ['', Validators.required],
-      phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^\+\d{1,4}\s?\d{6,12}$/)]],
       email: [''],
       brokerId: [this.isAdmin() ? '' : this.currentBrokerId, Validators.required],
       leadStatusId: [1, Validators.required], 
