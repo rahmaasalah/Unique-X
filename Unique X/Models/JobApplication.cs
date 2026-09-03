@@ -48,5 +48,18 @@
         public string? InterviewFeedbackLanguage { get; set; }        // Entry-level / Mid-level / Advanced
         public string? InterviewFeedbackNotes { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // ============================================================
+        // 🟢 نظام الأسئلة الديناميكية لكل وظيفة (8 فورمات مختلفة تمامًا)
+        // ============================================================
+        public string? WhatsAppNumber { get; set; }
+        public string? Email { get; set; }
+        public string? Age { get; set; }
+        public string? EmploymentStatus { get; set; } // Employed / Unemployed / Freelancer / Student / Other
+        public string? HowHeard { get; set; }
+
+        // 🟢 كل إجابات الأسئلة الخاصة بالوظيفة دي، مخزنة كـ JSON: { "السؤال": "الإجابة" }
+        // مش عمود لكل سؤال لأن كل وظيفة أسئلتها مختلفة تمامًا وعددها كبير جدًا (يوصل لـ 60+ سؤال)
+        public string? AnswersJson { get; set; }
     }
 }

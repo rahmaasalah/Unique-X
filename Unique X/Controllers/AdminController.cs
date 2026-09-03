@@ -327,6 +327,245 @@ namespace Unique_X.Controllers
             return Ok();
         }
 
+        // ============================================================
+        // 🟢 Property Views & Clicks Analytics - كان الـ endpoint ده مش موجود خالص (سبب الصفحة الفاضية)
+        // Views = ActionType "PropertyView" (لازم يتضاف نداء ليها في صفحة property-details لو مش موجودة بالفعل)
+        // Clicks = WhatsAppClick + CallClick (موجودين بالفعل وبيتسجلوا من property-card.ts)
+        // ============================================================
+        [HttpGet("properties-analytics")]
+        public async Task<IActionResult> GetPropertiesAnalytics()
+        {
+            var viewCounts = await _context.AnalyticsRecords
+                .Where(a => a.ActionType == "PropertyView" && a.PropertyId.HasValue)
+                .GroupBy(a => a.PropertyId)
+                .Select(g => new { PropertyId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var clickCounts = await _context.AnalyticsRecords
+                .Where(a => (a.ActionType == "WhatsAppClick" || a.ActionType == "CallClick") && a.PropertyId.HasValue)
+                .GroupBy(a => a.PropertyId)
+                .Select(g => new { PropertyId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var properties = await _context.Properties
+                .Select(p => new { p.Id, p.Code, p.Title, p.PropertyType, p.ListingType })
+                .ToListAsync();
+
+            var result = properties.Select(p =>
+            {
+                var views = viewCounts.FirstOrDefault(v => v.PropertyId == p.Id)?.Count ?? 0;
+                var clicks = clickCounts.FirstOrDefault(c => c.PropertyId == p.Id)?.Count ?? 0;
+                return new
+                {
+                    propertyId = p.Id,
+                    code = p.Code,
+                    title = p.Title,
+                    propertyType = p.PropertyType.ToString(),
+                    listingType = p.ListingType.ToString(),
+                    views,
+                    clicks,
+                    total = views + clicks
+                };
+            })
+            .Where(x => x.total > 0)
+            .OrderByDescending(x => x.total)
+            .ToList();
+
+            return Ok(result);
+        }
+
+        // ============================================================
+        // 🟢 تسجيل عمليات البحث - كان الـ endpoint ده مش موجود خالص (سبب الصفحة الفاضية في search-analytics)
+        // ============================================================
+        [HttpPost("log-search")]
+        [AllowAnonymous]
+        public async Task<IActionResult> LogSearch([FromBody] LogSearchDto dto)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var log = new SearchLog
+            {
+                SearchTerm = dto.SearchTerm,
+                ProjectName = dto.ProjectName,
+                City = dto.City,
+                PropertyType = dto.PropertyType,
+                ListingType = dto.ListingType,
+                MinPrice = dto.MinPrice,
+                MaxPrice = dto.MaxPrice,
+                MinPricePerMeter = dto.MinPricePerMeter,
+                MaxPricePerMeter = dto.MaxPricePerMeter,
+                MinRooms = dto.MinRooms,
+                MaxRooms = dto.MaxRooms,
+                MinBathrooms = dto.MinBathrooms,
+                MaxBathrooms = dto.MaxBathrooms,
+                MinFloor = dto.MinFloor,
+                MaxFloor = dto.MaxFloor,
+                UserId = userId
+            };
+
+            _context.SearchLogs.Add(log);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // ============================================================
+        // 🟢 تحليلات البحث المجمّعة (أكتر كلمات بحث، أكتر رينجات سعر/غرف/حمامات/دور، أكتر مدن/أنواع بحث عنها)
+        // ============================================================
+        [HttpGet("search-analytics")]
+        public async Task<IActionResult> GetSearchAnalytics()
+        {
+            var logs = await _context.SearchLogs.ToListAsync();
+
+            var result = new
+            {
+                totalSearches = logs.Count,
+
+                searchTerms = logs.Where(l => !string.IsNullOrWhiteSpace(l.SearchTerm))
+                    .GroupBy(l => l.SearchTerm)
+                    .Select(g => new { term = g.Key, count = g.Count() })
+                    .OrderByDescending(x => x.count).Take(15).ToList(),
+
+                priceRanges = logs.Where(l => l.MinPrice.HasValue || l.MaxPrice.HasValue)
+                    .GroupBy(l => new { l.MinPrice, l.MaxPrice })
+                    .Select(g => new { minPrice = g.Key.MinPrice, maxPrice = g.Key.MaxPrice, count = g.Count() })
+                    .OrderByDescending(x => x.count).Take(15).ToList(),
+
+                pricePerMeterRanges = logs.Where(l => l.MinPricePerMeter.HasValue || l.MaxPricePerMeter.HasValue)
+                    .GroupBy(l => new { l.MinPricePerMeter, l.MaxPricePerMeter })
+                    .Select(g => new { minPricePerMeter = g.Key.MinPricePerMeter, maxPricePerMeter = g.Key.MaxPricePerMeter, count = g.Count() })
+                    .OrderByDescending(x => x.count).Take(15).ToList(),
+
+                roomsRanges = logs.Where(l => l.MinRooms.HasValue || l.MaxRooms.HasValue)
+                    .GroupBy(l => new { l.MinRooms, l.MaxRooms })
+                    .Select(g => new { minRooms = g.Key.MinRooms, maxRooms = g.Key.MaxRooms, count = g.Count() })
+                    .OrderByDescending(x => x.count).Take(15).ToList(),
+
+                bathroomsRanges = logs.Where(l => l.MinBathrooms.HasValue || l.MaxBathrooms.HasValue)
+                    .GroupBy(l => new { l.MinBathrooms, l.MaxBathrooms })
+                    .Select(g => new { minBathrooms = g.Key.MinBathrooms, maxBathrooms = g.Key.MaxBathrooms, count = g.Count() })
+                    .OrderByDescending(x => x.count).Take(15).ToList(),
+
+                floorRanges = logs.Where(l => l.MinFloor.HasValue || l.MaxFloor.HasValue)
+                    .GroupBy(l => new { l.MinFloor, l.MaxFloor })
+                    .Select(g => new { minFloor = g.Key.MinFloor, maxFloor = g.Key.MaxFloor, count = g.Count() })
+                    .OrderByDescending(x => x.count).Take(15).ToList(),
+
+                propertyTypes = logs.Where(l => l.PropertyType.HasValue)
+                    .GroupBy(l => l.PropertyType)
+                    .Select(g => new { propertyType = g.Key, count = g.Count() })
+                    .OrderByDescending(x => x.count).ToList(),
+
+                listingTypes = logs.Where(l => l.ListingType.HasValue)
+                    .GroupBy(l => l.ListingType)
+                    .Select(g => new { listingType = g.Key, count = g.Count() })
+                    .OrderByDescending(x => x.count).ToList(),
+
+                cities = logs.Where(l => l.City.HasValue)
+                    .GroupBy(l => l.City)
+                    .Select(g => new { city = g.Key, count = g.Count() })
+                    .OrderByDescending(x => x.count).ToList()
+            };
+
+            return Ok(result);
+        }
+
+        // ============================================================
+        // 🟢 Job Postings (Join Our Team) - كانت الـ endpoints دي مش موجودة خالص (سبب "Failed to add job posting")
+        // ============================================================
+
+        // GET: api/Admin/job-postings - الوظائف الفعالة بس (لصفحة Join Our Team العامة)
+        [HttpGet("job-postings")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActiveJobPostings()
+        {
+            var postings = await _context.JobPostings
+                .Where(j => j.IsActive)
+                .OrderByDescending(j => j.CreatedAt)
+                .ToListAsync();
+            return Ok(postings);
+        }
+
+        // GET: api/Admin/job-postings/all - كل الوظائف حتى المقفولة (لصفحة الأدمن)
+        [HttpGet("job-postings/all")]
+        public async Task<IActionResult> GetAllJobPostings()
+        {
+            var postings = await _context.JobPostings
+                .OrderByDescending(j => j.CreatedAt)
+                .ToListAsync();
+            return Ok(postings);
+        }
+
+        // GET: api/Admin/job-postings/{id}
+        [HttpGet("job-postings/{id:int}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetJobPostingById(int id)
+        {
+            var posting = await _context.JobPostings.FindAsync(id);
+            if (posting == null) return NotFound("Job posting not found");
+            return Ok(posting);
+        }
+
+        // POST: api/Admin/job-postings
+        [HttpPost("job-postings")]
+        public async Task<IActionResult> AddJobPosting([FromBody] JobPostingDto dto)
+        {
+            var posting = new JobPosting
+            {
+                JobTitle = dto.JobTitle,
+                JobSummary = dto.JobSummary,
+                KeyResponsibilities = dto.KeyResponsibilities,
+                Qualifications = dto.Qualifications,
+                KPIs = dto.KPIs,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.JobPostings.Add(posting);
+            await _context.SaveChangesAsync();
+            return Ok(posting);
+        }
+
+        // PUT: api/Admin/job-postings/{id}
+        [HttpPut("job-postings/{id:int}")]
+        public async Task<IActionResult> UpdateJobPosting(int id, [FromBody] JobPostingDto dto)
+        {
+            var posting = await _context.JobPostings.FindAsync(id);
+            if (posting == null) return NotFound("Job posting not found");
+
+            posting.JobTitle = dto.JobTitle;
+            posting.JobSummary = dto.JobSummary;
+            posting.KeyResponsibilities = dto.KeyResponsibilities;
+            posting.Qualifications = dto.Qualifications;
+            posting.KPIs = dto.KPIs;
+
+            await _context.SaveChangesAsync();
+            return Ok(posting);
+        }
+
+        // PATCH: api/Admin/job-postings/{id}/toggle - تفعيل/تعطيل من غير مسح
+        [HttpPatch("job-postings/{id:int}/toggle")]
+        public async Task<IActionResult> ToggleJobPosting(int id)
+        {
+            var posting = await _context.JobPostings.FindAsync(id);
+            if (posting == null) return NotFound("Job posting not found");
+
+            posting.IsActive = !posting.IsActive;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Job posting status updated!", isActive = posting.IsActive });
+        }
+
+        // DELETE: api/Admin/job-postings/{id}
+        [HttpDelete("job-postings/{id:int}")]
+        public async Task<IActionResult> DeleteJobPosting(int id)
+        {
+            var posting = await _context.JobPostings.FindAsync(id);
+            if (posting == null) return NotFound("Job posting not found");
+
+            _context.JobPostings.Remove(posting);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Job posting deleted successfully!" });
+        }
+
         [HttpGet("properties-sold")]
         public async Task<IActionResult> GetSoldProperties()
         {
