@@ -1,0 +1,10 @@
+<div class="d-flex gap-2">
+  <select class="form-select flex-shrink-0" style="max-width: 120px;"
+          [(ngModel)]="selectedCode" (ngModelChange)="onCodeChange()" [disabled]="disabled">
+    @for (c of countryCodes; track c.code) {
+      <option [value]="c.code">{{ c.flag }} {{ c.code }}</option>
+    }
+  </select>
+  <input type="tel" class="form-control" [placeholder]="placeholder"
+         [(ngModel)]="localNumber" (ngModelChange)="onNumberChange()" [disabled]="disabled">
+</div>

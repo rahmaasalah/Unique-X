@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { AlertService } from '../../Services/alert';
 import { AdminService } from '../../Services/admin';
 import { environment } from '../../../environments/environment';
-import { getJobQuestions, JobSection } from './job-questions.data';
+import { getJobQuestions, JobSection, JobQuestion } from './job-questions.data';
 
 @Component({
   selector: 'app-join-our-team',
@@ -83,10 +83,46 @@ export class JoinOurTeamComponent implements OnInit {
         group[q.id] = q.type === 'checkbox'
           ? this.fb.control<string[]>([], validators)
           : this.fb.control('', validators);
+
+        // 🟢 لو السؤال فيه خيار "Other"، بنضيف جنبه خانة نص إضافية - إجبارية بس لو "Other" هو المختار فعلاً
+        if (this.hasOtherOption(q)) {
+          group[q.id + '_other'] = this.fb.control('');
+        }
       }
     }
 
     this.dynamicForm = this.fb.group(group);
+
+    // 🟢 مراقبة كل سؤال فيه "Other" - أول ما يتحدد، الخانة الإضافية تبقى إجبارية، وأول ما يتشال تتفضى وتبقى اختيارية
+    for (const section of sections) {
+      for (const q of section.questions) {
+        if (!this.hasOtherOption(q)) continue;
+        const mainCtrl = this.dynamicForm.get(q.id);
+        const otherCtrl = this.dynamicForm.get(q.id + '_other');
+        mainCtrl?.valueChanges.subscribe(val => {
+          const otherSelected = q.type === 'checkbox' ? (val || []).includes('Other') : val === 'Other';
+          if (otherSelected) {
+            otherCtrl?.setValidators([Validators.required]);
+          } else {
+            otherCtrl?.clearValidators();
+            otherCtrl?.setValue('');
+          }
+          otherCtrl?.updateValueAndValidity();
+        });
+      }
+    }
+  }
+
+  // 🟢 هل السؤال ده فيه خيار "Other" ضمن اختياراته؟
+  hasOtherOption(q: JobQuestion): boolean {
+    return (q.options || []).includes('Other');
+  }
+
+  // 🟢 هل نظهر خانة "برجاء التوضيح" تحت السؤال ده دلوقتي؟ (يعني هل "Other" هو المختار فعلاً)
+  showOtherInput(q: JobQuestion): boolean {
+    if (!this.hasOtherOption(q)) return false;
+    const val = this.dynamicForm.get(q.id)?.value;
+    return q.type === 'checkbox' ? (val || []).includes('Other') : val === 'Other';
   }
 
   // 🟢 دوال الـ Checkbox الخاصة بالفورم الديناميكية
@@ -119,12 +155,21 @@ export class JoinOurTeamComponent implements OnInit {
     const sections = this.dynamicSections();
 
     // 🟢 نجمع كل الإجابات في object واحد { "نص السؤال": "الإجابة" } عشان يتخزن كـ JSON
+    // لو "Other" مختارة، بنضيف التفاصيل اللي كتبها جنبها في نفس الإجابة
     const answers: { [label: string]: string } = {};
     if (sections) {
       for (const section of sections) {
         for (const q of section.questions) {
           const val = this.dynamicForm.get(q.id)?.value;
-          answers[q.label] = Array.isArray(val) ? val.join(', ') : (val || '');
+          const otherText = this.hasOtherOption(q) ? (this.dynamicForm.get(q.id + '_other')?.value || '') : '';
+
+          if (q.type === 'checkbox') {
+            const list: string[] = val || [];
+            const formatted = list.map(v => v === 'Other' && otherText ? `Other (${otherText})` : v);
+            answers[q.label] = formatted.join(', ');
+          } else {
+            answers[q.label] = (val === 'Other' && otherText) ? `Other (${otherText})` : (val || '');
+          }
         }
       }
     }

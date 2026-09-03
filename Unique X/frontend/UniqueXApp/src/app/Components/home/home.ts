@@ -6,6 +6,7 @@ import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
 import { ActivatedRoute } from '@angular/router';
 import { Router, RouterModule } from '@angular/router';
+import { PhoneInputComponent } from '../phone-input/phone-input';
 import { AuthService } from '../../Services/auth';
 import { AdminService } from '../../Services/admin';
 import { BlogService } from '../../Services/blog.service';
@@ -24,7 +25,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, PropertyCardComponent, RouterModule], 
+  imports: [CommonModule, FormsModule, PropertyCardComponent, RouterModule, PhoneInputComponent], 
   templateUrl: './home.html',
   styleUrl: './home.css'
 })

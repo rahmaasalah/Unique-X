@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { PhoneInputComponent } from '../phone-input/phone-input';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { LaunchService } from '../../Services/launch.service';
@@ -11,7 +12,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-launch-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, PhoneInputComponent],
   templateUrl: './launch-detail.html'
 })
 export class LaunchDetailComponent implements OnInit {
@@ -182,8 +183,24 @@ export class LaunchDetailComponent implements OnInit {
   // WhatsApp link للبروكر مع كود الوحدة ورابط الصفحة
   getBrokerWhatsAppLink(phone: string, unitCode?: string): string {
     if (!phone) return '#';
-    let cleaned = phone.replace(/\D/g, '');
-    
+
+    const trimmed = phone.trim();
+    let cleaned: string;
+
+    if (trimmed.includes(' ')) {
+      // 🟢 الشكل الجديد من app-phone-input: "+20 01012345678" - كود دولة + مسافة + رقم محلي (ممكن يبدأ بصفر)
+      const [codePart, ...rest] = trimmed.split(' ');
+      const countryCode = codePart.replace(/\D/g, '');
+      const localNumber = rest.join('').replace(/\D/g, '').replace(/^0+/, '');
+      cleaned = countryCode + localNumber;
+    } else {
+      // 🟢 الشكل القديم: رقم محلي مصري من غير كود دولة (بيانات قديمة قبل إضافة كود الدولة)
+      cleaned = trimmed.replace(/\D/g, '');
+      if (cleaned.startsWith('0')) {
+        cleaned = '20' + cleaned.replace(/^0+/, '');
+      }
+    }
+
     const currentUrl = window.location.href;
     const msg = encodeURIComponent(
       `Hello, I'm interested in property: #${unitCode || ''}\nLink: ${currentUrl}`

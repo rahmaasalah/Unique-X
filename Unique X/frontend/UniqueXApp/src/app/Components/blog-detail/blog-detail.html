@@ -655,8 +655,9 @@
               </div>
               <input type="text" class="form-control rounded-3 mb-2 border-0 bg-white"
                      placeholder="Your Name" [(ngModel)]="contactName">
-              <input type="text" class="form-control rounded-3 mb-2 border-0 bg-white"
-                     placeholder="Phone Number" [(ngModel)]="contactPhone">
+              <div class="mb-2">
+                <app-phone-input name="contactPhone" [(ngModel)]="contactPhone"></app-phone-input>
+              </div>
               <textarea class="form-control rounded-3 mb-3 border-0 bg-white" rows="3"
                         placeholder="Your message"
                         [(ngModel)]="contactMessage"></textarea>
@@ -708,8 +709,7 @@
 
         <div class="mb-3">
           <label class="form-label small fw-bold text-muted">Phone Number *</label>
-          <input type="tel" class="form-control bg-light border-0 rounded-3"
-                 [(ngModel)]="meetingPhone" placeholder="e.g. 01012345678">
+          <app-phone-input [(ngModel)]="meetingPhone" name="meetingPhone" placeholder="e.g. 01012345678"></app-phone-input>
         </div>
 
         <div class="mb-3">

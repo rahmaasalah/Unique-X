@@ -94,10 +94,24 @@ export class PropertyCardComponent {
 
   getWhatsAppLink(phone: string, code: string, id: number): string {
     if (!phone) return '#';
-    let cleanedPhone = phone.replace(/\D/g, '');
-    if (cleanedPhone.startsWith('0')) {
-      cleanedPhone = '20' + cleanedPhone.replace(/^0+/, '');
+
+    const trimmed = phone.trim();
+    let cleanedPhone: string;
+
+    if (trimmed.includes(' ')) {
+      // 🟢 الشكل الجديد من app-phone-input: "+20 01012345678" - كود دولة + مسافة + رقم محلي (ممكن يبدأ بصفر)
+      const [codePart, ...rest] = trimmed.split(' ');
+      const countryCode = codePart.replace(/\D/g, '');
+      const localNumber = rest.join('').replace(/\D/g, '').replace(/^0+/, '');
+      cleanedPhone = countryCode + localNumber;
+    } else {
+      // 🟢 الشكل القديم: رقم محلي مصري من غير كود دولة (بيانات قديمة قبل إضافة كود الدولة)
+      cleanedPhone = trimmed.replace(/\D/g, '');
+      if (cleanedPhone.startsWith('0')) {
+        cleanedPhone = '20' + cleanedPhone.replace(/^0+/, '');
+      }
     }
+
     const propertyUrl = `${window.location.origin}/property-details/${this.property.id}`;
     const message = encodeURIComponent(`Hello, I'm interested in property code: #${code}\nLink: ${propertyUrl}`);
     return `https://wa.me/${cleanedPhone}?text=${message}`;

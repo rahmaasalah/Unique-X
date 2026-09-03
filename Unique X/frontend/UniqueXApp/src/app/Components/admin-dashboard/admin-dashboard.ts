@@ -4,6 +4,7 @@ import { AdminService } from '../../Services/admin';
 import { AlertService } from '../../Services/alert';
 import { AuthService } from '../../Services/auth'; // مهم جداً
 import { RouterModule, Router } from '@angular/router';
+import { PhoneInputComponent } from '../phone-input/phone-input';
 import { CdkDragDrop, moveItemInArray, CdkDropList, CdkDrag, CdkDragPlaceholder, DragDropModule } from '@angular/cdk/drag-drop';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms'; // 1. حل مشكلة formGroup
 import { CrmService } from '../../Services/crm.services';
@@ -18,7 +19,7 @@ import { environment } from '../../../environments/environment';
   selector: 'app-admin-dashboard',
   standalone: true,
   // أضفنا ReactiveFormsModule هنا
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, CdkDropList, CdkDrag, CdkDragPlaceholder, DragDropModule], 
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, CdkDropList, CdkDrag, CdkDragPlaceholder, DragDropModule, PhoneInputComponent], 
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.css'
 })

@@ -6,11 +6,12 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../Services/auth';
 import { AlertService } from '../../Services/alert';
+import { PhoneInputComponent } from '../phone-input/phone-input';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, PhoneInputComponent],
   templateUrl: './settings.html',
   styleUrl: './settings.css'
 })
