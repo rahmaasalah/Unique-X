@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AlertService } from '../../Services/alert';
 import { AdminService } from '../../Services/admin';
@@ -20,6 +21,7 @@ export class JoinOurTeamComponent implements OnInit {
   private alertService = inject(AlertService);
   private adminService = inject(AdminService);
   private router = inject(Router);
+  private activatedRoute = inject(ActivatedRoute);
 
   selectedFile = signal<File | null>(null);
   isSubmitting = signal(false);
@@ -40,6 +42,13 @@ export class JoinOurTeamComponent implements OnInit {
       next: (data) => {
         this.jobs.set(data);
         this.jobsLoading.set(false);
+
+        // 🟢 لو جاي من لينك مباشر لوظيفة معينة (Copy Link من لوحة الأدمن)، نفتحله تفاصيلها على طول
+        const jobId = Number(this.activatedRoute.snapshot.queryParamMap.get('jobId'));
+        if (jobId) {
+          const matchedJob = data.find((j: any) => j.id === jobId);
+          if (matchedJob) this.openJobDetail(matchedJob);
+        }
       },
       error: () => this.jobsLoading.set(false)
     });

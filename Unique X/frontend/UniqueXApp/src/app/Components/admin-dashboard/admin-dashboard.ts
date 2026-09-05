@@ -179,6 +179,40 @@ newJobQualifications = signal<string>('');
 newJobKPIs = signal<string>('');
 isSavingJobPosting = signal(false);
 
+// 🟢 الوظائف اللي حاليًا متعرضة كاملة (Show More) في جدول All Job Postings
+expandedJobPostings = signal<Set<number>>(new Set());
+
+toggleJobPostingExpand(jobId: number) {
+  const current = new Set(this.expandedJobPostings());
+  if (current.has(jobId)) {
+    current.delete(jobId);
+  } else {
+    current.add(jobId);
+  }
+  this.expandedJobPostings.set(current);
+}
+
+isJobPostingExpanded(jobId: number): boolean {
+  return this.expandedJobPostings().has(jobId);
+}
+
+// 🟢 بيحول نص متعدد الأسطر (Key Responsibilities / Qualifications / KPIs) لقائمة نقاط
+toLines(text: string): string[] {
+  if (!text) return [];
+  return text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+}
+
+// 🟢 لينك مباشر لصفحة الوظيفة دي - بيفتحها على طول عند العميل من غير ما يدور عليها
+copyJobPostingLink(jobId: number) {
+  const link = `${window.location.origin}/join-our-team?jobId=${jobId}`;
+  navigator.clipboard.writeText(link).then(() => {
+    this.alertService.success('Job link copied to clipboard!');
+  }).catch(() => {
+    this.alertService.error('Failed to copy link.');
+  });
+}
+
+
 loadJobPostings() {
   this.adminService.getAllJobPostings().subscribe(data => this.jobPostings.set(data));
 }
@@ -1577,6 +1611,18 @@ calendarDays = signal<any[]>([]);
 calendarMonth = signal<Date>(new Date());
 selectedInterviewDate = signal<string>('');
 selectedInterviewHour = signal<string>('');
+
+// 🟢 فك الـ AnswersJson (إجابات الفورم الديناميكية للـ 9 وظائف الجديدة) لشكل منظم للعرض
+// بيرجع [] لو التطبيق ده من الفورم القديمة (مفيهوش answersJson خالص)
+parsedAnswers(app: any): { question: string; answer: string }[] {
+  if (!app?.answersJson) return [];
+  try {
+    const obj = JSON.parse(app.answersJson);
+    return Object.keys(obj).map(q => ({ question: q, answer: obj[q] || '—' }));
+  } catch {
+    return [];
+  }
+}
 
 // ---- فلاتر Job Applications ----
 jobSearchName = signal<string>('');

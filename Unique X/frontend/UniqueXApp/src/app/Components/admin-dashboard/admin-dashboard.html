@@ -629,7 +629,7 @@
         @for (job of jobPostings(); track job.id) {
           <tr>
             <td class="fw-bold">{{ job.jobTitle }}</td>
-            <td class="text-truncate" style="max-width: 320px;">{{ job.jobSummary }}</td>
+            <td style="max-width: 420px; white-space: normal; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">{{ job.jobSummary }}</td>
             <td>
               @if (job.isActive) {
                 <span class="badge bg-success">Active</span>
@@ -638,7 +638,13 @@
               }
             </td>
             <td>{{ job.createdAt | date:'d/M/yyyy' }}</td>
-            <td class="d-flex gap-2">
+            <td class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-sm btn-outline-primary" (click)="toggleJobPostingExpand(job.id)">
+                {{ isJobPostingExpanded(job.id) ? 'Show Less' : 'Show More' }}
+              </button>
+              <button class="btn btn-sm btn-outline-info" (click)="copyJobPostingLink(job.id)" title="Copy shareable link">
+                <i class="bi bi-link-45deg"></i> Copy Link
+              </button>
               <button class="btn btn-sm btn-outline-secondary" (click)="toggleJobPosting(job.id)">
                 {{ job.isActive ? 'Hide' : 'Activate' }}
               </button>
@@ -647,6 +653,49 @@
               </button>
             </td>
           </tr>
+          <!-- 🟢 صف تفاصيل إضافي - بيظهر بس لما يدوس Show More، وفيه كل البيانات كاملة -->
+          @if (isJobPostingExpanded(job.id)) {
+            <tr>
+              <td colspan="5" class="bg-light">
+                <div class="p-3">
+                  <div class="mb-3">
+                    <strong class="d-block mb-1 text-danger">Full Summary</strong>
+                    <p class="mb-0" style="white-space: pre-line;">{{ job.jobSummary }}</p>
+                  </div>
+                  @if (job.keyResponsibilities) {
+                    <div class="mb-3">
+                      <strong class="d-block mb-1 text-danger">Key Responsibilities</strong>
+                      <ul class="mb-0">
+                        @for (line of toLines(job.keyResponsibilities); track line) {
+                          <li>{{ line }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                  @if (job.qualifications) {
+                    <div class="mb-3">
+                      <strong class="d-block mb-1 text-danger">Qualifications</strong>
+                      <ul class="mb-0">
+                        @for (line of toLines(job.qualifications); track line) {
+                          <li>{{ line }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                  @if (job.kPIs) {
+                    <div>
+                      <strong class="d-block mb-1 text-danger">KPIs</strong>
+                      <ul class="mb-0">
+                        @for (line of toLines(job.kPIs); track line) {
+                          <li>{{ line }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
         }
         @if (jobPostings().length === 0) {
           <tr><td colspan="5" class="text-center text-muted py-3">No job postings yet.</td></tr>
@@ -2565,41 +2614,66 @@
         </div>
         @if (selectedApplication()) {
           <div class="modal-body">
-            <div class="row g-3">
+
+            <!-- 🟢 بيانات أساسية بتظهر دايمًا (قديم وجديد) -->
+            <div class="row g-3 mb-3 pb-3 border-bottom">
               <div class="col-md-6"><strong>Full Name:</strong> {{ selectedApplication().fullName }}</div>
               <div class="col-md-6"><strong>Phone:</strong> {{ selectedApplication().phoneNumber }}</div>
-              <div class="col-md-6"><strong>Address:</strong> {{ selectedApplication().address }}</div>
+              <div class="col-md-6" *ngIf="selectedApplication().whatsAppNumber"><strong>WhatsApp:</strong> {{ selectedApplication().whatsAppNumber }}</div>
+              <div class="col-md-6" *ngIf="selectedApplication().email"><strong>Email:</strong> {{ selectedApplication().email }}</div>
+              <div class="col-md-6" *ngIf="selectedApplication().age"><strong>Age:</strong> {{ selectedApplication().age }}</div>
               <div class="col-md-6"><strong>City:</strong> {{ selectedApplication().city || '—' }}</div>
-              <div class="col-md-6">
-                <strong>Has Job:</strong> {{ selectedApplication().hasJob }}
-                @if (selectedApplication().hasJob === 'Other') {
-                  <div class="small text-muted mt-1">
-                    Details: {{ selectedApplication().hasJobOther || 'Not specified' }}
-                  </div>
-                }
-              </div>
-              <div class="col-md-6"><strong>Work Place:</strong> {{ selectedApplication().workPlace || '—' }}</div>
-              <div class="col-md-6"><strong>Has Laptop:</strong> {{ selectedApplication().hasLaptop }}</div>
+              <div class="col-md-6" *ngIf="selectedApplication().employmentStatus"><strong>Employment Status:</strong> {{ selectedApplication().employmentStatus }}</div>
+              <div class="col-md-6" *ngIf="selectedApplication().howHeard"><strong>How they heard about us:</strong> {{ selectedApplication().howHeard }}</div>
               <div class="col-md-6"><strong>Job Title:</strong> {{ selectedApplication().jobTitle }}</div>
-              <div class="col-md-6"><strong>English Level:</strong> {{ selectedApplication().englishLevel }}</div>
-              <div class="col-md-6">
-                <strong>CRM Tools:</strong> {{ selectedApplication().crmTools }}
-                @if ((selectedApplication().crmTools || '').includes('Other')) {
-                  <div class="small text-muted mt-1">
-                    Other Tool Details: {{ selectedApplication().crmToolsOther || 'Not specified' }}
+            </div>
+
+            <!-- 🟢 الطلبات الجديدة (من الفورم الديناميكية بتاعة الوظائف الجديدة) - إجابات منظمة بدل JSON خام -->
+            @if (parsedAnswers(selectedApplication()).length > 0) {
+              <div class="row g-3">
+                @for (qa of parsedAnswers(selectedApplication()); track qa.question) {
+                  <div class="col-12">
+                    <div class="small text-muted fw-bold">{{ qa.question }}</div>
+                    <div>{{ qa.answer }}</div>
                   </div>
                 }
               </div>
-              <div class="col-md-6"><strong>Company Type:</strong> {{ selectedApplication().companyType }}</div>
-              <div class="col-md-6"><strong>Zone Worked On:</strong> {{ selectedApplication().zoneWorkedOn }}</div>
-              <div class="col-md-6"><strong>Project Preparation:</strong> {{ selectedApplication().projectPreparation }}</div>
-              <div class="col-md-6"><strong>Visit Site:</strong> {{ selectedApplication().visitSite }}</div>
-              <div class="col-md-6"><strong>Deals Closing:</strong> {{ selectedApplication().dealsClosing }}</div>
-              <div class="col-md-6"><strong>Sales Last Quarter:</strong> {{ selectedApplication().salesLastQuarter }}</div>
-              <div class="col-12"><strong>Past Experiences:</strong> {{ selectedApplication().pastExperiences || '—' }}</div>
-              <div class="col-12"><strong>Real Estate Background:</strong> {{ selectedApplication().realEstateBackground || '—' }}</div>
-              <div class="col-12"><strong>Notes:</strong> {{ selectedApplication().notes || '—' }}</div>
-            </div>
+            }
+
+            <!-- 🟢 الطلبات القديمة (الفورم الثابتة القديمة) - بس لو مفيش answersJson خالص -->
+            @if (parsedAnswers(selectedApplication()).length === 0) {
+              <div class="row g-3">
+                <div class="col-md-6"><strong>Address:</strong> {{ selectedApplication().address }}</div>
+                <div class="col-md-6">
+                  <strong>Has Job:</strong> {{ selectedApplication().hasJob }}
+                  @if (selectedApplication().hasJob === 'Other') {
+                    <div class="small text-muted mt-1">
+                      Details: {{ selectedApplication().hasJobOther || 'Not specified' }}
+                    </div>
+                  }
+                </div>
+                <div class="col-md-6"><strong>Work Place:</strong> {{ selectedApplication().workPlace || '—' }}</div>
+                <div class="col-md-6"><strong>Has Laptop:</strong> {{ selectedApplication().hasLaptop }}</div>
+                <div class="col-md-6"><strong>English Level:</strong> {{ selectedApplication().englishLevel }}</div>
+                <div class="col-md-6">
+                  <strong>CRM Tools:</strong> {{ selectedApplication().crmTools }}
+                  @if ((selectedApplication().crmTools || '').includes('Other')) {
+                    <div class="small text-muted mt-1">
+                      Other Tool Details: {{ selectedApplication().crmToolsOther || 'Not specified' }}
+                    </div>
+                  }
+                </div>
+                <div class="col-md-6"><strong>Company Type:</strong> {{ selectedApplication().companyType }}</div>
+                <div class="col-md-6"><strong>Zone Worked On:</strong> {{ selectedApplication().zoneWorkedOn }}</div>
+                <div class="col-md-6"><strong>Project Preparation:</strong> {{ selectedApplication().projectPreparation }}</div>
+                <div class="col-md-6"><strong>Visit Site:</strong> {{ selectedApplication().visitSite }}</div>
+                <div class="col-md-6"><strong>Deals Closing:</strong> {{ selectedApplication().dealsClosing }}</div>
+                <div class="col-md-6"><strong>Sales Last Quarter:</strong> {{ selectedApplication().salesLastQuarter }}</div>
+                <div class="col-12"><strong>Past Experiences:</strong> {{ selectedApplication().pastExperiences || '—' }}</div>
+                <div class="col-12"><strong>Real Estate Background:</strong> {{ selectedApplication().realEstateBackground || '—' }}</div>
+                <div class="col-12"><strong>Notes:</strong> {{ selectedApplication().notes || '—' }}</div>
+              </div>
+            }
           </div>
         }
       </div>
