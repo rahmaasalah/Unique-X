@@ -3,6 +3,7 @@ import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PhoneInputComponent } from '../phone-input/phone-input';
+import { PropertyCardComponent } from '../property-card/property-card';
 import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
 import { AuthService } from '../../Services/auth';
@@ -19,7 +20,7 @@ Chart.register(...registerables);
 @Component({
   selector: 'app-property-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, PhoneInputComponent],
+  imports: [CommonModule, RouterModule, FormsModule, PhoneInputComponent, PropertyCardComponent],
   templateUrl: './property-details.html',
   styleUrl: './property-details.css'
 })
@@ -39,6 +40,9 @@ export class PropertyDetailsComponent implements OnInit {
   property = signal<Property | null>(null);
   currentSlideIndex = signal(0);
   isDescriptionExpanded = signal(false);
+
+  // 🟢 "Lookalike Units" - وحدات في نفس المشروع (لو موجود) أو نفس المنطقة، بتظهر آخر الصفحة بسكرول أفقي زي الهوم
+  lookalikeUnits = signal<Property[]>([]);
 
   // 🟢 حالة أزرار Wishlist / Shortlist / Visit List - نفس منطق property-card.ts بالظبط
   isLiked = signal(false);
@@ -149,6 +153,7 @@ export class PropertyDetailsComponent implements OnInit {
         this.location.replaceState(`/${baseUrl}/${data.id}/${slug}`);
 
         this.loadReviews(data.id);
+        this.loadLookalikeUnits(data);
 
         if (data.code) {
           this.propertyService.getFinancialHistory(data.code).subscribe({
@@ -183,6 +188,35 @@ generateSlug(text: string): string {
     .replace(/-+/g, '-') // منع تكرار الشرطات المتتالية (مثال: --)
     .replace(/^-|-$/g, ''); // مسح أي شرطة في أول أو آخر اللينك
 }
+
+  // 🟢 بتجيب وحدات مشابهة: لو العقار تابع لمشروع معين بنفلتر على المشروع، لو مش تابع لمشروع بنفلتر على المنطقة
+  // بنستخدم نفس getProperties() المستخدمة في home.ts، وبنستبعد العقار الحالي نفسه من النتيجة
+  loadLookalikeUnits(data: Property) {
+    const filters: any = {};
+    if (data.projectName) {
+      filters.projectName = data.projectName;
+    } else if (data.region) {
+      filters.region = data.region;
+    } else {
+      this.lookalikeUnits.set([]);
+      return;
+    }
+
+    this.propertyService.getProperties(filters).subscribe({
+      next: (response: any) => {
+        const list = response?.message ? response.data : response;
+        this.lookalikeUnits.set((list || []).filter((p: Property) => p.id !== data.id));
+      },
+      error: () => this.lookalikeUnits.set([])
+    });
+  }
+
+  // 🟢 سكرول أفقي بأسهم يمين وشمال - نفس الدالة الموجودة في home.ts بالظبط
+  scrollH(container: HTMLElement, dir: number) {
+    if (!container) return;
+    const amount = container.clientWidth * 0.8 * dir;
+    container.scrollBy({ left: amount, behavior: 'smooth' });
+  }
 
   toggleDescription() {
   this.isDescriptionExpanded.update(val => !val);
