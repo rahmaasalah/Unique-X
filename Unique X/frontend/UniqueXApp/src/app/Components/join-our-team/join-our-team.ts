@@ -8,11 +8,12 @@ import { AlertService } from '../../Services/alert';
 import { AdminService } from '../../Services/admin';
 import { environment } from '../../../environments/environment';
 import { getJobQuestions, JobSection, JobQuestion } from './job-questions.data';
+import { PhoneInputComponent } from '../phone-input/phone-input';
 
 @Component({
   selector: 'app-join-our-team',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PhoneInputComponent],
   templateUrl: './join-our-team.html'
 })
 export class JoinOurTeamComponent implements OnInit {
@@ -88,7 +89,14 @@ export class JoinOurTeamComponent implements OnInit {
 
     for (const section of sections) {
       for (const q of section.questions) {
-        const validators = q.required === false ? [] : [Validators.required];
+        // 🟢 لو السؤال معلّق على سؤال تاني (Depends On)، منخليهوش إجباري في البداية
+        const validators = (q.required === false || q.dependsOn) ? [] : [Validators.required];
+
+        // 🟢 سؤالي التليفون والواتساب (q2, q3) - نتأكد إن شكل الرقم صحيح (كود دولة + أرقام) مش بس إنه مش فاضي
+        if (q.id === 'q2' || q.id === 'q3') {
+          validators.push(Validators.pattern(/^\+\d{1,4}\s?\d{6,12}$/));
+        }
+
         group[q.id] = q.type === 'checkbox'
           ? this.fb.control<string[]>([], validators)
           : this.fb.control('', validators);
@@ -120,6 +128,25 @@ export class JoinOurTeamComponent implements OnInit {
         });
       }
     }
+
+    // 🟢 مراقبة كل سؤال معلّق (زي "If yes, ...") - يبقى إجباري وظاهر بس لو السؤال اللي قبله جاوب بالقيمة المطلوبة
+    for (const section of sections) {
+      for (const q of section.questions) {
+        if (!q.dependsOn) continue;
+        const parentCtrl = this.dynamicForm.get(q.dependsOn.questionId);
+        const dependentCtrl = this.dynamicForm.get(q.id);
+        parentCtrl?.valueChanges.subscribe(val => {
+          const conditionMet = val === q.dependsOn!.value;
+          if (conditionMet) {
+            dependentCtrl?.setValidators([Validators.required]);
+          } else {
+            dependentCtrl?.clearValidators();
+            dependentCtrl?.setValue(q.type === 'checkbox' ? [] : '');
+          }
+          dependentCtrl?.updateValueAndValidity();
+        });
+      }
+    }
   }
 
   // 🟢 هل السؤال ده فيه خيار "Other" ضمن اختياراته؟
@@ -132,6 +159,13 @@ export class JoinOurTeamComponent implements OnInit {
     if (!this.hasOtherOption(q)) return false;
     const val = this.dynamicForm.get(q.id)?.value;
     return q.type === 'checkbox' ? (val || []).includes('Other') : val === 'Other';
+  }
+
+  // 🟢 هل نظهر السؤال المعلّق ده دلوقتي؟ (زي "If yes, ...") - بيتحدد حسب إجابة السؤال اللي قبله
+  showDependentQuestion(q: JobQuestion): boolean {
+    if (!q.dependsOn) return true;
+    const parentVal = this.dynamicForm.get(q.dependsOn.questionId)?.value;
+    return parentVal === q.dependsOn.value;
   }
 
   // 🟢 دوال الـ Checkbox الخاصة بالفورم الديناميكية
@@ -234,7 +268,7 @@ export class JoinOurTeamComponent implements OnInit {
 
   form: FormGroup = this.fb.group({
     fullName:              ['', Validators.required],
-    phoneNumber:           ['', Validators.required],
+    phoneNumber:           ['', [Validators.required, Validators.pattern(/^\+\d{1,4}\s?\d{6,12}$/)]],
     address:               ['', Validators.required],
     city:                  [''],
     hasJob:                ['', Validators.required],
