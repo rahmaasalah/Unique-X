@@ -134,9 +134,27 @@ export class PropertyDetailsComponent implements OnInit {
 
 
   ngOnInit(): void {
-  const id = Number(this.route.snapshot.paramMap.get('id'));
-  if (id) {
-    this.propertyService.getPropertyById(id).subscribe({
+  // 🟢 بنستخدم paramMap (مش snapshot) عشان لو المستخدم دوس على وحدة من Lookalike Units
+  // Angular بيعيد استخدام نفس الكومبوننت (نفس الراوت، مجرد id مختلف) وميعملش ngOnInit تاني،
+  // فكانت الصفحة فاضلة واقفة على نفس الوحدة القديمة. الاشتراك على paramMap بيخليها تتحدث كل مرة id يتغير
+  this.route.paramMap.subscribe(params => {
+    const id = Number(params.get('id'));
+    if (id) {
+      this.loadProperty(id);
+    }
+  });
+}
+
+private loadProperty(id: number): void {
+  // إعادة ضبط حالة الصفحة عشان مايفضلش فيه بواقي من الوحدة اللي قبل كده (سلايدر، وصف مفتوح، تقييمات، ...)
+  this.isDescriptionExpanded.set(false);
+  this.currentSlideIndex.set(0);
+  this.reviews.set([]);
+  this.lookalikeUnits.set([]);
+  this.financialHistory.set([]);
+  window.scrollTo({ top: 0, behavior: 'auto' });
+
+  this.propertyService.getPropertyById(id).subscribe({
       next: (data) => {
         this.property.set(data);
         this.isLiked.set(data.isFavorite ?? false);
@@ -175,7 +193,6 @@ export class PropertyDetailsComponent implements OnInit {
       error: (err) => console.error(err)
     });
   }
-}
 
   // دالة لعمل اللينك بالإنجليزي فقط لضمان عدم ظهور رموز الـ %
 generateSlug(text: string): string {
