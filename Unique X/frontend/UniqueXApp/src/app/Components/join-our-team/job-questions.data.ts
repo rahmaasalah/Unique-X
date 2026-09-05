@@ -10,6 +10,8 @@ export interface JobQuestion {
   type: 'text' | 'textarea' | 'radio' | 'checkbox';
   options?: string[];
   required?: boolean; // افتراضي true إلا لو اتحدد false صراحة
+  // 🟢 السؤال ده يبقى إجباري وظاهر بس لو سؤال تاني اتجاوب بقيمة معينة (زي "If yes, ..." اللي بعد سؤال Yes/No)
+  dependsOn?: { questionId: string; value: string };
 }
 
 export interface JobSection {
@@ -326,7 +328,7 @@ export const JOB_QUESTIONS: { [jobTitle: string]: JobSection[] } = {
         { id: 'q12', label: 'What is/was your current/most recent company?', type: 'text' },
         { id: 'q13', label: 'Briefly describe your previous experience in content creation.', type: 'textarea' },
         { id: 'q14', label: 'Have you created real estate content before?', type: 'radio', options: ['Yes', 'No'] },
-        { id: 'q15', label: 'If yes, please mention the real estate brands/projects you have worked with.', type: 'textarea' },
+        { id: 'q15', label: 'If yes, please mention the real estate brands/projects you have worked with.', type: 'textarea', dependsOn: { questionId: 'q14', value: 'Yes' } },
         { id: 'q16', label: 'Which platforms have you created content for?', type: 'checkbox', options: ['Instagram', 'TikTok', 'Facebook', 'YouTube', 'Other'] },
         { id: 'q17', label: 'Please share your portfolio / previous work links.', type: 'textarea' },
       ]
@@ -441,7 +443,7 @@ export const JOB_QUESTIONS: { [jobTitle: string]: JobSection[] } = {
         { id: 'q12', label: 'What is/was your current/most recent company?', type: 'text' },
         { id: 'q13', label: 'Briefly describe your previous experience in real estate sales.', type: 'textarea' },
         { id: 'q14', label: 'Have you managed a sales team before?', type: 'radio', options: ['Yes', 'No'] },
-        { id: 'q15', label: 'If yes, how many sales agents were you responsible for?', type: 'text' },
+        { id: 'q15', label: 'If yes, how many sales agents were you responsible for?', type: 'text', dependsOn: { questionId: 'q14', value: 'Yes' } },
         { id: 'q16', label: "What was your team's average monthly sales target?", type: 'text' },
         { id: 'q17', label: "What was your team's best sales achievement?", type: 'textarea' },
         { id: 'q18', label: 'What was your personal best sales achievement?', type: 'textarea' },
@@ -496,9 +498,9 @@ export const JOB_QUESTIONS: { [jobTitle: string]: JobSection[] } = {
         { id: 'q11', label: 'Graduation Year', type: 'text' },
         { id: 'q12', label: 'How many years of total work experience do you have?', type: 'text' },
         { id: 'q13', label: 'Do you have previous sales experience?', type: 'radio', options: ['Yes', 'No'] },
-        { id: 'q14', label: 'If yes, how many years of sales experience do you have?', type: 'text' },
+        { id: 'q14', label: 'If yes, how many years of sales experience do you have?', type: 'text', dependsOn: { questionId: 'q13', value: 'Yes' } },
         { id: 'q15', label: 'Do you have previous real estate experience?', type: 'radio', options: ['Yes', 'No'] },
-        { id: 'q16', label: 'If yes, how many years/months of real estate experience do you have?', type: 'text' },
+        { id: 'q16', label: 'If yes, how many years/months of real estate experience do you have?', type: 'text', dependsOn: { questionId: 'q15', value: 'Yes' } },
         { id: 'q17', label: 'What is your current/most recent job title?', type: 'text' },
         { id: 'q18', label: 'What is/was your current/most recent company?', type: 'text' },
         { id: 'q19', label: 'Briefly describe your previous sales/work experience.', type: 'textarea' },
@@ -509,13 +511,13 @@ export const JOB_QUESTIONS: { [jobTitle: string]: JobSection[] } = {
       questions: [
         { id: 'q20', label: 'Have you worked with leads before?', type: 'radio', options: ['Yes', 'No'] },
         { id: 'q21', label: 'Have you worked with a CRM before?', type: 'radio', options: ['Yes', 'No'] },
-        { id: 'q22', label: 'If yes, which CRM system did you use?', type: 'text' },
+        { id: 'q22', label: 'If yes, which CRM system did you use?', type: 'text', dependsOn: { questionId: 'q21', value: 'Yes' } },
         { id: 'q23', label: 'How comfortable are you making cold calls?', type: 'radio', options: ['Not comfortable', 'Somewhat comfortable', 'Comfortable', 'Very comfortable'] },
         { id: 'q24', label: 'How would you rate your communication skills?', type: 'radio', options: ['Beginner', 'Intermediate', 'Advanced', 'Excellent'] },
         { id: 'q25', label: 'How would you rate your negotiation skills?', type: 'radio', options: ['Beginner', 'Intermediate', 'Advanced', 'Excellent'] },
         { id: 'q26', label: 'How would you rate your ability to handle rejection?', type: 'radio', options: ['Low', 'Average', 'Good', 'Excellent'] },
         { id: 'q27', label: 'Have you worked with monthly sales targets before?', type: 'radio', options: ['Yes', 'No'] },
-        { id: 'q28', label: 'If yes, what was your previous monthly target?', type: 'text' },
+        { id: 'q28', label: 'If yes, what was your previous monthly target?', type: 'text', dependsOn: { questionId: 'q27', value: 'Yes' } },
         { id: 'q29', label: 'What was your best sales achievement?', type: 'textarea' },
       ]
     },
@@ -664,7 +666,7 @@ export const JOB_QUESTIONS: { [jobTitle: string]: JobSection[] } = {
       questions: [
         { id: 'q20', label: 'Which responsibilities have you handled before?', type: 'checkbox', options: ['CRM Management', 'Lead Management', 'Sales Reports', 'Reservation Processing', 'Contract Follow-up', 'Commission Tracking', 'Developer Coordination', 'Unit Availability', 'Price Lists', 'Payment Plans', 'Client Documentation', 'Sales Team Support', 'Other'] },
         { id: 'q21', label: 'Have you worked directly with real estate developers?', type: 'radio', options: ['Yes', 'No'] },
-        { id: 'q22', label: 'If yes, which developers have you dealt with?', type: 'textarea' },
+        { id: 'q22', label: 'If yes, which developers have you dealt with?', type: 'textarea', dependsOn: { questionId: 'q21', value: 'Yes' } },
         { id: 'q23', label: 'Have you handled property reservations/bookings before?', type: 'radio', options: ['Yes', 'No'] },
         { id: 'q24', label: 'Have you followed up on contracts and client documentation?', type: 'radio', options: ['Yes', 'No'] },
         { id: 'q25', label: 'Have you handled sales commission tracking?', type: 'radio', options: ['Yes', 'No'] },
@@ -679,7 +681,7 @@ export const JOB_QUESTIONS: { [jobTitle: string]: JobSection[] } = {
         { id: 'q29', label: 'How would you rate your Microsoft Excel / Google Sheets skills?', type: 'radio', options: ['Beginner', 'Intermediate', 'Advanced', 'Expert'] },
         { id: 'q30', label: 'Which Excel functions/tools can you use?', type: 'checkbox', options: ['SUM', 'COUNT / COUNTIF', 'IF', 'VLOOKUP / XLOOKUP', 'Pivot Tables', 'Filters & Sorting', 'Conditional Formatting', 'Other'] },
         { id: 'q31', label: 'Have you created sales reports or dashboards before?', type: 'radio', options: ['Yes', 'No'] },
-        { id: 'q32', label: 'If yes, briefly describe the reports you created.', type: 'textarea' },
+        { id: 'q32', label: 'If yes, briefly describe the reports you created.', type: 'textarea', dependsOn: { questionId: 'q31', value: 'Yes' } },
       ]
     },
     {

@@ -107,6 +107,7 @@
             <div class="row g-3">
 
               @for (q of section.questions; track q.id) {
+                @if (showDependentQuestion(q)) {
                 <div class="col-12" [ngClass]="q.type === 'text' ? 'col-md-6' : ''">
 
                   <label class="form-label fw-semibold">
@@ -114,8 +115,16 @@
                     @if (q.required !== false) { <span class="text-danger">*</span> }
                   </label>
 
+                  <!-- 🟢 معاملة خاصة لسؤالي التليفون والواتساب (q2, q3) - كومبوننت كود الدولة بدل خانة نص عادية -->
+                  @if (q.id === 'q2' || q.id === 'q3') {
+                    <app-phone-input [formControlName]="q.id"></app-phone-input>
+                    @if (isDynamicInvalid(q.id)) {
+                      <div class="text-danger small mt-1">Please enter a valid phone number.</div>
+                    }
+                  }
+
                   <!-- نص قصير -->
-                  @if (q.type === 'text') {
+                  @if (q.type === 'text' && q.id !== 'q2' && q.id !== 'q3') {
                     <input type="text" class="form-control rounded-3" [formControlName]="q.id"
                            [class.is-invalid]="isDynamicInvalid(q.id)">
                     <div class="invalid-feedback">Required</div>
@@ -175,6 +184,7 @@
                   }
 
                 </div>
+                }
               }
 
             </div>
@@ -221,9 +231,8 @@
 
           <div class="col-md-6">
             <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
-            <input type="text" class="form-control rounded-3" formControlName="phoneNumber"
-                   [class.is-invalid]="isInvalid('phoneNumber')" placeholder="01xxxxxxxxx">
-            <div class="invalid-feedback">Required</div>
+            <app-phone-input formControlName="phoneNumber"></app-phone-input>
+            <div class="invalid-feedback d-block" *ngIf="isInvalid('phoneNumber')">Please enter a valid phone number.</div>
           </div>
 
           <div class="col-md-6">
