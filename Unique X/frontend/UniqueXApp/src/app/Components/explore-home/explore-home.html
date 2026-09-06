@@ -65,6 +65,19 @@
               <app-property-card [property]="prop" [class.hot-deal-card]="prop.isHotDeal"></app-property-card>
             </div>
           }
+          @if (hasMore()) {
+            <div class="h-scroll-item d-flex align-items-center justify-content-center" style="width:320px;">
+              <button class="btn btn-outline-danger rounded-pill px-4 fw-bold"
+                      [disabled]="isLoadingMore()"
+                      (click)="loadMore()">
+                @if (isLoadingMore()) {
+                  <span class="spinner-border spinner-border-sm me-2" role="status"></span> Loading...
+                } @else {
+                  Load More
+                }
+              </button>
+            </div>
+          }
         </div>
         <button class="h-scroll-arrow right" (click)="scrollH(resaleProjectScroll, 1)" aria-label="Scroll right">
           <i class="bi bi-chevron-right"></i>

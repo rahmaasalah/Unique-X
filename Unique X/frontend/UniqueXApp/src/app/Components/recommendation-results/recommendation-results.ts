@@ -13,10 +13,6 @@ export interface ScoredProperty {
   matchPercent: number;
 }
 
-// ملحوظة: القيم دي لازم تطابق أسماء الـ enums في الباك إند بالظبط (PropEnums.cs)
-const CITY_LABELS: Record<string, string> = { '1': 'Cairo', '2': 'Alexandria', '3': 'NorthCoast' };
-const LISTING_TYPE_LABELS: Record<string, string> = { '0': 'Resale', '1': 'Rent', '2': 'Primary', '3': 'ResaleProject' };
-const PROPERTY_TYPE_LABELS: Record<string, string> = { '0': 'Apartment', '1': 'Villa', '2': 'Shop', '3': 'Office', '4': 'Chalet', '5': 'FullFloor' };
 
 @Component({
   selector: 'app-recommendation-results',
@@ -43,24 +39,22 @@ export class RecommendationResultsComponent implements OnInit {
   private loadRecommendations(): void {
     this.isLoading.set(true);
 
-    // 🟢 المعايير التصنيفية (Zone/Listing Type/Property Type) بقت Multiple، فمش بنقدر نبعتها كفلتر واحد
-    // للباك إند - بنجيب كل العقارات وبنفلتر ونرتب هنا في الفرونت
-    this.propertyService.getProperties({}).subscribe({
+    const cities = this.splitParam(this.criteria.city);
+    const listingTypes = this.splitParam(this.criteria.listingType);
+    const propertyTypes = this.splitParam(this.criteria.propertyType);
+
+    // 🟢 المعايير التصنيفية (Zone/Listing Type/Property Type) بقت بتتبعت للباك إند نفسه كفلتر Multi-select
+    // فبنجيب بس العقارات اللي تطابقها فعلاً بدل كل عقار في الداتابيز. الترتيب حسب نسبة التطابق (rooms/budget/...)
+    // لسه بيحصل هنا في الفرونت لأنه محتاج يشوف كل المرشحين مع بعض عشان يرتبهم صح من الأعلى للأقل
+    this.propertyService.getProperties({
+      cities: cities.join(','),
+      listingTypes: listingTypes.join(','),
+      propertyTypes: propertyTypes.join(',')
+    }).subscribe({
       next: (response: any) => {
         const data: Property[] = response?.message ? response.data : response;
 
-        const cities = this.splitParam(this.criteria.city).map(v => CITY_LABELS[v]).filter(Boolean);
-        const listingTypes = this.splitParam(this.criteria.listingType).map(v => LISTING_TYPE_LABELS[v]).filter(Boolean);
-        const propertyTypes = this.splitParam(this.criteria.propertyType).map(v => PROPERTY_TYPE_LABELS[v]).filter(Boolean);
-
-        const filtered = (data || []).filter(p => {
-          if (cities.length && !cities.includes(p.city)) return false;
-          if (listingTypes.length && !listingTypes.includes(p.listingType)) return false;
-          if (propertyTypes.length && !propertyTypes.includes(p.propertyType)) return false;
-          return true;
-        });
-
-        const scored = filtered.map(p => this.scoreProperty(p));
+        const scored = (data || []).map(p => this.scoreProperty(p));
         // ترتيب من الأعلى تطابقًا للأقل
         scored.sort((a, b) => b.matchPercent - a.matchPercent || b.score - a.score);
         this.results.set(scored);

@@ -28,52 +28,52 @@ namespace Unique_X.DTOs
         public string? Address { get; set; }
         public string City { get; set; }
         public bool IsSold { get; set; } = false;
-        public string? DistanceFromLandmark { get; set; } 
-        public bool HasMasterRoom { get; set; }           
+        public string? DistanceFromLandmark { get; set; }
+        public bool HasMasterRoom { get; set; }
         public int ReceptionPieces { get; set; }
-        public string? View { get; set; }                 
-        public int Floor { get; set; }                   
-        public int TotalFloors { get; set; }              
+        public string? View { get; set; }
+        public int Floor { get; set; }
+        public int TotalFloors { get; set; }
         public int ApartmentsPerFloor { get; set; }
 
         public decimal? BuiltUpArea { get; set; }
         public decimal? LandArea { get; set; }
-        public int ElevatorsCount { get; set; }            
-        public int BuildYear { get; set; }                 
-        public bool HasHotelEntrance { get; set; }        
-        public bool HasSecurity { get; set; }             
+        public int ElevatorsCount { get; set; }
+        public int BuildYear { get; set; }
+        public bool HasHotelEntrance { get; set; }
+        public bool HasSecurity { get; set; }
         public bool IsFirstOwner { get; set; }
         public bool IsHotDeal { get; set; }
 
         public string? OwnerName { get; set; }
         public string? OwnerPhone { get; set; }
         public string? DeveloperName { get; set; }
-        public bool IsLegalReconciled { get; set; }       
-        public bool HasParking { get; set; }             
-        public decimal CommissionPercentage { get; set; } = 2.5m; 
+        public bool IsLegalReconciled { get; set; }
+        public bool HasParking { get; set; }
+        public decimal CommissionPercentage { get; set; } = 2.5m;
         public bool HasBalcony { get; set; }
         public bool IsFurnished { get; set; }
         public string PaymentMethod { get; set; }
-       // public int? InstallmentYears { get; set; } 
+        // public int? InstallmentYears { get; set; } 
         public string ListingType { get; set; }
         public string PropertyType { get; set; }
         public DeliveryStatus DeliveryStatus { get; set; } = DeliveryStatus.Ready;
-        public int? DeliveryYear { get; set; } 
-        public bool? IsLicensed { get; set; }       
-        public bool? HasWaterMeter { get; set; }     
-        public bool? HasElectricityMeter { get; set; } 
+        public int? DeliveryYear { get; set; }
+        public bool? IsLicensed { get; set; }
+        public bool? HasWaterMeter { get; set; }
+        public bool? HasElectricityMeter { get; set; }
         public bool? HasLandShare { get; set; }
         public bool? HasGasMeter { get; set; }
         //public decimal? DownPayment { get; set; }       
         //public decimal? QuarterInstallment { get; set; } 
-        public decimal? SecurityDeposit { get; set; }    
+        public decimal? SecurityDeposit { get; set; }
         public List<PaymentPlanDto>? PaymentPlans { get; set; }
         public decimal? MonthlyRent { get; set; }
-        public string? Code { get; set; } 
+        public string? Code { get; set; }
         public FinishingType Finishing { get; set; }
         public string? ProjectName { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public string BrokerId { get; set; } 
+        public string BrokerId { get; set; }
         public int BrokerPropertyCount { get; set; }
         public string? BrokerImage { get; set; }
         public string? BrokerTitle { get; set; }
@@ -104,7 +104,7 @@ namespace Unique_X.DTOs
         public bool? HasGarden { get; set; }
         public List<PhotoResponseDto> Photos { get; set; }
 
-        public string BrokerName { get; set; } 
+        public string BrokerName { get; set; }
         public string BrokerPhone { get; set; }
         public bool IsApproved { get; set; }
         public bool IsActive { get; set; }
@@ -146,6 +146,12 @@ namespace Unique_X.DTOs
         public int? MaxFloor { get; set; }
         public decimal? MinPricePerMeter { get; set; }
         public decimal? MaxPricePerMeter { get; set; }
+
+        // 🟢 فلاتر Multi-select (قيم مفصولة بفاصلة زي "1,2,3") - لصفحة Get Recommendation اللي بتسمح باختيار أكتر من قيمة مع بعض
+        // منفصلين عن City/ListingType/PropertyType العاديين فوق عشان ميأثروش على أي حد تاني بيستخدم القيمة المفردة
+        public string? Cities { get; set; }
+        public string? ListingTypes { get; set; }
+        public string? PropertyTypes { get; set; }
 
     }
 

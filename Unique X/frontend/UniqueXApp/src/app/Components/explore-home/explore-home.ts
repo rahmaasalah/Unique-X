@@ -13,11 +13,16 @@ import { Property } from '../../Models/property.model';
   styleUrl: './explore-home.css'
 })
 export class ExploreHomeComponent implements OnInit {
-  properties = signal<Property[]>([]);
   isLoading = signal<boolean>(true);
 
-  // 🟢 الصفحة دلوقتي بتعرض وحدات Resale Project بس
-  resaleProjectProps = computed(() => this.properties().filter(p => p.listingType === 'ResaleProject'));
+  // 🟢 دلوقتي بنجيب ResaleProject بس من الباك إند مباشرة (بدل ما نجيب كل الوحدات ونفلتر هنا)، مع Load More
+  private readonly pageSize = 12;
+  private readonly listingTypeCode = 3; // ResaleProject
+  resaleProjectProps = signal<Property[]>([]);
+  totalCount = signal(0);
+  page = signal(1);
+  isLoadingMore = signal(false);
+  hasMore = computed(() => this.resaleProjectProps().length < this.totalCount());
 
   constructor(private propertyService: PropertyService) {}
 
@@ -25,20 +30,39 @@ export class ExploreHomeComponent implements OnInit {
     this.loadProperties();
   }
 
-  // بنجيب كل الوحدات من غير أي فلتر وبعدين بنفلتر Resale Project بس في الـ computed
-  loadProperties() {
-    this.isLoading.set(true);
-    this.propertyService.getProperties({}).subscribe({
+  private loadProperties(append: boolean = false) {
+    if (append) {
+      this.isLoadingMore.set(true);
+    } else {
+      this.isLoading.set(true);
+      this.page.set(1);
+    }
+
+    this.propertyService.getProperties({
+      listingType: this.listingTypeCode,
+      pageNumber: this.page(),
+      pageSize: this.pageSize
+    }).subscribe({
       next: (response: any) => {
         this.isLoading.set(false);
-        const data = response?.message ? response.data : response;
-        this.properties.set(data || []);
+        this.isLoadingMore.set(false);
+        const data = response?.data ?? [];
+        const total = response?.totalCount ?? data.length;
+        this.resaleProjectProps.update(prev => append ? [...prev, ...data] : data);
+        this.totalCount.set(total);
       },
       error: (err) => {
         this.isLoading.set(false);
+        this.isLoadingMore.set(false);
         console.error(err);
       }
     });
+  }
+
+  loadMore() {
+    if (this.isLoadingMore() || !this.hasMore()) return;
+    this.page.update(p => p + 1);
+    this.loadProperties(true);
   }
 
   // 🟢 سكرول أفقي بأسهم يمين وشمال (زي شريط الأيقونات في الهوم)

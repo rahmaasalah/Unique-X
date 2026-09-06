@@ -11,11 +11,12 @@ import { Router } from '@angular/router';
 import { AdminService } from '../../Services/admin';
 import { GoogleAnalyticsService } from 'ngx-google-analytics';
 import { AlertService } from '../../Services/alert';
-import { Chart, registerables } from 'chart.js';
+import { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Legend, Tooltip } from 'chart.js';
 import { CrmService } from '../../Services/crm.services';
 import { ReviewService } from '../../Services/review.service';
 import { CurrencyService } from '../../Services/currency.service';
-Chart.register(...registerables);
+// 🟢 بنسجل بس العناصر اللي بنستخدمها فعليًا (line chart) بدل كل الـ registerables عشان نقلل حجم الـ chunk
+Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Legend, Tooltip);
 
 @Component({
   selector: 'app-property-details',
