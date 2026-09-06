@@ -50,10 +50,10 @@ namespace Unique_X.Data
         {
             base.OnModelCreating(builder);
 
-            
 
-                builder.Entity<Property>()
-                .HasIndex(p => p.Price);
+
+            builder.Entity<Property>()
+            .HasIndex(p => p.Price);
 
             builder.Entity<Property>()
                 .HasIndex(p => p.City);
@@ -70,6 +70,14 @@ namespace Unique_X.Data
 
             builder.Entity<Property>()
                 .HasIndex(p => p.PropertyType);
+
+            // 🟢 Performance: Region و ProjectName بيتفلتر بيهم في البحث العادي وكمان في Lookalike Units
+            // (بتجيب كل وحدة في نفس المنطقة/المشروع) - كانوا من غير index خالص يعني full table scan في كل مرة
+            builder.Entity<Property>()
+                .HasIndex(p => p.Region);
+
+            builder.Entity<Property>()
+                .HasIndex(p => p.ProjectName);
 
 
 
@@ -88,7 +96,7 @@ namespace Unique_X.Data
 
             builder.Entity<Property>()
                 .HasOne(p => p.Broker)
-                .WithMany() 
+                .WithMany()
                 .HasForeignKey(p => p.BrokerId)
                 .OnDelete(DeleteBehavior.Restrict); // نستخدم Restrict لمنع حذف المستخدم إذا كان لديه عقارات (أو يمكن جعلها Cascade حسب رغبتك)
 

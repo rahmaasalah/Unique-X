@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, ChangeDetectorRef, computed  } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectorRef, computed, WritableSignal  } from '@angular/core';
 import { CommonModule } from '@angular/common'; // مهم جداً للأوامر مثل *ngIf
 import { FormsModule } from '@angular/forms';
 import { PropertyCardComponent } from '../property-card/property-card'; // مهم لكي يتعرف على الكارت
@@ -30,12 +30,58 @@ import { environment } from '../../../environments/environment';
   styleUrl: './home.css'
 })
 export class HomeComponent implements OnInit {
-  properties = signal<Property[]>([]); 
   message = signal<string>('');
   ads = signal<any[]>([]);
   blogs = signal<any[]>([]);
   launches = signal<any[]>([]);
   private http = inject(HttpClient);
+
+  // 🟢 Pagination (Load More) - كل نوع (Resale/ResaleProject/Primary/Rent) له صفحته وزراره الخاص بيه لوحده
+  private readonly pageSize = 12;
+  private lastFilters: any = {};
+  isLoading = signal<boolean>(false);
+
+  resaleProps = signal<Property[]>([]);
+  resaleTotal = signal(0);
+  resalePage = signal(1);
+  resaleLoadingMore = signal(false);
+  resaleHasMore = computed(() => this.resaleProps().length < this.resaleTotal());
+
+  resaleProjectProps = signal<Property[]>([]);
+  resaleProjectTotal = signal(0);
+  resaleProjectPage = signal(1);
+  resaleProjectLoadingMore = signal(false);
+  resaleProjectHasMore = computed(() => this.resaleProjectProps().length < this.resaleProjectTotal());
+
+  primaryProps = signal<Property[]>([]);
+  primaryTotal = signal(0);
+  primaryPage = signal(1);
+  primaryLoadingMore = signal(false);
+  primaryHasMore = computed(() => this.primaryProps().length < this.primaryTotal());
+
+  rentProps = signal<Property[]>([]);
+  rentTotal = signal(0);
+  rentPage = signal(1);
+  rentLoadingMore = signal(false);
+  rentHasMore = computed(() => this.rentProps().length < this.rentTotal());
+
+  // 🟢 خريطة صغيرة بتربط كود نوع الإعلان (زي اللي في الباك إند) بالـ signals بتاعته - عشان مانكررش نفس الكود 4 مرات
+  private categoryState: Record<number, {
+    props: WritableSignal<Property[]>;
+    total: WritableSignal<number>;
+    page: WritableSignal<number>;
+    loadingMore: WritableSignal<boolean>;
+  }> = {
+    0: { props: this.resaleProps, total: this.resaleTotal, page: this.resalePage, loadingMore: this.resaleLoadingMore },
+    1: { props: this.rentProps, total: this.rentTotal, page: this.rentPage, loadingMore: this.rentLoadingMore },
+    2: { props: this.primaryProps, total: this.primaryTotal, page: this.primaryPage, loadingMore: this.primaryLoadingMore },
+    3: { props: this.resaleProjectProps, total: this.resaleProjectTotal, page: this.resaleProjectPage, loadingMore: this.resaleProjectLoadingMore },
+  };
+
+  anyResultsFound = computed(() =>
+    this.resaleProps().length > 0 || this.resaleProjectProps().length > 0 ||
+    this.primaryProps().length > 0 || this.rentProps().length > 0
+  );
 
   // 🟢 بانرات ثابتة بين قسمي Launches و Hot Deals - Array واحد مرتب حسب ترتيب الأدمن
   homeSectionBanners = signal<any[]>([]);
@@ -66,10 +112,6 @@ export class HomeComponent implements OnInit {
   private launchService = inject(LaunchService);
   currencyService = inject(CurrencyService);
 
-  resaleProps = computed(() => this.properties().filter(p => p.listingType === 'Resale'));
-  resaleProjectProps = computed(() => this.properties().filter(p => p.listingType === 'ResaleProject'));
-  primaryProps = computed(() => this.properties().filter(p => p.listingType === 'Primary'));
-  rentProps = computed(() => this.properties().filter(p => p.listingType === 'Rent'));
   hotDealsList = signal<any[]>([]);
   recommendedVisitsList = signal<any[]>([]);
   articles = signal<any[]>([]);
@@ -125,7 +167,6 @@ export class HomeComponent implements OnInit {
   });
 
 
-  isLoading = signal<boolean>(false);
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef); 
   constructor(private propertyService: PropertyService, 
@@ -478,76 +519,121 @@ updateProjectsList(cityId: any) {
   }
 
 
-  /* loadProperties(filters: any = {}) {
-  this.isLoading.set(true);
-  this.propertyService.getProperties(filters).subscribe({
-    next: (response: any) => {
-      this.isLoading.set(false);
-      
-      // 1. استخراج البيانات (سواء كانت مصفوفة أو كائن فيه رسالة)
-      const data = response.message ? response.data : response;
-      this.properties.set(data || []);
 
-      // 2. تحديث الرسالة بناءً على الحالة
-      if (!data || data.length === 0) {
-        if (filters.brokerId) {
-          // لو فيه brokerId في الرابط، اظهر الرسالة المخصصة
-          this.message.set("This agent hasn't listed any properties yet.");
-        } else {
-          // لو بحث عادي، اظهر الرسالة العادية
-          this.message.set("No properties match your search criteria.");
-        }
-      } else {
-        this.message.set(''); // مسح الرسالة لو فيه نتائج
-      }
-    },
-    error: (err) => {
-      this.isLoading.set(false);
-      console.error(err);
+  // 🟢 بتحوّل أي شكل بيوصل بيه فلتر نوع الإعلان (رقم، نص رقم، أو اسم زي 'Resale') لكود رقمي موحّد (0-3)، أو null لو مفيش فلتر أصلاً
+  private resolveListingTypeCode(value: any): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const nameMap: Record<string, number> = { Resale: 0, Rent: 1, Primary: 2, ResaleProject: 3 };
+    if (typeof value === 'string' && nameMap[value] !== undefined) return nameMap[value];
+    const n = Number(value);
+    return isNaN(n) ? null : n;
+  }
+
+  private updateNoResultsMessage(filters: any) {
+    if (!this.anyResultsFound()) {
+      if (filters.brokerId || filters.brokerName)
+        this.message.set("This agent hasn't listed any properties yet.");
+      else
+        this.message.set("No properties match your search criteria.");
+    } else {
+      this.message.set('');
     }
-  });
-} */
+  }
 
-  loadProperties(filters: any = {}) {
-    this.isLoading.set(true);
-    
+  // 🟢 بتجيب صفحة واحدة من نوع إعلان معين (Resale/Rent/Primary/ResaleProject) وتحدّث الـ signals بتاعته بس
+  private fetchCategoryPage(listingTypeCode: number, filters: any, page: number, append: boolean, onDone?: () => void) {
+    const state = this.categoryState[listingTypeCode];
+    if (!state) { onDone?.(); return; }
+
+    if (append) this.categoryState[listingTypeCode].loadingMore.set(true);
+
     // تنظيف الفلاتر من القيم الفارغة أو null قبل الإرسال
     const cleanFilters = Object.fromEntries(
       Object.entries(filters).filter(([_, v]) => v != null && v !== "" && v !== "null")
     );
 
-    // تطبيق القاموس
-     const apiFilters: any = { ...cleanFilters };
+    const apiFilters: any = { ...cleanFilters, listingType: listingTypeCode, pageNumber: page, pageSize: this.pageSize };
 
     if (apiFilters['searchTerm']) {
       apiFilters['searchTerm'] = this.getSmartSearchTerm(apiFilters['searchTerm'] as string);
     }
-    
     if (apiFilters['projectName']) {
       apiFilters['projectName'] = this.getSmartSearchTerm(apiFilters['projectName'] as string);
     }
+
     this.propertyService.getProperties(apiFilters).subscribe({
       next: (response: any) => {
-        this.isLoading.set(false);
-        const data = response.message ? response.data : response;
-        this.properties.set(data || []);
-
-        // تحديث الرسالة
-        if (!data || data.length === 0) {
-          if (filters.brokerId || filters.brokerName) 
-            this.message.set("This agent hasn't listed any properties yet.");
-          else 
-            this.message.set("No properties match your search criteria.");
-        } else {
-          this.message.set('');
-        }
+        state.loadingMore.set(false);
+        const data = response?.data ?? [];
+        const total = response?.totalCount ?? data.length;
+        state.props.update(prev => append ? [...prev, ...data] : data);
+        state.total.set(total);
+        onDone?.();
       },
       error: (err) => {
-        this.isLoading.set(false);
+        state.loadingMore.set(false);
         console.error(err);
+        onDone?.();
       }
     });
-}
+  }
+
+  loadProperties(filters: any = {}, append: boolean = false) {
+    if (!append) {
+      this.isLoading.set(true);
+      this.lastFilters = filters;
+    }
+
+    const explicitCode = this.resolveListingTypeCode(filters.listingType);
+
+    if (explicitCode !== null) {
+      // 🟢 المستخدم فلتر بنوع إعلان معين بنفسه (من الناف بار مثلاً) - نجيب النوع ده بس
+      // ونصفّر باقي الأنواع عشان أقسامهم متفضلش شايلة نتايج قديمة من قبل الفلترة
+      if (!append) {
+        Object.keys(this.categoryState).forEach(codeStr => {
+          const code = Number(codeStr);
+          const state = this.categoryState[code];
+          if (code !== explicitCode) {
+            state.props.set([]);
+            state.total.set(0);
+          }
+          state.page.set(1);
+        });
+      }
+      this.fetchCategoryPage(explicitCode, filters, this.categoryState[explicitCode].page(), append, () => {
+        this.isLoading.set(false);
+        this.updateNoResultsMessage(filters);
+      });
+      return;
+    }
+
+    // 🟢 مفيش فلتر بنوع معين - كل الأنواع بتتحمل مع بعض، كل واحد بصفحته وزراره لوحده
+    const codes = Object.keys(this.categoryState).map(Number);
+    if (!append) {
+      codes.forEach(code => this.categoryState[code].page.set(1));
+    }
+
+    let remaining = codes.length;
+    codes.forEach(code => {
+      this.fetchCategoryPage(code, filters, this.categoryState[code].page(), append, () => {
+        remaining--;
+        if (remaining === 0) {
+          this.isLoading.set(false);
+          this.updateNoResultsMessage(filters);
+        }
+      });
+    });
+  }
+
+  // 🟢 بتحمّل صفحة إضافية من نوع إعلان معين بس - الأنواع التانية متتأثرش خالص
+  loadMoreCategory(listingTypeCode: number) {
+    const state = this.categoryState[listingTypeCode];
+    if (!state) return;
+    if (state.loadingMore() || state.props().length >= state.total()) return;
+    const nextPage = state.page() + 1;
+    state.page.set(nextPage);
+    this.fetchCategoryPage(listingTypeCode, this.lastFilters, nextPage, true);
+  }
 
 getSmartSearchTerm(term: string): string {
     if (!term) return '';

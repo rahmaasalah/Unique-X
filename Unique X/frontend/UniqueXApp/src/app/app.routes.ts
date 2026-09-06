@@ -3,9 +3,6 @@ import { authGuard } from './Guards/auth-guard';
 import { guestGuard } from './Guards/guest-guard';
 import { adminGuard } from './Guards/admin-guard';
 import { leadFeedbackGuard } from './Guards/lead-feedback-guard';
-import { InvestmentCalculatorComponent } from './Components/investment-calculator/investment-calculator';
-import { LaunchDetailComponent } from './Components/launch-detail/launch-detail';
-import { LaunchListComponent } from './Components/launch-list/launch-list';
 
 export const routes: Routes = [
   // ===== Public =====
@@ -44,10 +41,10 @@ export const routes: Routes = [
 
   // ===== Admin =====
   { path: 'admin', loadComponent: () => import('./Components/admin-dashboard/admin-dashboard').then(m => m.AdminDashboardComponent), canActivate: [adminGuard] },
-  { path: 'investment-calculator', component: InvestmentCalculatorComponent },
-  { path: 'launch', component: LaunchListComponent },
-{ path: 'launch/:id', component: LaunchDetailComponent },
-{ path: 'launch/:id/:slug', component: LaunchDetailComponent },
+  { path: 'investment-calculator', loadComponent: () => import('./Components/investment-calculator/investment-calculator').then(m => m.InvestmentCalculatorComponent) },
+  { path: 'launch', loadComponent: () => import('./Components/launch-list/launch-list').then(m => m.LaunchListComponent) },
+  { path: 'launch/:id', loadComponent: () => import('./Components/launch-detail/launch-detail').then(m => m.LaunchDetailComponent) },
+  { path: 'launch/:id/:slug', loadComponent: () => import('./Components/launch-detail/launch-detail').then(m => m.LaunchDetailComponent) },
   // ===== CRM =====
   { path: 'crm/leads', loadComponent: () => import('./Components/CRM/leads-dashboard/leads-dashboard').then(m => m.LeadsDashboardComponent) },
   { path: 'crm/leads/:id', loadComponent: () => import('./Components/CRM/lead-details/lead-details').then(m => m.LeadDetailsComponent), canDeactivate: [leadFeedbackGuard] },

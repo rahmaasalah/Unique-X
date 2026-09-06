@@ -188,7 +188,7 @@ namespace Unique_X.Services.Implementation
             return MapToResponseDto(property);
         }
 
-        public async Task<IEnumerable<PropertyResponseDto>> GetAllPropertiesAsync(PropertyFilterDto filter, string userId)
+        public async Task<(IEnumerable<PropertyResponseDto> Items, int TotalCount)> GetAllPropertiesAsync(PropertyFilterDto filter, string userId)
         {
 
             var userFavorites = new List<int>();
@@ -213,6 +213,7 @@ namespace Unique_X.Services.Implementation
             }
 
             var query = _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -221,24 +222,45 @@ namespace Unique_X.Services.Implementation
             if (filter.City.HasValue)
                 query = query.Where(p => p.City == (City)filter.City.Value);
 
+            // 🟢 فلتر Multi-select لأكتر من مدينة مع بعض (Get Recommendation) - منفصل عن City المفردة فوق
+            if (!string.IsNullOrEmpty(filter.Cities))
+            {
+                var cityInts = filter.Cities.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => int.TryParse(s.Trim(), out var v) ? (int?)v : null)
+                    .Where(v => v.HasValue).Select(v => v!.Value).ToList();
+                if (cityInts.Any())
+                    query = query.Where(p => cityInts.Contains((int)p.City));
+            }
+
             if (filter.MinPrice.HasValue)
                 query = query.Where(p => p.Price >= filter.MinPrice.Value);
 
             if (filter.MaxPrice.HasValue)
                 query = query.Where(p => p.Price <= filter.MaxPrice.Value);
 
-            // 🟢 فلترة بسعر المتر
+            // 🟢 فلترة بسعر المتر - نفس منطق الفرونت بالظبط: لو PricePerMeter متسجلش (0)، نحسبها من السعر/المساحة
+            // بدل ما نفلتر على العمود الخام بس (كان هيستبعد غلط أي عقار قديم متسجلش فيه سعر المتر يدويًا)
             if (filter.MinPricePerMeter.HasValue)
-                query = query.Where(p => p.PricePerMeter >= filter.MinPricePerMeter.Value);
+                query = query.Where(p => (p.PricePerMeter > 0 ? p.PricePerMeter : (p.Area > 0 ? p.Price / p.Area : 0)) >= filter.MinPricePerMeter.Value);
 
             if (filter.MaxPricePerMeter.HasValue)
-                query = query.Where(p => p.PricePerMeter <= filter.MaxPricePerMeter.Value);
+                query = query.Where(p => (p.PricePerMeter > 0 ? p.PricePerMeter : (p.Area > 0 ? p.Price / p.Area : 0)) <= filter.MaxPricePerMeter.Value);
 
             if (filter.Rooms.HasValue)
                 query = query.Where(p => p.Rooms == filter.Rooms.Value);
 
             if (filter.PropertyType.HasValue)
                 query = query.Where(p => p.PropertyType == (PropertyType)filter.PropertyType.Value);
+
+            // 🟢 فلتر Multi-select لأكتر من نوع عقار مع بعض (Get Recommendation)
+            if (!string.IsNullOrEmpty(filter.PropertyTypes))
+            {
+                var typeInts = filter.PropertyTypes.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => int.TryParse(s.Trim(), out var v) ? (int?)v : null)
+                    .Where(v => v.HasValue).Select(v => v!.Value).ToList();
+                if (typeInts.Any())
+                    query = query.Where(p => typeInts.Contains((int)p.PropertyType));
+            }
 
 
             if (!string.IsNullOrEmpty(filter.Code))
@@ -308,6 +330,16 @@ namespace Unique_X.Services.Implementation
             {
                 query = query.Where(p => p.ListingType == (ListingType)filter.ListingType.Value);
             }
+
+            // 🟢 فلتر Multi-select لأكتر من نوع إعلان مع بعض (Get Recommendation)
+            if (!string.IsNullOrEmpty(filter.ListingTypes))
+            {
+                var listingInts = filter.ListingTypes.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => int.TryParse(s.Trim(), out var v) ? (int?)v : null)
+                    .Where(v => v.HasValue).Select(v => v!.Value).ToList();
+                if (listingInts.Any())
+                    query = query.Where(p => listingInts.Contains((int)p.ListingType));
+            }
             query = query.Where(p => !p.IsSold && p.IsActive && p.IsApproved);
 
             if (!string.IsNullOrEmpty(filter.SearchTerm))
@@ -334,15 +366,35 @@ namespace Unique_X.Services.Implementation
                 }
             }
 
-            var properties = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
+            // 🟢 العدد الكلي للنتائج المطابقة (قبل تقطيعها لصفحات) - بيتحسب مرة واحدة على الفلاتر بس، من غير Include عشان يكون خفيف
+            var totalCount = await query.CountAsync();
 
-            return properties.Select(p => {
-                var dto = MapToResponseDto(p);
+            var orderedQuery = query.OrderByDescending(p => p.CreatedAt);
+
+            // 🟢 التقطيع لصفحات (Pagination) بيتفعل بس لو الطالب بعت PageNumber/PageSize فعلاً (زي صفحة الهوم مع Load More)
+            // لو محدش بعتهم (زي recommendation-results, price-range-search, explore-home, lookalike units) بيرجع كل النتائج زي ما كان بالظبط، عشان دول بيعملوا فلترة على القائمة كاملة عندهم
+            IQueryable<Property> pagedQuery = orderedQuery;
+            if (filter.PageNumber.HasValue || filter.PageSize.HasValue)
+            {
+                int pageNumber = (filter.PageNumber ?? 1) < 1 ? 1 : filter.PageNumber ?? 1;
+                int pageSize = (filter.PageSize ?? 12) < 1 ? 12 : filter.PageSize ?? 12;
+                pagedQuery = orderedQuery.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            }
+
+            var properties = await pagedQuery.ToListAsync();
+
+            // 🟢 كويري واحدة بس لكل صفحة عشان نعرف مين فيهم Hot Deal، بدل ما MapToResponseDto يعمل كويري منفصلة لكل عقار
+            var hotDealIds = await _context.HotDeals.Select(h => h.PropertyId).ToListAsync();
+
+            var items = properties.Select(p => {
+                var dto = MapToResponseDto(p, hotDealIds.Contains(p.Id));
                 dto.IsFavorite = userFavorites.Contains(p.Id);
                 dto.IsShortlisted = userShortlisted.Contains(p.Id);
                 dto.IsVisitListed = userVisitListed.Contains(p.Id);
                 return dto;
             });
+
+            return (items, totalCount);
         }
 
         public async Task<bool> MarkAsSoldAsync(int id, string brokerId)
@@ -383,6 +435,7 @@ namespace Unique_X.Services.Implementation
         public async Task<IEnumerable<PropertyResponseDto>> GetBrokerPropertiesAsync(string brokerId)
         {
             var properties = await _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -392,13 +445,15 @@ namespace Unique_X.Services.Implementation
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
-            return properties.Select(p => MapToResponseDto(p));
+            var hotDealIds = await _context.HotDeals.Select(h => h.PropertyId).ToListAsync();
+            return properties.Select(p => MapToResponseDto(p, hotDealIds.Contains(p.Id)));
         }
 
         public async Task<PropertyResponseDto> GetPropertyByIdAsync(int id)
         {
             // 1. جلب العقار أولاً
             var property = await _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
@@ -406,7 +461,7 @@ namespace Unique_X.Services.Implementation
 
             if (property == null) return null;
 
-            var count = await _context.Properties.CountAsync(p => p.BrokerId == property.BrokerId && !p.IsSold);
+            var count = await _context.Properties.AsNoTracking().CountAsync(p => p.BrokerId == property.BrokerId && !p.IsSold);
 
             var dto = MapToResponseDto(property);
 
@@ -625,14 +680,15 @@ namespace Unique_X.Services.Implementation
             return await _context.SaveChangesAsync() > 0;
         }
 
-        private PropertyResponseDto MapToResponseDto(Property property)
+        // 🟢 isHotDealOverride: لو الكولر (اللي بيجيب أكتر من عقار مرة واحدة) عنده الإجابة جاهزة، بيبعتها هنا بدل ما الدالة تعمل كويري لوحدها لكل عقار (كان ده بيعمل N+1 query حقيقي على كل صفحة فيها أكتر من عقار)
+        private PropertyResponseDto MapToResponseDto(Property property, bool? isHotDealOverride = null)
         {
             return new PropertyResponseDto
             {
                 Id = property.Id,
                 Title = property.Title,
                 Description = property.Description,
-                IsHotDeal = _context.HotDeals.Any(h => h.PropertyId == property.Id),
+                IsHotDeal = isHotDealOverride ?? _context.HotDeals.Any(h => h.PropertyId == property.Id),
                 Price = property.Price,
                 Area = property.Area,
                 Rooms = property.Rooms,
@@ -749,13 +805,15 @@ namespace Unique_X.Services.Implementation
             var hotDealIds = await _context.HotDeals.Select(h => h.PropertyId).ToListAsync();
 
             var properties = await _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
                 .Where(p => hotDealIds.Contains(p.Id) && p.IsActive && p.IsApproved && !p.IsSold)
                 .ToListAsync();
 
-            return properties.Select(p => MapToResponseDto(p));
+            // 🟢 كل عقار هنا Hot Deal بالتعريف (هي أصلاً اللي جابت الـ Ids)، فمفيش داعي MapToResponseDto يعمل كويري تاني يتأكد
+            return properties.Select(p => MapToResponseDto(p, true));
         }
 
         public async Task<IEnumerable<PropertyResponseDto>> GetRecommendedVisitsAsync()
@@ -763,13 +821,15 @@ namespace Unique_X.Services.Implementation
             var recommendedIds = await _context.RecommendedVisits.Select(r => r.PropertyId).ToListAsync();
 
             var properties = await _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
                 .Where(p => recommendedIds.Contains(p.Id) && p.IsActive && p.IsApproved && !p.IsSold)
                 .ToListAsync();
 
-            return properties.Select(p => MapToResponseDto(p));
+            var hotDealIds = await _context.HotDeals.Select(h => h.PropertyId).ToListAsync();
+            return properties.Select(p => MapToResponseDto(p, hotDealIds.Contains(p.Id)));
         }
 
         private async Task<string> GenerateSmartCodeAsync(Property property)
@@ -903,6 +963,7 @@ namespace Unique_X.Services.Implementation
         public async Task<PropertyResponseDto> GetPropertyByCodeAsync(string code)
         {
             var property = await _context.Properties
+                .AsNoTracking()
                 .Include(p => p.Photos)
                 .Include(p => p.PaymentPlans)
                 .FirstOrDefaultAsync(p => p.Code == code);

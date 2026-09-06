@@ -39,7 +39,7 @@
         <p class="mt-3">No units found in this price-per-meter range.</p>
       </div>
     } @else {
-      <p class="text-muted small mb-3">{{ results().length }} matching unit(s)</p>
+      <p class="text-muted small mb-3">{{ totalCount() }} matching unit(s)</p>
       <div class="row g-4">
         @for (prop of results(); track prop.id) {
           <div class="col-lg-3 col-md-4 col-sm-6">
@@ -47,6 +47,19 @@
           </div>
         }
       </div>
+      @if (hasMore()) {
+        <div class="text-center my-4">
+          <button class="btn btn-outline-danger rounded-pill px-5 fw-bold"
+                  [disabled]="isLoadingMore()"
+                  (click)="loadMore()">
+            @if (isLoadingMore()) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span> Loading...
+            } @else {
+              Load More
+            }
+          </button>
+        </div>
+      }
     }
   }
 

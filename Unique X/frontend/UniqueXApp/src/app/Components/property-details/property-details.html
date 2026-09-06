@@ -542,7 +542,7 @@
     <div class="card border-0 shadow rounded-4 p-4 text-center">
       <div class="position-relative d-inline-block mx-auto mb-3">
         <img [src]="prop.brokerImage || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" 
-             class="rounded-circle shadow-sm border border-3 border-danger" 
+             class="rounded-circle shadow-sm border border-3 border-danger" loading="lazy" decoding="async"
              style="width: 80px; height: 80px; object-fit: cover;">
       </div>
       <h5 class="fw-bold mb-1">{{ prop.brokerName }}</h5>
@@ -588,7 +588,7 @@
   <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
     <div class="d-flex align-items-center">
       <img [src]="prop.brokerImage || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
-           class="rounded-circle shadow-sm border me-3" 
+           class="rounded-circle shadow-sm border me-3" loading="lazy" decoding="async"
            style="width: 70px; height: 70px; object-fit: cover;">
       <div>
         <h4 class="fw-bold mb-0" style="font-size: 0.7rem; letter-spacing: 1px;">Provided By</h4>
@@ -670,7 +670,7 @@
     @for (review of reviews(); track review.id) {
       <div class="d-flex gap-3 border-bottom pb-3 mb-3">
         <img [src]="review.userImage || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
-             class="rounded-circle" style="width:45px;height:45px;object-fit:cover;">
+             class="rounded-circle" loading="lazy" decoding="async" style="width:45px;height:45px;object-fit:cover;">
         <div class="flex-grow-1">
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
@@ -779,7 +779,7 @@
             <div class="carousel-inner">
               @for (photo of prop.photos; track photo.url; let i = $index) {
                 <div class="carousel-item" [class.active]="i === 0">
-                  <img [src]="photo.url">
+                  <img [src]="photo.url" loading="lazy" decoding="async">
                 </div>
               }
             </div>

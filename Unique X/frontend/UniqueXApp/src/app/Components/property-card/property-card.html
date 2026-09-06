@@ -5,6 +5,7 @@
     <!-- الصورة الرئيسية -->
     <img [src]="getThumbUrl(property.photos[0]?.url)" 
          class="card-img-top object-fit-cover" 
+         loading="lazy" decoding="async"
          style="height: 200px;" alt="Property Image">
     
     <div class="position-absolute top-0 start-0 m-3 d-flex flex-column gap-1" style="z-index: 5;">

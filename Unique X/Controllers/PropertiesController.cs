@@ -55,7 +55,11 @@ namespace Unique_X.Controllers
         public async Task<IActionResult> GetAll([FromQuery] PropertyFilterDto filter)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var result = await _propertiesService.GetAllPropertiesAsync(filter, userId);
+            var (result, totalCount) = await _propertiesService.GetAllPropertiesAsync(filter, userId);
+
+            // 🟢 الـ Pagination بترجع شكل رد إضافي (TotalCount) بس لو الطلب فعلاً طالب صفحة معينة (PageNumber/PageSize)
+            // عشان الصفحات التانية (recommendation-results, price-range-search, explore-home, lookalike units) تفضل شغالة زي ما هي بالظبط من غير أي تغيير
+            bool isPaged = filter.PageNumber.HasValue || filter.PageSize.HasValue;
 
             if (result == null || !result.Any())
             {
@@ -71,10 +75,14 @@ namespace Unique_X.Controllers
                     message = "There are no properties in the requested price range.";
                 }
 
-                return Ok(new { Message = message, Data = result });
+                return isPaged
+                    ? Ok(new { Message = message, Data = result, TotalCount = totalCount })
+                    : Ok(new { Message = message, Data = result });
             }
 
-            return Ok(result);
+            return isPaged
+                ? Ok(new { Data = result, TotalCount = totalCount })
+                : Ok(result);
         }
 
         [HttpGet("my-properties")]
