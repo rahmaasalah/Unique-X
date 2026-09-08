@@ -203,14 +203,14 @@
   <h5 class="fw-bold mb-3 border-start border-danger border-4 ps-2">Description</h5>
   
   <!-- نطبق الكلاس description-collapsed فقط إذا كانت الحالة false -->
-  <p class="text-muted lh-lg mb-1" 
+  <p #descriptionText class="text-muted lh-lg mb-1" 
      [class.description-collapsed]="!isDescriptionExpanded()"
      style="white-space: pre-line;">
     {{ prop.description }}
   </p>
 
-  <!-- يظهر الزرار فقط إذا كان النص طويلاً (مثلاً أكثر من 150 حرف) -->
-  @if (prop.description.length > 150) {
+  <!-- يظهر الزرار فقط لو النص اتقطع فعليًا (سطرين) على الشاشة الحالية، مش على عدد حروف ثابت -->
+  @if (isDescriptionTruncated() || isDescriptionExpanded()) {
     <button type="button" class="see-more-btn" (click)="toggleDescription()">
       {{ isDescriptionExpanded() ? 'See less' : 'See full description' }}
       <i class="bi" [class.bi-chevron-up]="isDescriptionExpanded()" [class.bi-chevron-down]="!isDescriptionExpanded()"></i>

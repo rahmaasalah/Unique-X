@@ -61,7 +61,7 @@
         </div>
         
         <div class="col-md-3">
-          <label class="form-label small fw-bold text-dark">Campaign Source *</label>
+          <label class="form-label small fw-bold text-dark">Campaign Source</label>
           <select class="form-select bg-light border-0 rounded-3" formControlName="campaignSource">
             <option value="">-- Direct / Organic --</option>
             <option *ngFor="let s of sourcesList" [value]="s">{{ s }}</option>
@@ -69,7 +69,7 @@
         </div>
 
         <div class="col-md-3 position-relative">
-  <label class="form-label small fw-bold text-dark">Campaign Name *</label>
+  <label class="form-label small fw-bold text-dark">Campaign Name</label>
   <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
          placeholder="Type to search code..."
          [ngModel]="searchCampaignCode()" 
@@ -91,7 +91,7 @@
 
 
         <div class="col-md-3">
-          <label class="form-label small fw-bold text-dark">Referred By *</label>
+          <label class="form-label small fw-bold text-dark">Referred By</label>
           <select class="form-select bg-light border-0 rounded-3" formControlName="referredBy">
             <option value="">-- Direct (No Referral) --</option>
             <option *ngFor="let broker of dummyBrokers()" [value]="broker.code">
@@ -132,7 +132,7 @@
 
         <!-- 🟢 Cities (جديد - نفس فكرة مودال Get Recommendation) -->
         <div class="col-md-6">
-          <label class="form-label small fw-bold text-dark d-block mb-2">Preferred Cities <span class="text-muted fw-normal">(Multi-select)</span></label>
+          <label class="form-label small fw-bold text-dark d-block mb-2">Preferred Cities <span class="text-muted fw-normal">(Zone · Multi-select)</span></label>
           <div class="d-flex flex-wrap gap-2">
             @for (opt of ['Cairo', 'Alexandria', 'North Coast']; track opt) {
               <button type="button" class="btn btn-sm rounded-pill px-3"
@@ -163,13 +163,7 @@
           <input type="number" min="0" class="form-control bg-light border-0 rounded-3" formControlName="maxBathrooms">
         </div>
 
-        <div class="col-md-4">
-          <label class="form-label small fw-bold text-dark">Zone</label>
-          <select class="form-select bg-light border-0 rounded-3 border-start border-danger border-4 fw-bold" formControlName="zoneId">
-            <option value="">-- Select Zone --</option>
-            <option *ngFor="let zone of zones" [value]="zone.id">{{ zone.name }}</option>
-          </select>
-        </div>
+        <!-- 🟢 الـ Zone dropdown القديم اتشال - Preferred Cities تحت (Multi-select) بقت هي المتحكمة في الـ Zone -->
 
         <!-- المناطق والمشاريع -->
         <div class="col-12 animate__animated animate__fadeIn" *ngIf="showRegionSelection && availableRegions.length > 0">
@@ -196,10 +190,15 @@
         <hr class="my-3 text-muted">
 
         <!-- 4. التفاصيل المالية -->
-        <div class="col-md-6">
-          <label class="form-label small fw-bold text-dark">Budget</label>
+        <div class="col-md-3">
+          <label class="form-label small fw-bold text-dark">Min Budget</label>
           <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
-                 placeholder="e.g. 5,000,000" formControlName="totalAmount" (input)="formatCurrency($event, 'totalAmount')">
+                 placeholder="e.g. 3,000,000" formControlName="minBudget" (input)="formatCurrency($event, 'minBudget')">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-bold text-dark">Max Budget</label>
+          <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
+                 placeholder="e.g. 5,000,000" formControlName="maxBudget" (input)="formatCurrency($event, 'maxBudget')">
         </div>
         <div class="col-md-6">
           <label class="form-label small fw-bold text-dark">Payment Method</label>
@@ -249,6 +248,12 @@
         </div>
         
         <div class="col-12 mt-4 text-end border-top pt-4">
+          @if (editRequestForm.invalid && missingRequiredFields.length > 0) {
+            <div class="text-danger small mb-2">
+              <i class="bi bi-exclamation-circle me-1"></i>
+              Please complete: {{ missingRequiredFields.join(', ') }}
+            </div>
+          }
           <button type="submit" class="btn btn-danger btn-lg px-5 rounded-pill fw-bold shadow" [disabled]="editRequestForm.invalid">
             <i class="bi bi-save2-fill me-2"></i> Save Changes
           </button>
