@@ -264,7 +264,10 @@ namespace Unique_X.Services.Implementation
 
 
             if (!string.IsNullOrEmpty(filter.Code))
-                query = query.Where(p => p.Code == filter.Code);
+            {
+                var codeSearch = filter.Code.Trim().ToUpper();
+                query = query.Where(p => p.Code.ToUpper() == codeSearch);
+            }
 
             if (filter.BuildYear.HasValue)
                 query = query.Where(p => p.BuildYear >= filter.BuildYear.Value);

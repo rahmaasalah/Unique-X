@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, effect } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -25,7 +25,11 @@ Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryS
   templateUrl: './property-details.html',
   styleUrl: './property-details.css'
 })
-export class PropertyDetailsComponent implements OnInit {
+export class PropertyDetailsComponent implements OnInit, AfterViewInit {
+  // 🟢 بنستخدم العنصر الفعلي في الـ DOM عشان نعرف هل النص اتقطع بصريًا فعلاً (سطرين) ولا لأ،
+  // بدل ما نعتمد على عدد حروف ثابت (كان بيفشل في الموبايل لأن عدد الحروف اللي بتلم في سطرين أقل بكتير من الديسكتوب)
+  @ViewChild('descriptionText') descriptionTextEl?: ElementRef<HTMLElement>;
+  isDescriptionTruncated = signal(false);
   private route = inject(ActivatedRoute);
   private propertyService = inject(PropertyService);
   public authService = inject(AuthService);
@@ -134,6 +138,29 @@ export class PropertyDetailsComponent implements OnInit {
 
 
 
+  ngAfterViewInit(): void {
+    this.checkDescriptionTruncation();
+  }
+
+  // 🟢 لو المستخدم لف الموبايل أو غيّر حجم شاشة المتصفح، لازم نعيد الحساب
+  // (بس من غير ما نكسر الزرار لو النص كان متفتح Expanded أصلاً)
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (!this.isDescriptionExpanded()) {
+      this.checkDescriptionTruncation();
+    }
+  }
+
+  // بنستنى فريم واحد عشان الـ DOM يترسم بالكلاس description-collapsed (سطرين) الأول،
+  // بعدين نقارن ارتفاع النص الكامل (scrollHeight) بارتفاع الصندوق الظاهر (clientHeight)
+  private checkDescriptionTruncation(): void {
+    setTimeout(() => {
+      const el = this.descriptionTextEl?.nativeElement;
+      if (!el) { this.isDescriptionTruncated.set(false); return; }
+      this.isDescriptionTruncated.set(el.scrollHeight > el.clientHeight + 1);
+    }, 0);
+  }
+
   ngOnInit(): void {
   // 🟢 بنستخدم paramMap (مش snapshot) عشان لو المستخدم دوس على وحدة من Lookalike Units
   // Angular بيعيد استخدام نفس الكومبوننت (نفس الراوت، مجرد id مختلف) وميعملش ngOnInit تاني،
@@ -161,6 +188,7 @@ private loadProperty(id: number): void {
         this.isLiked.set(data.isFavorite ?? false);
         this.isShortlisted.set(data.isShortlisted ?? false);
         this.isVisitListed.set(data.isVisitListed ?? false);
+        this.checkDescriptionTruncation();
         this.adminService.trackAction('PropertyView', data.id).subscribe();
         const slugText = `${data.propertyType} ${data.listingType} ${data.region} ${data.code || ''}`;
         

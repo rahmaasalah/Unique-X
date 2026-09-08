@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal,computed} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
 import { AdminService } from '../../../Services/admin';
@@ -157,18 +158,21 @@ export class EditRequestComponent implements OnInit {
       email: [''],
       leadStatusId: [1, Validators.required],
       
-      // 👇 بقوا Required زي ما طلبتي
-      campaignSource: ['', Validators.required],
-      campaignName: ['', Validators.required],
-      referredBy: ['', Validators.required],
+      // 🟢 بقوا مش Required - عندهم اختيار شرعي "Direct" بقيمة فاضية ''،
+      // وكانوا بيخلوا الفورم invalid للأبد وزرار الـ Save miss يشتغلش
+      campaignSource: [''],
+      campaignName: [''],
+      referredBy: [''],
       
       propertyType: [[], Validators.required], // 🟢 بقت Array - Multi-select زي مودال Get Recommendation
       purpose: [[], Validators.required], // 🟢 بقت Array - Multi-select
-      totalAmount: [''], 
+      // 🟢 Budget بقى Range (Min/Max) بدل رقم واحد - زي مودال Get Recommendation
+      minBudget: [''],
+      maxBudget: [''],
       paymentMethod: ['Cash'],
-      zoneId: [''],
       selectedRegions: [[]],
       selectedProjects: [[]],
+      // 🟢 selectedCities بقت هي نفسها الـ "Zone" - مفيش zoneId منفصل خالص دلوقتي
       selectedCities: [[]], // 🟢 جديد - Multi-select زي مودال Get Recommendation
       minRooms: [''], maxRooms: [''], // 🟢 جديد
       minBathrooms: [''], maxBathrooms: [''], // 🟢 جديد
@@ -196,17 +200,16 @@ export class EditRequestComponent implements OnInit {
             this.leadQualification.set(null);
           }
           this.originalPhone = info.phoneNumber; // نحفظ الرقم الأصلي
-          
-          this.editRequestForm.get('zoneId')?.setValue(req.zoneId || '', { emitEvent: false });
-          this.loadRegionsForZone(req.zoneId);
-          this.updateAvailableProjects(req.zoneId);
-
           const regionsArr = req.selectedRegions ? req.selectedRegions.split(', ').filter((x:any)=>x) :[];
           const projectsArr = req.selectedProjects ? req.selectedProjects.split(', ').filter((x:any)=>x) :[];
           // 🟢 PropertyType/Purpose/Cities بقوا Comma-separated من الباك إند - بنحولهم لـ Array هنا
           const propertyTypeArr = req.propertyType ? req.propertyType.split(',').map((x:string)=>x.trim()).filter((x:any)=>x) :[];
           const purposeArr = req.purpose ? req.purpose.split(',').map((x:string)=>x.trim()).filter((x:any)=>x) :[];
           const citiesArr = req.selectedCities ? req.selectedCities.split(',').map((x:string)=>x.trim()).filter((x:any)=>x) :[];
+
+          // 🟢 Regions/Projects دلوقتي بيتحملوا بناءً على المدن المختارة (Preferred Cities) بدل zoneId منفصل
+          this.loadRegionsForZone(citiesArr);
+          this.updateAvailableProjects(citiesArr);
 
           // 🟢 جلب أكواد المشاريع الخاصة بالعميل ده عشان الداتا تنزل متعلمة جاهزة (بناخد أول Purpose مختار)
           this.fetchPropertyCodes(purposeArr[0] || '', () => {
@@ -228,11 +231,11 @@ export class EditRequestComponent implements OnInit {
               minBathrooms: req.minBathrooms ?? '',
               maxBathrooms: req.maxBathrooms ?? '',
               paymentMethod: req.paymentMethod || 'Cash',
-              zoneId: req.zoneId || '',
               selectedRegions: regionsArr,
               selectedProjects: projectsArr,
               
-              totalAmount: req.totalAmount ? Number(req.totalAmount).toLocaleString('en-US') : '',
+              minBudget: req.minBudget ? Number(req.minBudget).toLocaleString('en-US') : '',
+              maxBudget: req.maxBudget ? Number(req.maxBudget).toLocaleString('en-US') : '',
               downPayment: req.downPayment ? Number(req.downPayment).toLocaleString('en-US') : '',
               quarterlyInstallment: req.quarterlyInstallment ? Number(req.quarterlyInstallment).toLocaleString('en-US') : '',
               installmentYears: req.installmentYears ? Number(req.installmentYears).toLocaleString('en-US') : '',
@@ -260,10 +263,11 @@ export class EditRequestComponent implements OnInit {
   }
 
  setupDynamicFields() {
-    this.editRequestForm.get('zoneId')?.valueChanges.subscribe(zoneId => {
-      this.editRequestForm.patchValue({ selectedRegions: [], selectedProjects: [] });
-      this.loadRegionsForZone(zoneId);
-      this.updateAvailableProjects(zoneId); 
+    // 🟢 Preferred Cities دلوقتي هي الـ "Zone" - أي تغيير فيها (اختيار/إلغاء مدينة) بيعيد تحميل Regions/Projects لكل المدن المختارة
+    this.editRequestForm.get('selectedCities')?.valueChanges.subscribe((cities: string[]) => {
+      this.editRequestForm.patchValue({ selectedRegions: [], selectedProjects: [] }, { emitEvent: false });
+      this.loadRegionsForZone(cities || []);
+      this.updateAvailableProjects(cities || []);
     });
 
     this.editRequestForm.get('purpose')?.valueChanges.subscribe((purpose: string[]) => {
@@ -276,28 +280,40 @@ export class EditRequestComponent implements OnInit {
     });
   }
 
-  // 🟢 المناطق (Regions) بقت جايه من الداتابيز (تاب Lookups بتاع الأدمن) بدل ليستة ثابتة في الكود
-  loadRegionsForZone(zoneId: number) {
+  // 🟢 المناطق (Regions) بقت جايه من الداتابيز (تاب Lookups بتاع الأدمن)، وبتتحمل لكل المدن (Zones) المختارة مع بعض
+  loadRegionsForZone(cityNames: string[]) {
     this.availableRegions = [];
-    if (!zoneId) return;
-    this.adminService.getRegions(zoneId).subscribe({
-      next: (regions: any[]) => {
-        this.availableRegions = (regions || []).map(r => r.name).sort();
+    const zoneIds = this.cityNamesToZoneIds(cityNames);
+    if (zoneIds.length === 0) return;
+    forkJoin(zoneIds.map(id => this.adminService.getRegions(id))).subscribe({
+      next: (results: any[][]) => {
+        const merged = results.flat().map((r: any) => r.name);
+        this.availableRegions = Array.from(new Set(merged)).sort();
       },
       error: () => this.availableRegions = []
     });
   }
 
-  // 🟢 المشاريع (Projects) بقت جايه من الداتابيز (تاب Lookups بتاع الأدمن) بدل ليستة ثابتة في الكود
-  updateAvailableProjects(zoneId: number) {
+  // 🟢 المشاريع (Projects) بقت جايه من الداتابيز (تاب Lookups بتاع الأدمن)، وبتتحمل لكل المدن (Zones) المختارة مع بعض
+  updateAvailableProjects(cityNames: string[]) {
     this.availableProjects = [];
-    if (!zoneId) return;
-    this.adminService.getProjects(undefined, zoneId).subscribe({
-      next: (projects: any[]) => {
-        this.availableProjects = (projects || []).map(p => p.name).sort();
+    const zoneIds = this.cityNamesToZoneIds(cityNames);
+    if (zoneIds.length === 0) return;
+    forkJoin(zoneIds.map(id => this.adminService.getProjects(undefined, id))).subscribe({
+      next: (results: any[][]) => {
+        const merged = results.flat().map((p: any) => p.name);
+        this.availableProjects = Array.from(new Set(merged)).sort();
       },
       error: () => this.availableProjects = []
     });
+  }
+
+  // 🟢 بيحول أسماء المدن المختارة (Cairo, Alexandria, ...) لأرقام الـ Zone المطابقة عشان نقدر ننده على الـ APIs بيها
+  private cityNamesToZoneIds(cityNames: string[]): number[] {
+    if (!cityNames || cityNames.length === 0) return [];
+    return cityNames
+      .map(name => this.zones.find(z => z.name === name)?.id)
+      .filter((id): id is number => id !== undefined);
   }
 
   onRegionChange(event: any, region: string) {
@@ -329,6 +345,21 @@ export class EditRequestComponent implements OnInit {
   isMultiValueSelected(controlName: string, value: string): boolean {
     const current = (this.editRequestForm.get(controlName)?.value || []) as string[];
     return current.includes(value);
+  }
+
+  // 🟢 عشان زرار Save ميبانش "مش شغال" من غير سبب - بنوضح فعليًا أي حقل ناقص
+  get missingRequiredFields(): string[] {
+    if (!this.editRequestForm) return [];
+    const labels: Record<string, string> = {
+      fullName: 'Client Name',
+      phoneNumber: 'Phone Number',
+      leadStatusId: 'Lead Status',
+      propertyType: 'Property Type',
+      purpose: 'Purpose'
+    };
+    return Object.keys(labels)
+      .filter(key => this.editRequestForm.get(key)?.invalid)
+      .map(key => labels[key]);
   }
 
   get showRegionSelection() {
@@ -377,12 +408,12 @@ export class EditRequestComponent implements OnInit {
     submitData.maxRooms = submitData.maxRooms ? Number(submitData.maxRooms) : null;
     submitData.minBathrooms = submitData.minBathrooms ? Number(submitData.minBathrooms) : null;
     submitData.maxBathrooms = submitData.maxBathrooms ? Number(submitData.maxBathrooms) : null;
-    submitData.totalAmount = submitData.totalAmount ? parseInt(String(submitData.totalAmount).replace(/,/g, ''), 10) : 0;
+    submitData.minBudget = submitData.minBudget ? parseInt(String(submitData.minBudget).replace(/,/g, ''), 10) : 0;
+    submitData.maxBudget = submitData.maxBudget ? parseInt(String(submitData.maxBudget).replace(/,/g, ''), 10) : 0;
     submitData.downPayment = submitData.downPayment ? parseInt(String(submitData.downPayment).replace(/,/g, ''), 10) : 0;
     submitData.quarterlyInstallment = submitData.quarterlyInstallment ? parseInt(String(submitData.quarterlyInstallment).replace(/,/g, ''), 10) : 0;
     submitData.installmentYears = submitData.installmentYears ? parseInt(String(submitData.installmentYears).replace(/,/g, ''), 10) : 0;
     if (submitData.campaignId === '') submitData.campaignId = null;
-    if (submitData.zoneId === '') submitData.zoneId = null;
 
     // الـ backend هيتحقق من التكرار تلقائياً ويرجع isDuplicate لو في تكرار
     this.saveUpdate(submitData);
