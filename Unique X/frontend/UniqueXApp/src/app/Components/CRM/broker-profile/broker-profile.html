@@ -172,6 +172,15 @@
             <option *ngFor="let zone of zones" [value]="zone.name">{{ zone.name }}</option>
           </select>
         </div>
+        <div class="col-md-2">
+          <!-- 🟢 فلتر التراكر الموحّد - Active/Late/TooLate جاي من الباك إند (نفس المصدر في كل الصفحات) -->
+          <select class="form-select form-select-sm" [ngModel]="filterTrackerStatus()" (ngModelChange)="filterTrackerStatus.set($event)">
+            <option value="">All Tracker Status</option>
+            <option value="Active">Active</option>
+            <option value="Late">Late</option>
+            <option value="TooLate">Too Late</option>
+          </select>
+        </div>
         <div class="col-md-3 d-flex gap-1">
           <input type="number" class="form-control form-control-sm" placeholder="Min Budget" [ngModel]="filterMinBudget()" (ngModelChange)="filterMinBudget.set($event)">
           <input type="number" class="form-control form-control-sm" placeholder="Max Budget" [ngModel]="filterMaxBudget()" (ngModelChange)="filterMaxBudget.set($event)">
@@ -303,12 +312,12 @@
                 <div class="mt-1">
                   <span class="badge rounded-pill px-2 py-1 fw-bold"
                         [ngClass]="{
-                          'bg-success-subtle text-success-emphasis border border-success-subtle': getTrackerRemaining(lead).level === 'safe',
-                          'bg-warning-subtle text-warning-emphasis border border-warning-subtle': getTrackerRemaining(lead).level === 'warning',
-                          'bg-danger-subtle text-danger-emphasis border border-danger-subtle': getTrackerRemaining(lead).level === 'danger'
+                          'bg-success-subtle text-success-emphasis border border-success-subtle': (lead.lateStatus || 'Active') === 'Active',
+                          'bg-warning-subtle text-warning-emphasis border border-warning-subtle': lead.lateStatus === 'Late',
+                          'bg-danger-subtle text-danger-emphasis border border-danger-subtle': lead.lateStatus === 'TooLate'
                         }"
                         style="font-size: 0.65rem;">
-                    <i class="bi bi-stopwatch me-1"></i>{{ getTrackerRemaining(lead).text }}
+                    <i class="bi bi-stopwatch me-1"></i>{{ lead.lateStatus || 'Active' }} · {{ getTrackerRemaining(lead).text }}
                   </span>
                 </div>
               </td>

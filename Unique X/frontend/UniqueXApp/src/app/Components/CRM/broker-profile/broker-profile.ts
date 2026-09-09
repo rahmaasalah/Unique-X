@@ -51,6 +51,8 @@ export class BrokerProfileComponent implements OnInit, OnDestroy {
   filterCampaign = signal<string>('');
   filterStage = signal<string>('');
   filterZone = signal<string>('');
+  // 🟢 فلتر التراكر الموحّد الجديد - Active / Late / TooLate (جاي من الباك إند lead.lateStatus)
+  filterTrackerStatus = signal<string>('');
   filterCreationDate = signal<string>('');
   filterLastUpdate = signal<string>('');
   filterMinBudget = signal<number | null>(null);
@@ -119,6 +121,7 @@ filteredLeads = computed(() => {
     const camp = this.filterCampaign();
     const stage = this.filterStage();
     const zone = this.filterZone(); 
+    const trackerStatus = this.filterTrackerStatus();
     const cDate = this.filterCreationDate();
     const uDate = this.filterLastUpdate();
     const minB = this.filterMinBudget();
@@ -135,6 +138,8 @@ const campCode = this.filterCampaignCode();
     if (stage) leads = leads.filter((l: any) => l.statusId.toString() === stage);
     // 🟢 zoneName بقى ممكن يبقى فيه أكتر من مدينة (زي "Cairo, Alexandria") - بنفلتر بـ includes بدل exact match
     if (zone) leads = leads.filter((l: any) => (l.zoneName || '').split(',').map((x: string) => x.trim()).includes(zone));
+    // 🟢 فلتر بالتراكر الموحّد - lateStatus جاي جاهز من الباك إند (نفس المصدر في كل الصفحات)
+    if (trackerStatus) leads = leads.filter((l: any) => (l.lateStatus || 'Active') === trackerStatus);
     if (cDate) leads = leads.filter((l: any) => this.formatDateForFilter(l.createdAt) === cDate);
     if (uDate) leads = leads.filter((l: any) => this.formatDateForFilter(l.updatedAt || l.createdAt) === uDate);
     // 🟢 الفلتر بقى بياخد بالباله Min/Max Budget (لو موجودين)، ولو مش موجودين بيرجع لـ totalAmount القديم
@@ -416,6 +421,7 @@ if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
     this.filterCampaign.set('');
     this.filterStage.set('');
     this.filterZone.set('');
+    this.filterTrackerStatus.set('');
     this.filterCreationDate.set('');
     this.filterBroker.set('');
     this.filterLastUpdate.set('');

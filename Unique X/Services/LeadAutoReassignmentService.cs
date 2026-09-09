@@ -1,25 +1,28 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Unique_X.Data;
+using Unique_X.Helpers;
 
 namespace Unique_X.Services
 {
     // ============================================================
-    // 🟢 خدمة السحب التلقائي للعملاء (Late / Too Late / Auto Unassign)
+    // 🟢 خدمة السحب التلقائي للعملاء - بقت جزء من التراكر الموحّد الواحد
     // ============================================================
-    // بتشتغل في الخلفية كل فترة (CheckIntervalMinutes) وبتعمل الآتي:
-    // 1. أي Call/Visit لسه Pending وعدى عليه 72 ساعة من غير أكشن (أي نشاط واحد بس كفاية)
-    //    -> يتم سحب العميل من البروكر الحالي (IsUnassigned = true)
-    // 2. كل الأنشطة (Calls/Visits) المعلقة (Pending) بتاعت العميل ده بتتلغي (Status = Cancelled)
-    //    عشان البروكر الجديد يبدأ من الصفر تمامًا لما الأدمن يديله العميل
-    // ملحوظة: الـ Today/Late/Too Late نفسها (24 و 48 ساعة) بتتحسب لحظيًا في الـ DashboardController
-    // وقت عرض الإشعارات - مفيش داعي نخزنها، الخدمة دي مسؤولة بس عن السحب النهائي بعد 72 ساعة.
+    // قبل كده كان فيه تراكرين منفصلين:
+    //   1. تراكر الـ Late/TooLate (24/48 ساعة) - كان بيتحسب من أقدم Call/Visit لسه Pending
+    //   2. تراكر السحب التلقائي (72 ساعة) - في الخدمة دي، وكان بيعتمد بردو على وجود Activity/Visit متأخرة
+    //
+    // دلوقتي بقوا تراكر واحد بس (LeadTrackerHelper) بيحسب من lead.UpdatedAt (أو CreatedAt لو لسه من غير أكشن).
+    // الأكشن ده معناه أي حاجة البروكر يعملها للعميل: Feedback / Activity / Visit / Change Status / Edit Request..
+    // كل الأكشنز دي أصلاً بتحدث lead.UpdatedAt، يعني التراكر بيتصفّر تلقائيًا في كل مرة.
+    //
+    // العتبات (زي LeadTrackerHelper بالظبط):
+    //   >= 24 ساعة من غير أكشن -> Late  (بادج بس، من غير سحب)
+    //   >= 48 ساعة من غير أكشن -> TooLate + في نفس اللحظة دي، الخدمة دي بتسحب العميل من البروكر ويروح عند الأدمن في Pending Clients
+    // ============================================================
     public class LeadAutoReassignmentService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<LeadAutoReassignmentService> _logger;
-
-        // 🟢 الحد الأقصى قبل السحب: 72 ساعة من غير أي أكشن على النشاط
-        private static readonly TimeSpan UnassignThreshold = TimeSpan.FromHours(72);
 
         // بيفحص كل 15 دقيقة - عدد كافي وموفر للأداء بدل ما يفحص كل ثانية
         private static readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(15);
@@ -52,39 +55,19 @@ namespace Unique_X.Services
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var cutoff = DateTime.UtcNow - UnassignThreshold;
+            var tooLateCutoff = DateTime.UtcNow.AddHours(-LeadTrackerHelper.TooLateThresholdHours);
 
-            // 🟢 خطوة 1: نلاقي كل الـ LeadIds اللي عندها نشاط واحد (Call) على الأقل عدى عليه 72 ساعة من غير رد
-            var overdueLeadIdsFromActivities = await context.LeadActivities
-                .Where(a => a.Status == "Pending" && a.DueDate <= cutoff)
-                .Select(a => a.LeadId)
-                .Distinct()
-                .ToListAsync(stoppingToken);
-
-            // 🟢 وكمان أي عميل عنده Visit عدى عليها 72 ساعة من غير رد
-            var overdueLeadIdsFromVisits = await context.Visits
-                .Where(v => v.Status == "Pending" && v.VisitDate <= cutoff)
-                .Select(v => v.LeadId)
-                .Distinct()
-                .ToListAsync(stoppingToken);
-
-            var overdueLeadIds = overdueLeadIdsFromActivities
-                .Union(overdueLeadIdsFromVisits)
-                .Distinct()
-                .ToList();
-
-            if (!overdueLeadIds.Any()) return;
-
-            // 🟢 خطوة 2: نجيب بس العملاء اللي لسه معينين لبروكر (مسحوبينش قبل كده)
+            // 🟢 كل العملاء اللي لسه معينين لبروكر (مسحوبينش قبل كده)، وآخر أكشن حصل عليهم (UpdatedAt أو CreatedAt لو جديد)
+            // عدى عليه 48 ساعة - مش شرط يكون عندهم Activity أو Visit مجدولة أصلاً، أي عميل ساكت لـ 48 ساعة بيتسحب
             var leadsToUnassign = await context.Leads
-                .Where(l => overdueLeadIds.Contains(l.Id) && !l.IsUnassigned)
+                .Where(l => !l.IsUnassigned && (l.UpdatedAt ?? l.CreatedAt) <= tooLateCutoff)
                 .ToListAsync(stoppingToken);
 
             if (!leadsToUnassign.Any()) return;
 
             foreach (var lead in leadsToUnassign)
             {
-                // 🟢 نلغي كل الأنشطة المعلقة بتاعت العميل ده - البروكر الجديد يبدأ من الصفر
+                // 🟢 نلغي كل الأنشطة/الزيارات المعلقة بتاعت العميل ده - البروكر الجديد يبدأ من الصفر تمامًا
                 var pendingActivities = await context.LeadActivities
                     .Where(a => a.LeadId == lead.Id && a.Status == "Pending")
                     .ToListAsync(stoppingToken);
@@ -107,7 +90,7 @@ namespace Unique_X.Services
                 lead.UnassignedAt = DateTime.UtcNow;
                 lead.UpdatedAt = DateTime.UtcNow;
 
-                _logger.LogInformation("تم سحب العميل {LeadId} من البروكر {BrokerId} بسبب عدم الرد لمدة 72 ساعة", lead.Id, lead.BrokerId);
+                _logger.LogInformation("تم سحب العميل {LeadId} من البروكر {BrokerId} بسبب عدم اتخاذ أي أكشن لمدة 48 ساعة", lead.Id, lead.BrokerId);
             }
 
             await context.SaveChangesAsync(stoppingToken);
