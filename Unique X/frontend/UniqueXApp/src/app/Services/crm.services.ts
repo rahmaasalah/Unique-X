@@ -144,8 +144,8 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
     return this.http.put(`${this.apiUrl}/activities/${id}`, data);
   }
 
-  addGeneralNote(leadId: number, brokerId: string, note: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/leads/${leadId}/add-note?brokerId=${brokerId}`, JSON.stringify(note), { headers: { 'Content-Type': 'application/json' }});
+  addGeneralNote(leadId: number, brokerId: string, note: string, contactMethod: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/leads/${leadId}/add-note?brokerId=${brokerId}&contactMethod=${encodeURIComponent(contactMethod)}`, JSON.stringify(note), { headers: { 'Content-Type': 'application/json' }});
   }
 
   addVisitFeedback(id: number, feedback: string): Observable<any> {

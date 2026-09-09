@@ -212,15 +212,15 @@
 
              <div class="d-flex flex-column gap-2">
 
-               <a [href]="'tel:' + leadInfo().phoneNumber" class="d-block fw-bold text-dark text-decoration-none border rounded p-2 text-center bg-light text-nowrap" style="font-size: 0.9rem;">
+               <a [href]="getTelLink(leadInfo().phoneNumber)" class="d-block fw-bold text-dark text-decoration-none border rounded p-2 text-center bg-light text-nowrap" style="font-size: 0.9rem;">
 
                  <i class="bi bi-telephone-fill text-primary me-1"></i> {{ leadInfo().phoneNumber }}
 
                </a>
 
-               <a [href]="'https://wa.me/+2' + leadInfo().phoneNumber" target="_blank" class="d-block fw-bold text-success text-decoration-none border rounded p-2 text-center bg-success-subtle border-success-subtle text-nowrap" style="font-size: 0.9rem;">
+               <a [href]="getWhatsAppLink(leadInfo().phoneNumber)" target="_blank" class="d-block fw-bold text-success text-decoration-none border rounded p-2 text-center bg-success-subtle border-success-subtle text-nowrap" style="font-size: 0.9rem;">
 
-                Wa/+{{ leadInfo().phoneNumber }}
+                Wa/{{ leadInfo().phoneNumber }}
 
                </a>
 
@@ -332,10 +332,11 @@
 
             <label class="text-muted small fw-bold">Budget</label>
 
-            <p class="fw-bold text-dark fs-5" *ngIf="requestDetails().totalAmount > 0">{{ requestDetails().totalAmount | currency:'EGP ' }}</p>
-            <p class="fw-bold text-dark fs-5" *ngIf="!(requestDetails().totalAmount > 0) && (requestDetails().minBudget > 0 || requestDetails().maxBudget > 0)">
+            <!-- 🟢 الأولوية بقت لـ Min-Max لو موجودين (من Get Recommendation أو صفحة التعديل) - totalAmount بقى Fallback بس لليدز القديمة -->
+            <p class="fw-bold text-dark fs-5" *ngIf="requestDetails().minBudget > 0 || requestDetails().maxBudget > 0">
               {{ requestDetails().minBudget | currency:'EGP ' }} - {{ requestDetails().maxBudget | currency:'EGP ' }}
             </p>
+            <p class="fw-bold text-dark fs-5" *ngIf="!(requestDetails().minBudget > 0) && !(requestDetails().maxBudget > 0) && requestDetails().totalAmount > 0">{{ requestDetails().totalAmount | currency:'EGP ' }}</p>
             <p class="fw-bold text-dark fs-5" *ngIf="!(requestDetails().totalAmount > 0) && !(requestDetails().minBudget > 0) && !(requestDetails().maxBudget > 0)">N/A</p>
 
           </div>
@@ -473,11 +474,11 @@
 
         <div class="card-body pt-0">
 
-          <p class="text-muted small mb-3" *ngIf="requestDetails()?.totalAmount > 0">
-            Based on the client's budget (EGP {{ requestDetails()?.totalAmount | number }}) and requirements, here are the best matching properties.
-          </p>
-          <p class="text-muted small mb-3" *ngIf="!(requestDetails()?.totalAmount > 0)">
+          <p class="text-muted small mb-3" *ngIf="requestDetails()?.minBudget > 0 || requestDetails()?.maxBudget > 0">
             Based on the client's budget (EGP {{ requestDetails()?.minBudget | number }} - {{ requestDetails()?.maxBudget | number }}) and requirements, here are the best matching properties.
+          </p>
+          <p class="text-muted small mb-3" *ngIf="!(requestDetails()?.minBudget > 0) && !(requestDetails()?.maxBudget > 0) && requestDetails()?.totalAmount > 0">
+            Based on the client's budget (EGP {{ requestDetails()?.totalAmount | number }}) and requirements, here are the best matching properties.
           </p>
 
           
@@ -885,6 +886,16 @@
             <!-- الدالة parseFeedbacks بترجعلنا مصفوفة مرتبة -->
 
             <div *ngFor="let fb of parseFeedbacks(leadInfo().generalFeedback)" class="bg-info-subtle border border-info-subtle p-3 rounded-3 text-dark shadow-sm">
+
+              <!-- 🟢 بادج طريقة التواصل (Call / WhatsApp) - مش هيظهر للفيدباكات القديمة اللي اتسجلت قبل الميزة دي -->
+
+              <span *ngIf="fb.method === 'Call'" class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle rounded-pill mb-2">
+                <i class="bi bi-telephone-fill me-1"></i> Call
+              </span>
+
+              <span *ngIf="fb.method === 'WhatsApp'" class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill mb-2">
+                <i class="bi bi-whatsapp me-1"></i> WhatsApp
+              </span>
 
               <!-- النص الأساسي -->
 
@@ -1504,9 +1515,42 @@
 
           <div class="mb-3">
 
+            <label class="form-label small fw-bold text-muted d-block">How did you contact the client? *</label>
+
+            <div class="btn-group w-100 shadow-sm" role="group">
+
+              <button type="button"
+                      class="btn fw-bold"
+                      [class.btn-danger]="generalNoteForm.value.contactMethod === 'Call'"
+                      [class.btn-outline-danger]="generalNoteForm.value.contactMethod !== 'Call'"
+                      (click)="generalNoteForm.patchValue({ contactMethod: 'Call' })">
+
+                <i class="bi bi-telephone-fill me-1"></i> Call
+
+              </button>
+
+              <button type="button"
+                      class="btn fw-bold"
+                      [class.btn-success]="generalNoteForm.value.contactMethod === 'WhatsApp'"
+                      [class.btn-outline-success]="generalNoteForm.value.contactMethod !== 'WhatsApp'"
+                      (click)="generalNoteForm.patchValue({ contactMethod: 'WhatsApp' })">
+
+                <i class="bi bi-whatsapp me-1"></i> WhatsApp
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <div class="mb-3">
+
             <label class="form-label small fw-bold text-muted">Feedback Details *</label>
 
-            <textarea class="form-control bg-light border-0 rounded-3" formControlName="note" rows="4" placeholder="Write any updates or notes about this client..."></textarea>
+            <!-- 🟢 التكستاريا مقفولة لحد ما يختار طريقة التواصل الأول -->
+            <textarea class="form-control bg-light border-0 rounded-3" formControlName="note" rows="4"
+                      [attr.disabled]="!generalNoteForm.value.contactMethod ? '' : null"
+                      [placeholder]="generalNoteForm.value.contactMethod ? 'Write any updates or notes about this client...' : 'Choose Call or WhatsApp first...'"></textarea>
 
           </div>
 
