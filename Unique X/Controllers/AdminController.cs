@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Unique_X.Data;
 using Unique_X.DTOs;
+using Unique_X.Helpers;
 using Unique_X.Models;
 using Unique_X.Services.Implementation;
 using Unique_X.Services.Interface;
@@ -68,24 +69,8 @@ namespace Unique_X.Controllers
                 .Where(u => u.UserType == 1 && u.IsActive)
                 .ToListAsync();
 
-            var lateCutoff = DateTime.UtcNow.AddHours(-24);
-            var tooLateCutoff = DateTime.UtcNow.AddHours(-48);
-
-            var tooLateLeadIds = (await _context.LeadActivities
-                    .Where(a => a.Status == "Pending" && a.DueDate <= tooLateCutoff)
-                    .Select(a => a.LeadId).Distinct().ToListAsync())
-                .Union(await _context.Visits
-                    .Where(v => v.Status == "Pending" && v.VisitDate <= tooLateCutoff)
-                    .Select(v => v.LeadId).Distinct().ToListAsync())
-                .ToHashSet();
-
-            var lateLeadIds = (await _context.LeadActivities
-                    .Where(a => a.Status == "Pending" && a.DueDate <= lateCutoff && a.DueDate > tooLateCutoff)
-                    .Select(a => a.LeadId).Distinct().ToListAsync())
-                .Union(await _context.Visits
-                    .Where(v => v.Status == "Pending" && v.VisitDate <= lateCutoff && v.VisitDate > tooLateCutoff)
-                    .Select(v => v.LeadId).Distinct().ToListAsync())
-                .ToHashSet();
+            // 🟢 التراكر الموحّد الجديد - بدل ما كان بيحسب من الـ Activities/Visits المعلقة بس
+            var nowUtc = DateTime.UtcNow;
 
             var transferredInLeadIds = (await _context.LeadStatusHistories
                     .Where(h => h.Notes != null && (h.Notes.Contains("Admin transferred") || h.Notes.Contains("Admin assigned this lead to a new broker")))
@@ -98,12 +83,14 @@ namespace Unique_X.Controllers
             {
                 var brokerLeads = await _context.Leads
                     .Where(l => l.BrokerId == broker.Id && !l.IsUnassigned)
-                    .Select(l => new { l.Id, l.FullName, l.PhoneNumber })
+                    .Select(l => new { l.Id, l.FullName, l.PhoneNumber, l.UpdatedAt, l.CreatedAt })
                     .ToListAsync();
 
-                var lateClients = brokerLeads.Where(l => lateLeadIds.Contains(l.Id))
+                var lateClients = brokerLeads
+                    .Where(l => LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc) == "Late")
                     .Select(l => new { l.Id, l.FullName, l.PhoneNumber, lateStatus = "Late" }).ToList();
-                var tooLateClients = brokerLeads.Where(l => tooLateLeadIds.Contains(l.Id))
+                var tooLateClients = brokerLeads
+                    .Where(l => LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc) == "TooLate")
                     .Select(l => new { l.Id, l.FullName, l.PhoneNumber, lateStatus = "TooLate" }).ToList();
                 var transferredInCount = brokerLeads.Count(l => transferredInLeadIds.Contains(l.Id));
 

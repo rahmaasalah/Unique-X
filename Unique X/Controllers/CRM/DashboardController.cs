@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Unique_X.Data;
 using Unique_X.DTOs.CRM;
 using Unique_X.DTOs.Dashboard;
+using Unique_X.Helpers;
 
 namespace Unique_X.Controllers.CRM
 {
@@ -223,6 +224,13 @@ namespace Unique_X.Controllers.CRM
                     CancelledActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Cancelled"),
                     RescheduledActivities = _context.LeadActivities.Count(a => a.LeadId == l.Id && a.Status == "Rescheduled")
                 }).ToListAsync();
+
+            // 🟢 التراكر الموحّد - نفس المصدر المستخدم في كل الصفحات التانية (Leads list / Admin stats)
+            var nowUtc = DateTime.UtcNow;
+            foreach (var l in leads)
+            {
+                l.LateStatus = LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc);
+            }
 
             var brokerLeadIds = await _context.Leads
     .Where(l => l.BrokerId == brokerId)

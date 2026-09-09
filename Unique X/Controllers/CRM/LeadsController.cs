@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using Unique_X.Data;
 using Unique_X.DTOs.CRM;
+using Unique_X.Helpers;
 using Unique_X.Models;
 
 namespace Unique_X.Controllers.CRM
@@ -171,27 +172,10 @@ namespace Unique_X.Controllers.CRM
             }).ToListAsync();
 
             // ============================================================
-            // 🟢 حساب Late/TooLate + هل العميل جاله Transfer من الأدمن قبل كده
-            // (بنعملها في خطوة منفصلة بسيطة وسريعة بدل Subqueries معقدة جوه الـ Select)
+            // 🟢 التراكر الموحّد الجديد: Active / Late / TooLate بناءً على lead.UpdatedAt (أو CreatedAt لو لسه من غير أكشن)
+            // بدل التراكرين القدامى (واحد على الـ Activities المعلقة، وواحد منفصل تمامًا في broker-profile)
             // ============================================================
-            var lateCutoff = DateTime.UtcNow.AddHours(-24);
-            var tooLateCutoff = DateTime.UtcNow.AddHours(-48);
-
-            var tooLateLeadIds = (await _context.LeadActivities
-                    .Where(a => a.Status == "Pending" && a.DueDate <= tooLateCutoff)
-                    .Select(a => a.LeadId).Distinct().ToListAsync())
-                .Union(await _context.Visits
-                    .Where(v => v.Status == "Pending" && v.VisitDate <= tooLateCutoff)
-                    .Select(v => v.LeadId).Distinct().ToListAsync())
-                .ToHashSet();
-
-            var lateLeadIds = (await _context.LeadActivities
-                    .Where(a => a.Status == "Pending" && a.DueDate <= lateCutoff && a.DueDate > tooLateCutoff)
-                    .Select(a => a.LeadId).Distinct().ToListAsync())
-                .Union(await _context.Visits
-                    .Where(v => v.Status == "Pending" && v.VisitDate <= lateCutoff && v.VisitDate > tooLateCutoff)
-                    .Select(v => v.LeadId).Distinct().ToListAsync())
-                .ToHashSet();
+            var nowUtc = DateTime.UtcNow;
 
             var transferredInLeadIds = (await _context.LeadStatusHistories
                     .Where(h => h.Notes != null && (h.Notes.Contains("Admin transferred") || h.Notes.Contains("Admin assigned this lead to a new broker")))
@@ -200,7 +184,7 @@ namespace Unique_X.Controllers.CRM
 
             foreach (var l in leads)
             {
-                l.LateStatus = tooLateLeadIds.Contains(l.Id) ? "TooLate" : (lateLeadIds.Contains(l.Id) ? "Late" : "OnTime");
+                l.LateStatus = LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc);
                 l.IsTransferredIn = transferredInLeadIds.Contains(l.Id);
             }
 
