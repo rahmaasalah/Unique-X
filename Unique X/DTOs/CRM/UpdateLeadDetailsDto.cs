@@ -16,6 +16,9 @@
         public string PropertyType { get; set; }
         public string Purpose { get; set; }
         public decimal TotalAmount { get; set; }
+        // 🟢 Budget بقى Range (Min/Max) زي مودال Get Recommendation - TotalAmount فاضل موجود بس للتوافق مع الداشبورد القديم
+        public decimal? MinBudget { get; set; }
+        public decimal? MaxBudget { get; set; }
         public string PaymentMethod { get; set; }
         public int? ZoneId { get; set; }
         public string? SelectedRegions { get; set; }

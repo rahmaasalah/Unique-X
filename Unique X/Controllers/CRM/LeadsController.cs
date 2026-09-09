@@ -133,10 +133,9 @@ namespace Unique_X.Controllers.CRM
                 SelectedProjects = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).SelectedProjects : "",
                 Notes = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).Notes : "",
 
-                ZoneName = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) == null ? "N/A" :
-                       _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 1 ? "Cairo" :
-                       _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 2 ? "Alexandria" :
-                       _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 3 ? "North Coast" : "N/A",
+                ZoneName = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) == null
+                       || string.IsNullOrEmpty(_context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).SelectedCities) ? "N/A" :
+                       _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).SelectedCities.Replace(",", ", "),
 
                 // 👇 الحقول المالية الجديدة
                 PaymentMethod = _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id) != null ? _context.LeadRequests.OrderByDescending(r => r.Id).FirstOrDefault(r => r.LeadId == l.Id).PaymentMethod : "",
@@ -545,6 +544,13 @@ namespace Unique_X.Controllers.CRM
                 // لو ملوش إيميل متسجل وبعت واحد دلوقتي، نضيفه
                 if (string.IsNullOrEmpty(lead.Email) && !string.IsNullOrEmpty(dto.Email)) lead.Email = dto.Email;
 
+                // 🟢 بنحدث الاسم بالاسم الحقيقي بتاع الأكاونت اللي بعت الطلب - كان بيفضل عالق على أول قيمة اتسجلت بيها
+                // (مثلاً "Website Client" لو حصلت مشكلة في اللوجين وقت أول طلب) حتى لو سجل دخول صح بعد كده وبعت تاني
+                if (!string.IsNullOrWhiteSpace(dto.FullName) && !dto.FullName.Trim().Equals("Website Client", StringComparison.OrdinalIgnoreCase))
+                {
+                    lead.FullName = dto.FullName;
+                }
+
                 var request = await _context.LeadRequests.FirstOrDefaultAsync(r => r.LeadId == leadId);
                 if (request == null)
                 {
@@ -693,7 +699,9 @@ namespace Unique_X.Controllers.CRM
                     ReferredBy = lead.ReferredBy ?? "",
                     GeneralFeedback = lead.GeneralFeedback ?? "",
                     lead.CreatedAt,
-                    UpdatedAt = history.Any() ? history.First().ChangedAt : lead.CreatedAt
+                    // 🟢 كان بيتحسب بس من تاريخ آخر تغيير حالة (Status History)، فمكنش بيتحدث لما تتضاف Feedback أو Activity أو Visit
+                    // رغم إن الأكشنز دي كلها فعليًا بتحدث lead.UpdatedAt في الداتابيز - فبنستخدمه هو مباشرة كمصدر وحيد للحقيقة
+                    UpdatedAt = lead.UpdatedAt ?? lead.CreatedAt
                 },
                 RequestDetails = new
                 {
@@ -705,7 +713,7 @@ namespace Unique_X.Controllers.CRM
                     request?.InstallmentYears,
                     request?.QuarterlyInstallment,
                     ZoneId = request?.ZoneId,
-                    ZoneName = request?.ZoneId == 1 ? "Cairo" : request?.ZoneId == 2 ? "Alexandria" : request?.ZoneId == 3 ? "North Coast" : "",
+                    ZoneName = string.IsNullOrEmpty(request?.SelectedCities) ? "" : request.SelectedCities.Replace(",", ", "),
                     request?.SelectedRegions,
                     request?.SelectedProjects,
                     request?.PreferredLocation,
@@ -839,9 +847,7 @@ namespace Unique_X.Controllers.CRM
             {
                 request.PropertyType = dto.PropertyType;
                 request.Purpose = dto.Purpose;
-                request.TotalAmount = dto.TotalAmount;
                 request.PaymentMethod = dto.PaymentMethod ?? "";
-                request.ZoneId = dto.ZoneId;
                 request.SelectedRegions = dto.SelectedRegions ?? "";
                 request.SelectedProjects = dto.SelectedProjects ?? "";
                 request.DownPayment = dto.DownPayment;
@@ -857,6 +863,16 @@ namespace Unique_X.Controllers.CRM
                 request.MinBathrooms = dto.MinBathrooms;
                 request.MaxBathrooms = dto.MaxBathrooms;
 
+                // 🟢 Budget بقى Range (Min/Max) - وTotalAmount بيفضل متزامن تلقائيًا (بياخد MaxBudget) عشان أي مكان قديم بيعرض TotalAmount (Dashboard/Favorites) يفضل شغال
+                request.MinBudget = dto.MinBudget ?? 0;
+                request.MaxBudget = dto.MaxBudget ?? 0;
+                request.TotalAmount = dto.MaxBudget ?? dto.MinBudget ?? request.TotalAmount;
+
+                // 🟢 Zone بقت بالكامل مبنية على Preferred Cities (SelectedCities) - مفيش ZoneId منفصل تاني.
+                // بنصفّرها عشان لو كان فيه ZoneId قديم متسجل، الـ Recommendation Engine ميفضلهاش على SelectedCities
+                // (لو سبناها زي ما هي، الترشيحات هتتقيد بمدينة واحدة بس بدل كل المدن المختارة)
+                request.ZoneId = null;
+
                 _context.LeadRequests.Update(request);
             }
 
@@ -864,7 +880,7 @@ namespace Unique_X.Controllers.CRM
             return Ok(new { message = "Lead updated successfully!" });
         }
         [HttpPost("{id}/add-note")]
-        public async Task<IActionResult> AddGeneralNote(int id, [FromBody] string note, [FromQuery] string brokerId)
+        public async Task<IActionResult> AddGeneralNote(int id, [FromBody] string note, [FromQuery] string brokerId, [FromQuery] string contactMethod = "")
         {
             var lead = await _context.Leads.FindAsync(id);
             if (lead == null) return NotFound("Lead not found");
@@ -877,7 +893,8 @@ namespace Unique_X.Controllers.CRM
             string dateStr = DateTime.UtcNow.ToString("o");
 
             // 3. ندمجهم بفاصل سري (عشان لو العميل كتب أي علامات عادية متأثرش)
-            string newEntry = $"{brokerName}_#|#_{dateStr}_#|#_{note}";
+            // 🟢 بقى فيه حقل رابع (contactMethod: Call/WhatsApp) قبل النص نفسه
+            string newEntry = $"{brokerName}_#|#_{dateStr}_#|#_{contactMethod}_#|#_{note}";
 
             // 4. بنحط الفيدباك الجديد في الأول، وبعدين القديم، عشان يترتب من الأحدث للأقدم
             lead.GeneralFeedback = string.IsNullOrEmpty(lead.GeneralFeedback)

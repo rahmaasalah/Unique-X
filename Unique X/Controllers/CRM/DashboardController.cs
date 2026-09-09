@@ -202,10 +202,11 @@ namespace Unique_X.Controllers.CRM
                     PropertyType = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PropertyType ?? "",
                     Purpose = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).Purpose ?? "",
                     TotalAmount = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).TotalAmount ?? 0,
+                    MinBudget = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).MinBudget,
+                    MaxBudget = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).MaxBudget,
                     PreferredLocation = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PreferredLocation ?? "Not Specified",
-                    ZoneName = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 1 ? "Cairo" :
-                       _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 2 ? "Alexandria" :
-                       _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).ZoneId == 3 ? "North Coast" : "N/A",
+                    ZoneName = string.IsNullOrEmpty(_context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).SelectedCities) ? "N/A" :
+                       _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).SelectedCities.Replace(",", ", "),
                     PaymentMethod = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).PaymentMethod ?? "",
                     DownPayment = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).DownPayment,
                     InstallmentYears = _context.LeadRequests.FirstOrDefault(r => r.LeadId == l.Id).InstallmentYears,
@@ -465,7 +466,7 @@ namespace Unique_X.Controllers.CRM
                     r.InstallmentYears,
                     r.PreferredLocation,
                     r.Notes,
-                    ZoneName = r.ZoneId == 1 ? "Cairo" : r.ZoneId == 2 ? "Alexandria" : r.ZoneId == 3 ? "North Coast" : "N/A"
+                    ZoneName = string.IsNullOrEmpty(r.SelectedCities) ? "N/A" : r.SelectedCities.Replace(",", ", ")
                 })
                 .ToListAsync();
 

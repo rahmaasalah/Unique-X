@@ -276,7 +276,15 @@
               
               <td>
                 <div class="fw-bold text-success text-nowrap">
-                  {{ lead.totalAmount > 0 ? 'EGP ' + (lead.totalAmount | number:'1.0-0') : 'N/A' }}</div>
+                  <ng-container *ngIf="lead.minBudget > 0 || lead.maxBudget > 0; else totalAmountBlock">
+                    {{ lead.minBudget > 0 ? ('EGP ' + (lead.minBudget | number:'1.0-0')) : 'EGP 0' }}
+                    -
+                    {{ lead.maxBudget > 0 ? ('EGP ' + (lead.maxBudget | number:'1.0-0')) : '∞' }}
+                  </ng-container>
+                  <ng-template #totalAmountBlock>
+                    {{ lead.totalAmount > 0 ? 'EGP ' + (lead.totalAmount | number:'1.0-0') : 'N/A' }}
+                  </ng-template>
+                </div>
                 <div class="mt-1" *ngIf="lead.paymentMethod">
                   <span class="badge bg-light text-dark border">{{ lead.paymentMethod }}</span>
                   <div *ngIf="lead.paymentMethod === 'Installment'" class="mt-1 text-muted" style="font-size: 0.65rem; font-weight: 600;">

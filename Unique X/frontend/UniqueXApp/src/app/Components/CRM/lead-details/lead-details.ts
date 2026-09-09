@@ -308,6 +308,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
 
     // فورم الملاحظة العمومية
     this.generalNoteForm = this.fb.group({
+      contactMethod: ['', Validators.required], // 🟢 لازم يتحدد الأول: Call ولا WhatsApp
       note: ['', Validators.required]
     });
 
@@ -624,21 +625,55 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
     return value.split(',').map(v => v.trim()).filter(v => v);
   }
 
+  // 🟢 نفس منطق تنظيف الرقم المستخدم في property-card.ts - بيتعامل مع الشكلين:
+  // القديم: رقم محلي مصري من غير كود دولة ("01276567878")
+  // الجديد: كود دولة + مسافة + رقم محلي من app-phone-input ("+20 01276567878" أو "+966 501234567")
+  private cleanPhoneDigits(phone: string): string {
+    if (!phone) return '';
+    const trimmed = phone.trim();
+    if (trimmed.includes(' ')) {
+      const [codePart, ...rest] = trimmed.split(' ');
+      const countryCode = codePart.replace(/\D/g, '');
+      const localNumber = rest.join('').replace(/\D/g, '').replace(/^0+/, '');
+      return countryCode + localNumber;
+    }
+    let cleaned = trimmed.replace(/\D/g, '');
+    if (cleaned.startsWith('0')) {
+      cleaned = '20' + cleaned.replace(/^0+/, '');
+    }
+    return cleaned;
+  }
+
+  getWhatsAppLink(phone: string): string {
+    const cleaned = this.cleanPhoneDigits(phone);
+    return cleaned ? `https://wa.me/${cleaned}` : '#';
+  }
+
+  getTelLink(phone: string): string {
+    const cleaned = this.cleanPhoneDigits(phone);
+    return cleaned ? `tel:+${cleaned}` : '#';
+  }
+
   parseFeedbacks(feedbackStr: string) {
     if (!feedbackStr) return[];
     
     // لو دي داتا قديمة قبل التعديل
     if (!feedbackStr.includes('_#|#_')) {
-      return [{ broker: 'System/Legacy', date: null, text: feedbackStr }];
+      return [{ broker: 'System/Legacy', date: null, method: '', text: feedbackStr }];
     }
 
     const records = feedbackStr.split('_@|@_');
     return records.map(rec => {
       const parts = rec.split('_#|#_');
-      if (parts.length >= 3) {
-        return { broker: parts[0], date: parts[1], text: parts[2] };
+      // 🟢 الشكل الجديد فيه 4 أجزاء: broker, date, contactMethod, text
+      if (parts.length >= 4) {
+        return { broker: parts[0], date: parts[1], method: parts[2], text: parts[3] };
       }
-      return { broker: 'Unknown', date: null, text: rec };
+      // 🟢 فيدباكات قديمة اتسجلت قبل ما نضيف Contact Method - 3 أجزاء بس (من غير method)
+      if (parts.length === 3) {
+        return { broker: parts[0], date: parts[1], method: '', text: parts[2] };
+      }
+      return { broker: 'Unknown', date: null, method: '', text: rec };
     });
   }
 
@@ -873,7 +908,7 @@ isAdminAction(item: any): boolean {
   submitGeneralNote() {
     if (this.generalNoteForm.valid) {
       this.alertService.showLoading('Adding Note...');
-      this.crmService.addGeneralNote(this.leadId, this.currentBrokerId, this.generalNoteForm.value.note).subscribe({
+      this.crmService.addGeneralNote(this.leadId, this.currentBrokerId, this.generalNoteForm.value.note, this.generalNoteForm.value.contactMethod).subscribe({
         next: () => {
           this.alertService.close();
 

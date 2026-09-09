@@ -133,11 +133,19 @@ const campCode = this.filterCampaignCode();
     if (broker) leads = leads.filter((l: any) => l.brokerName === broker);
     if (camp) leads = leads.filter((l: any) => l.campaignName === camp);
     if (stage) leads = leads.filter((l: any) => l.statusId.toString() === stage);
-    if (zone) leads = leads.filter((l: any) => l.zoneName === zone);
+    // 🟢 zoneName بقى ممكن يبقى فيه أكتر من مدينة (زي "Cairo, Alexandria") - بنفلتر بـ includes بدل exact match
+    if (zone) leads = leads.filter((l: any) => (l.zoneName || '').split(',').map((x: string) => x.trim()).includes(zone));
     if (cDate) leads = leads.filter((l: any) => this.formatDateForFilter(l.createdAt) === cDate);
     if (uDate) leads = leads.filter((l: any) => this.formatDateForFilter(l.updatedAt || l.createdAt) === uDate);
-    if (minB !== null) leads = leads.filter((l: any) => l.totalAmount >= minB);
-    if (maxB !== null) leads = leads.filter((l: any) => l.totalAmount <= maxB);
+    // 🟢 الفلتر بقى بياخد بالباله Min/Max Budget (لو موجودين)، ولو مش موجودين بيرجع لـ totalAmount القديم
+    if (minB !== null) leads = leads.filter((l: any) => {
+      const upperBound = l.maxBudget > 0 ? l.maxBudget : (l.minBudget > 0 ? l.minBudget : l.totalAmount);
+      return upperBound >= minB;
+    });
+    if (maxB !== null) leads = leads.filter((l: any) => {
+      const lowerBound = l.minBudget > 0 ? l.minBudget : (l.maxBudget > 0 ? l.maxBudget : l.totalAmount);
+      return lowerBound > 0 ? lowerBound <= maxB : true;
+    });
     if (refBy) leads = leads.filter((l: any) => l.referredBy === refBy);
     // 🟢 propertyType/purpose بقوا Multi-select (Comma-separated) - بنفلتر بـ includes بدل exact match
     if (propType) leads = leads.filter((l: any) => (l.propertyType || '').split(',').map((x: string) => x.trim()).includes(propType));
