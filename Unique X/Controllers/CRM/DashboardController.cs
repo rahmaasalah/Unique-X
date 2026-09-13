@@ -178,7 +178,7 @@ namespace Unique_X.Controllers.CRM
                 .Include(l => l.Status)
                 .Include(l => l.Broker)
                 .Include(l => l.Campaign)
-                .Where(l => l.BrokerId == brokerId)
+                .Where(l => l.BrokerId == brokerId && !l.IsUnassigned)
                 .OrderByDescending(l => l.CreatedAt)
                 .Select(l => new LeadResponseDto
                 {

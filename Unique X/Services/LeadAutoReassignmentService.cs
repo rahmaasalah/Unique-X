@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Unique_X.Data;
 using Unique_X.Helpers;
+using Unique_X.Models;
 
 namespace Unique_X.Services
 {
@@ -24,8 +25,14 @@ namespace Unique_X.Services
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<LeadAutoReassignmentService> _logger;
 
-        // بيفحص كل 15 دقيقة - عدد كافي وموفر للأداء بدل ما يفحص كل ثانية
-        private static readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(15);
+        // بيفحص كل دقيقتين
+        private static readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(2);
+
+        // 🟢 عشان نتأكد إن الخدمة شغالة فعلاً من غير ما نحتاج نوصل للـ server logs
+        // شوفي AdminController -> GET admin/auto-reassignment-status
+        public static DateTime? LastRunAtUtc { get; private set; }
+        public static int LastRunUnassignedCount { get; private set; }
+        public static string? LastRunError { get; private set; }
 
         public LeadAutoReassignmentService(IServiceProvider serviceProvider, ILogger<LeadAutoReassignmentService> logger)
         {
@@ -40,10 +47,16 @@ namespace Unique_X.Services
                 try
                 {
                     await ProcessOverdueLeadsAsync(stoppingToken);
+                    LastRunError = null;
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "خطأ أثناء فحص العملاء المتأخرين (Auto Reassignment)");
+                    LastRunError = ex.Message;
+                }
+                finally
+                {
+                    LastRunAtUtc = DateTime.UtcNow;
                 }
 
                 await Task.Delay(CheckInterval, stoppingToken);
@@ -63,7 +76,11 @@ namespace Unique_X.Services
                 .Where(l => !l.IsUnassigned && (l.UpdatedAt ?? l.CreatedAt) <= tooLateCutoff)
                 .ToListAsync(stoppingToken);
 
-            if (!leadsToUnassign.Any()) return;
+            if (!leadsToUnassign.Any())
+            {
+                LastRunUnassignedCount = 0;
+                return;
+            }
 
             foreach (var lead in leadsToUnassign)
             {
@@ -90,10 +107,21 @@ namespace Unique_X.Services
                 lead.UnassignedAt = DateTime.UtcNow;
                 lead.UpdatedAt = DateTime.UtcNow;
 
+                // 🟢 إشعار للبروكر إن العميل ده اتشال من عنده بسبب عدم التحديث
+                context.BrokerNotifications.Add(new BrokerNotification
+                {
+                    BrokerId = lead.BrokerId,
+                    LeadId = lead.Id,
+                    Type = "LeadRemoved",
+                    Message = $"Client \"{lead.FullName}\" was removed from your list due to no update for 48 hours.",
+                    CreatedAt = DateTime.UtcNow
+                });
+
                 _logger.LogInformation("تم سحب العميل {LeadId} من البروكر {BrokerId} بسبب عدم اتخاذ أي أكشن لمدة 48 ساعة", lead.Id, lead.BrokerId);
             }
 
             await context.SaveChangesAsync(stoppingToken);
+            LastRunUnassignedCount = leadsToUnassign.Count;
         }
     }
 }

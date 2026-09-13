@@ -89,10 +89,10 @@ namespace Unique_X.Controllers.CRM
                 .Include(l => l.Campaign)
                 .AsQueryable();
 
-            // فلتر بالبروكر: بنجيب عملاء البروكر الحاليين + العملاء اللي اتسحبوا منه قبل كده (عشان يظهروا كـ Disappeared)
+            // فلتر بالبروكر: بنجيب عملاء البروكر الحاليين بس - العملاء اللي اتسحبوا منه (IsUnassigned) مبقوش بيظهروله خالص دلوقتي
             if (!string.IsNullOrEmpty(brokerId))
             {
-                query = query.Where(l => l.BrokerId == brokerId || l.PreviousBrokerId == brokerId);
+                query = query.Where(l => l.BrokerId == brokerId && !l.IsUnassigned);
             }
 
             // فلتر بالحالة
@@ -186,24 +186,6 @@ namespace Unique_X.Controllers.CRM
             {
                 l.LateStatus = LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc);
                 l.IsTransferredIn = transferredInLeadIds.Contains(l.Id);
-            }
-
-            // لو بنجيب ليستة بروكر معين، أي عميل اتسحب منه (PreviousBrokerId == هو) وبقى دلوقتي عند بروكر تاني (BrokerId != هو)
-            // لازم يظهر عنده كـ "Disappeared" بس - اسم فقط من غير أي بيانات
-            if (!string.IsNullOrEmpty(brokerId))
-            {
-                leads = leads.Select(l =>
-                {
-                    bool isDisappearedForCaller = l.PreviousBrokerId == brokerId && l.BrokerId != brokerId;
-                    if (!isDisappearedForCaller) return l;
-
-                    return new LeadResponseDto
-                    {
-                        Id = l.Id,
-                        FullName = l.FullName,
-                        IsDisappeared = true
-                    };
-                }).ToList();
             }
 
             return Ok(leads);
@@ -1208,6 +1190,90 @@ namespace Unique_X.Controllers.CRM
 
             var codes = await query.Select(p => p.Code).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToListAsync();
             return Ok(codes);
+        }
+
+        // ===================== Broker Lead Requests ("Request Leads" من بروفايل البروكر) =====================
+
+        // POST: api/crm/leads/broker-requests
+        // 🟢 البروكر بيضغط "Request Leads" في بروفايله ويملى المودال ده - بيتسجل طلب جديد
+        [HttpPost("broker-requests")]
+        public async Task<IActionResult> CreateBrokerLeadRequest([FromQuery] string brokerId, [FromBody] BrokerLeadRequestDto dto)
+        {
+            if (string.IsNullOrEmpty(brokerId)) return BadRequest("brokerId is required");
+
+            var request = new BrokerLeadRequest
+            {
+                BrokerId = brokerId,
+                SelectedCities = dto.Cities != null && dto.Cities.Any() ? string.Join(",", dto.Cities) : null,
+                ListingTypes = dto.ListingTypes != null && dto.ListingTypes.Any() ? string.Join(",", dto.ListingTypes) : null,
+                PropertyTypes = dto.PropertyTypes != null && dto.PropertyTypes.Any() ? string.Join(",", dto.PropertyTypes) : null,
+                MinRooms = dto.MinRooms,
+                MaxRooms = dto.MaxRooms,
+                MinBathrooms = dto.MinBathrooms,
+                MaxBathrooms = dto.MaxBathrooms,
+                MinBudget = dto.MinBudget,
+                MaxBudget = dto.MaxBudget,
+                Status = "Pending"
+            };
+
+            _context.BrokerLeadRequests.Add(request);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Request submitted successfully" });
+        }
+
+        // GET: api/crm/leads/broker-requests
+        // 🟢 الأدمن بيشوف كل الطلبات (تاب Requested Leads) - الأحدث الأول
+        [HttpGet("broker-requests")]
+        public async Task<IActionResult> GetBrokerLeadRequests()
+        {
+            var requests = await _context.BrokerLeadRequests
+                .Include(r => r.Broker)
+                .OrderByDescending(r => r.CreatedAt)
+                .Select(r => new BrokerLeadRequestResponseDto
+                {
+                    Id = r.Id,
+                    BrokerId = r.BrokerId,
+                    BrokerName = r.Broker != null ? $"{r.Broker.FirstName} {r.Broker.LastName}" : "N/A",
+                    SelectedCities = r.SelectedCities,
+                    ListingTypes = r.ListingTypes,
+                    PropertyTypes = r.PropertyTypes,
+                    MinRooms = r.MinRooms,
+                    MaxRooms = r.MaxRooms,
+                    MinBathrooms = r.MinBathrooms,
+                    MaxBathrooms = r.MaxBathrooms,
+                    MinBudget = r.MinBudget,
+                    MaxBudget = r.MaxBudget,
+                    Status = r.Status,
+                    CreatedAt = r.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(requests);
+        }
+
+        // PATCH: api/crm/leads/broker-requests/{id}/fulfill
+        // 🟢 الأدمن بيعلّم الطلب إنه خلص (بعد ما يكون حوّل للبروكر العملاء المطلوبين يدويًا من New Leads/Transfer)
+        [HttpPatch("broker-requests/{id}/fulfill")]
+        public async Task<IActionResult> FulfillBrokerLeadRequest(int id)
+        {
+            var request = await _context.BrokerLeadRequests.FindAsync(id);
+            if (request == null) return NotFound("Request not found");
+
+            request.Status = "Fulfilled";
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Request marked as fulfilled" });
+        }
+
+        // DELETE: api/crm/leads/broker-requests/{id}
+        [HttpDelete("broker-requests/{id}")]
+        public async Task<IActionResult> DeleteBrokerLeadRequest(int id)
+        {
+            var request = await _context.BrokerLeadRequests.FindAsync(id);
+            if (request == null) return NotFound("Request not found");
+
+            _context.BrokerLeadRequests.Remove(request);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Request deleted" });
         }
 
         // GET: api/crm/leads/pending-clients

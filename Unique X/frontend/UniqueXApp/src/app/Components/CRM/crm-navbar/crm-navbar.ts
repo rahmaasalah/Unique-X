@@ -26,6 +26,11 @@ export class CrmNavbarComponent implements OnInit {
   todayCount = signal<number>(0);
   lateCount = signal<number>(0);
   tooLateCount = signal<number>(0);
+
+  // 🟢 إشعارات دائمة (زي تنبيه سحب عميل) - منفصلة عن الـ Reminders بتاعة المهام
+  leadAlerts = signal<any[]>([]);
+  leadAlertsUnreadCount = signal<number>(0);
+  private seenLeadAlertIds = new Set<number>();
   
   private pollingInterval: any; // مؤقت التحديث التلقائي
   private alertedItems = new Set<string>();
@@ -57,13 +62,16 @@ export class CrmNavbarComponent implements OnInit {
         const brokerId = user.id || user.userId || '';
         if (brokerId) {
           this.loadNotifications(brokerId);
-          
+          this.loadLeadAlerts(brokerId);
+
           this.pollingInterval = setInterval(() => {
             this.loadNotifications(brokerId);
+            this.loadLeadAlerts(brokerId);
           }, 60000); 
 
           this.crmService.refreshNavbar$.subscribe(() => {
             this.loadNotifications(brokerId);
+            this.loadLeadAlerts(brokerId);
           });
         }
       }
@@ -98,6 +106,31 @@ export class CrmNavbarComponent implements OnInit {
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
     }
+  }
+
+  // 🟢 إشعارات سحب العملاء (وأي إشعارات دائمة تانية بعدين)
+  loadLeadAlerts(brokerId: string) {
+    this.crmService.getBrokerNotifications(brokerId).subscribe({
+      next: (res: any[]) => {
+        const list = res || [];
+        this.leadAlerts.set(list);
+        this.leadAlertsUnreadCount.set(list.filter(n => !n.isRead).length);
+
+        // 🟢 لو فيه إشعار جديد لسه مشفتوش من قبل، نطلعله بوب أب فوري
+        list.filter(n => !n.isRead && !this.seenLeadAlertIds.has(n.id)).forEach(n => {
+          this.seenLeadAlertIds.add(n.id);
+          this.alertService.error(n.message, 'Client Removed');
+        });
+      }
+    });
+  }
+
+  markAlertRead(notification: any) {
+    if (notification.isRead) return;
+    this.crmService.markNotificationAsRead(notification.id).subscribe(() => {
+      notification.isRead = true;
+      this.leadAlertsUnreadCount.set(this.leadAlerts().filter(n => !n.isRead).length);
+    });
   }
 
   loadNotifications(brokerId: string) {
