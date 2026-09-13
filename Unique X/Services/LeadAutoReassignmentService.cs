@@ -68,12 +68,13 @@ namespace Unique_X.Services
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var tooLateCutoff = DateTime.UtcNow.AddHours(-LeadTrackerHelper.TooLateThresholdHours);
+            var unassignCutoff = DateTime.UtcNow.AddHours(-LeadTrackerHelper.UnassignThresholdHours);
 
             // 🟢 كل العملاء اللي لسه معينين لبروكر (مسحوبينش قبل كده)، وآخر أكشن حصل عليهم (UpdatedAt أو CreatedAt لو جديد)
-            // عدى عليه 48 ساعة - مش شرط يكون عندهم Activity أو Visit مجدولة أصلاً، أي عميل ساكت لـ 48 ساعة بيتسحب
+            // عدى عليه 72 ساعة - مش شرط يكون عندهم Activity أو Visit مجدولة أصلاً، أي عميل ساكت لـ 72 ساعة بيتسحب
+            // (الـ TooLate بادج بيظهر عند 48 ساعة كتحذير، بس السحب الفعلي بيحصل عند 72)
             var leadsToUnassign = await context.Leads
-                .Where(l => !l.IsUnassigned && (l.UpdatedAt ?? l.CreatedAt) <= tooLateCutoff)
+                .Where(l => !l.IsUnassigned && (l.UpdatedAt ?? l.CreatedAt) <= unassignCutoff)
                 .ToListAsync(stoppingToken);
 
             if (!leadsToUnassign.Any())
@@ -113,11 +114,11 @@ namespace Unique_X.Services
                     BrokerId = lead.BrokerId,
                     LeadId = lead.Id,
                     Type = "LeadRemoved",
-                    Message = $"Client \"{lead.FullName}\" was removed from your list due to no update for 48 hours.",
+                    Message = $"Client \"{lead.FullName}\" was removed from your list due to no update for 72 hours.",
                     CreatedAt = DateTime.UtcNow
                 });
 
-                _logger.LogInformation("تم سحب العميل {LeadId} من البروكر {BrokerId} بسبب عدم اتخاذ أي أكشن لمدة 48 ساعة", lead.Id, lead.BrokerId);
+                _logger.LogInformation("تم سحب العميل {LeadId} من البروكر {BrokerId} بسبب عدم اتخاذ أي أكشن لمدة 72 ساعة", lead.Id, lead.BrokerId);
             }
 
             await context.SaveChangesAsync(stoppingToken);

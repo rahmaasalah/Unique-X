@@ -4483,7 +4483,7 @@
 
           <div class="row g-2 align-items-center">
 
-            <div class="col-md-5">
+            <div class="col-md-4">
 
               <div class="input-group input-group-sm">
 
@@ -4501,7 +4501,7 @@
 
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
 
               <select class="form-select form-select-sm"
 
@@ -4525,7 +4525,27 @@
 
             </div>
 
-            <div class="col-md-3 d-flex gap-2">
+            <div class="col-md-3">
+
+              <select class="form-select form-select-sm"
+
+                      [ngModel]="pendingFilterStage()"
+
+                      (ngModelChange)="pendingFilterStage.set($event)">
+
+                <option value="">-- All Stages --</option>
+
+                @for (stage of pendingStageOptions; track stage.id) {
+
+                  <option [value]="stage.id">{{ stage.label }}</option>
+
+                }
+
+              </select>
+
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
 
               <span class="badge bg-warning text-dark px-3 py-2 rounded-pill align-self-center">
 
@@ -4533,11 +4553,11 @@
 
               </span>
 
-              @if (pendingSearchName() || pendingFilterBroker()) {
+              @if (pendingSearchName() || pendingFilterBroker() || pendingFilterStage()) {
 
                 <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
 
-                        (click)="pendingSearchName.set(''); pendingFilterBroker.set('')">
+                        (click)="pendingSearchName.set(''); pendingFilterBroker.set(''); pendingFilterStage.set('')">
 
                   <i class="bi bi-x-lg me-1"></i>Clear
 
