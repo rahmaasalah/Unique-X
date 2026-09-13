@@ -4553,6 +4553,38 @@
 
 
 
+        <!-- 🟢 شريط الـ Bulk Assign - بيظهر بس لما يكون فيه عملاء متحددين -->
+        @if (selectedPendingIds().length > 0) {
+          <div class="card border-0 shadow-sm rounded-4 p-3 mb-3 bg-danger-subtle">
+            <div class="row g-2 align-items-center">
+              <div class="col-md-4">
+                <span class="badge bg-danger px-3 py-2 rounded-pill">{{ selectedPendingIds().length }} clients selected</span>
+              </div>
+              <div class="col-md-5">
+                <select class="form-select form-select-sm" [ngModel]="bulkPendingBrokerId()" (ngModelChange)="bulkPendingBrokerId.set($event)">
+                  <option value="">-- Choose New Broker --</option>
+                  @for (broker of allBrokersList(); track broker.id) {
+                    <option [value]="broker.id">{{ broker.firstName }} {{ broker.lastName }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-danger btn-sm w-100 fw-bold rounded-pill"
+                        [disabled]="!bulkPendingBrokerId() || isBulkAssigningPending()"
+                        (click)="bulkAssignPendingClients()">
+                  @if (isBulkAssigningPending()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span> Assigning...
+                  } @else {
+                    <i class="bi bi-check-circle me-1"></i> Assign Selected
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+
+
         @if (pendingClientsLoading()) {
 
           <div class="text-center py-5"><div class="spinner-border text-warning"></div></div>
@@ -4579,7 +4611,11 @@
 
                   <tr>
 
-                    <th class="ps-4 py-3">Client</th>
+                    <th class="ps-4 py-3" style="width:40px;">
+                      <input type="checkbox" class="form-check-input" [checked]="isAllPendingSelected" (change)="toggleSelectAllPending()">
+                    </th>
+
+                    <th class="py-3">Client</th>
 
                     <th class="py-3">Phone</th>
 
@@ -4603,7 +4639,7 @@
 
                     <tr>
 
-                      <td colspan="7" class="text-center text-muted py-4">No clients match your filters.</td>
+                      <td colspan="8" class="text-center text-muted py-4">No clients match your filters.</td>
 
                     </tr>
 
@@ -4613,7 +4649,11 @@
 
                     <tr>
 
-                      <td class="ps-4 fw-bold">{{ client.fullName }}</td>
+                      <td class="ps-4">
+                        <input type="checkbox" class="form-check-input" [checked]="isPendingSelected(client.id)" (change)="togglePendingSelection(client.id)">
+                      </td>
+
+                      <td class="fw-bold">{{ client.fullName }}</td>
 
                       <td class="text-muted small">{{ client.phoneNumber }}</td>
 

@@ -298,6 +298,66 @@ export class CrmDashboardComponent implements OnInit {
 
   }
 
+  // ===================== تحديد جماعي + Assign جماعي لعملاء Pending =====================
+  selectedPendingIds = signal<number[]>([]);
+  bulkPendingBrokerId = signal<string>('');
+  isBulkAssigningPending = signal<boolean>(false);
+
+  togglePendingSelection(id: number) {
+    const current = this.selectedPendingIds();
+    this.selectedPendingIds.set(
+      current.includes(id) ? current.filter(x => x !== id) : [...current, id]
+    );
+  }
+
+  isPendingSelected(id: number): boolean {
+    return this.selectedPendingIds().includes(id);
+  }
+
+  // 🟢 بتحدد/تلغي تحديد كل العملاء المعروضين حاليًا (بعد الفلترة/السيرش) دفعة واحدة
+  toggleSelectAllPending() {
+    const visibleIds = this.filteredPendingClients.map((c: any) => c.id);
+    const allSelected = visibleIds.length > 0 && visibleIds.every((id: number) => this.selectedPendingIds().includes(id));
+    this.selectedPendingIds.set(allSelected ? [] : visibleIds);
+  }
+
+  get isAllPendingSelected(): boolean {
+    const visibleIds = this.filteredPendingClients.map((c: any) => c.id);
+    return visibleIds.length > 0 && visibleIds.every((id: number) => this.selectedPendingIds().includes(id));
+  }
+
+  // بتنقل كل العملاء المختارين لبروكر واحد دفعة واحدة - بنفس الـ endpoint اللي بيصفر العدادات
+  bulkAssignPendingClients() {
+    const ids = this.selectedPendingIds();
+    const brokerId = this.bulkPendingBrokerId();
+
+    if (ids.length === 0) { this.alertService.error('Please select at least one client.'); return; }
+    if (!brokerId) { this.alertService.error('Please select a broker first.'); return; }
+
+    const adminId = this.currentBrokerId;
+
+    this.alertService.confirm(`Assign ${ids.length} client(s) to the selected broker? All counters (Feedback, etc.) will be reset for them.`, () => {
+      this.isBulkAssigningPending.set(true);
+
+      const calls = ids.map(id => this.crmService.assignNewBroker(id, brokerId, adminId));
+
+      forkJoin(calls).subscribe({
+        next: () => {
+          this.isBulkAssigningPending.set(false);
+          this.alertService.success(`${ids.length} client(s) assigned successfully! All counters were reset.`);
+          this.selectedPendingIds.set([]);
+          this.bulkPendingBrokerId.set('');
+          this.loadPendingClients();
+          this.refreshAllLeads();
+        },
+        error: () => {
+          this.isBulkAssigningPending.set(false);
+          this.alertService.error('Something went wrong while assigning some clients. Please refresh and check.');
+        }
+      });
+    });
+  }
+
 
 
 
@@ -1751,6 +1811,7 @@ hiddenLeads = signal<number[]>([]);
   loadPendingClients() {
 
     this.pendingClientsLoading.set(true);
+    this.selectedPendingIds.set([]);
 
     this.crmService.getPendingClients().subscribe({
 
