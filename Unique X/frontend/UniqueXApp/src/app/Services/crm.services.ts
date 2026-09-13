@@ -248,4 +248,34 @@ submitRecommendationLead(dto: RecommendationLeadDto): Observable<any> {
 getNewLeads(): Observable<any[]> {
   return this.http.get<any[]>(`${this.apiUrl}/leads/new-leads`);
 }
+
+// 🟢 "Request Leads" - البروكر بيطلب عملاء جداد بمعايير معينة، والأدمن بيشوفهم في تاب Requested Leads
+submitBrokerLeadRequest(brokerId: string, dto: any): Observable<any> {
+  return this.http.post(`${this.apiUrl}/leads/broker-requests?brokerId=${brokerId}`, dto);
+}
+
+getBrokerLeadRequests(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/leads/broker-requests`);
+}
+
+fulfillBrokerLeadRequest(id: number): Observable<any> {
+  return this.http.patch(`${this.apiUrl}/leads/broker-requests/${id}/fulfill`, {});
+}
+
+deleteBrokerLeadRequest(id: number): Observable<any> {
+  return this.http.delete(`${this.apiUrl}/leads/broker-requests/${id}`);
+}
+
+// 🟢 إشعارات البروكر الدائمة (زي تنبيه سحب عميل بسبب عدم التحديث)
+getBrokerNotifications(brokerId: string): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/notifications?brokerId=${brokerId}`);
+}
+
+markNotificationAsRead(id: number): Observable<any> {
+  return this.http.put(`${this.apiUrl}/notifications/${id}/mark-read`, {});
+}
+
+markAllNotificationsAsRead(brokerId: string): Observable<any> {
+  return this.http.put(`${this.apiUrl}/notifications/mark-all-read?brokerId=${brokerId}`, {});
+}
 }

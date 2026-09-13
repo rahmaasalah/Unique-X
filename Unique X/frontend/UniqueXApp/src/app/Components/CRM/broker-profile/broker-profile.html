@@ -32,6 +32,9 @@
       <button class="btn btn-danger rounded-pill fw-bold px-4 shadow-sm" routerLink="/crm/leads">
         <i class="bi bi-kanban me-1"></i> My Pipeline
       </button>
+      <button class="btn btn-outline-danger rounded-pill fw-bold px-4" (click)="openRequestLeadsModal()">
+        <i class="bi bi-person-plus me-1"></i> Request Leads
+      </button>
 
       <button class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm border"
         [ngClass]="showFavouritesOnly() ? 'btn-warning text-dark' : 'bg-white text-dark'"
@@ -587,5 +590,104 @@
 
     
 
+  </div>
+
+  <!-- ===== Request Leads Modal ===== -->
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 2000;" *ngIf="showRequestLeadsModal()">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold text-danger">Tell us what you're looking for</h5>
+          <button type="button" class="btn-close" (click)="closeRequestLeadsModal()"></button>
+        </div>
+        <div class="modal-body py-3">
+          <div class="row g-4">
+
+            <!-- Zone (multi) -->
+            <div class="col-12">
+              <label class="form-label small fw-bold d-block mb-2">Zone</label>
+              <div class="d-flex flex-wrap gap-2">
+                <button *ngFor="let opt of [{v:'1', l:'Cairo'}, {v:'2', l:'Alexandria'}, {v:'3', l:'North Coast'}]"
+                        type="button" class="btn btn-sm rounded-pill px-3"
+                        [class.btn-danger]="isRequestValueSelected(requestLeadsForm.cities, opt.v)"
+                        [class.btn-outline-secondary]="!isRequestValueSelected(requestLeadsForm.cities, opt.v)"
+                        (click)="toggleRequestValue(requestLeadsForm.cities, opt.v)">
+                  {{ opt.l }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Listing Type (multi) -->
+            <div class="col-12">
+              <label class="form-label small fw-bold d-block mb-2">Listing Type</label>
+              <div class="d-flex flex-wrap gap-2">
+                <button *ngFor="let opt of [{v:'0', l:'Resale'}, {v:'1', l:'Rent'}, {v:'2', l:'Primary'}, {v:'3', l:'Resale Project'}]"
+                        type="button" class="btn btn-sm rounded-pill px-3"
+                        [class.btn-danger]="isRequestValueSelected(requestLeadsForm.listingTypes, opt.v)"
+                        [class.btn-outline-secondary]="!isRequestValueSelected(requestLeadsForm.listingTypes, opt.v)"
+                        (click)="toggleRequestValue(requestLeadsForm.listingTypes, opt.v)">
+                  {{ opt.l }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Property Type (multi) -->
+            <div class="col-12">
+              <label class="form-label small fw-bold d-block mb-2">Property Type</label>
+              <div class="row g-2">
+                <div class="col-4" *ngFor="let opt of [{v:'0', l:'Apartment'}, {v:'1', l:'Villa'}, {v:'2', l:'Shop'}, {v:'3', l:'Office'}, {v:'4', l:'Chalet'}, {v:'5', l:'Full Floor'}]">
+                  <button type="button" class="btn btn-sm rounded-pill px-2 w-100"
+                          [class.btn-danger]="isRequestValueSelected(requestLeadsForm.propertyTypes, opt.v)"
+                          [class.btn-outline-secondary]="!isRequestValueSelected(requestLeadsForm.propertyTypes, opt.v)"
+                          (click)="toggleRequestValue(requestLeadsForm.propertyTypes, opt.v)">
+                    {{ opt.l }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-1">
+
+            <!-- Rooms range -->
+            <div class="col-6">
+              <label class="form-label small fw-bold">Min Rooms</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="requestLeadsForm.minRooms">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">Max Rooms</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="requestLeadsForm.maxRooms">
+            </div>
+
+            <!-- Bathrooms range -->
+            <div class="col-6">
+              <label class="form-label small fw-bold">Min Bathrooms</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="requestLeadsForm.minBathrooms">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">Max Bathrooms</label>
+              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="requestLeadsForm.maxBathrooms">
+            </div>
+
+            <!-- Budget range -->
+            <div class="col-6">
+              <label class="form-label small fw-bold">Min Budget (EGP)</label>
+              <input type="text" class="form-control rounded-3" (input)="formatRequestPrice($event)" #reqMinBudget>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">Max Budget (EGP)</label>
+              <input type="text" class="form-control rounded-3" (input)="formatRequestPrice($event)" #reqMaxBudget>
+            </div>
+
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-danger w-100 rounded-pill fw-bold py-2"
+                  [disabled]="isSubmittingRequest()"
+                  (click)="submitRequestLeads(reqMinBudget, reqMaxBudget)">
+            {{ isSubmittingRequest() ? 'Submitting...' : 'Submit' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

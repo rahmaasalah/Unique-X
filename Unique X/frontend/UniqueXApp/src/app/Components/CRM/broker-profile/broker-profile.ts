@@ -484,4 +484,81 @@ cleanAdminPrefix(text: string | null): string | null {
       });
     }
   }
+
+  // ===================== Request Leads (نفس فكرة مودال Get Recommendation بالظبط) =====================
+  showRequestLeadsModal = signal<boolean>(false);
+  isSubmittingRequest = signal<boolean>(false);
+
+  requestLeadsForm: {
+    cities: string[];
+    listingTypes: string[];
+    propertyTypes: string[];
+    minRooms: string; maxRooms: string;
+    minBathrooms: string; maxBathrooms: string;
+  } = {
+    cities: [],
+    listingTypes: [],
+    propertyTypes: [],
+    minRooms: '', maxRooms: '',
+    minBathrooms: '', maxBathrooms: ''
+  };
+
+  openRequestLeadsModal() {
+    this.requestLeadsForm = {
+      cities: [], listingTypes: [], propertyTypes: [],
+      minRooms: '', maxRooms: '', minBathrooms: '', maxBathrooms: ''
+    };
+    this.showRequestLeadsModal.set(true);
+  }
+
+  closeRequestLeadsModal() {
+    this.showRequestLeadsModal.set(false);
+  }
+
+  isRequestValueSelected(list: string[], value: string): boolean {
+    return list.includes(value);
+  }
+
+  toggleRequestValue(list: string[], value: string) {
+    const idx = list.indexOf(value);
+    if (idx > -1) list.splice(idx, 1);
+    else list.push(value);
+  }
+
+  formatRequestPrice(event: any) {
+    const input = event.target;
+    const raw = input.value.replace(/[^0-9]/g, '');
+    input.value = raw ? Number(raw).toLocaleString('en-US') : '';
+  }
+
+  submitRequestLeads(minBudgetEl: HTMLInputElement, maxBudgetEl: HTMLInputElement) {
+    const f = this.requestLeadsForm;
+    const minBudget = minBudgetEl?.value?.replace(/,/g, '');
+    const maxBudget = maxBudgetEl?.value?.replace(/,/g, '');
+
+    const dto = {
+      cities: f.cities,
+      listingTypes: f.listingTypes,
+      propertyTypes: f.propertyTypes,
+      minRooms: f.minRooms ? Number(f.minRooms) : null,
+      maxRooms: f.maxRooms ? Number(f.maxRooms) : null,
+      minBathrooms: f.minBathrooms ? Number(f.minBathrooms) : null,
+      maxBathrooms: f.maxBathrooms ? Number(f.maxBathrooms) : null,
+      minBudget: minBudget ? Number(minBudget) : null,
+      maxBudget: maxBudget ? Number(maxBudget) : null
+    };
+
+    this.isSubmittingRequest.set(true);
+    this.crmService.submitBrokerLeadRequest(this.currentBrokerId, dto).subscribe({
+      next: () => {
+        this.isSubmittingRequest.set(false);
+        this.showRequestLeadsModal.set(false);
+        this.alertService.success('Your request has been sent to the admin. We will get back to you soon!');
+      },
+      error: () => {
+        this.isSubmittingRequest.set(false);
+        this.alertService.error('Failed to submit your request. Please try again.');
+      }
+    });
+  }
 }

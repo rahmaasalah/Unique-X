@@ -230,6 +230,19 @@
 <li class="mb-2">
 
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold"
+          [ngClass]="activeTab() === 'requested_leads' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'"
+          (click)="switchTab('requested_leads')">
+    <i class="bi bi-clipboard-plus-fill me-3 fs-5"></i> Requested Leads
+    @if (requestedLeadsList().length > 0) {
+      <span class="badge bg-danger ms-auto rounded-pill">{{ requestedLeadsList().length }}</span>
+    }
+  </button>
+
+</li>
+
+<li class="mb-2">
+
+  <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold"
 
           [ngClass]="activeTab() === 'pending_clients' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'"
 
@@ -4135,6 +4148,191 @@
           </div>
         }
       </section>
+    }
+
+
+
+    <!-- ===== Requested Leads Section (البروكرز بيطلبوا عملاء بمعايير معينة) ===== -->
+
+    @if (activeTab() === 'requested_leads') {
+
+      @if (!fulfillingRequest()) {
+
+      <section class="animate__animated animate__fadeIn">
+        <h4 class="fw-bold mb-1"><i class="bi bi-clipboard-plus-fill text-danger me-2"></i>Requested Leads</h4>
+        <p class="text-muted small mb-4">
+          Brokers who requested new leads with specific criteria via "Request Leads" on their profile.
+        </p>
+
+        @if (requestedLeadsList().length === 0) {
+          <div class="alert alert-light text-center border shadow-sm py-5">
+            <i class="bi bi-emoji-smile fs-1 text-muted d-block mb-2"></i>
+            No broker requests right now.
+          </div>
+        } @else {
+          <div class="row g-3">
+            @for (req of requestedLeadsList(); track req.id) {
+              <div class="col-12 col-lg-6">
+                <div class="card shadow-sm border-0 h-100">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <h6 class="fw-bold mb-0"><i class="bi bi-person-badge-fill text-primary me-1"></i>{{ req.brokerName }}</h6>
+                      <span class="badge" [ngClass]="req.status === 'Fulfilled' ? 'bg-success' : 'bg-warning text-dark'">{{ req.status }}</span>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-1 my-2">
+                      <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle" *ngIf="req.selectedCities">
+                        <i class="bi bi-geo-alt-fill me-1"></i>{{ mapRequestCities(req.selectedCities) }}
+                      </span>
+                      <span class="badge bg-success" *ngIf="req.listingTypes">
+                        <i class="bi bi-tag-fill me-1"></i>{{ mapRequestListingTypes(req.listingTypes) }}
+                      </span>
+                      <span class="badge bg-secondary" *ngIf="req.propertyTypes">
+                        <i class="bi bi-building me-1"></i>{{ mapRequestPropertyTypes(req.propertyTypes) }}
+                      </span>
+                    </div>
+
+                    <div class="small text-muted mb-1" *ngIf="req.minRooms != null || req.maxRooms != null">
+                      Rooms: {{ req.minRooms ?? '—' }} - {{ req.maxRooms ?? '—' }}
+                    </div>
+                    <div class="small text-muted mb-1" *ngIf="req.minBathrooms != null || req.maxBathrooms != null">
+                      Bathrooms: {{ req.minBathrooms ?? '—' }} - {{ req.maxBathrooms ?? '—' }}
+                    </div>
+                    <div class="small text-muted mb-3" *ngIf="req.minBudget != null || req.maxBudget != null">
+                      Budget: {{ req.minBudget != null ? (req.minBudget | currency:'EGP ') : '—' }} - {{ req.maxBudget != null ? (req.maxBudget | currency:'EGP ') : '—' }}
+                    </div>
+
+                    <div class="text-muted small mb-2"><i class="bi bi-clock-history me-1"></i>{{ req.createdAt | date:'d MMM y, h:mm a' }}</div>
+
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-sm btn-success fw-bold flex-fill" *ngIf="req.status !== 'Fulfilled'" (click)="fulfillRequestedLead(req.id)">
+                        <i class="bi bi-check-lg"></i> Mark as Fulfilled
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger fw-bold flex-fill" (click)="goToAssignLeads(req)">
+                        <i class="bi bi-person-fill"></i> Go Assign Leads
+                      </button>
+                      <button class="btn btn-sm btn-outline-secondary" (click)="deleteRequestedLead(req.id)">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      } @else {
+
+        <!-- ===== Fulfill Broker Request (قسم مخصص - مش نفس Bulk Transfer) ===== -->
+        <section class="animate__animated animate__fadeIn">
+
+          <button class="btn btn-sm btn-outline-secondary rounded-pill mb-3" (click)="backFromFulfill()">
+            <i class="bi bi-arrow-right me-1"></i> Back to Requested Leads
+          </button>
+
+          <!-- تفاصيل طلب البروكر -->
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+              <h5 class="fw-bold mb-3"><i class="bi bi-person-badge-fill text-primary me-2"></i>{{ fulfillingRequest().brokerName }}'s Request</h5>
+              <div class="d-flex flex-wrap gap-2">
+                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle" *ngIf="fulfillingRequest().selectedCities">
+                  <i class="bi bi-geo-alt-fill me-1"></i>{{ mapRequestCities(fulfillingRequest().selectedCities) }}
+                </span>
+                <span class="badge bg-success" *ngIf="fulfillingRequest().listingTypes">
+                  <i class="bi bi-tag-fill me-1"></i>{{ mapRequestListingTypes(fulfillingRequest().listingTypes) }}
+                </span>
+                <span class="badge bg-secondary" *ngIf="fulfillingRequest().propertyTypes">
+                  <i class="bi bi-building me-1"></i>{{ mapRequestPropertyTypes(fulfillingRequest().propertyTypes) }}
+                </span>
+                <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle"
+                      *ngIf="fulfillingRequest().minRooms != null || fulfillingRequest().maxRooms != null">
+                  <i class="bi bi-door-open-fill me-1"></i>Rooms: {{ fulfillingRequest().minRooms ?? '—' }} - {{ fulfillingRequest().maxRooms ?? '—' }}
+                </span>
+                <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle"
+                      *ngIf="fulfillingRequest().minBathrooms != null || fulfillingRequest().maxBathrooms != null">
+                  <i class="bi bi-droplet-fill me-1"></i>Bathrooms: {{ fulfillingRequest().minBathrooms ?? '—' }} - {{ fulfillingRequest().maxBathrooms ?? '—' }}
+                </span>
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"
+                      *ngIf="fulfillingRequest().minBudget != null || fulfillingRequest().maxBudget != null">
+                  <i class="bi bi-cash-stack me-1"></i>
+                  Budget: {{ fulfillingRequest().minBudget != null ? (fulfillingRequest().minBudget | currency:'EGP ') : '—' }}
+                  - {{ fulfillingRequest().maxBudget != null ? (fulfillingRequest().maxBudget | currency:'EGP ') : '—' }}
+                </span>
+              </div>
+              <div class="text-muted small mt-2">
+                <i class="bi bi-clock-history me-1"></i>Requested on {{ fulfillingRequest().createdAt | date:'d MMM y, h:mm a' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Pool العملاء المتاحين للتوزيع -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0">Available Clients <span class="text-muted small">(unassigned + pulled from previous brokers)</span></h6>
+            <span class="badge rounded-pill px-3 py-2 fs-6" [ngClass]="selectedFulfillLeadIds().length > 0 ? 'bg-danger' : 'bg-secondary'">
+              {{ selectedFulfillLeadIds().length }} Selected
+            </span>
+          </div>
+
+          @if (fulfillPoolLoading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-danger"></div>
+            </div>
+          } @else if (fulfillPoolLeads().length === 0) {
+            <div class="alert alert-light text-center border shadow-sm py-5">
+              <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+              No unassigned or pulled-back clients available right now.
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle bg-white shadow-sm rounded-3 overflow-hidden">
+                <thead class="table-light">
+                  <tr>
+                    <th></th>
+                    <th>Client</th>
+                    <th>Source</th>
+                    <th>Property Type</th>
+                    <th>Zone / Info</th>
+                    <th>Budget</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (lead of fulfillPoolLeads(); track lead.id) {
+                    <tr [class.table-danger]="isFulfillLeadSelected(lead.id)" style="cursor:pointer;" (click)="toggleFulfillLead(lead.id)">
+                      <td><input type="checkbox" class="form-check-input" [checked]="isFulfillLeadSelected(lead.id)" (click)="$event.stopPropagation(); toggleFulfillLead(lead.id)"></td>
+                      <td>
+                        <div class="fw-bold">{{ lead.fullName }}</div>
+                        <div class="text-muted small">{{ lead.phoneNumber }}</div>
+                      </td>
+                      <td>
+                        <span class="badge" [ngClass]="lead.poolOrigin === 'pending' ? 'bg-warning text-dark' : 'bg-info text-dark'">
+                          {{ lead.poolOrigin === 'pending' ? 'Pulled Back' : 'New / Unassigned' }}
+                        </span>
+                      </td>
+                      <td>{{ lead.propertyType }}</td>
+                      <td class="small">{{ lead.extraInfo || lead.zone }}</td>
+                      <td>{{ lead.budgetLabel !== '—' ? ('EGP ' + lead.budgetLabel) : '—' }}</td>
+                      <td class="small text-muted">{{ lead.dateLabel | date:'d MMM y' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <button class="btn btn-danger fw-bold rounded-pill px-4 mt-3"
+                    [disabled]="selectedFulfillLeadIds().length === 0 || isAssigningFulfill()"
+                    (click)="assignSelectedToFulfillRequest()">
+              @if (isAssigningFulfill()) {
+                <span class="spinner-border spinner-border-sm me-2"></span> Assigning...
+              } @else {
+                <i class="bi bi-check-circle me-1"></i> Assign {{ selectedFulfillLeadIds().length }} Client(s) to {{ fulfillingRequest().brokerName }}
+              }
+            </button>
+          }
+        </section>
+      }
     }
 
 

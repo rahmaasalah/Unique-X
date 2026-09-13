@@ -31,10 +31,12 @@ namespace Unique_X.Data
         public DbSet<JobPosting> JobPostings { get; set; }
         public DbSet<Blog> Blogs { get; set; }
         public DbSet<LeadFavorite> LeadFavorites { get; set; }
+        public DbSet<BrokerLeadRequest> BrokerLeadRequests { get; set; }
 
         public DbSet<Shortlist> Shortlists { get; set; }
         public DbSet<VisitList> VisitLists { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<BrokerNotification> BrokerNotifications { get; set; }
         public DbSet<ProjectMeetingRequest> ProjectMeetingRequests { get; set; }
         public DbSet<Launch> Launches { get; set; }
         public DbSet<LaunchMeetingRequest> LaunchMeetingRequests { get; set; }

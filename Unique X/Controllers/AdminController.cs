@@ -1432,5 +1432,31 @@ namespace Unique_X.Controllers
             return Ok(new { Message = "Deleted" });
         }
 
+        // ============================================================
+        // 🟢 Diagnostic: نتأكد إن LeadAutoReassignmentService شغالة فعلاً من غير ما نحتاج نوصل للـ server logs
+        // لو "minutesSinceLastRun" بيفضل يكبر (أكتر من 3-4 دقايق) ومبيرجعش لصفر، يبقى الخدمة مش شغالة
+        // (يعني الـ API معملوش Restart بعد آخر Deploy، أو في مشكلة تانية بتمنعها تشتغل)
+        // ============================================================
+        [HttpGet("auto-reassignment-status")]
+        public IActionResult GetAutoReassignmentStatus()
+        {
+            var lastRun = Unique_X.Services.LeadAutoReassignmentService.LastRunAtUtc;
+            double? minutesSinceLastRun = lastRun.HasValue
+                ? (DateTime.UtcNow - lastRun.Value).TotalMinutes
+                : (double?)null;
+
+            return Ok(new
+            {
+                lastRunAtUtc = lastRun,
+                minutesSinceLastRun = minutesSinceLastRun.HasValue ? Math.Round(minutesSinceLastRun.Value, 1) : (double?)null,
+                lastRunUnassignedCount = Unique_X.Services.LeadAutoReassignmentService.LastRunUnassignedCount,
+                lastRunError = Unique_X.Services.LeadAutoReassignmentService.LastRunError,
+                serviceLooksAlive = lastRun.HasValue && minutesSinceLastRun.HasValue && minutesSinceLastRun.Value < 5,
+                note = lastRun == null
+                    ? "الخدمة لسه مشغلتش أي دورة من وقت آخر Restart للـ API - استني دقيقتين وارفريشي، لو فضلت null يبقى الخدمة مش متسجلة/شغالة."
+                    : "لو minutesSinceLastRun بيفضل يزيد باستمرار من غير ما يرجع لصفر، الخدمة واقفة."
+            });
+        }
+
     }
 }

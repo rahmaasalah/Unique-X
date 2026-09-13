@@ -58,6 +58,33 @@
         </ul>
       </div>
 
+      <!-- 🟢 إشعارات سحب العملاء (منفصلة عن تذكيرات المهام) -->
+      <div class="dropdown mt-1" *ngIf="!isAdmin()">
+        <a class="nav-link text-white position-relative d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" style="cursor: pointer;">
+          <i class="bi bi-exclamation-octagon-fill fs-4"></i>
+          <span *ngIf="leadAlertsUnreadCount() > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm" style="font-size: 0.7rem;">
+            {{ leadAlertsUnreadCount() }}
+          </span>
+        </a>
+
+        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2" style="width: 300px; max-height: 350px; overflow-y: auto;">
+          <li><h6 class="dropdown-header fw-bold text-danger border-bottom pb-2 mb-2 fs-6">
+            <i class="bi bi-exclamation-octagon-fill me-1"></i> Alerts
+          </h6></li>
+
+          <li *ngIf="leadAlerts().length === 0">
+            <span class="dropdown-item text-muted small py-3 text-center">No alerts. 🎉</span>
+          </li>
+
+          <li *ngFor="let n of leadAlerts()" (click)="markAlertRead(n)">
+            <a class="dropdown-item rounded py-2 mb-1" [class.bg-danger-subtle]="!n.isRead" style="white-space: normal; cursor: pointer;">
+              <div class="fw-bold small" [class.text-danger]="!n.isRead">{{ n.message }}</div>
+              <div class="text-muted" style="font-size: 0.7rem;">{{ n.createdAt | date:'MMM d, h:mm a' }}</div>
+            </a>
+          </li>
+        </ul>
+      </div>
+
       <!-- خط فاصل شيك بين الإشعارات والبروفايل -->
       <div class="vr text-white opacity-25 d-none d-md-block" style="width: 2px; height: 35px;"></div>
 

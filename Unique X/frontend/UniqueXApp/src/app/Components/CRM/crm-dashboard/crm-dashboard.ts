@@ -48,11 +48,178 @@ export class CrmDashboardComponent implements OnInit {
 
   isAdmin = signal<boolean>(false);
 
-  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'admin_favorites' | 'pending_duplicates' | 'rejected_duplicates' | 'report' | 'pending_clients' | 'broker_codes' | 'broker_limits' | 'new_leads'>('brokers');
+  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'admin_favorites' | 'pending_duplicates' | 'rejected_duplicates' | 'report' | 'pending_clients' | 'broker_codes' | 'broker_limits' | 'new_leads' | 'requested_leads'>('brokers');
 
   // 🟢 تاب "New Leads" - عملاء جايين من مودال Get Recommendation ولسه محتاجين توزيع على بروكر
   newLeadsList = signal<any[]>([]);
   newLeadsSelectedBroker: { [leadId: number]: string } = {};
+
+  // ===================== Requested Leads (طلبات البروكرز لعملاء جداد) =====================
+  requestedLeadsList = signal<any[]>([]);
+
+  // 🟢 نفس الـ maps المستخدمة في مودال "Get Recommendation" (home.ts) بالظبط - رقم -> اسم مقروء
+  private cityNames: Record<string, string> = { '1': 'Cairo', '2': 'Alexandria', '3': 'North Coast' };
+  private listingTypeNames: Record<string, string> = { '0': 'Resale', '1': 'Rent', '2': 'Primary', '3': 'Resale Project' };
+  private propertyTypeNames: Record<string, string> = { '0': 'Apartment', '1': 'Villa', '2': 'Shop', '3': 'Office', '4': 'Chalet', '5': 'Full Floor' };
+
+  // بتحول أي قيمة comma-separated من كودات لأسماء مقروءة، مفصولة بفاصلة
+  private mapCodesToNames(csv: string | null | undefined, map: Record<string, string>): string {
+    if (!csv) return '';
+    return csv.split(',').map(code => map[code.trim()] ?? code.trim()).join(', ');
+  }
+
+  mapRequestCities(csv: string | null | undefined): string {
+    return this.mapCodesToNames(csv, this.cityNames);
+  }
+
+  mapRequestListingTypes(csv: string | null | undefined): string {
+    return this.mapCodesToNames(csv, this.listingTypeNames);
+  }
+
+  mapRequestPropertyTypes(csv: string | null | undefined): string {
+    return this.mapCodesToNames(csv, this.propertyTypeNames);
+  }
+
+  loadRequestedLeads() {
+    this.crmService.getBrokerLeadRequests().subscribe({
+      next: (res: any[]) => this.requestedLeadsList.set(res || []),
+      error: (err) => console.error('Error loading requested leads', err)
+    });
+  }
+
+  fulfillRequestedLead(id: number) {
+    this.crmService.fulfillBrokerLeadRequest(id).subscribe({
+      next: () => {
+        this.alertService.success('Request marked as fulfilled.');
+        this.loadRequestedLeads();
+      },
+      error: () => this.alertService.error('Failed to update request.')
+    });
+  }
+
+  deleteRequestedLead(id: number) {
+    this.alertService.confirm('Delete this request permanently?', () => {
+      this.crmService.deleteBrokerLeadRequest(id).subscribe({
+        next: () => {
+          this.alertService.success('Request deleted.');
+          this.loadRequestedLeads();
+        },
+        error: () => this.alertService.error('Failed to delete request.')
+      });
+    });
+  }
+
+  // ===================== Fulfill Broker Request (قسم مخصص - مش نفس تاب Bulk Transfer) =====================
+  // 🟢 لما الأدمن يدوس "Go Assign Leads" على طلب بروكر معين، بيفتح القسم ده بدل التاب العادي
+  // بيعرض تفاصيل طلب البروكر فوق + Pool من العملاء المتاحين للتوزيع (جداد + مسحوبين) تحت
+  fulfillingRequest = signal<any | null>(null);
+  fulfillPoolLeads = signal<any[]>([]);
+  fulfillPoolLoading = signal<boolean>(false);
+  selectedFulfillLeadIds = signal<number[]>([]);
+  isAssigningFulfill = signal<boolean>(false);
+
+  goToAssignLeads(req: any) {
+    this.fulfillingRequest.set(req);
+    this.selectedFulfillLeadIds.set([]);
+    this.loadFulfillPool();
+  }
+
+  backFromFulfill() {
+    this.fulfillingRequest.set(null);
+    this.fulfillPoolLeads.set([]);
+    this.selectedFulfillLeadIds.set([]);
+  }
+
+  // بيجمع Pool العملاء المتاحين للتوزيع: العملاء الجداد من غير بروكر حقيقي (New Leads)
+  // + العملاء اللي اتسحبوا تلقائيًا من بروكرهم القديم بعد مرور الوقت (Pending Clients)
+  // 🟢 الشكلين مختلفين تمامًا في الـ backend، فبنوحدهم هنا لشكل واحد بسيط قبل ما نعرضهم
+  loadFulfillPool() {
+    this.fulfillPoolLoading.set(true);
+    forkJoin({
+      newLeads: this.crmService.getNewLeads(),
+      pendingClients: this.crmService.getPendingClients()
+    }).subscribe({
+      next: ({ newLeads, pendingClients }) => {
+        const taggedNew = (newLeads || []).map((l: any) => ({
+          id: l.id,
+          fullName: l.fullName,
+          phoneNumber: l.phoneNumber,
+          propertyType: l.request?.propertyType || '—',
+          zone: l.request?.selectedCities || '—',
+          budgetLabel: (l.request?.minBudget || l.request?.maxBudget)
+            ? `${l.request?.minBudget ?? 0} - ${l.request?.maxBudget ?? 0}` : '—',
+          dateLabel: l.createdAt,
+          extraInfo: null,
+          poolOrigin: 'new'
+        }));
+
+        const taggedPending = (pendingClients || []).map((l: any) => ({
+          id: l.id,
+          fullName: l.fullName,
+          phoneNumber: l.phoneNumber,
+          propertyType: '—',
+          zone: '—',
+          budgetLabel: '—',
+          dateLabel: l.unassignedAt,
+          extraInfo: `Previously with ${l.previousBrokerName}`,
+          poolOrigin: 'pending'
+        }));
+
+        this.fulfillPoolLeads.set([...taggedNew, ...taggedPending]);
+        this.fulfillPoolLoading.set(false);
+      },
+      error: () => {
+        this.fulfillPoolLeads.set([]);
+        this.fulfillPoolLoading.set(false);
+      }
+    });
+  }
+
+  toggleFulfillLead(id: number) {
+    const current = this.selectedFulfillLeadIds();
+    this.selectedFulfillLeadIds.set(
+      current.includes(id) ? current.filter(x => x !== id) : [...current, id]
+    );
+  }
+
+  isFulfillLeadSelected(id: number): boolean {
+    return this.selectedFulfillLeadIds().includes(id);
+  }
+
+  // بتنقل كل العملاء المختارين للبروكر صاحب الطلب - كل واحد بالـ endpoint الصح حسب مصدره (جديد/مسحوب)
+  // وبعد ما يخلصوا كلهم بنعلّم الطلب نفسه Fulfilled تلقائيًا
+  assignSelectedToFulfillRequest() {
+    const req = this.fulfillingRequest();
+    const ids = this.selectedFulfillLeadIds();
+    if (!req || ids.length === 0) {
+      this.alertService.error('Please select at least one client.');
+      return;
+    }
+
+    this.isAssigningFulfill.set(true);
+    const pool = this.fulfillPoolLeads();
+
+    const calls = ids.map(id => {
+      const lead = pool.find(l => l.id === id);
+      return lead?.poolOrigin === 'pending'
+        ? this.crmService.assignNewBroker(id, req.brokerId, this.currentBrokerId)
+        : this.crmService.transferLead(id, req.brokerId, this.currentBrokerId);
+    });
+
+    forkJoin(calls).subscribe({
+      next: () => {
+        this.isAssigningFulfill.set(false);
+        this.alertService.success(`${ids.length} client(s) assigned to ${req.brokerName} successfully!`);
+        this.crmService.fulfillBrokerLeadRequest(req.id).subscribe(() => this.loadRequestedLeads());
+        this.refreshAllLeads();
+        this.backFromFulfill();
+      },
+      error: () => {
+        this.isAssigningFulfill.set(false);
+        this.alertService.error('Something went wrong while assigning clients. Please try again.');
+      }
+    });
+  }
 
   loadNewLeads() {
     this.crmService.getNewLeads().subscribe({
@@ -1495,6 +1662,7 @@ hiddenLeads = signal<number[]>([]);
     if (tab === 'pending_clients') this.loadPendingClients();
 
     if (tab === 'new_leads') this.loadNewLeads();
+    if (tab === 'requested_leads') this.loadRequestedLeads();
 
     if (tab === 'broker_codes') this.loadBrokersWithCodes();
 
