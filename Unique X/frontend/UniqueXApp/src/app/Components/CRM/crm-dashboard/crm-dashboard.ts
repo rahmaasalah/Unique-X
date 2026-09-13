@@ -272,17 +272,38 @@ export class CrmDashboardComponent implements OnInit {
 
   pendingFilterBroker = signal<string>('');
 
+  // 🟢 فلترة Pending Clients بالـ Stage - قايمة ثابتة بالـ Status IDs المطلوبة فقط
+  pendingFilterStage = signal<string>('');
+
+  pendingStageOptions: { id: number; label: string }[] = [
+    { id: 1, label: 'New "To Call"' },
+    { id: 4, label: 'Calls (request)' },
+    { id: 6, label: 'Follow Up For Visit' },
+    { id: 7, label: 'Visit scheduled' },
+    { id: 10, label: 'Follow up for Meeting' },
+    { id: 11, label: 'Meeting Scheduled' },
+    { id: 8, label: 'Follow up After visit' },
+    { id: 18, label: 'Follow up for closing' },
+    { id: 19, label: 'Deal closed' },
+    { id: 23, label: 'Low Budget' },
+    { id: 22, label: 'Lost Not interested' },
+    { id: 24, label: 'Number Issue' },
+    { id: 21, label: 'N/A "unreachable"' },
+    { id: 25, label: 'Broker' },
+    { id: 26, label: 'Recommend to shift' }
+  ];
+
   brokersWithCodes = signal<any[]>([]);
 
   brokerCodeInputs: { [id: string]: string } = {};
-
-
 
   get filteredPendingClients() {
 
     const search = this.pendingSearchName().toLowerCase();
 
     const broker = this.pendingFilterBroker();
+
+    const stage = this.pendingFilterStage();
 
     return this.pendingClients().filter(c => {
 
@@ -292,7 +313,9 @@ export class CrmDashboardComponent implements OnInit {
 
       const matchBroker = !broker || c.previousBrokerName === broker;
 
-      return matchName && matchBroker;
+      const matchStage = !stage || String(c.statusId) === stage;
+
+      return matchName && matchBroker && matchStage;
 
     });
 

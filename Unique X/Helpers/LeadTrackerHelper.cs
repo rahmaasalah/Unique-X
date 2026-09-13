@@ -15,13 +15,18 @@
     //
     // العتبات:
     //   < 24 ساعة من غير أكشن  -> Active  (طبيعي)
-    //   >= 24 ساعة              -> Late
-    //   >= 48 ساعة              -> TooLate (وده نفس الوقت اللي العميل بيتسحب فيه من البروكر - شوفي LeadAutoReassignmentService)
+    //   >= 24 ساعة              -> Late   (بادج بس، من غير سحب)
+    //   >= 48 ساعة              -> TooLate (بادج تحذيري - العميل بدأ يقرب من السحب، بس لسه معاه)
+    //   >= 72 ساعة              -> بيتسحب فعليًا من البروكر - شوفي LeadAutoReassignmentService
     // ============================================================
     public static class LeadTrackerHelper
     {
         public const double LateThresholdHours = 24;
         public const double TooLateThresholdHours = 48;
+
+        // 🟢 العتبة الفعلية للسحب من البروكر - منفصلة عن TooLateThresholdHours
+        // (TooLate = بادج تحذيري بس، الرقم ده هو اللي فعليًا بيحرك LeadAutoReassignmentService)
+        public const double UnassignThresholdHours = 72;
 
         // بيرجع "Active" / "Late" / "TooLate"
         public static string GetLateStatus(DateTime? updatedAt, DateTime createdAt, DateTime? nowUtc = null)
