@@ -4583,7 +4583,7 @@
               <div class="col-md-5">
                 <select class="form-select form-select-sm" [ngModel]="bulkPendingBrokerId()" (ngModelChange)="bulkPendingBrokerId.set($event)">
                   <option value="">-- Choose New Broker --</option>
-                  @for (broker of allBrokersList(); track broker.id) {
+                  @for (broker of vipBrokers(); track broker.id) {
                     <option [value]="broker.id">{{ broker.firstName }} {{ broker.lastName }}</option>
                   }
                 </select>
@@ -4711,7 +4711,7 @@
 
                           <option value="">-- Select Broker --</option>
 
-                          @for (broker of allBrokersList(); track broker.id) {
+                          @for (broker of vipBrokers(); track broker.id) {
 
                             <option [value]="broker.id">{{ broker.firstName }} {{ broker.lastName }}</option>
 
