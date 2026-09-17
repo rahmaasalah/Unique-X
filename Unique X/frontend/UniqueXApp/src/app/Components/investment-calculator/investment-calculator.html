@@ -240,7 +240,20 @@
 
     <!-- ============ Glossary ============ -->
     <div class="card border-0 shadow-sm rounded-4 p-4">
-      <h5 class="fw-bold mb-3" style="color:#1a1a2e;"><i class="bi bi-book me-2 text-danger"></i>Glossary</h5>
+      <!-- 🟢 العنوان بقى زرار Toggle - دوسة تفتح القايمة ودوسة تقفلها -->
+      <button type="button"
+              class="btn btn-link text-decoration-none p-0 w-100 d-flex align-items-center justify-content-between"
+              [class.mb-3]="showGlossary()"
+              (click)="toggleGlossary()">
+        <h5 class="fw-bold mb-0" style="color:#1a1a2e;">
+          <i class="bi bi-book me-2 text-danger"></i>Glossary
+        </h5>
+        <i class="bi text-danger fs-5"
+           [class.bi-chevron-down]="!showGlossary()"
+           [class.bi-chevron-up]="showGlossary()"></i>
+      </button>
+
+      @if (showGlossary()) {
       <div class="accordion" id="glossaryAccordion">
         @for (item of [
           {term: 'Unit Price @ Delivery', descAr: 'سعر الوحدة المتوقع وقت الاستلام، بعد تطبيق نسبة التقدير السنوية على سنوات ما قبل الاستلام.', descEn: 'The expected unit price at delivery time, after applying the annual appreciation rate over the pre-delivery years.'},
@@ -281,6 +294,7 @@
           </div>
         }
       </div>
+      }
     </div>
 
   </div>

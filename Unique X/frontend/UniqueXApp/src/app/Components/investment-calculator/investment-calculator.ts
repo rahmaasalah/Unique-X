@@ -126,6 +126,13 @@ export class InvestmentCalculatorComponent {
   results = signal<ScenarioResult[] | null>(null);
   selectedScenarioKey = signal<'bullish' | 'stable' | 'declining'>('stable');
   activeView = signal<'chart' | 'table'>('chart');
+
+  // 🟢 إظهار/إخفاء قايمة المصطلحات (Glossary) - مقفولة افتراضيًا عشان متزحمش الصفحة
+  showGlossary = signal(false);
+
+  toggleGlossary() {
+    this.showGlossary.update(v => !v);
+  }
   errorMessage = signal<string>('');
 
   selectedResult = computed(() => {
@@ -174,10 +181,13 @@ export class InvestmentCalculatorComponent {
     const unitPriceAtDelivery = P0 * Math.pow(1 + a, D);
     const unitPriceAfterInstallment = P0 * Math.pow(1 + a, I);
 
-    const amountPaidAtDelivery = P0 * deliveryFrac;
-    const amountPaidAfterDelivery = P0 * (1 - deliveryFrac);
-
     const postDeliveryYears = Math.max(I - D, 0);
+
+    // 🟢 لو سنوات التقسيط = سنوات الاستلام، يبقى مفيش فترة سداد بعد الاستلام أصلاً،
+    // فكل الثمن بيتعتبر مدفوع عند الاستلام - كده مجموع المدفوعات يفضل = سعر الوحدة في كل الحالات
+    const amountPaidAtDelivery = postDeliveryYears > 0 ? P0 * deliveryFrac : P0;
+    const amountPaidAfterDelivery = postDeliveryYears > 0 ? P0 * (1 - deliveryFrac) : 0;
+
     const annualRent = capRate * unitPriceAtDelivery;
     const totalRentAfterDelivery = annualRent * postDeliveryYears;
     const netRentInstallmentAfterDelivery = totalRentAfterDelivery - amountPaidAfterDelivery;
@@ -233,14 +243,22 @@ export class InvestmentCalculatorComponent {
         totalPaid += D === 0 ? amountPaidAtDelivery : 0;
       }
 
-      const monthlyRent = year >= D ? annualRent / 12 : 0;
+      // 🟢 الإيجار بيبدأ يتحصّل بعد سنة الاستلام - الصف بتاع سنة الاستلام نفسها لسه مفيش فيه إيجار
+      const monthlyRent = year > D ? annualRent / 12 : 0;
       if (year > D) cumulativeRent += annualRent;
 
       const netWorth = propertyValue + cumulativeRent - totalPaid;
-      // 🟢 ROI = نسبة الربح (المكسب) على رأس المال، مش القيمة الكلية على رأس المال
-      // عشان يبدأ من 0% في السنة صفر بدل ما يبدأ من 100%
-      const roiYear = P0 > 0 ? ((netWorth - P0) / P0) * 100 : 0;
-      const roeYear = totalPaid > 0 ? (netWorth / totalPaid) * 100 : null;
+
+      // 🟢 الربح في أي سنة = (قيمة الوحدة + الإيجار المتجمع) ناقص سعر الوحدة الأصلي كامل.
+      // بنطرح P0 مش totalPaid لأن الالتزام بالثمن كله قائم من أول يوم حتى لو لسه بتدفع على أقساط -
+      // وده اللي بيخلي آخر صف في الجدول يطابق بالظبط الـ ROI/ROE اللي في كروت السمري فوق.
+      const profit = propertyValue + cumulativeRent - P0;
+      const roiYear = P0 > 0 ? (profit / P0) * 100 : 0;
+
+      // 🟢 ROE بيتقسم على حقوق الملكية (المدفوع حتى الاستلام فقط)، مش على كل المدفوعات -
+      // نفس مقام الـ ROE في كارت السمري
+      const equityPaidSoFar = Math.min(totalPaid, amountPaidAtDelivery);
+      const roeYear = equityPaidSoFar > 0 ? (profit / equityPaidSoFar) * 100 : null;
 
       yearlyTable.push({
         year, propertyValue, monthlyRent, cumulativeRent, totalPaid, netWorth,

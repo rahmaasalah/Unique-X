@@ -31,6 +31,7 @@ export class PhoneInputComponent implements ControlValueAccessor {
     { code: '+962', flag: '🇯🇴', name: 'Jordan' },
     { code: '+961', flag: '🇱🇧', name: 'Lebanon' },
     { code: '+218', flag: '🇱🇾', name: 'Libya' },
+    { code: '+216', flag: '🇹🇳', name: 'Tunisia' },
     { code: '+1', flag: '🇺🇸', name: 'USA / Canada' },
     { code: '+44', flag: '🇬🇧', name: 'UK' },
   ];
