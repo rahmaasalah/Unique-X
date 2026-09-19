@@ -28,6 +28,8 @@ services:
       - EmailSettings__Host=smtp.gmail.com
       - EmailSettings__Port=587
 
+      - AdminSettings__Email=betk2025@gmail.com
+
   frontend:
     image: rahma324ssalah/unique-x-frontend:latest
     container_name: unique-x-frontend
