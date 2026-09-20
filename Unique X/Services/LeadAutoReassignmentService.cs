@@ -85,22 +85,10 @@ namespace Unique_X.Services
 
             foreach (var lead in leadsToUnassign)
             {
-                // 🟢 نلغي كل الأنشطة/الزيارات المعلقة بتاعت العميل ده - البروكر الجديد يبدأ من الصفر تمامًا
-                var pendingActivities = await context.LeadActivities
-                    .Where(a => a.LeadId == lead.Id && a.Status == "Pending")
-                    .ToListAsync(stoppingToken);
-                foreach (var act in pendingActivities)
-                {
-                    act.Status = "Cancelled";
-                }
-
-                var pendingVisits = await context.Visits
-                    .Where(v => v.LeadId == lead.Id && v.Status == "Pending")
-                    .ToListAsync(stoppingToken);
-                foreach (var visit in pendingVisits)
-                {
-                    visit.Status = "Cancelled";
-                }
+                // 🟢 البروكر القديم يفقد كل سجل المكالمات والزيارات بتاعته مع العميل ده تمامًا
+                // (مش بس اللي Pending - كل حاجة، من لحظة السحب نفسها، عشان ميقدرش يوصل لبيانات
+                // العميل تاني حتى لو العميل لسه في Pending Clients ومتحطش لبروكر جديد بعد)
+                await LeadReassignmentCleanupHelper.PurgeBrokerHistoryForLeadAsync(context, lead.Id, lead.BrokerId);
 
                 // 🟢 سحب العميل من البروكر الحالي
                 lead.PreviousBrokerId = lead.BrokerId;

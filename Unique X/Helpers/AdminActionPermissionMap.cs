@@ -122,5 +122,15 @@
         // ⚠️ GetActivityLogs بيخدم تابين مختلفين (calls / whatsapp) على حسب الـ {type} route value
         // فبيتحدد وقت التنفيذ مش من الخريطة العادية - شوف AdminPermissionFilter
         public const string ActivityLogsAction = "GetActivityLogs";
+
+        // 🟢 Actions قراءة بس، مفتوحة لأي مستخدم مسجل دخول (بروكر عنده CRM Access) من غير ما يحتاج
+        // صلاحية "lookups" - المطلوب فعليًا للاستخدام العادي في فورمات زي Schedule Visit، مش للإدارة.
+        // Add/Delete بتاعت نفس البيانات دي لسه تحت صلاحية "lookups" في الـ Map فوق.
+        public static readonly HashSet<string> PublicReadActions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "GetRegions",
+            "GetProjects",
+            "GetDevelopers",
+        };
     }
 }
