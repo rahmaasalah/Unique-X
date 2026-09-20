@@ -38,13 +38,13 @@
       <ul class="list-unstyled pe-2">
         <!-- كل مسافات الـ li اتغيرت من mb-3 لـ mb-1 -->
         <li class="mb-1">
-          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"[class.active]="activeTab() === 'props'" (click)="switchTab('props')">
+          <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"[class.active]="activeTab() === 'props'" *ngIf="canAccess('props')" (click)="switchTab('props')">
             <i class="bi bi-houses-fill me-3 fs-6"></i> Property Listings
           </button>
         </li>
         <li class="mb-1">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center justify-content-between py-2"
-                  [class.active]="activeTab() === 'pending'" (click)="switchTab('pending')">
+                  [class.active]="activeTab() === 'pending'" *ngIf="canAccess('pending')" (click)="switchTab('pending')">
             <span><i class="bi bi-hourglass-split me-3 fs-6"></i> Pending Approval</span>
             @if (brokerPendingProperties().length > 0) {
               <span class="badge bg-warning text-dark rounded-pill">{{ brokerPendingProperties().length }}</span>
@@ -53,7 +53,7 @@
         </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'ownerProps'"
+          [class.active]="activeTab() === 'ownerProps'" *ngIf="canAccess('ownerProps')"
           (click)="activeTab.set('ownerProps'); loadOwnerProperties()">
     <i class="bi bi-person-vcard me-3 fs-6"></i> Owners Properties
     @if (ownerPropertiesPendingCount() > 0) {
@@ -63,7 +63,7 @@
 </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'articles'"
+          [class.active]="activeTab() === 'articles'" *ngIf="canAccess('articles')"
           (click)="activeTab.set('articles'); loadArticles()">
     <i class="bi bi-journal-text me-3 fs-6"></i> Blogs
     @if (articles().length > 0) {
@@ -73,19 +73,19 @@
 </li>
         <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-          [class.active]="activeTab() === 'hotDeals'" (click)="switchTab('hotDeals')">
+          [class.active]="activeTab() === 'hotDeals'" *ngIf="canAccess('hotDeals')" (click)="switchTab('hotDeals')">
     <i class="bi bi-fire me-3 fs-6"></i> Hot Deals
   </button>
 </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-          [class.active]="activeTab() === 'recommendedVisits'" (click)="switchTab('recommendedVisits')">
+          [class.active]="activeTab() === 'recommendedVisits'" *ngIf="canAccess('recommendedVisits')" (click)="switchTab('recommendedVisits')">
     <i class="bi bi-geo-alt-fill me-3 fs-6"></i> Recommended to Visit
   </button>
 </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'blogs'"
+          [class.active]="activeTab() === 'blogs'" *ngIf="canAccess('blogs')"
           (click)="activeTab.set('blogs'); loadBlogs()">
     <i class="bi bi-newspaper me-3 fs-6"></i> Projects
     @if (blogs().length > 0) {
@@ -95,7 +95,7 @@
 </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'launches'"
+          [class.active]="activeTab() === 'launches'" *ngIf="canAccess('launches')"
           (click)="activeTab.set('launches'); loadLaunches()">
     <i class="bi bi-rocket-takeoff me-3 fs-6"></i> Launches
     @if (launches().length > 0) {
@@ -105,7 +105,7 @@
 </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'projectMeetings'"
+          [class.active]="activeTab() === 'projectMeetings'" *ngIf="canAccess('projectMeetings')"
           (click)="activeTab.set('projectMeetings'); loadProjectMeetings()">
     <i class="bi bi-calendar-check me-3 fs-6"></i> Projects Meetings
     @if (uncontactedMeetingsCount() > 0) {
@@ -115,7 +115,7 @@
 </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'launchMeetings'"
+          [class.active]="activeTab() === 'launchMeetings'" *ngIf="canAccess('launchMeetings')"
           (click)="activeTab.set('launchMeetings'); loadLaunchMeetings()">
     <i class="bi bi-calendar-check me-3 fs-6"></i> Launch Meetings
     @if (uncontactedLaunchMeetingsCount() > 0) {
@@ -125,31 +125,31 @@
 </li>
         <li class="mb-1">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-                  [class.active]="activeTab() === 'banners'" (click)="switchTab('banners')">
+                  [class.active]="activeTab() === 'banners'" *ngIf="canAccess('banners')" (click)="switchTab('banners')">
             <i class="bi bi-image-fill me-3 fs-6"></i> Manage Banners
           </button>
         </li>
         <li class="mb-1">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-                  [class.active]="activeTab() === 'homeSectionBanners'" (click)="switchTab('homeSectionBanners'); loadHomeSectionBanners()">
+                  [class.active]="activeTab() === 'homeSectionBanners'" *ngIf="canAccess('homeSectionBanners')" (click)="switchTab('homeSectionBanners'); loadHomeSectionBanners()">
             <i class="bi bi-images me-3 fs-6"></i> Load Banners
           </button>
         </li>
         <li class="mb-1">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-                  [class.active]="activeTab() === 'financial'" (click)="switchTab('financial')">
+                  [class.active]="activeTab() === 'financial'" *ngIf="canAccess('financial')" (click)="switchTab('financial')">
             <i class="bi bi-bar-chart-fill me-3 fs-6"></i> Financial Charts
           </button>
         </li>
         <li class="mb-1">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-                  [class.active]="activeTab() === 'projectFinancial'" (click)="switchTab('projectFinancial')">
+                  [class.active]="activeTab() === 'projectFinancial'" *ngIf="canAccess('projectFinancial')" (click)="switchTab('projectFinancial')">
             <i class="bi bi-graph-up-arrow me-3 fs-6"></i> Financial Charts (Projects)
           </button>
         </li>
 <li  class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'deletions'"
+          [class.active]="activeTab() === 'deletions'" *ngIf="canAccess('deletions')"
           (click)="activeTab.set('deletions'); loadPendingDeletions()">
     <i class="bi bi-trash3 me-2 text-danger"></i> Deleted Properties
     @if (pendingDeletions().length > 0) {
@@ -159,13 +159,13 @@
 </li>
         <li class="mb-1">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-                  [class.active]="activeTab() === 'users'" (click)="switchTab('users')">
+                  [class.active]="activeTab() === 'users'" *ngIf="canAccess('users')" (click)="switchTab('users')">
             <i class="bi bi-people-fill me-3 fs-6"></i> User Accounts
           </button>
         </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'ourTeam'"
+          [class.active]="activeTab() === 'ourTeam'" *ngIf="canAccess('ourTeam')"
           (click)="activeTab.set('ourTeam'); loadJobApplications()">
     <i class="bi bi-people me-3 fs-6"></i> Our Team
     @if (jobApplications().length > 0) {
@@ -175,35 +175,42 @@
 </li>
 
 <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-        [class.active]="activeTab() === 'propertyAnalytics'" (click)="switchTab('propertyAnalytics')">
+        [class.active]="activeTab() === 'propertyAnalytics'" *ngIf="canAccess('propertyAnalytics')" (click)="switchTab('propertyAnalytics')">
   <i class="bi bi-graph-up me-2"></i> Property Views & Clicks
 </button>
 
 <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-        [class.active]="activeTab() === 'searchAnalytics'" (click)="switchTab('searchAnalytics')">
+        [class.active]="activeTab() === 'searchAnalytics'" *ngIf="canAccess('searchAnalytics')" (click)="switchTab('searchAnalytics')">
   <i class="bi bi-search me-2"></i> Search Analytics
 </button>
 
 <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-        [class.active]="activeTab() === 'brokerLimits'" (click)="switchTab('brokerLimits')">
+        [class.active]="activeTab() === 'brokerLimits'" *ngIf="canAccess('brokerLimits')" (click)="switchTab('brokerLimits')">
   <i class="bi bi-person-lines-fill me-2"></i> Broker Limits
 </button>
 
 <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-        [class.active]="activeTab() === 'jobPostings'" (click)="switchTab('jobPostings')">
+        [class.active]="activeTab() === 'jobPostings'" *ngIf="canAccess('jobPostings')" (click)="switchTab('jobPostings')">
   <i class="bi bi-briefcase-fill me-2"></i> Job Postings
 </button>
         <li class="mb-1">
           <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2" 
-                  [class.active]="activeTab() === 'settings'" (click)="switchTab('settings')">
+                  [class.active]="activeTab() === 'settings'" *ngIf="canAccess('settings')" (click)="switchTab('settings')">
             <i class="bi bi-person-gear me-3 fs-6"></i> My Account
           </button>
         </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
-          [class.active]="activeTab() === 'lookups'"
+          [class.active]="activeTab() === 'lookups'" *ngIf="canAccess('lookups')"
           (click)="switchTab('lookups')">
     <i class="bi bi-diagram-3 me-3 fs-6"></i> Developers &amp; Projects
+  </button>
+</li>
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'authorization'" *ngIf="canAccess('authorization')"
+          (click)="switchTab('authorization')">
+    <i class="bi bi-shield-lock-fill me-3 fs-6"></i> Authorization
   </button>
 </li>
         
@@ -223,7 +230,7 @@
     
     <!-- قسم الإحصائيات (يختفي في صفحة الإعدادات) -->
     <!-- قسم الإحصائيات (يختفي في صفحة الإعدادات) -->
-    @if (activeTab() !== 'settings') {
+    @if (activeTab() !== 'settings' && activeTab() !== 'authorization' && canAccess('settings')) {
       <div class="row g-3 mb-5 animate__animated animate__fadeIn">
         <div class="col-md-3">
           <div class="stat-card p-4 bg-white shadow-sm border-0 border-start border-danger border-5 rounded-4">
@@ -4521,6 +4528,13 @@
     </div>
   </div>
 }
+
+  @if (activeTab() === 'authorization') {
+    <div class="animate__animated animate__fadeIn">
+      <app-authorization-manager dashboard="Admin"></app-authorization-manager>
+    </div>
+  }
+
   </main>
 
   <!-- ================== مودال فحص العقار الشامل ( Inspection Report ) ================== -->

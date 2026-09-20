@@ -13,13 +13,15 @@ import { LaunchService } from '../../Services/launch.service';
 import { ArticleService } from '../../Services/article.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { AuthorizationManagerComponent } from '../authorization-manager/authorization-manager';
+import { AuthorizationService } from '../../Services/authorization.service';
 
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
   // أضفنا ReactiveFormsModule هنا
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, CdkDropList, CdkDrag, CdkDragPlaceholder, DragDropModule, PhoneInputComponent], 
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, CdkDropList, CdkDrag, CdkDragPlaceholder, DragDropModule, PhoneInputComponent, AuthorizationManagerComponent], 
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.css'
 })
@@ -32,6 +34,7 @@ export class AdminDashboardComponent implements OnInit {
   private crmService = inject(CrmService);
   private blogService = inject(BlogService);
   private launchService = inject(LaunchService);
+  private authorizationService = inject(AuthorizationService);
   articleService = inject(ArticleService);
   private http = inject(HttpClient);
   adminLeadForm!: FormGroup;
@@ -112,7 +115,42 @@ export class AdminDashboardComponent implements OnInit {
   draggedBannerKey: string | null = null;
   bannersOrderChanged = signal<boolean>(false);
 
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'homeSectionBanners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'projectFinancial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'recommendedVisits' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings' | 'launches' | 'launchMeetings' | 'articles' | 'lookups' | 'propertyAnalytics' | 'searchAnalytics' | 'brokerLimits' | 'jobPostings'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'homeSectionBanners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'projectFinancial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'recommendedVisits' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings' | 'launches' | 'launchMeetings' | 'articles' | 'lookups' | 'propertyAnalytics' | 'searchAnalytics' | 'brokerLimits' | 'jobPostings' | 'authorization'>('users');
+
+  // 🟢 Authorization: هل اليوزر فُل أدمن ولا صاحب Custom Role محدود؟
+  // بندي القيمة الافتراضية false (Fail-Closed) لحد ما نتأكد من الباك اند فعليًا - أأمن من إننا نفترض إنه أدمن
+  isFullAdmin = signal(false);
+  myAdminPermissions = signal<string[] | null>(null); // null لحد ما نحمل البيانات الفعلية
+  permissionsLoaded = signal(false); // true بعد ما يوصلنا رد my-permissions (نجاح أو فشل)
+
+  // بيتستخدم في الـ HTML على كل زرار/تاب: [hidden]="!canAccess('key')"
+  canAccess(key: string): boolean {
+    if (this.isFullAdmin()) return true;
+    return this.myAdminPermissions()?.includes(key) ?? false;
+  }
+
+  private loadMyAdminPermissions() {
+    this.authorizationService.getMyPermissions().subscribe({
+      next: (perm) => {
+        console.log('[Authorization] my-permissions response:', perm); // 🟢 مؤقت للتصحيح - احذفيه بعد التأكد إن كل حاجة شغالة
+        this.isFullAdmin.set(perm.isFullAdmin);
+        this.myAdminPermissions.set(perm.adminPermissions);
+        this.permissionsLoaded.set(true);
+
+        // لو اليوزر محدود الصلاحيات وأول تاب افتراضي (users) مش من ضمن صلاحياته،
+        // نوديه على أول تاب مسموح له بيه بدل ما يشوف صفحة فاضية
+        if (!perm.isFullAdmin && !this.canAccess(this.activeTab())) {
+          const firstAllowed = perm.adminPermissions?.[0];
+          if (firstAllowed) this.switchTab(firstAllowed as any);
+        }
+      },
+      error: (err) => {
+        console.error('[Authorization] my-permissions FAILED:', err); // 🟢 مؤقت للتصحيح
+        // فشل التحميل - نسيبها Fail-Closed (isFullAdmin تفضل false) بدل ما نفترض إنه أدمن كامل
+        this.permissionsLoaded.set(true);
+      }
+    });
+  }
 
   // --- Lookups: Developers / Primary Projects / Resale Projects / Regions ---
   lookupsSubTab = signal<'developers' | 'primaryProjects' | 'resaleProjects' | 'regions'>('developers');
@@ -584,6 +622,9 @@ deleteJobPosting(id: number) {
       name: ['', Validators.required],
       source: ['Facebook', Validators.required]
     });
+
+    // 🟢 Authorization: نحمل صلاحيات اليوزر الحالي عشان نعرف نعرضله أي تابات بالظبط
+    this.loadMyAdminPermissions();
 
     // وفي نفس الدالة (ngOnInit) استدعي الدالة دي عشان نجيب الداتا
     this.loadCampaigns();

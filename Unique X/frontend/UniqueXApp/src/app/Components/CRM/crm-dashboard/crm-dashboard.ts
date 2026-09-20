@@ -14,7 +14,9 @@ import { AuthService } from '../../../Services/auth';
 
 import { AlertService } from '../../../Services/alert';
 
-import { forkJoin } from 'rxjs';
+import { forkJoin, catchError, of } from 'rxjs';
+import { AuthorizationManagerComponent } from '../../authorization-manager/authorization-manager';
+import { AuthorizationService } from '../../../Services/authorization.service';
 
 
 
@@ -24,7 +26,7 @@ import { forkJoin } from 'rxjs';
 
   standalone: true,
 
-  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, AuthorizationManagerComponent],
 
   templateUrl: './crm-dashboard.html',
 
@@ -41,6 +43,7 @@ export class CrmDashboardComponent implements OnInit {
   public authService = inject(AuthService);
 
   private alertService = inject(AlertService);
+  private authorizationService = inject(AuthorizationService);
 
   private router = inject(Router);
 
@@ -48,7 +51,16 @@ export class CrmDashboardComponent implements OnInit {
 
   isAdmin = signal<boolean>(false);
 
-  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'admin_favorites' | 'pending_duplicates' | 'rejected_duplicates' | 'report' | 'pending_clients' | 'broker_codes' | 'broker_limits' | 'new_leads' | 'requested_leads'>('brokers');
+  // 🟢 Authorization: هل اليوزر فُل أدمن/مانجر كامل ولا صاحب Custom Role محدود في الـ CRM؟
+  isFullCrmAdmin = signal(false);
+  myCrmPermissions = signal<string[] | null>(null);
+
+  canAccess(key: string): boolean {
+    if (this.isFullCrmAdmin()) return true;
+    return this.myCrmPermissions()?.includes(key) ?? false;
+  }
+
+  activeTab = signal<'brokers' | 'clients' | 'calendar' | 'closed_deals' | 'requests' | 'revenue' | 'all_visits' | 'all_activities' | 'closing_stage' | 'add_broker'  | 'transfer_leads' | 'favorites' | 'admin_favorites' | 'pending_duplicates' | 'rejected_duplicates' | 'report' | 'pending_clients' | 'broker_codes' | 'broker_limits' | 'new_leads' | 'requested_leads' | 'authorization'>('brokers');
 
   // 🟢 تاب "New Leads" - عملاء جايين من مودال Get Recommendation ولسه محتاجين توزيع على بروكر
   newLeadsList = signal<any[]>([]);
@@ -1438,7 +1450,25 @@ hiddenLeads = signal<number[]>([]);
 
     if (!isUserAdmin) {
 
-      this.router.navigate(['/home']);
+      // 🟢 مش فُل مانجر - نتحقق لو معاه Custom Role جوه crm-dashboard (زي Team Leader)
+      this.authorizationService.getMyPermissions().subscribe({
+        next: (perm) => {
+          if (perm.isFullAdmin || (perm.crmPermissions && perm.crmPermissions.length > 0)) {
+            this.isFullCrmAdmin.set(perm.isFullAdmin);
+            this.myCrmPermissions.set(perm.crmPermissions);
+            this.isAdmin.set(true);
+            this.loadAdminData();
+
+            if (!perm.isFullAdmin && !this.canAccess(this.activeTab())) {
+              const firstAllowed = perm.crmPermissions?.[0];
+              if (firstAllowed) this.switchTab(firstAllowed as any);
+            }
+          } else {
+            this.router.navigate(['/home']);
+          }
+        },
+        error: () => this.router.navigate(['/home'])
+      });
 
       return;
 
@@ -1449,6 +1479,8 @@ hiddenLeads = signal<number[]>([]);
     
 
 
+
+    this.isFullCrmAdmin.set(true);
 
     this.isAdmin.set(true);
 
@@ -1470,11 +1502,11 @@ hiddenLeads = signal<number[]>([]);
 
     forkJoin({
 
-      users: this.adminService.getAllUsers(),
+      users: this.authorizationService.getCrmUsersData().pipe(catchError(() => of([]))),
 
-      leads: this.crmService.getLeads(''),
+      leads: this.crmService.getLeads('').pipe(catchError(() => of([]))),
 
-      calendar: this.crmService.getAdminCalendarEvents()
+      calendar: this.crmService.getAdminCalendarEvents().pipe(catchError(() => of([])))
 
     }).subscribe({
 

@@ -38,6 +38,13 @@
     </a>
   }
 
+  <!-- 🟢 زرار لوحة الأدمن المحدودة (بيظهر بس لصاحب Custom Role زي Team Leader) -->
+  @if (hasLimitedAdminRole()) {
+    <a routerLink="/admin" class="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold shadow-sm">
+      <i class="bi bi-shield-lock-fill text-danger me-2"></i> Open My Admin Panel
+    </a>
+  }
+
   <!-- زرار الإعدادات -->
   <a routerLink="/settings" class="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold shadow-sm">
     <i class="bi bi-gear-fill me-2"></i> Settings

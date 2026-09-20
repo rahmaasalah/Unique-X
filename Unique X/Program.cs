@@ -75,6 +75,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPropertiesService, PropertiesService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+
 
 // 🟢 خدمة السحب التلقائي للعملاء اللي معملهاش أكشن لـ 72 ساعة (Late/Too Late system)
 builder.Services.AddHostedService<LeadAutoReassignmentService>();

@@ -36,6 +36,12 @@
         <i class="bi bi-person-plus me-1"></i> Request Leads
       </button>
 
+      <!-- 🟢 زرار لوحة الـ CRM المحدودة (بيظهر بس لصاحب Custom Role زي Team Leader) -->
+      <button *ngIf="hasLimitedCrmRole()" class="btn btn-outline-dark rounded-pill fw-bold px-4"
+              [routerLink]="['/crm/dashboard']">
+        <i class="bi bi-shield-lock-fill me-1"></i> Open My CRM Panel
+      </button>
+
       <button class="btn btn-sm rounded-pill px-4 fw-bold shadow-sm border"
         [ngClass]="showFavouritesOnly() ? 'btn-warning text-dark' : 'bg-white text-dark'"
         (click)="showFavouritesOnly.set(!showFavouritesOnly())">

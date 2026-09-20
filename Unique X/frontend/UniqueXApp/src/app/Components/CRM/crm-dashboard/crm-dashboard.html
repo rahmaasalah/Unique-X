@@ -46,7 +46,7 @@
 
           <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
 
-                  [ngClass]="activeTab() === 'brokers' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+                  [ngClass]="activeTab() === 'brokers' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('brokers')" 
 
                   (click)="switchTab('brokers')">
 
@@ -60,7 +60,7 @@
 
           <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
 
-                  [ngClass]="activeTab() === 'clients' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+                  [ngClass]="activeTab() === 'clients' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('clients')" 
 
                   (click)="switchTab('clients')">
 
@@ -76,7 +76,7 @@
 
           <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
 
-                  [ngClass]="activeTab() === 'favorites' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+                  [ngClass]="activeTab() === 'favorites' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('favorites')" 
 
                   (click)="switchTab('favorites')">
 
@@ -92,7 +92,7 @@
 
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
 
-          [ngClass]="activeTab() === 'transfer_leads' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+          [ngClass]="activeTab() === 'transfer_leads' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('transfer_leads')" 
 
           (click)="switchTab('transfer_leads'); selectedLeadsForTransfer.set([])">
 
@@ -108,7 +108,7 @@
 
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
 
-          [ngClass]="activeTab() === 'report' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+          [ngClass]="activeTab() === 'report' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('report')" 
 
           (click)="switchTab('report')">
 
@@ -122,7 +122,7 @@
 
           <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
 
-                  [ngClass]="activeTab() === 'calendar' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+                  [ngClass]="activeTab() === 'calendar' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('calendar')" 
 
                   (click)="switchTab('calendar')">
 
@@ -140,7 +140,7 @@
 
           <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
 
-                  [ngClass]="activeTab() === 'add_broker' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" 
+                  [ngClass]="activeTab() === 'add_broker' ? 'btn-danger text-white shadow-sm' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('add_broker')" 
 
                   (click)="switchTab('add_broker')">
 
@@ -156,7 +156,7 @@
 
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
 
-          [ngClass]="activeTab() === 'pending_duplicates' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" 
+          [ngClass]="activeTab() === 'pending_duplicates' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('pending_duplicates')" 
 
           (click)="switchTab('pending_duplicates')">
 
@@ -170,7 +170,7 @@
 
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold" 
 
-          [ngClass]="activeTab() === 'rejected_duplicates' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" 
+          [ngClass]="activeTab() === 'rejected_duplicates' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('rejected_duplicates')" 
 
           (click)="switchTab('rejected_duplicates')">
 
@@ -184,7 +184,7 @@
 
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold"
 
-          [ngClass]="activeTab() === 'admin_favorites' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'"
+          [ngClass]="activeTab() === 'admin_favorites' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('admin_favorites')"
 
           (click)="switchTab('admin_favorites')">
 
@@ -204,7 +204,7 @@
 
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold"
 
-          [ngClass]="activeTab() === 'broker_limits' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'"
+          [ngClass]="activeTab() === 'broker_limits' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('broker_limits')"
 
           (click)="switchTab('broker_limits')">
 
@@ -217,7 +217,21 @@
 <li class="mb-2">
 
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold"
-          [ngClass]="activeTab() === 'new_leads' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'"
+
+          [ngClass]="activeTab() === 'authorization' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('authorization')"
+
+          (click)="switchTab('authorization')">
+
+    <i class="bi bi-shield-lock-fill me-3 fs-5"></i> Authorization
+
+  </button>
+
+</li>
+
+<li class="mb-2">
+
+  <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold"
+          [ngClass]="activeTab() === 'new_leads' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('new_leads')"
           (click)="switchTab('new_leads')">
     <i class="bi bi-person-plus-fill me-3 fs-5"></i> New Leads
     @if (newLeadsList().length > 0) {
@@ -230,7 +244,7 @@
 <li class="mb-2">
 
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold"
-          [ngClass]="activeTab() === 'requested_leads' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'"
+          [ngClass]="activeTab() === 'requested_leads' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('requested_leads')"
           (click)="switchTab('requested_leads')">
     <i class="bi bi-clipboard-plus-fill me-3 fs-5"></i> Requested Leads
     @if (requestedLeadsList().length > 0) {
@@ -244,7 +258,7 @@
 
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold"
 
-          [ngClass]="activeTab() === 'pending_clients' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'"
+          [ngClass]="activeTab() === 'pending_clients' ? 'btn-danger text-white' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('pending_clients')"
 
           (click)="switchTab('pending_clients')">
 
@@ -264,7 +278,7 @@
 
   <button class="btn w-100 text-start d-flex align-items-center py-2 fw-bold"
 
-          [ngClass]="activeTab() === 'broker_codes' ? 'btn-dark text-white' : 'text-white-50 btn-outline-dark border-0'"
+          [ngClass]="activeTab() === 'broker_codes' ? 'btn-dark text-white' : 'text-white-50 btn-outline-dark border-0'" *ngIf="canAccess('broker_codes')"
 
           (click)="switchTab('broker_codes')">
 
@@ -3626,7 +3640,7 @@
 
         <h4 class="fw-bold mb-3 flex-shrink-0">
 
-          <i class="bi" [ngClass]="activeTab() === 'all_visits' ? 'bi-geo-alt-fill text-info' : 'bi-telephone-fill text-dark'"></i> 
+          <i class="bi" [ngClass]="activeTab() === 'all_visits' ? 'bi-geo-alt-fill text-info' : 'bi-telephone-fill text-dark'" *ngIf="canAccess('all_visits')"></i> 
 
           {{ activeTab() === 'all_visits' ? 'All Scheduled Visits' : 'All Calls & Activities' }}
 
@@ -3792,7 +3806,7 @@
 
         <h4 class="fw-bold mb-3 flex-shrink-0">
 
-          <i class="bi" [ngClass]="activeTab() === 'all_visits' ? 'bi-geo-alt-fill text-info' : 'bi-telephone-fill text-dark'"></i> 
+          <i class="bi" [ngClass]="activeTab() === 'all_visits' ? 'bi-geo-alt-fill text-info' : 'bi-telephone-fill text-dark'" *ngIf="canAccess('all_visits')"></i> 
 
           {{ activeTab() === 'all_visits' ? 'All Scheduled Visits' : 'All Calls & Activities' }}
 
@@ -4921,6 +4935,11 @@
 
     }
 
+  @if (activeTab() === 'authorization') {
+    <div class="animate__animated animate__fadeIn">
+      <app-authorization-manager dashboard="Crm"></app-authorization-manager>
+    </div>
+  }
 
 
   </main>
@@ -5332,4 +5351,5 @@
       </div>
     </div>
   </div>
+
 </div>
