@@ -38,6 +38,7 @@ export const routes: Routes = [
   { path: 'shortlist', loadComponent: () => import('./Components/shortlist/shortlist').then(m => m.ShortlistComponent), canActivate: [authGuard] },
   { path: 'visit-list', loadComponent: () => import('./Components/visitlist/visitlist').then(m => m.VisitListComponent), canActivate: [authGuard] },
   { path: 'profile', loadComponent: () => import('./Components/profile/profile').then(m => m.ProfileComponent), canActivate: [authGuard] },
+  { path: 'my-permissions', loadComponent: () => import('./Components/my-permissions/my-permissions').then(m => m.MyPermissionsComponent), canActivate: [authGuard] },
 
   // ===== Admin =====
   { path: 'admin', loadComponent: () => import('./Components/admin-dashboard/admin-dashboard').then(m => m.AdminDashboardComponent), canActivate: [adminGuard] },

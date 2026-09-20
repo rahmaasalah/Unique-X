@@ -7,6 +7,7 @@ import { AlertService } from '../../../Services/alert';
 import { AuthService } from '../../../Services/auth';
 import { Router } from '@angular/router';
 import { AdminService } from '../../../Services/admin'; // 👈 استيراد AdminService
+import { AuthorizationService } from '../../../Services/authorization.service';
 
 @Component({
   selector: 'app-broker-profile',
@@ -27,6 +28,10 @@ export class BrokerProfileComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private router = inject(Router);
   private adminService = inject(AdminService);
+  private authorizationService = inject(AuthorizationService);
+
+  // 🟢 true لو معاه custom role جوه crm-dashboard (Team Leader مثلاً) - مش فُل أدمن
+  hasLimitedCrmRole = signal(false);
   brokerName = signal<string>('');
   brokerImage = signal<string>('https://cdn-icons-png.flaticon.com/512/149/149071.png');
   
@@ -222,6 +227,13 @@ if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
 
   ngOnInit() {
     this.trackerInterval = setInterval(() => this.nowTick.set(Date.now()), 60000);
+
+    this.authorizationService.getMyPermissions().subscribe({
+      next: (perm) => {
+        this.hasLimitedCrmRole.set(!perm.isFullAdmin && perm.crmRoleNames.length > 0);
+      },
+      error: () => {}
+    });
 
     if (!this.authService.isAllowedToOpenCrm()) {
       this.router.navigate(['/home']);

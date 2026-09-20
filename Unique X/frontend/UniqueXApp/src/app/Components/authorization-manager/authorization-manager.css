@@ -1,0 +1,48 @@
+.authorization-manager {
+  padding: 4px;
+}
+
+.role-card {
+  border-radius: 14px;
+  transition: transform .15s ease;
+}
+.role-card:hover {
+  transform: translateY(-2px);
+}
+
+.authorization-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1080;
+  padding: 16px;
+}
+
+.authorization-panel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.checklist-box {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fafafa;
+}
+
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 4px 12px;
+  max-height: 260px;
+}

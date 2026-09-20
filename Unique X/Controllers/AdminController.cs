@@ -10,13 +10,19 @@ using Unique_X.Helpers;
 using Unique_X.Models;
 using Unique_X.Services.Implementation;
 using Unique_X.Services.Interface;
+using Unique_X.Filters;
+using Microsoft.AspNetCore.Mvc.Filters;
 using static Unique_X.Models.PropEnums;
 
 namespace Unique_X.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    // 🟢 بدل ما كانت [Authorize(Roles = "Admin")] بس - دلوقتي أي يوزر مسجل دخول يقدر يوصل للكنترولر،
+    // بس AdminPermissionFilter هو اللي بيقرر فعليًا مين مسموحله بأنهي Action (فُل أدمن = كل حاجة،
+    // صاحب custom role = بس التابات اللي معاه صلاحيتها). لازم يفضل [Authorize] عشان نمنع أي حد مش مسجل دخول أصلاً.
+    [Authorize]
+    [TypeFilter(typeof(AdminPermissionFilter))]
     public class AdminController : ControllerBase
     {
         private readonly UserManager<ApplicantUser> _userManager;

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Unique_X.Models;
+using Unique_X.Models.Authorization;
 
 namespace Unique_X.Data
 {
@@ -47,10 +48,49 @@ namespace Unique_X.Data
         public DbSet<Article> Articles { get; set; }
         public DbSet<SearchLog> SearchLogs { get; set; }
 
+        // 🟢 Authorization (Custom Roles)
+        public DbSet<CustomRole> CustomRoles { get; set; }
+        public DbSet<CustomRolePermission> CustomRolePermissions { get; set; }
+        public DbSet<CustomRoleMember> CustomRoleMembers { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            // 🟢 Authorization (Custom Roles) relations
+            builder.Entity<CustomRolePermission>()
+                .HasOne(p => p.CustomRole)
+                .WithMany(r => r.Permissions)
+                .HasForeignKey(p => p.CustomRoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<CustomRoleMember>()
+                .HasOne(m => m.CustomRole)
+                .WithMany(r => r.Members)
+                .HasForeignKey(m => m.CustomRoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<CustomRoleMember>()
+                .HasOne(m => m.User)
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // مفيش تكرار لنفس البروكر جوه نفس الدور
+            builder.Entity<CustomRoleMember>()
+                .HasIndex(m => new { m.CustomRoleId, m.UserId })
+                .IsUnique();
+
+            // مفيش تكرار لنفس الصلاحية جوه نفس الدور
+            builder.Entity<CustomRolePermission>()
+                .HasIndex(p => new { p.CustomRoleId, p.PermissionKey })
+                .IsUnique();
+
+            // اسم الدور لازم يبقى فريد جوه نفس اللوحة (ممكن "Team Leader" يتكرر في Admin وCrm بس مش مرتين في Admin)
+            builder.Entity<CustomRole>()
+                .HasIndex(r => new { r.Dashboard, r.Name })
+                .IsUnique();
 
 
 

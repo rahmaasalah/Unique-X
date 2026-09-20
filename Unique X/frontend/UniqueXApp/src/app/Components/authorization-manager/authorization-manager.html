@@ -1,0 +1,131 @@
+<div class="authorization-manager">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1"><i class="bi bi-shield-lock-fill me-2"></i> Authorization</h4>
+      <p class="text-muted small mb-0">Create custom roles and grant each one partial permissions from the {{ dashboard === 'Admin' ? 'Admin Dashboard' : 'CRM Dashboard' }}.</p>
+    </div>
+    <button class="btn btn-danger rounded-pill fw-bold px-4" (click)="openCreateForm()">
+      <i class="bi bi-plus-circle me-1"></i> Add Role
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-danger" role="status"></div>
+    </div>
+  } @else if (roles().length === 0) {
+    <div class="alert alert-light border text-center py-4">
+      No roles have been created yet. Click "Add Role" to get started.
+    </div>
+  } @else {
+    <div class="row g-3">
+      @for (role of roles(); track role.id) {
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="card h-100 shadow-sm border-0 role-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <h5 class="fw-bold mb-1">{{ role.name }}</h5>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-secondary" (click)="openEditForm(role)" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteRole(role)" title="Delete">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+              @if (role.description) {
+                <p class="text-muted small mb-2">{{ role.description }}</p>
+              }
+
+              <div class="mb-2">
+                <span class="badge bg-secondary-subtle text-dark me-1 mb-1">
+                  <i class="bi bi-key-fill me-1"></i>{{ role.permissions.length }} permission(s)
+                </span>
+              </div>
+
+              <div class="small text-muted mb-1">Role members:</div>
+              <div class="d-flex flex-wrap gap-1 mb-2">
+                @for (m of role.members; track m.userId) {
+                  <span class="badge bg-danger-subtle text-dark border">
+                    {{ m.fullName }} @if (m.brokerCode) { ({{ m.brokerCode }}) }
+                  </span>
+                }
+              </div>
+
+              <div class="d-flex flex-wrap gap-1">
+                @for (key of role.permissions; track key) {
+                  <span class="badge bg-light text-dark border small">{{ permissionLabel(key) }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ================= Form Modal-Like Panel ================= -->
+  @if (showForm()) {
+    <div class="authorization-overlay" (click)="closeForm()">
+      <div class="authorization-panel shadow-lg" (click)="$event.stopPropagation()">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">{{ editingRoleId() ? 'Edit Role' : 'New Role' }}</h5>
+          <button class="btn-close" (click)="closeForm()"></button>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Role Name</label>
+          <input type="text" class="form-control" placeholder="e.g. Team Leader"
+                 [ngModel]="formName()" (ngModelChange)="formName.set($event)">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Description (optional)</label>
+          <textarea class="form-control" rows="2" placeholder="Short description of this role"
+                    [ngModel]="formDescription()" (ngModelChange)="formDescription.set($event)"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Who holds this role? (select one or more brokers)</label>
+          <input type="text" class="form-control mb-2" placeholder="Search by name or code..."
+                 [ngModel]="brokerSearchText()" (ngModelChange)="brokerSearchText.set($event)">
+          <div class="checklist-box">
+            @for (b of filteredBrokers(); track b.userId) {
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" [id]="'broker-' + b.userId"
+                       [checked]="isMemberChecked(b.userId)" (change)="toggleMember(b.userId)">
+                <label class="form-check-label" [for]="'broker-' + b.userId">
+                  {{ b.fullName }} @if (b.brokerCode) { <span class="text-muted">({{ b.brokerCode }})</span> }
+                </label>
+              </div>
+            }
+            @if (filteredBrokers().length === 0) {
+              <div class="text-muted small p-2">No results</div>
+            }
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Permissions ({{ dashboard === 'Admin' ? 'Admin Dashboard' : 'CRM Dashboard' }})</label>
+          <div class="checklist-box permissions-grid">
+            @for (item of catalog(); track item.key) {
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" [id]="'perm-' + item.key"
+                       [checked]="isPermissionChecked(item.key)" (change)="togglePermission(item.key)">
+                <label class="form-check-label" [for]="'perm-' + item.key">{{ item.label }}</label>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+          <button class="btn btn-outline-secondary rounded-pill px-4" (click)="closeForm()">Cancel</button>
+          <button class="btn btn-danger rounded-pill px-4 fw-bold" (click)="saveRole()">Save</button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

@@ -4,6 +4,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../Services/auth';
 import { AlertService } from '../../Services/alert';
+import { AuthorizationService } from '../../Services/authorization.service';
 import { RouterLink } from "@angular/router";
 
 @Component({
@@ -17,11 +18,26 @@ export class ProfileComponent implements OnInit {
   // سجنل شايل كل بيانات المستخدم بما فيها رابط الصورة
   userData = signal<any>(null);
 
+  // 🟢 true لو معاه custom role جوه admin-dashboard (Team Leader مثلاً) - مش فُل أدمن
+  hasLimitedAdminRole = signal(false);
+
   public authService = inject(AuthService);
   private alertService = inject(AlertService);
+  private authorizationService = inject(AuthorizationService);
 
   ngOnInit(): void {
     this.loadProfile();
+    this.loadMyPermissions();
+  }
+
+  loadMyPermissions() {
+    this.authorizationService.getMyPermissions().subscribe({
+      next: (perm) => {
+        // بنعرض الزرار لو معاه رول مخصص وهو مش فُل أدمن أصلاً (الفُل أدمن عنده دخول كامل زي ما هو)
+        this.hasLimitedAdminRole.set(!perm.isFullAdmin && perm.adminRoleNames.length > 0);
+      },
+      error: () => {}
+    });
   }
 
   loadProfile() {
