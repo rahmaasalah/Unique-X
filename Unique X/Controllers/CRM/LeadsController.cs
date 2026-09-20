@@ -667,7 +667,10 @@ namespace Unique_X.Controllers.CRM
                     lead.CreatedAt,
                     // 🟢 كان بيتحسب بس من تاريخ آخر تغيير حالة (Status History)، فمكنش بيتحدث لما تتضاف Feedback أو Activity أو Visit
                     // رغم إن الأكشنز دي كلها فعليًا بتحدث lead.UpdatedAt في الداتابيز - فبنستخدمه هو مباشرة كمصدر وحيد للحقيقة
-                    UpdatedAt = lead.UpdatedAt ?? lead.CreatedAt
+                    UpdatedAt = lead.UpdatedAt ?? lead.CreatedAt,
+                    // 🟢 نفس التراكر الموحّد المستخدم في قايمة الـ Leads وشاشة broker-profile - عشان البادج
+                    // يبقى ظاهر جوه صفحة تفاصيل العميل نفسها (لصاحب العميل وللأدمن) مش بس في الليست
+                    LateStatus = LeadTrackerHelper.GetLateStatus(lead.UpdatedAt, lead.CreatedAt)
                 },
                 RequestDetails = new
                 {
@@ -1122,6 +1125,9 @@ namespace Unique_X.Controllers.CRM
             var lead = await _context.Leads.FindAsync(id);
             if (lead == null) return NotFound("Lead not found");
 
+            // 🟢 نحفظ الـ ID بتاع البروكر القديم قبل ما نغيّره
+            var oldBrokerId = lead.BrokerId;
+
             // 🟢 نتأكد إن البروكر الجديد معداش الـ Lead Limit بتاعه قبل ما ننقله
             var newBroker = await _context.Users.FindAsync(dto.NewBrokerId) as ApplicantUser;
             if (newBroker?.LeadLimit != null)
@@ -1138,12 +1144,9 @@ namespace Unique_X.Controllers.CRM
             lead.LastActionBy = "admin";
             _context.Leads.Update(lead);
 
-            // نقل المهام والزيارات المعلقة للبروكر الجديد
-            var pendingActivities = await _context.LeadActivities.Where(a => a.LeadId == id && a.Status == "Pending").ToListAsync();
-            foreach (var activity in pendingActivities) { activity.AssignedToId = dto.NewBrokerId; }
-
-            var pendingVisits = await _context.Visits.Where(v => v.LeadId == id && v.Status == "Pending").ToListAsync();
-            foreach (var visit in pendingVisits) { visit.BrokerId = dto.NewBrokerId; }
+            // 🟢 البروكر القديم يفقد كل سجل المكالمات والزيارات بتاعته مع العميل ده تمامًا
+            // (مش بس اللي Pending - كل حاجة، عشان ميقدرش يوصل لبيانات العميل تاني)
+            await LeadReassignmentCleanupHelper.PurgeBrokerHistoryForLeadAsync(_context, id, oldBrokerId);
 
             // تسجيل حركة النقل في الـ History
             _context.LeadStatusHistories.Add(new LeadStatusHistory
@@ -1314,6 +1317,9 @@ namespace Unique_X.Controllers.CRM
             if (lead == null) return NotFound("Lead not found");
             if (!lead.IsUnassigned) return BadRequest("This lead is not in the pending pool.");
 
+            // 🟢 نحفظ الـ ID بتاع البروكر القديم قبل ما نغيّره
+            var oldBrokerId = lead.BrokerId;
+
             // 🟢 نتأكد إن البروكر الجديد معداش الـ Lead Limit بتاعه قبل ما نديله العميل
             var newBrokerUser = await _context.Users.FindAsync(dto.NewBrokerId) as ApplicantUser;
             if (newBrokerUser?.LeadLimit != null)
@@ -1333,6 +1339,9 @@ namespace Unique_X.Controllers.CRM
             lead.IsUnassigned = false;
             lead.LastActionBy = "admin";
             lead.UpdatedAt = DateTime.UtcNow;
+
+            // 🟢 البروكر القديم يفقد كل سجل المكالمات والزيارات بتاعته مع العميل ده تمامًا
+            await LeadReassignmentCleanupHelper.PurgeBrokerHistoryForLeadAsync(_context, id, oldBrokerId);
 
             // 🟢 تصفير عداد الفيدباك - الفيدباكات القديمة بتفضل في GeneralFeedback كتاريخ
             // بس مش هتتحسب في العداد بعد التاريخ ده
@@ -1363,17 +1372,15 @@ namespace Unique_X.Controllers.CRM
 
             foreach (var lead in leads)
             {
+                // 🟢 نحفظ الـ ID بتاع البروكر القديم قبل ما نغيّره
+                var oldBrokerId = lead.BrokerId;
+
                 lead.BrokerId = dto.NewBrokerId;
                 lead.UpdatedAt = DateTime.UtcNow;
                 lead.LastActionBy = "admin";
 
-                // نقل المهام المعلقة
-                var pendingActivities = await _context.LeadActivities.Where(a => a.LeadId == lead.Id && a.Status == "Pending").ToListAsync();
-                foreach (var activity in pendingActivities) { activity.AssignedToId = dto.NewBrokerId; }
-
-                // نقل الزيارات المعلقة
-                var pendingVisits = await _context.Visits.Where(v => v.LeadId == lead.Id && v.Status == "Pending").ToListAsync();
-                foreach (var visit in pendingVisits) { visit.BrokerId = dto.NewBrokerId; }
+                // 🟢 البروكر القديم يفقد كل سجل المكالمات والزيارات بتاعته مع العميل ده تمامًا
+                await LeadReassignmentCleanupHelper.PurgeBrokerHistoryForLeadAsync(_context, lead.Id, oldBrokerId);
 
                 // تسجيل الهيستوري
                 _context.LeadStatusHistories.Add(new LeadStatusHistory

@@ -35,6 +35,14 @@ namespace Unique_X.Filters
 
             var actionName = (context.ActionDescriptor as ControllerActionDescriptor)?.ActionName ?? string.Empty;
 
+            // 🟢 قراءة الـ Lookups (المناطق/المشاريع/المطورين) مفتوحة لأي حد Login وواصل لصفحات الـ CRM -
+            // مش محتاجة صلاحية "lookups" لأنها بيانات عرض بس، مش تعديل. التعديل (Add/Delete) لسه محتاج الصلاحية.
+            if (AdminActionPermissionMap.PublicReadActions.Contains(actionName))
+            {
+                await next();
+                return;
+            }
+
             string permissionKey;
 
             if (actionName.Equals(AdminActionPermissionMap.ActivityLogsAction, StringComparison.OrdinalIgnoreCase))
