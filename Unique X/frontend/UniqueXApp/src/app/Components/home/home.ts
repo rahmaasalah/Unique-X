@@ -174,6 +174,8 @@ export class HomeComponent implements OnInit {
   private adminService: AdminService) {}
 
   currentListingType: string | null = null;
+  // 🟢 بنحتفظ بآخر City متحددة عشان نقدر نعيد تحميل المشاريع بيها لما الـ Listing Type يتغيّر (من غير ما نحتاج نلمس select المدينة نفسه)
+  currentCityId: any = null;
   currentProjectName: string | null = null;
 
   // 🟢 Region & Project typeahead - بيتقروا لايف من الداتا بيز (api/properties/regions-list و api/properties/projects-list)
@@ -199,7 +201,9 @@ export class HomeComponent implements OnInit {
   });
 
   // بيجيب المناطق والمشاريع من الداتا بيز، ولو city اتحددت بيفلتر عليها بس
-  loadRegionsAndProjects(cityId?: any) {
+  // 🟢 بقى ياخد typeId كمان - المشاريع لازم تتفلتر بالـ Listing Type المختار (Primary/Resale...)،
+  // غير كده هتظهر مشاريع بنفس الاسم من نوعين مختلفين مع بعض (زي "مروج" Primary و"مروج" Resale)
+  loadRegionsAndProjects(cityId?: any, typeId?: any) {
     const cityParam = cityId ? `?city=${cityId}` : '';
 
     this.http.get<any[]>(`${environment.apiUrl}/Properties/regions-list${cityParam}`).subscribe({
@@ -207,7 +211,18 @@ export class HomeComponent implements OnInit {
       error: () => this.allRegions.set([])
     });
 
-    this.http.get<any[]>(`${environment.apiUrl}/Properties/projects-list${cityParam}`).subscribe({
+    // 🟢 كود الـ Listing Type بتاع العقار (PropEnums.ListingType: Resale=0, Rent=1, Primary=2, ResaleProject=3)
+    // مش نفس كود الـ Type بتاع المشروع نفسه (ProjectListingType: Primary=0, Resale=1) - لازم ترجمة قبل ما نبعته للـ API،
+    // غير كده type=3 (ResaleProject) أو type=2 (Primary) هيدوروا على قيمة مش موجودة في ProjectListingType أصلاً ويرجعوا فاضيين
+    const projectTypeMap: { [key: string]: number } = { '2': 0, '3': 1 }; // Primary->Primary, ResaleProject->Resale
+    const projectType = typeId !== undefined && typeId !== null ? projectTypeMap[String(typeId)] : undefined;
+
+    const projectsParams: string[] = [];
+    if (cityId) projectsParams.push(`city=${cityId}`);
+    if (projectType !== undefined) projectsParams.push(`type=${projectType}`);
+    const projectsQuery = projectsParams.length ? `?${projectsParams.join('&')}` : '';
+
+    this.http.get<any[]>(`${environment.apiUrl}/Properties/projects-list${projectsQuery}`).subscribe({
       next: (data) => this.allProjects.set(data || []),
       error: () => this.allProjects.set([])
     });
@@ -492,10 +507,13 @@ onBannerClick(key: string): void {
 onListingTypeChange(value: string) {
   const listingTypeMap: any = { 'Resale': '0', 'Rent': '1', 'Primary': '2', 'ResaleProject': '3' };
   this.currentListingType = value ? (listingTypeMap[value] ?? value) : null;
+  // 🟢 نعيد تحميل قايمة المشاريع بنفس المدينة المختارة + النوع الجديد، عشان "مروج Primary" و"مروج Resale" متتلخبطش مع بعض
+  this.loadRegionsAndProjects(this.currentCityId, this.currentListingType);
 }
 
 updateProjectsList(cityId: any) {
-    this.loadRegionsAndProjects(cityId);
+    this.currentCityId = cityId;
+    this.loadRegionsAndProjects(cityId, this.currentListingType);
   }
 
   initCarousel() {
