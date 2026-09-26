@@ -3247,12 +3247,18 @@
         <div class="modal-header bg-dark text-white">
           <h5 class="modal-title fw-bold">
             <i class="bi bi-buildings me-2"></i>
-            {{ editingBlog() ? 'Edit Project' : 'Add New Project' }}
+            {{ editingBlog() ? 'Edit Project' : (convertingLaunchId() ? 'Move Launch to Projects' : 'Add New Project') }}
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
 
         <div class="modal-body p-4" [formGroup]="blogForm">
+          @if (convertingLaunchId()) {
+            <div class="alert alert-warning d-flex align-items-center gap-2 rounded-3">
+              <i class="bi bi-info-circle fs-5"></i>
+              <span>This form is pre-filled with the launch's data. Review it and fill in anything missing before saving it as a Project.</span>
+            </div>
+          }
 
           <!-- ── Section 1: Basic Info ── -->
           <h6 class="fw-bold text-danger mb-3"><i class="bi bi-info-circle me-2"></i>Basic Info</h6>
@@ -3708,7 +3714,7 @@
             @if (blogSubmitting()) {
               <span class="spinner-border spinner-border-sm me-2"></span>Saving...
             } @else {
-              <i class="bi bi-check-lg me-2"></i>{{ editingBlog() ? 'Update Project' : 'Publish Project' }}
+              <i class="bi bi-check-lg me-2"></i>{{ editingBlog() ? 'Update Project' : (convertingLaunchId() ? 'Save as Project' : 'Publish Project') }}
             }
           </button>
         </div>
@@ -3799,9 +3805,16 @@
                     @if (launch.pricePerMeterPrimary) {
                       <span class="badge bg-dark text-white">Primary: {{ launch.pricePerMeterPrimary | number }} EGP/m²</span>
                     }
+                    @if (launch.eoi) {
+                      <span class="badge bg-success-subtle text-success">EOI: {{ launch.eoi | number }} EGP</span>
+                    }
                   </div>
                 }
-                <div class="mt-auto d-flex gap-2 justify-content-end">
+                <div class="mt-auto d-flex gap-2 justify-content-end flex-wrap">
+                  <button class="btn btn-sm btn-outline-success rounded-pill px-3" (click)="openConvertLaunchToBlog(launch)"
+                          title="Move this launch to Projects once it's ready/delivered">
+                    <i class="bi bi-arrow-right-circle me-1"></i>Move to Projects
+                  </button>
                   <button class="btn btn-sm btn-outline-primary rounded-pill px-3" (click)="openEditLaunch(launch)">
                     <i class="bi bi-pencil me-1"></i>Edit
                   </button>
@@ -3975,6 +3988,15 @@
   <input type="text" class="form-control rounded-3 bg-light border-0"
          formControlName="pricePerMeterPrimary" placeholder="e.g. 120,000"
          (input)="formatPrice($event)">
+</div>
+<div class="col-md-6">
+  <label class="form-label fw-semibold">EOI (First Check)</label>
+  <div class="input-group">
+    <input type="text" class="form-control rounded-start-3 bg-light border-0"
+           formControlName="eoi" placeholder="e.g. 50,000"
+           (input)="formatPrice($event)">
+    <span class="input-group-text rounded-end-3 bg-light border-0 fw-semibold text-muted">EGP</span>
+  </div>
 </div>
             
           </div>

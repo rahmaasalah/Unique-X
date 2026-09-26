@@ -15,6 +15,7 @@
 
         public decimal? PricePerMeterResale { get; set; }
         public decimal? PricePerMeterPrimary { get; set; }
+        public decimal? EOI { get; set; }
         public decimal? DownPaymentPercentage { get; set; }
         public decimal? AvgDownPayment { get; set; }
 

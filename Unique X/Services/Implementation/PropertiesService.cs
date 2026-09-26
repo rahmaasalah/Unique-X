@@ -272,6 +272,12 @@ namespace Unique_X.Services.Implementation
             if (filter.BuildYear.HasValue)
                 query = query.Where(p => p.BuildYear >= filter.BuildYear.Value);
 
+            // 🟢 فلتر Range لسنة البناء (from...to) - لصفحة الهوم
+            if (filter.MinBuildYear.HasValue)
+                query = query.Where(p => p.BuildYear >= filter.MinBuildYear.Value);
+            if (filter.MaxBuildYear.HasValue)
+                query = query.Where(p => p.BuildYear <= filter.MaxBuildYear.Value);
+
             if (filter.Area.HasValue)
                 query = query.Where(p => p.Area >= filter.Area.Value);
 

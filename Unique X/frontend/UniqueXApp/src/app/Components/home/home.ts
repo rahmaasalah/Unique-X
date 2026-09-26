@@ -126,6 +126,7 @@ export class HomeComponent implements OnInit {
       q['minPrice'] || q['maxPrice'] || q['minPricePerMeter'] || q['maxPricePerMeter'] || q['area'] || q['minRooms'] || 
       q['maxRooms'] || q['minBathrooms'] || q['maxBathrooms'] || 
       q['minFloor'] || q['maxFloor'] || 
+      q['minBuildYear'] || q['maxBuildYear'] ||
       q['brokerId'] || q['brokerName'] || q['broker'] || // 👈 ضفنا فحص البروكر
       q['listingType'] // 👈 ضفنا فحص الناف بار (Resale, Rent...)
     );
@@ -754,7 +755,8 @@ getSmartSearchTerm(term: string): string {
     projectName: params.projectName || null,
     code: params.code || null,
     area: params.area || null,
-    buildYear: params.buildYear || null,
+    minBuildYear: params.minBuildYear || null,
+    maxBuildYear: params.maxBuildYear || null,
     minRooms: params.minRooms || null,
     maxRooms: params.maxRooms || null,
     minBathrooms: params.minBathrooms || null,
@@ -789,7 +791,14 @@ getSmartSearchTerm(term: string): string {
   };
 
   this.adminService.logSearch(searchLogPayload).subscribe({ error: () => {} });
-  this.router.navigate(['/home'], { queryParams: filters });
+  this.router.navigate(['/home'], { queryParams: filters }).then(() => {
+    // 🟢 بعد ما يدوس Search: نقفل جزء "More Filters" ونمسح البانرز (بيحصل تلقائي عن طريق hasSearchFilters)
+    // وننزل للنتايج على طول من غير ما يحتاج يسكرول تحت بنفسه
+    this.showAdvancedFilters.set(false);
+    setTimeout(() => {
+      document.getElementById('resultsAnchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  });
 }
 clearFilters() {
   // التوجه للهوم بدون أي Query Params

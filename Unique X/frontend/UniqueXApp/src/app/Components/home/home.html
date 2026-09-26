@@ -69,7 +69,8 @@
                    listingType: propertyType.value, propertyType: propType.value,
                    minFloor: minFloor.value, maxFloor: maxFloor.value,
                    minRooms: minRooms.value, maxRooms: maxRooms.value,
-                   minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value
+                   minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value,
+                   minBuildYear: minBuildYear.value, maxBuildYear: maxBuildYear.value
                  })">
         </div>
       </div>
@@ -92,7 +93,8 @@
                   listingType: propertyType.value, propertyType: propType.value,
                   minFloor: minFloor.value, maxFloor: maxFloor.value,
                   minRooms: minRooms.value, maxRooms: maxRooms.value,
-                  minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value
+                  minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value,
+                  minBuildYear: minBuildYear.value, maxBuildYear: maxBuildYear.value
                 })">
           <i class="bi bi-search"></i>
         </button>
@@ -237,6 +239,18 @@
             </div>
           </div>
         </div>
+        <div class="col-md-3">
+          <div class="row g-1">
+            <div class="col-6">
+              <label class="form-label x-small-bold mb-1 text-muted">Build Year From</label>
+              <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="e.g. 2015" #minBuildYear>
+            </div>
+            <div class="col-6">
+              <label class="form-label x-small-bold mb-1 text-muted">Build Year To</label>
+              <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="e.g. 2026" #maxBuildYear>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="row g-2 align-items-end">
@@ -277,7 +291,8 @@
                       listingType: propertyType.value, propertyType: propType.value,
                       minFloor: minFloor.value, maxFloor: maxFloor.value,
                       minRooms: minRooms.value, maxRooms: maxRooms.value,
-                      minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value
+                      minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value,
+                      minBuildYear: minBuildYear.value, maxBuildYear: maxBuildYear.value
                     })">
               <i class="bi bi-search me-1"></i> Search Properties
             </button>
@@ -433,6 +448,7 @@
   </div>
 
   <!-- ===== Banners: Ads Carousel ===== -->
+  @if (!hasSearchFilters()) {
   <div class="container-fluid p-0 mb-5">
   <!-- Ads Carousel -->
   <div id="adsCarousel" class="carousel slide shadow-sm mb-5" data-bs-ride="carousel">
@@ -458,6 +474,7 @@
     </button>
   </div>
 </div>
+  }
 
 <ng-template #hotDealsSection>
     @if (filteredHotDeals().length > 0) {
@@ -691,6 +708,12 @@
                         }
                       </div>
                     }
+                    @if (launch.eoi) {
+                      <div class="text-center bg-success-subtle rounded-3 px-3 py-2 mb-3">
+                        <div class="small text-muted">EOI (First Check)</div>
+                        <div class="fw-bold text-success">{{ currencyService.format(launch.eoi) }}</div>
+                      </div>
+                    }
 
                     <button class="btn btn-danger w-100 rounded-3 fw-bold py-2 mb-2"
                             (click)="sendLaunchInquiry(launch, $event)">
@@ -786,6 +809,8 @@
       </div>
     }
     }
+
+    <div id="resultsAnchor"></div>
 
     @if (isLoading()) {
       <div class="col-12 text-center py-5">
