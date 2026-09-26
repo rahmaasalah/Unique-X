@@ -9,7 +9,7 @@ import { NgxGoogleAnalyticsModule, NgxGoogleAnalyticsRouterModule } from 'ngx-go
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(), // تعديل هنا
-    provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top' }) ),
+    provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' }) ),
     provideHttpClient(withInterceptors([jwtInterceptor])),
      importProvidersFrom(
       NgxGoogleAnalyticsModule.forRoot('G-VYQY2D36T8'), 

@@ -27,6 +27,9 @@
         public decimal? PricePerMeterResale { get; set; }
         public decimal? PricePerMeterPrimary { get; set; }
 
+        // EOI (Expression of Interest) — سعر أول شيك، مخزن دايمًا بالجنيه المصري زي باقي الأسعار
+        public decimal? EOI { get; set; }
+
         // 3 Buttons
         public string? Button1Label { get; set; }
         public string? Button1ImageUrl { get; set; }

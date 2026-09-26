@@ -2024,6 +2024,8 @@ blogMasterPlanFile = signal<File | null>(null);
 blogSliderFiles = signal<File[]>([]);
 blogButtonFiles: { [key: number]: File | null } = { 1: null, 2: null, 3: null };
 blogSubmitting = signal(false);
+// لو الفورم ده مفتوح عشان يحوّل لونش لـ Blog، بيبقى فيه الـ id بتاع اللونش المصدر
+convertingLaunchId = signal<number | null>(null);
 
 // ================== Projects Meetings ==================
 projectMeetings = signal<any[]>([]);
@@ -2396,6 +2398,7 @@ loadBlogs() {
 
 openAddBlog() {
   this.editingBlog.set(null);
+  this.convertingLaunchId.set(null);
   this.blogSliderFiles.set([]);
   this.sliderPreviewUrls.set([]);
   this.blogMasterPlanFile.set(null);
@@ -2415,6 +2418,7 @@ openAddBlog() {
 
 openEditBlog(blog: any) {
   this.editingBlog.set(blog);
+  this.convertingLaunchId.set(null);
   this.blogSliderFiles.set([]);
   this.sliderPreviewUrls.set([]);
   this.blogMasterPlanFile.set(null);
@@ -2456,6 +2460,54 @@ openEditBlog(blog: any) {
   );
 
   this.initBlogForm(blog);
+  const modal = new (window as any).bootstrap.Modal(document.getElementById('blogFormModal'));
+  modal.show();
+}
+
+// 🟢 "Move to Projects": بيفتح نفس فورم الـ Blog متعبي ببيانات اللونش (وصوره المرفوعة بالفعل)
+// عشان الأدمن يراجعها ويملى أي حقل ناقص قبل ما يحفظها كـ Blog. الحفظ نفسه بيتم في submitBlog().
+openConvertLaunchToBlog(launch: any) {
+  this.editingBlog.set(null); // بيتعامل معاه submitBlog كإنشاء Blog جديد، مش تعديل
+  this.convertingLaunchId.set(launch.id);
+  this.blogSliderFiles.set([]);
+  this.sliderPreviewUrls.set([]);
+  this.blogMasterPlanFile.set(null);
+  this.blogButtonFiles = { 1: null, 2: null, 3: null };
+  this.resaleUnitSearchText.set('');
+  this.primaryUnitSearchText.set('');
+  this.rentUnitSearchText.set('');
+
+  const resaleIds: number[] = this.parseJson(launch.resaleUnitIdsJson);
+  this.selectedResaleUnits.set(
+    resaleIds
+      .map(id => this.properties().find(p => p.id === id))
+      .filter(p => !!p)
+      .map(p => ({ id: p.id, code: p.code, title: p.title }))
+  );
+
+  const primaryIds: number[] = this.parseJson(launch.primaryUnitIdsJson);
+  this.selectedPrimaryUnits.set(
+    primaryIds
+      .map(id => this.properties().find(p => p.id === id))
+      .filter(p => !!p)
+      .map(p => ({ id: p.id, code: p.code, title: p.title }))
+  );
+
+  const rentIds: number[] = this.parseJson(launch.rentUnitIdsJson);
+  this.selectedRentUnits.set(
+    rentIds
+      .map(id => this.properties().find(p => p.id === id))
+      .filter(p => !!p)
+      .map(p => ({ id: p.id, code: p.code, title: p.title }))
+  );
+
+  this.mainNewImageIndex.set(null);
+  const sliderImgs = this.getSliderImagesArray(launch);
+  this.mainExistingImageUrl.set(
+    launch.coverImageUrl && sliderImgs.includes(launch.coverImageUrl) ? launch.coverImageUrl : null
+  );
+
+  this.initBlogForm(launch); // نفس أسماء الحقول في اللونش والـ Blog، فبيتملى الفورم منها مباشرة
   const modal = new (window as any).bootstrap.Modal(document.getElementById('blogFormModal'));
   modal.show();
 }
@@ -2687,13 +2739,22 @@ submitBlog() {
   });
 
   const editing = this.editingBlog();
-  const req = editing ? this.blogService.update(editing.id, fd) : this.blogService.create(fd);
+  const convertingId = this.convertingLaunchId();
+  const req = editing
+    ? this.blogService.update(editing.id, fd)
+    : convertingId
+      ? this.launchService.convertToBlog(convertingId, fd)
+      : this.blogService.create(fd);
 
   req.subscribe({
     next: () => {
       this.blogSubmitting.set(false);
-      this.alertService.success(editing ? 'Project updated!' : 'Project created!');
+      this.alertService.success(convertingId ? 'Launch moved to Projects!' : (editing ? 'Project updated!' : 'Project created!'));
       this.loadBlogs();
+      if (convertingId) {
+        this.loadLaunches();
+        this.convertingLaunchId.set(null);
+      }
       const modal = (window as any).bootstrap.Modal.getInstance(document.getElementById('blogFormModal'));
       modal?.hide();
     },
@@ -3042,6 +3103,7 @@ initLaunchForm(launch?: any) {
     isPublished:          [true],
     pricePerMeterResale:  [null],
     pricePerMeterPrimary: [null],
+    eoi:                  [null],
     downPaymentPercentage: [null],
     avgDownPayment: [null],
     projectDetails:       [''],
@@ -3059,6 +3121,7 @@ initLaunchForm(launch?: any) {
       isPublished:          launch.isPublished,
       pricePerMeterResale:  launch.pricePerMeterResale,
       pricePerMeterPrimary: launch.pricePerMeterPrimary,
+      eoi:                  launch.eoi,
       downPaymentPercentage: launch.downPaymentPercentage,
       avgDownPayment: launch.avgDownPayment,
       projectDetails:       launch.projectDetails || '',
@@ -3358,6 +3421,7 @@ submitLaunch() {
   fd.append('IsPublished',          f.isPublished ? 'true' : 'false');
   fd.append('PricePerMeterResale',  f.pricePerMeterResale?.toString() || '');
   fd.append('PricePerMeterPrimary', f.pricePerMeterPrimary?.toString() || '');
+  fd.append('EOI',                  f.eoi?.toString() || '');
   fd.append('DownPaymentPercentage', f.downPaymentPercentage?.toString() || '');
   fd.append('AvgDownPayment',       f.avgDownPayment?.toString() || '');
   fd.append('AdminPhone',           '01509064020');

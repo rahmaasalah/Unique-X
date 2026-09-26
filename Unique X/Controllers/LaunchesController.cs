@@ -64,6 +64,7 @@ namespace Unique_X.Controllers
                 DeliveryDate = dto.DeliveryDate,
                 PricePerMeterResale = dto.PricePerMeterResale,
                 PricePerMeterPrimary = dto.PricePerMeterPrimary,
+                EOI = dto.EOI,
                 DownPaymentPercentage = dto.DownPaymentPercentage,
                 AvgDownPayment = dto.AvgDownPayment,
                 Button1Label = dto.Button1Label,
@@ -127,6 +128,7 @@ namespace Unique_X.Controllers
             launch.DeliveryDate = dto.DeliveryDate;
             launch.PricePerMeterResale = dto.PricePerMeterResale;
             launch.PricePerMeterPrimary = dto.PricePerMeterPrimary;
+            launch.EOI = dto.EOI;
             launch.DownPaymentPercentage = dto.DownPaymentPercentage;
             launch.AvgDownPayment = dto.AvgDownPayment;
             launch.Button1Label = dto.Button1Label;
@@ -206,6 +208,84 @@ namespace Unique_X.Controllers
             _context.Launches.Remove(launch);
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        // 🟢 تحويل اللونش لـ Blog/Project بعد ما يخلص بناء: بننقل كل بيانات اللونش (والصور المرفوعة بالفعل)
+        // للـ Blog الجديد، وبنطبق فوقها أي تعديلات بعتها الأدمن من نفس فورم الـ Blog (اللي بيفتح متعبي بيانات اللونش)،
+        // بعدين بنمسح اللونش القديم. أي حقل موجود في فورم الـ Blog ومش موجود في اللونش هيفضل فاضي في الفورم
+        // عشان الأدمن يملاه قبل ما يحفظ - من غير ما نحتاج شاشة "بيانات ناقصة" منفصلة.
+        [HttpPost("{id}/convert-to-blog")]
+        public async Task<IActionResult> ConvertToBlog(int id, [FromForm] CreateBlogDto dto)
+        {
+            var launch = await _context.Launches.FindAsync(id);
+            if (launch == null) return NotFound("Launch not found");
+
+            var blog = new Blog
+            {
+                Title = dto.Title,
+                Excerpt = dto.Excerpt,
+                Zone = dto.Zone,
+                ProjectName = dto.ProjectName,
+                DeveloperName = dto.DeveloperName,
+                IsPublished = dto.IsPublished,
+                PricePerMeterResale = dto.PricePerMeterResale,
+                PricePerMeterPrimary = dto.PricePerMeterPrimary,
+                DownPaymentPercentage = dto.DownPaymentPercentage,
+                AvgDownPayment = dto.AvgDownPayment,
+                Button1Label = dto.Button1Label,
+                Button2Label = dto.Button2Label,
+                Button3Label = dto.Button3Label,
+                ProjectDetails = dto.ProjectDetails,
+                MapEmbedUrl = dto.MapEmbedUrl,
+                PaymentPlansJson = dto.PaymentPlansJson,
+                ResaleUnitIdsJson = dto.ResaleUnitIdsJson,
+                PrimaryUnitIdsJson = dto.PrimaryUnitIdsJson,
+                RentUnitIdsJson = dto.RentUnitIdsJson,
+                ArticleSectionsJson = dto.ArticleSectionsJson,
+                FaqsJson = dto.FaqsJson,
+                AdminPhone = dto.AdminPhone,
+
+                // 🟢 نحافظ على كل الصور اللي كانت مرفوعة بالفعل على اللونش (بلاش نرفعها تاني)
+                CoverImageUrl = launch.CoverImageUrl,
+                SliderImages = launch.SliderImages,
+                Button1ImageUrl = launch.Button1ImageUrl,
+                Button2ImageUrl = launch.Button2ImageUrl,
+                Button3ImageUrl = launch.Button3ImageUrl,
+                MasterPlanImageUrl = launch.MasterPlanImageUrl,
+            };
+
+            // لو الأدمن ضاف صور سلايدر جديدة وهو بيراجع البيانات قبل التحويل → تتضاف فوق صور اللونش الأصلية
+            List<string> newUrls = new List<string>();
+            if (dto.SliderImages != null && dto.SliderImages.Count > 0)
+            {
+                var existing = string.IsNullOrEmpty(blog.SliderImages)
+                    ? new List<string>()
+                    : blog.SliderImages.Split('|').ToList();
+
+                foreach (var f in dto.SliderImages)
+                {
+                    var url = await UploadToCloudinary(f);
+                    if (url != null) newUrls.Add(url);
+                }
+                existing.AddRange(newUrls);
+                blog.SliderImages = string.Join("|", existing);
+            }
+
+            if (dto.MainNewImageIndex.HasValue && dto.MainNewImageIndex.Value >= 0 && dto.MainNewImageIndex.Value < newUrls.Count)
+                blog.CoverImageUrl = newUrls[dto.MainNewImageIndex.Value];
+            else if (!string.IsNullOrEmpty(dto.CoverImageUrl))
+                blog.CoverImageUrl = dto.CoverImageUrl;
+
+            if (dto.Button1Image != null) blog.Button1ImageUrl = await UploadToCloudinary(dto.Button1Image);
+            if (dto.Button2Image != null) blog.Button2ImageUrl = await UploadToCloudinary(dto.Button2Image);
+            if (dto.Button3Image != null) blog.Button3ImageUrl = await UploadToCloudinary(dto.Button3Image);
+            if (dto.MasterPlanImage != null) blog.MasterPlanImageUrl = await UploadToCloudinary(dto.MasterPlanImage);
+
+            _context.Blogs.Add(blog);
+            _context.Launches.Remove(launch);
+            await _context.SaveChangesAsync();
+
+            return Ok(blog);
         }
 
         // حذف صورة واحدة من الـ slider

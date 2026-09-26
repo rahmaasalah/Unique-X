@@ -133,6 +133,8 @@ namespace Unique_X.DTOs
 
         public string? Code { get; set; }
         public int? BuildYear { get; set; }
+        public int? MinBuildYear { get; set; }
+        public int? MaxBuildYear { get; set; }
         public int? Area { get; set; }
         public string? ProjectName { get; set; }
         public string? Region { get; set; }
