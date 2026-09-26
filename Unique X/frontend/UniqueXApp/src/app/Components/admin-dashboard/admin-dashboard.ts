@@ -2467,6 +2467,10 @@ openEditBlog(blog: any) {
 // 🟢 "Move to Projects": بيفتح نفس فورم الـ Blog متعبي ببيانات اللونش (وصوره المرفوعة بالفعل)
 // عشان الأدمن يراجعها ويملى أي حقل ناقص قبل ما يحفظها كـ Blog. الحفظ نفسه بيتم في submitBlog().
 openConvertLaunchToBlog(launch: any) {
+  // فورم الـ Blog (وموداله) بيتعرض بس لما activeTab يبقى 'blogs' (@if في التمبلت)،
+  // فلازم نحول التاب الأول ونستنى Angular يرندر قبل ما نفتح المودال، وإلا document.getElementById بيرجع null
+  this.activeTab.set('blogs');
+
   this.editingBlog.set(null); // بيتعامل معاه submitBlog كإنشاء Blog جديد، مش تعديل
   this.convertingLaunchId.set(launch.id);
   this.blogSliderFiles.set([]);
@@ -2508,8 +2512,12 @@ openConvertLaunchToBlog(launch: any) {
   );
 
   this.initBlogForm(launch); // نفس أسماء الحقول في اللونش والـ Blog، فبيتملى الفورم منها مباشرة
-  const modal = new (window as any).bootstrap.Modal(document.getElementById('blogFormModal'));
-  modal.show();
+
+  // نستنى Angular يخلص يرندر بلوك الـ 'blogs' (اللي فيه المودال) قبل ما نفتحه
+  setTimeout(() => {
+    const modal = new (window as any).bootstrap.Modal(document.getElementById('blogFormModal'));
+    modal.show();
+  });
 }
 
 onSliderImagesChange(event: any) {

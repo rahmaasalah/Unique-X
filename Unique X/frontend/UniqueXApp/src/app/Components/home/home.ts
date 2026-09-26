@@ -622,6 +622,7 @@ updateProjectsList(cityId: any) {
       this.fetchCategoryPage(explicitCode, filters, this.categoryState[explicitCode].page(), append, () => {
         this.isLoading.set(false);
         this.updateNoResultsMessage(filters);
+        this.restoreHScroll();
       });
       return;
     }
@@ -639,9 +640,34 @@ updateProjectsList(cityId: any) {
         if (remaining === 0) {
           this.isLoading.set(false);
           this.updateNoResultsMessage(filters);
+          this.restoreHScroll();
         }
       });
     });
+  }
+
+  // 🟢 بنحفظ وضع السكرول الأفقي لكل قسم نتايج (Resale/ResaleProject/Primary/Rent) عشان
+  // لو المستخدم دخل تفاصيل وحدة معينة ورجع تاني، يرجع بالظبط عند نفس مكان الوحدة دي
+  // مش يرجعله يبدأ من أول القائمة تاني. بنستخدم sessionStorage عشان يعيش حتى لو
+  // الـ component اتعمله Destroy وInit تاني وقت التنقل بين الصفحات.
+  private readonly HSCROLL_KEYS = ['resale', 'resaleProject', 'primary', 'rent'];
+
+  onHScroll(key: string, event: Event) {
+    const scrollLeft = (event.target as HTMLElement).scrollLeft;
+    sessionStorage.setItem('hscroll_' + key, scrollLeft.toString());
+  }
+
+  private restoreHScroll() {
+    setTimeout(() => {
+      this.HSCROLL_KEYS.forEach(key => {
+        const saved = sessionStorage.getItem('hscroll_' + key);
+        if (!saved) return;
+        const el = document.getElementById('scroll-' + key);
+        if (el) {
+          el.scrollLeft = parseInt(saved, 10);
+        }
+      });
+    }, 250);
   }
 
   // 🟢 بتحمّل صفحة إضافية من نوع إعلان معين بس - الأنواع التانية متتأثرش خالص
