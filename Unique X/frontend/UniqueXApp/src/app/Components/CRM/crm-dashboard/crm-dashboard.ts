@@ -287,6 +287,10 @@ export class CrmDashboardComponent implements OnInit {
   // 🟢 فلترة Pending Clients بالـ Stage - قايمة ثابتة بالـ Status IDs المطلوبة فقط
   pendingFilterStage = signal<string>('');
 
+  // 🟢 فلترة Pending Clients بتاريخ الـ "Unassigned Since" (من - لـ)
+  pendingUnassignedFrom = signal<string>('');
+  pendingUnassignedTo = signal<string>('');
+
   pendingStageOptions: { id: number; label: string }[] = [
     { id: 1, label: 'New "To Call"' },
     { id: 4, label: 'Calls (request)' },
@@ -317,6 +321,10 @@ export class CrmDashboardComponent implements OnInit {
 
     const stage = this.pendingFilterStage();
 
+    const unassignedFrom = this.pendingUnassignedFrom();
+
+    const unassignedTo = this.pendingUnassignedTo();
+
     return this.pendingClients().filter(c => {
 
       const matchName = !search || c.fullName.toLowerCase().includes(search);
@@ -327,7 +335,16 @@ export class CrmDashboardComponent implements OnInit {
 
       const matchStage = !stage || String(c.statusId) === stage;
 
-      return matchName && matchBroker && matchStage;
+      const matchUnassignedFrom = !unassignedFrom || (c.unassignedAt && new Date(c.unassignedAt) >= new Date(unassignedFrom));
+
+      let matchUnassignedTo = true;
+      if (unassignedTo) {
+        const toEnd = new Date(unassignedTo);
+        toEnd.setHours(23, 59, 59, 999);
+        matchUnassignedTo = !!c.unassignedAt && new Date(c.unassignedAt) <= toEnd;
+      }
+
+      return matchName && matchBroker && matchStage && matchUnassignedFrom && matchUnassignedTo;
 
     });
 

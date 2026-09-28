@@ -1946,13 +1946,25 @@
 
           </div>
 
-          <div class="col-md-3">
+          <div class="col-md-2">
 
             <select class="form-select bg-light border-0" [ngModel]="globalBrokerFilter()" (ngModelChange)="globalBrokerFilter.set($event)">
 
               <option value="">Filter by Current Broker</option>
 
               <option *ngFor="let b of vipBrokers()" [value]="b.firstName + ' ' + b.lastName">{{ b.firstName }} {{ b.lastName }}</option>
+
+            </select>
+
+          </div>
+
+          <div class="col-md-2">
+
+            <select class="form-select bg-light border-0" [ngModel]="filterClientStage()" (ngModelChange)="filterClientStage.set($event)">
+
+              <option value="">Filter by Stage</option>
+
+              <option *ngFor="let stage of stages" [value]="stage.id">{{ stage.name }}</option>
 
             </select>
 
@@ -2010,7 +2022,7 @@
 
           </div>
 
-          <div class="col-md-3 text-end">
+          <div class="col-md-2 text-end">
 
             <button class="btn btn-outline-danger fw-bold w-100 rounded-3" (click)="clearClientFilters()">Clear Filters</button>
 
@@ -4567,17 +4579,41 @@
 
               </span>
 
-              @if (pendingSearchName() || pendingFilterBroker() || pendingFilterStage()) {
+              @if (pendingSearchName() || pendingFilterBroker() || pendingFilterStage() || pendingUnassignedFrom() || pendingUnassignedTo()) {
 
                 <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
 
-                        (click)="pendingSearchName.set(''); pendingFilterBroker.set(''); pendingFilterStage.set('')">
+                        (click)="pendingSearchName.set(''); pendingFilterBroker.set(''); pendingFilterStage.set(''); pendingUnassignedFrom.set(''); pendingUnassignedTo.set('')">
 
                   <i class="bi bi-x-lg me-1"></i>Clear
 
                 </button>
 
               }
+
+            </div>
+
+            <div class="col-md-3">
+
+              <label class="form-label small fw-semibold text-muted mb-1">Unassigned Since (From)</label>
+
+              <input type="date" class="form-control form-select-sm"
+
+                     [ngModel]="pendingUnassignedFrom()"
+
+                     (ngModelChange)="pendingUnassignedFrom.set($event)">
+
+            </div>
+
+            <div class="col-md-3">
+
+              <label class="form-label small fw-semibold text-muted mb-1">Unassigned Since (To)</label>
+
+              <input type="date" class="form-control form-select-sm"
+
+                     [ngModel]="pendingUnassignedTo()"
+
+                     (ngModelChange)="pendingUnassignedTo.set($event)">
 
             </div>
 

@@ -422,16 +422,46 @@ namespace Unique_X.Controllers.CRM
                 .Select(l => new { l.Id, l.FullName, l.PhoneNumber, l.CreatedAt })
                 .ToListAsync();
 
-            // ملخص يومي للـ Activities
-            var dailySummary = activities
-                .GroupBy(a => a.DueDate.Date)
-                .Select(g => new
+            // 🟢 الفيدباكات المكتوبة من صفحة lead-details (add-note) واللي محددلها contactMethod = Call/WhatsApp
+            // بتتحسب في الـ Daily Activity Summary زي الـ Activities العادية بالظبط
+            var feedbackRaw = await _context.Leads
+                .Where(l => brokerLeadIds.Contains(l.Id) && !string.IsNullOrEmpty(l.GeneralFeedback))
+                .Select(l => l.GeneralFeedback)
+                .ToListAsync();
+
+            var feedbackEntries = new List<(DateTime Date, string ContactMethod)>();
+            foreach (var gf in feedbackRaw)
+            {
+                foreach (var entry in gf!.Split("_@|@_", StringSplitOptions.RemoveEmptyEntries))
                 {
-                    Date = g.Key.ToString("yyyy-MM-dd"),
-                    TotalCalls = g.Count(a => a.ActivityType == "Call"),
-                    TotalWhatsApp = g.Count(a => a.ActivityType == "WhatsApp"),
-                    TotalActivities = g.Count(),
-                    CompletedActivities = g.Count(a => a.Status == "Completed")
+                    var parts = entry.Split("_#|#_");
+                    if (parts.Length < 4) continue; // فيدباكات قديمة اتكتبت قبل إضافة اختيار Call/WhatsApp
+                    var contactMethod = parts[2];
+                    if (contactMethod != "Call" && contactMethod != "WhatsApp") continue;
+                    if (!DateTime.TryParse(parts[1], null, System.Globalization.DateTimeStyles.RoundtripKind, out var entryDate)) continue;
+                    entryDate = entryDate.ToUniversalTime();
+                    if (entryDate < fromDate || entryDate >= toDate) continue;
+                    feedbackEntries.Add((entryDate, contactMethod));
+                }
+            }
+
+            // ملخص يومي للـ Activities + الفيدباكات مع بعض في نفس الجدول
+            var allDailyDates = activities.Select(a => a.DueDate.Date)
+                .Concat(feedbackEntries.Select(f => f.Date.Date))
+                .Distinct();
+
+            var dailySummary = allDailyDates
+                .Select(date => new
+                {
+                    Date = date.ToString("yyyy-MM-dd"),
+                    TotalCalls = activities.Count(a => a.DueDate.Date == date && a.ActivityType == "Call")
+                               + feedbackEntries.Count(f => f.Date.Date == date && f.ContactMethod == "Call"),
+                    TotalWhatsApp = activities.Count(a => a.DueDate.Date == date && a.ActivityType == "WhatsApp")
+                               + feedbackEntries.Count(f => f.Date.Date == date && f.ContactMethod == "WhatsApp"),
+                    TotalActivities = activities.Count(a => a.DueDate.Date == date)
+                               + feedbackEntries.Count(f => f.Date.Date == date),
+                    CompletedActivities = activities.Count(a => a.DueDate.Date == date && a.Status == "Completed")
+                               + feedbackEntries.Count(f => f.Date.Date == date) // فيدباك = تفاعل حصل فعلًا، فبيتحسب Completed
                 })
                 .OrderByDescending(d => d.Date)
                 .ToList();
