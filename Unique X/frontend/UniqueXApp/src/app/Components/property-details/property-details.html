@@ -593,7 +593,8 @@
       <div style="min-width: 0; flex: 1 1 auto;">
         <h4 class="fw-bold mb-0" style="font-size: 0.7rem; letter-spacing: 1px;">Provided By</h4>
         <h5 class="fw-bold mb-0">{{ prop.brokerName }}</h5>
-        <span class="badge bg-danger-subtle text-danger px-2 py-1 mt-1 small">{{ prop.brokerTitle || 'Professional Agent' }}</span>
+        <span class="badge bg-danger-subtle text-danger px-2 py-1 mt-1 small d-inline-block"
+              style="white-space: normal; overflow-wrap: break-word; word-break: break-word; max-width: 100%;">{{ prop.brokerTitle || 'Professional Agent' }}</span>
 
         <p class="text-muted small mb-0" style="white-space: normal; overflow-wrap: break-word; word-break: break-word; max-width: 100%;">
           {{ prop.brokerDescription || '' }}
