@@ -586,16 +586,16 @@
   <!-- قسمProvided By (في آخر عمود التفاصيل col-lg-8) -->
 <div class="bg-white p-4 rounded-4 shadow-sm border border-light mt-4 mb-5">
   <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-    <div class="d-flex align-items-center">
+    <div class="d-flex align-items-center" style="min-width: 0; flex: 1 1 auto;">
       <img [src]="prop.brokerImage || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
-           class="rounded-circle shadow-sm border me-3" loading="lazy" decoding="async"
+           class="rounded-circle shadow-sm border me-3 flex-shrink-0" loading="lazy" decoding="async"
            style="width: 70px; height: 70px; object-fit: cover;">
-      <div>
+      <div style="min-width: 0; flex: 1 1 auto;">
         <h4 class="fw-bold mb-0" style="font-size: 0.7rem; letter-spacing: 1px;">Provided By</h4>
         <h5 class="fw-bold mb-0">{{ prop.brokerName }}</h5>
         <span class="badge bg-danger-subtle text-danger px-2 py-1 mt-1 small">{{ prop.brokerTitle || 'Professional Agent' }}</span>
 
-        <p class="text-muted small mb-0" style="white-space: normal; overflow-wrap: break-word; word-break: break-word; max-width: 500px;">
+        <p class="text-muted small mb-0" style="white-space: normal; overflow-wrap: break-word; word-break: break-word; max-width: 100%;">
           {{ prop.brokerDescription || '' }}
         </p>
 
