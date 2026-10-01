@@ -53,8 +53,7 @@
 <div class="container py-5">
 
   <!-- ===== Filters: Keyword + Toggle first ===== -->
-  <div class="bg-light py-3 border-bottom mb-5 shadow-sm rounded-4 filters-bar"
-       [class.filters-sticky]="!showAdvancedFilters()"
+  <div class="bg-light py-3 border-bottom mb-5 shadow-sm rounded-4 filters-bar filters-sticky"
        [style.top.px]="stickyTop()">
   <div class="container">
 
@@ -129,7 +128,8 @@
     </div>
 
     <!-- ===== Rest of the filters — toggled by the "More Filters" button ===== -->
-    <div [class.d-none]="!showAdvancedFilters()">
+    <div class="advanced-filters-panel" [class.d-none]="!showAdvancedFilters()"
+         [style.max-height]="'calc(100vh - ' + (stickyTop() + 140) + 'px)'">
 
       <div class="row g-2 mb-3">
         <div class="col-md-2">

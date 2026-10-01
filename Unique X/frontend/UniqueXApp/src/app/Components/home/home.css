@@ -190,8 +190,8 @@ select optgroup.region-group option.project-option {
 
 
 /* ===== 🟢 Sticky Search Bar =====
-   الـ top بييجي من الـ TS (ارتفاع الناف بار)، وبيلزق بس لما More Filters تكون مقفولة
-   (لو مفتوحة الفلاتر طويلة خصوصًا على الموبايل وكانت هتغطي الصفحة) */
+   الـ top بييجي من الـ TS (ارتفاع الناف بار). بيفضل ثابت دايمًا حتى لو More Filters مفتوحة،
+   وجزء الفلاتر الإضافية ليه max-height + سكرول داخلي عشان ميغطيش الشاشة كلها (خصوصًا على الموبايل) */
 .filters-sticky {
   position: sticky;
   z-index: 1010; /* أقل من الناف بار (1020) وأعلى من الكروت */
@@ -244,4 +244,16 @@ select optgroup.region-group option.project-option {
     right: 0;
     width: 100%;
   }
+}
+
+/* الفلاتر الإضافية: سكرول داخلي لو أطول من الشاشة (الـ max-height بييجي من الـ HTML) */
+.advanced-filters-panel {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px 4px;
+}
+
+/* لما Search يسكرول للنتايج، منخليش الـ bar الثابت يغطي أول النتايج */
+#resultsAnchor {
+  scroll-margin-top: 190px;
 }
