@@ -209,7 +209,7 @@ export class EditRequestComponent implements OnInit {
 
           // 🟢 Regions/Projects دلوقتي بيتحملوا بناءً على المدن المختارة (Preferred Cities) بدل zoneId منفصل
           this.loadRegionsForZone(citiesArr);
-          this.updateAvailableProjects(citiesArr);
+          this.updateAvailableProjects(citiesArr, purposeArr);
 
           // 🟢 جلب أكواد المشاريع الخاصة بالعميل ده عشان الداتا تنزل متعلمة جاهزة (بناخد أول Purpose مختار)
           this.fetchPropertyCodes(purposeArr[0] || '', () => {
@@ -273,6 +273,8 @@ export class EditRequestComponent implements OnInit {
     this.editRequestForm.get('purpose')?.valueChanges.subscribe((purpose: string[]) => {
       this.editRequestForm.patchValue({ selectedRegions: [], selectedProjects:[], downPayment: '', installmentYears: '', campaignName: '' });
       this.fetchPropertyCodes(purpose?.[0] || ''); // 👈 تحديث أكواد العقارات لو الغرض اتغير (بناخد أول Purpose مختار)
+      // 🟢 المشاريع بتتغير حسب الـ Purpose (Primary / Resale Project) - نعيد تحميلها بنفس المدن المختارة
+      this.updateAvailableProjects(this.editRequestForm.get('selectedCities')?.value || [], purpose || []);
     });
     
     this.editRequestForm.get('paymentMethod')?.valueChanges.subscribe(() => {
@@ -295,11 +297,24 @@ export class EditRequestComponent implements OnInit {
   }
 
   // 🟢 المشاريع (Projects) بقت جايه من الداتابيز (تاب Lookups بتاع الأدمن)، وبتتحمل لكل المدن (Zones) المختارة مع بعض
-  updateAvailableProjects(cityNames: string[]) {
+  // 🟢 نوع المشروع في الداتابيز (ProjectListingType): Primary = 0, Resale = 1 - مش نفس أرقام الـ Purpose
+  // Primary -> مشاريع Primary بس | Resale Project و Rent -> مشاريع Resale بس | لو اختارت أكتر من واحد -> الأنواع المطابقة مع بعض
+  // (الـ Rent بيتعامل زي الـ Resale في الأكواد، فبياخد مشاريع الـ Resale. لو عايزاه Primary حطي 0 بدل 1 عند Rent)
+  private projectTypesForPurposes(purposes: string[]): (number | undefined)[] {
+    const p = purposes || [];
+    const types: number[] = [];
+    if (p.includes('Primary')) types.push(0);
+    if (p.includes('Resale Project') || p.includes('Rent')) types.push(1);
+    return types.length ? types : [undefined];
+  }
+
+  updateAvailableProjects(cityNames: string[], purposes: string[] = (this.editRequestForm?.get('purpose')?.value || [])) {
     this.availableProjects = [];
     const zoneIds = this.cityNamesToZoneIds(cityNames);
     if (zoneIds.length === 0) return;
-    forkJoin(zoneIds.map(id => this.adminService.getProjects(undefined, id))).subscribe({
+    const types = this.projectTypesForPurposes(purposes);
+    const calls = zoneIds.flatMap(id => types.map(t => this.adminService.getProjects(t, id)));
+    forkJoin(calls).subscribe({
       next: (results: any[][]) => {
         const merged = results.flat().map((p: any) => p.name);
         this.availableProjects = Array.from(new Set(merged)).sort();

@@ -12,28 +12,28 @@ namespace Unique_X.DTOs
         public int? Area { get; set; }
         public int? Rooms { get; set; }
         public int? Bathrooms { get; set; }
-        public string? DistanceFromLandmark { get; set; } 
-        public bool? HasMasterRoom { get; set; }          
-        public int? ReceptionPieces { get; set; }         
-        public string? View { get; set; }                 
-        public int? Floor { get; set; }                    
-        public int? TotalFloors { get; set; }               
-        public int? ApartmentsPerFloor { get; set; }        
-        public int? ElevatorsCount { get; set; }            
-        public int? BuildYear { get; set; }                 
-        public bool? HasHotelEntrance { get; set; }        
-        public bool? HasSecurity { get; set; }             
-        public bool? IsFirstOwner { get; set; }            
-        public bool? IsLegalReconciled { get; set; }       
+        public string? DistanceFromLandmark { get; set; }
+        public bool? HasMasterRoom { get; set; }
+        public int? ReceptionPieces { get; set; }
+        public string? View { get; set; }
+        public int? Floor { get; set; }
+        public int? TotalFloors { get; set; }
+        public int? ApartmentsPerFloor { get; set; }
+        public int? ElevatorsCount { get; set; }
+        public int? BuildYear { get; set; }
+        public bool? HasHotelEntrance { get; set; }
+        public bool? HasSecurity { get; set; }
+        public bool? IsFirstOwner { get; set; }
+        public bool? IsLegalReconciled { get; set; }
         public bool? HasParking { get; set; }
 
         public string? OwnerName { get; set; }
         public string? OwnerPhone { get; set; }
         public string? DeveloperName { get; set; }
-        public decimal CommissionPercentage { get; set; } = 2.5m; 
+        public decimal CommissionPercentage { get; set; } = 2.5m;
         public bool? HasBalcony { get; set; }
         public bool? IsFurnished { get; set; }
-        public string? PaymentMethod { get; set; } 
+        public string? PaymentMethod { get; set; }
         //public int? InstallmentYears { get; set; } // Nullable لأنه يظهر في حالة التقسيط فقط
         public int? City { get; set; }
         public string? Region { get; set; }
@@ -42,18 +42,19 @@ namespace Unique_X.DTOs
         public int? PropertyType { get; set; }
         public int MainPhotoIndex { get; set; } = 0;
         public DeliveryStatus? DeliveryStatus { get; set; }
-        public int? DeliveryYear { get; set; } 
-        public bool? IsLicensed { get; set; }        
-        public bool? HasWaterMeter { get; set; }      
-        public bool? HasElectricityMeter { get; set; } 
+        public int? DeliveryYear { get; set; }
+        public bool? IsLicensed { get; set; }
+        public bool? HasWaterMeter { get; set; }
+        public bool? HasElectricityMeter { get; set; }
         public bool? HasGasMeter { get; set; }
+        public bool? HasVideo { get; set; }          // 🟢 الوحدة ليها فيديو
         public bool? HasLandShare { get; set; }
         //public decimal? DownPayment { get; set; }        
         //public decimal? QuarterInstallment { get; set; } 
-        public decimal? SecurityDeposit { get; set; }    
+        public decimal? SecurityDeposit { get; set; }
         public List<PaymentPlanDto>? PaymentPlans { get; set; }
         public decimal? MonthlyRent { get; set; }
-        public string? Code { get; set; } 
+        public string? Code { get; set; }
 
         // أنواع الفيلا والمساحة
         public AreaType? AreaType { get; set; }

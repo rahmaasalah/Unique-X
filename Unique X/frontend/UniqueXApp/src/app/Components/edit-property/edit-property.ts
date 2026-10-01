@@ -133,7 +133,7 @@ filteredProjects: string[] = [];
       hasMasterRoom: [false], hasHotelEntrance: [false], hasSecurity: [false],
       hasParking: [false], hasBalcony: [false], isFurnished: [false],
       isFirstOwner: [false], isLegalReconciled: [false], isLicensed: [false],
-      hasWaterMeter: [false], hasElectricityMeter: [false], hasGasMeter: [false], hasLandShare: [false],
+      hasWaterMeter: [false], hasElectricityMeter: [false], hasGasMeter: [false], hasLandShare: [false], hasVideo: [false],
       pricePerMeter: [''],
       //downPaymentPercentage: ['']
     });
@@ -992,6 +992,7 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
     formData.append('HasElectricityMeter', (f.hasElectricityMeter || false).toString());
     formData.append('HasWaterMeter', (f.hasWaterMeter || false).toString());
     formData.append('HasGasMeter', (f.hasGasMeter || false).toString());
+    formData.append('HasVideo', (f.hasVideo || false).toString());
 
     if (f.paymentMethod === 'Installment') {
       this.paymentPlans.controls.forEach((plan, index) => {

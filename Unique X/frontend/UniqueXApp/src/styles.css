@@ -1,18 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;900&display=swap');
 
-/* 🟢 منع أي عنصر في أي صفحة إنه يوسع الصفحة كلها عرضيًا (Horizontal Scroll) على الموبايل.
-   أي محتوى عريض أكتر من الشاشة هيتقص بدل ما "يفتح" الصفحة كلها للجنب.
-   السكرول الأفقي المقصود (زي .h-scroll) عنده overflow-x:auto خاص بيه فمش هيتأثر. */
-html {
-  overflow-x: hidden;
-  max-width: 100vw;
-}
-body {
-  overflow-x: clip;   /* بيمنع السكرول الأفقي من غير ما يكسر الـ sticky */
-  max-width: 100vw;
-}
-
-
 .wishlist-btn i {
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }

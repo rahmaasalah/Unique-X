@@ -48,6 +48,7 @@ namespace Unique_X.DTOs
         public bool? HasLandShare { get; set; }
         public bool? HasElectricityMeter { get; set; } // عداد كهرباء
         public bool? HasGasMeter { get; set; }
+        public bool? HasVideo { get; set; }          // 🟢 الوحدة ليها فيديو
         //public decimal? DownPayment { get; set; }        // المقدم
         //public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
         public decimal? SecurityDeposit { get; set; }    // مبلغ التأمين (للإيجار)

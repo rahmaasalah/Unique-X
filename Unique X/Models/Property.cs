@@ -10,12 +10,12 @@ namespace Unique_X.Models
 
         [Required]
         [MaxLength(200)]
-        public string Title { get; set; } 
+        public string Title { get; set; }
 
         [Required]
         public string Description { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")] 
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
         public decimal PricePerMeter { get; set; }
 
@@ -56,6 +56,7 @@ namespace Unique_X.Models
         public bool HasWaterMeter { get; set; }      // عداد مياه
         public bool HasElectricityMeter { get; set; } // عداد كهرباء
         public bool HasGasMeter { get; set; }
+        public bool HasVideo { get; set; }           // 🟢 الوحدة ليها فيديو
         //public decimal? DownPayment { get; set; }        // المقدم
         //public decimal? QuarterInstallment { get; set; } // القسط الربع سنوي
         public decimal? SecurityDeposit { get; set; }    // مبلغ التأمين (للإيجار)

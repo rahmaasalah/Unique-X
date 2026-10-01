@@ -144,6 +144,7 @@ landArea: [0, [Validators.min(0)]],
       hasWaterMeter: [false],
       hasElectricityMeter: [false],
       hasGasMeter: [false],
+      hasVideo: [false],
       hasLandShare: [false],
       pricePerMeter: [''], // 🟢 إزالة Validators.required من هنا لمنع قفل الزرار في البداية
       paymentPlans: this.fb.array([this.createPaymentPlan()]),
@@ -942,6 +943,7 @@ formData.append('LandArea', cleanNum(f.landArea));
     formData.append('HasElectricityMeter', (f.hasElectricityMeter || false).toString());
     formData.append('HasWaterMeter', (f.hasWaterMeter || false).toString());
     formData.append('HasGasMeter', (f.hasGasMeter || false).toString());
+    formData.append('HasVideo', (f.hasVideo || false).toString());
 
     // 🟢 خطط الدفع (مغسولة)
     if (f.paymentMethod === 'Installment') {
