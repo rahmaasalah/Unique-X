@@ -71,7 +71,8 @@
                    minFloor: minFloor.value, maxFloor: maxFloor.value,
                    minRooms: minRooms.value, maxRooms: maxRooms.value,
                    minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value,
-                   minBuildYear: minBuildYear.value, maxBuildYear: maxBuildYear.value
+                   minBuildYear: minBuildYear.value, maxBuildYear: maxBuildYear.value,
+                   minDeliveryYear: minDeliveryYear.value, maxDeliveryYear: maxDeliveryYear.value
                  })">
         </div>
       </div>
@@ -120,7 +121,8 @@
                   minFloor: minFloor.value, maxFloor: maxFloor.value,
                   minRooms: minRooms.value, maxRooms: maxRooms.value,
                   minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value,
-                  minBuildYear: minBuildYear.value, maxBuildYear: maxBuildYear.value
+                  minBuildYear: minBuildYear.value, maxBuildYear: maxBuildYear.value,
+                   minDeliveryYear: minDeliveryYear.value, maxDeliveryYear: maxDeliveryYear.value
                 })">
           <i class="bi bi-search"></i>
         </button>
@@ -278,7 +280,20 @@
             </div>
           </div>
         </div>
-        <div class="col-md-9">
+        <!-- 🟢 Delivery Year: بيظهر بس مع Primary / Resale Project (بنستخدم d-none مش @if عشان الـ #refs تفضل متاحة للـ onSearch) -->
+        <div class="col-md-3" [class.d-none]="currentListingType !== '2' && currentListingType !== '3'">
+          <div class="row g-1">
+            <div class="col-6">
+              <label class="form-label x-small-bold mb-1 text-muted">Delivery Year From</label>
+              <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="e.g. 2027" #minDeliveryYear>
+            </div>
+            <div class="col-6">
+              <label class="form-label x-small-bold mb-1 text-muted">Delivery Year To</label>
+              <input type="text" class="form-control form-control-sm shadow-sm" (input)="formatInteger($event)" placeholder="e.g. 2030" #maxDeliveryYear>
+            </div>
+          </div>
+        </div>
+        <div [class]="(currentListingType === '2' || currentListingType === '3') ? 'col-md-6' : 'col-md-9'">
           <div class="row g-1">
             <div class="col-md-6">
               <label class="form-label x-small-bold mb-1 text-muted">Min Price</label>
@@ -316,7 +331,8 @@
                       minFloor: minFloor.value, maxFloor: maxFloor.value,
                       minRooms: minRooms.value, maxRooms: maxRooms.value,
                       minBathrooms: minBathrooms.value, maxBathrooms: maxBathrooms.value,
-                      minBuildYear: minBuildYear.value, maxBuildYear: maxBuildYear.value
+                      minBuildYear: minBuildYear.value, maxBuildYear: maxBuildYear.value,
+                   minDeliveryYear: minDeliveryYear.value, maxDeliveryYear: maxDeliveryYear.value
                     })">
               <i class="bi bi-search me-1"></i> Search Properties
             </button>

@@ -138,6 +138,8 @@ export class AddLeadComponent implements OnInit {
     this.leadForm.get('purpose')?.valueChanges.subscribe(purpose => {
       this.leadForm.patchValue({ selectedRegions: [], selectedProjects: [], downPayment: 0, installmentYears: 0, campaignName: '' });
       this.fetchPropertyCodes(purpose);
+      // 🟢 المشاريع بتتغير حسب الـ Purpose (Primary / Resale Project) - نعيد تحميلها بنفس الـ Zone المختارة
+      this.updateAvailableProjects(this.leadForm.get('zoneId')?.value, purpose);
     });
 
     this.leadForm.get('paymentMethod')?.valueChanges.subscribe(() => {
@@ -166,10 +168,19 @@ export class AddLeadComponent implements OnInit {
   }
 
   // 🟢 المشاريع (Projects) بقت جايه من الداتابيز (تاب Lookups بتاع الأدمن) بدل ليستة ثابتة في الكود
-  updateAvailableProjects(zoneId: number) {
+  // 🟢 نوع المشروع في الداتابيز (ProjectListingType): Primary = 0, Resale = 1 - مش نفس أرقام الـ Purpose
+  // Primary -> مشاريع Primary بس | Resale Project و Rent -> مشاريع Resale بس
+  // (الـ Rent بيتعامل زي الـ Resale في الأكواد، فبياخد مشاريع الـ Resale. لو عايزاه Primary غيّري الرقم بتاعه لـ 0)
+  private projectTypeForPurpose(purpose: string): number | undefined {
+    if (purpose === 'Primary') return 0;
+    if (purpose === 'Resale Project' || purpose === 'Rent') return 1;
+    return undefined;
+  }
+
+  updateAvailableProjects(zoneId: number, purpose: string = this.leadForm?.get('purpose')?.value) {
     this.availableProjects =[];
     if (!zoneId) return;
-    this.adminService.getProjects(undefined, zoneId).subscribe({
+    this.adminService.getProjects(this.projectTypeForPurpose(purpose), zoneId).subscribe({
       next: (projects: any[]) => {
         this.availableProjects = (projects || []).map(p => p.name).sort();
       },

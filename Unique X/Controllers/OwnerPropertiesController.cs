@@ -101,6 +101,7 @@ namespace Unique_X.Controllers
                 HasWaterMeter = property.HasWaterMeter,
                 HasElectricityMeter = property.HasElectricityMeter,
                 HasGasMeter = property.HasGasMeter,
+                HasVideo = property.HasVideo,
                 HasLandShare = property.HasLandShare,
                 IsLicensed = property.IsLicensed,
 

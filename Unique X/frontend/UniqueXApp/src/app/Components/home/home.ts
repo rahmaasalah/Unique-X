@@ -163,6 +163,7 @@ export class HomeComponent implements OnInit {
       q['maxRooms'] || q['minBathrooms'] || q['maxBathrooms'] || 
       q['minFloor'] || q['maxFloor'] || 
       q['minBuildYear'] || q['maxBuildYear'] ||
+      q['minDeliveryYear'] || q['maxDeliveryYear'] ||
       q['brokerId'] || q['brokerName'] || q['broker'] || // 👈 ضفنا فحص البروكر
       q['listingType'] // 👈 ضفنا فحص الناف بار (Resale, Rent...)
     );
@@ -809,6 +810,9 @@ getSmartSearchTerm(term: string): string {
   const rawType = params.listingType;
   const resolvedType = rawType ? (listingTypeMap[rawType] ?? rawType) : null;
 
+  // 🟢 فلتر Delivery Year بيتطبق بس مع Primary / Resale Project (حتى لو كان فيه قيمة متكتبة في الحقل المخفي)
+  const isDeliveryType = resolvedType !== null && (Number(resolvedType) === 2 || Number(resolvedType) === 3);
+
   const rawPropertyType = params.propertyType;
   const resolvedPropertyType = rawPropertyType ? (propertyTypeMap[rawPropertyType] ?? rawPropertyType) : null;
 
@@ -827,6 +831,8 @@ getSmartSearchTerm(term: string): string {
     area: params.area || null,
     minBuildYear: params.minBuildYear || null,
     maxBuildYear: params.maxBuildYear || null,
+    minDeliveryYear: isDeliveryType ? (params.minDeliveryYear || null) : null,
+    maxDeliveryYear: isDeliveryType ? (params.maxDeliveryYear || null) : null,
     minRooms: params.minRooms || null,
     maxRooms: params.maxRooms || null,
     minBathrooms: params.minBathrooms || null,

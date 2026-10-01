@@ -64,6 +64,7 @@ namespace Unique_X.DTOs
         public bool? HasElectricityMeter { get; set; }
         public bool? HasLandShare { get; set; }
         public bool? HasGasMeter { get; set; }
+        public bool HasVideo { get; set; }           // 🟢 الوحدة ليها فيديو
         //public decimal? DownPayment { get; set; }       
         //public decimal? QuarterInstallment { get; set; } 
         public decimal? SecurityDeposit { get; set; }
@@ -135,6 +136,10 @@ namespace Unique_X.DTOs
         public int? BuildYear { get; set; }
         public int? MinBuildYear { get; set; }
         public int? MaxBuildYear { get; set; }
+
+        // 🟢 فلتر سنة التسليم (Range) - بيستخدم مع Primary / Resale Project
+        public int? MinDeliveryYear { get; set; }
+        public int? MaxDeliveryYear { get; set; }
         public int? Area { get; set; }
         public string? ProjectName { get; set; }
         public string? Region { get; set; }

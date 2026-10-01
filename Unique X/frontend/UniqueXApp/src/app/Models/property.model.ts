@@ -56,6 +56,7 @@ isLicensed: boolean;
 hasWaterMeter: boolean;
 hasElectricityMeter: boolean;
 hasGasMeter: boolean;
+hasVideo?: boolean;
 hasLandShare: boolean;
 code: string;
 monthlyRent: number;

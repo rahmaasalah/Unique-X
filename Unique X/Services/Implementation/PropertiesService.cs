@@ -134,6 +134,7 @@ namespace Unique_X.Services.Implementation
                 HasWaterMeter = dto.HasWaterMeter ?? false,
                 HasElectricityMeter = dto.HasElectricityMeter ?? false,
                 HasGasMeter = dto.HasGasMeter ?? false,
+                HasVideo = dto.HasVideo ?? false,
 
                 BrokerId = brokerId,
                 AddedByBrokerId = brokerId,
@@ -277,6 +278,12 @@ namespace Unique_X.Services.Implementation
                 query = query.Where(p => p.BuildYear >= filter.MinBuildYear.Value);
             if (filter.MaxBuildYear.HasValue)
                 query = query.Where(p => p.BuildYear <= filter.MaxBuildYear.Value);
+
+            // 🟢 فلتر Range لسنة التسليم (DeliveryYear nullable - العقارات من غير سنة تسليم بتتستبعد تلقائي لما الفلتر يتفعل)
+            if (filter.MinDeliveryYear.HasValue)
+                query = query.Where(p => p.DeliveryYear >= filter.MinDeliveryYear.Value);
+            if (filter.MaxDeliveryYear.HasValue)
+                query = query.Where(p => p.DeliveryYear <= filter.MaxDeliveryYear.Value);
 
             if (filter.Area.HasValue)
                 query = query.Where(p => p.Area >= filter.Area.Value);
@@ -583,6 +590,7 @@ namespace Unique_X.Services.Implementation
             if (dto.HasLandShare.HasValue) property.HasLandShare = dto.HasLandShare.Value;
             if (dto.HasElectricityMeter.HasValue) property.HasElectricityMeter = dto.HasElectricityMeter.Value;
             if (dto.HasGasMeter.HasValue) property.HasGasMeter = dto.HasGasMeter.Value;
+            if (dto.HasVideo.HasValue) property.HasVideo = dto.HasVideo.Value;
             if (dto.HasWaterMeter.HasValue) property.HasWaterMeter = dto.HasWaterMeter.Value;
             if (dto.IsLicensed.HasValue) property.IsLicensed = dto.IsLicensed.Value;
 
@@ -764,6 +772,7 @@ namespace Unique_X.Services.Implementation
                 HasWaterMeter = property.HasWaterMeter,
                 HasElectricityMeter = property.HasElectricityMeter,
                 HasGasMeter = property.HasGasMeter,
+                HasVideo = property.HasVideo,
                 HasLandShare = property.HasLandShare,
                 IsLicensed = property.IsLicensed,
 
