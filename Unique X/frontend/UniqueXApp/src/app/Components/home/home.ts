@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, ChangeDetectorRef, computed, WritableSignal  } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectorRef, computed, WritableSignal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common'; // مهم جداً للأوامر مثل *ngIf
 import { FormsModule } from '@angular/forms';
 import { PropertyCardComponent } from '../property-card/property-card'; // مهم لكي يتعرف على الكارت
@@ -117,6 +117,42 @@ export class HomeComponent implements OnInit {
   articles = signal<any[]>([]);
 
   activeQueryParams = signal<any>({});
+
+  // ===== 🟢 Sorting (الترتيب بيتم في الباك إند عشان الـ Pagination / Load More يفضل صح) =====
+  showSortMenu = signal<boolean>(false);
+  readonly sortOptions = [
+    { value: 'hotdeals',       label: 'Hot Deals' },
+    { value: 'newest',         label: 'Newest' },
+    { value: 'price_asc',      label: 'Price (low)' },
+    { value: 'price_desc',     label: 'Price (high)' },
+    { value: 'rooms_asc',      label: 'Rooms (least)' },
+    { value: 'rooms_desc',     label: 'Rooms (most)' },
+    { value: 'bathrooms_asc',  label: 'Bathrooms (least)' },
+    { value: 'bathrooms_desc', label: 'Bathrooms (most)' },
+    { value: 'floors_asc',     label: 'Total floors (least)' },
+    { value: 'floors_desc',    label: 'Total floors (most)' },
+  ];
+  // الترتيب الحالي من الـ URL (الافتراضي Hot Deals)
+  currentSort = computed<string>(() => this.activeQueryParams()['sortBy'] || 'hotdeals');
+
+  // ===== 🟢 Sticky Search Bar: بنقيس ارتفاع الناف بار عشان الـ search bar يلزق تحته بالظبط =====
+  stickyTop = signal<number>(72);
+
+  @HostListener('window:resize')
+  updateStickyTop() {
+    const nav = document.querySelector('nav.sticky-top') as HTMLElement | null;
+    if (nav) this.stickyTop.set(nav.offsetHeight);
+  }
+
+  onSortChange(value: string) {
+    this.showSortMenu.set(false);
+    if (value === this.currentSort()) return;
+    // merge: بيحافظ على كل الفلاتر الحالية ويغيّر الـ sortBy بس (null = يشيله من الـ URL لو Hot Deals الافتراضي)
+    this.router.navigate(['/home'], {
+      queryParams: { sortBy: value === 'hotdeals' ? null : value },
+      queryParamsHandling: 'merge'
+    });
+  }
 
   // 🟢 2. التحقق هل المستخدم يبحث من شريط البحث (Search Bar) أم لا
    hasSearchFilters = computed(() => {
@@ -261,6 +297,8 @@ export class HomeComponent implements OnInit {
 
 
 ngOnInit(): void {
+  setTimeout(() => this.updateStickyTop(), 0);
+
   // 🟢 1. نقلنا الـ Hot Deals بره عشان تحمل مرة واحدة بس ومتبقاش بطيئة!
   this.loadHotDeals();
   this.loadRecommendedVisits();
@@ -571,7 +609,13 @@ updateProjectsList(cityId: any) {
       Object.entries(filters).filter(([_, v]) => v != null && v !== "" && v !== "null")
     );
 
-    const apiFilters: any = { ...cleanFilters, listingType: listingTypeCode, pageNumber: page, pageSize: this.pageSize };
+    const apiFilters: any = {
+      ...cleanFilters,
+      listingType: listingTypeCode,
+      pageNumber: page,
+      pageSize: this.pageSize,
+      sortBy: (cleanFilters as any)['sortBy'] || 'hotdeals'
+    };
 
     if (apiFilters['searchTerm']) {
       apiFilters['searchTerm'] = this.getSmartSearchTerm(apiFilters['searchTerm'] as string);
@@ -788,7 +832,9 @@ getSmartSearchTerm(term: string): string {
     minBathrooms: params.minBathrooms || null,
     maxBathrooms: params.maxBathrooms || null,
     minFloor: params.minFloor || null,
-    maxFloor: params.maxFloor || null
+    maxFloor: params.maxFloor || null,
+    // 🟢 نحافظ على الترتيب المختار لما يعمل Search جديد
+    sortBy: this.activeQueryParams()['sortBy'] || null
   };
 
   // 🟢 لازم نبعت أرقام فعلية (مش نصوص) للـ log-search، لأن الـ DTO في الباك اند int? وبيرفض النصوص

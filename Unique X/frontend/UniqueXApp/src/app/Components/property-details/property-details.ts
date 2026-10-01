@@ -15,6 +15,7 @@ import { Chart, LineController, LineElement, PointElement, LinearScale, Category
 import { CrmService } from '../../Services/crm.services';
 import { ReviewService } from '../../Services/review.service';
 import { CurrencyService } from '../../Services/currency.service';
+import { environment } from '../../../environments/environment';
 // 🟢 بنسجل بس العناصر اللي بنستخدمها فعليًا (line chart) بدل كل الـ registerables عشان نقلل حجم الـ chunk
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Legend, Tooltip);
 
@@ -322,6 +323,36 @@ handleContact(event: Event, method: 'call' | 'whatsapp', brokerPhone: string) {
     else if (method === 'call') {
       window.location.href = `tel:${brokerPhone}`;
     }
+  }
+
+  // ===================== Social Share =====================
+  shareToPlatform(platform: 'facebook' | 'tiktok' | 'instagram' | 'x' | 'linkedin') {
+    const prop = this.property();
+    if (!prop || !this.isBroker()) return; // Admin / Broker only
+
+    const caption = (prop.description || prop.title || '').trim();
+    // صفحة الـ OG اللي في PropertyPreviewController (بتطلع كارت بالصورة والوصف)
+    const shareUrl = `${environment.apiUrl}/propertypreview/${prop.id}`;
+    const enc = encodeURIComponent;
+
+    const urls: Record<typeof platform, string> = {
+      facebook:  `https://www.facebook.com/sharer/sharer.php?u=${enc(shareUrl)}`,
+      x:         `https://twitter.com/intent/tweet?text=${enc(caption.slice(0, 230))}&url=${enc(shareUrl)}`,
+      linkedin:  `https://www.linkedin.com/feed/?shareActive=true&text=${enc(caption.slice(0, 2500))}`,
+      instagram: 'https://www.instagram.com/',
+      tiktok:    'https://www.tiktok.com/upload'
+    };
+
+    // لازم window.open يتنفذ أول حاجة وبشكل متزامن عشان المتصفح ميبلوكش الـ popup
+    window.open(urls[platform], '_blank', 'noopener');
+
+    // نسخ الـ caption (وصف الوحدة)
+    navigator.clipboard?.writeText(caption)
+      .then(() => this.alertService.success('Caption copied! Paste it in your post.'))
+      .catch(() => console.error('Clipboard copy failed'));
+
+    // تحميل صور الوحدة عشان تترفع في البوست
+    this.downloadPhotos();
   }
 
   isBroker(): boolean {

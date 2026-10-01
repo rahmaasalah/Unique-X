@@ -146,6 +146,9 @@ namespace Unique_X.DTOs
         public int? MaxBathrooms { get; set; }
         public int? MinFloor { get; set; }
         public int? MaxFloor { get; set; }
+
+        // 🟢 الترتيب: hotdeals | newest | price_asc | price_desc | rooms_asc | rooms_desc | bathrooms_asc | bathrooms_desc | floors_asc | floors_desc
+        public string? SortBy { get; set; }
         public decimal? MinPricePerMeter { get; set; }
         public decimal? MaxPricePerMeter { get; set; }
 

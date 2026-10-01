@@ -378,7 +378,23 @@ namespace Unique_X.Services.Implementation
             // 🟢 العدد الكلي للنتائج المطابقة (قبل تقطيعها لصفحات) - بيتحسب مرة واحدة على الفلاتر بس، من غير Include عشان يكون خفيف
             var totalCount = await query.CountAsync();
 
-            var orderedQuery = query.OrderByDescending(p => p.CreatedAt);
+            // 🟢 الترتيب (Sort by) - لازم يتم هنا قبل الـ Skip/Take عشان الـ Pagination و Load More يفضلوا صح
+            // لو SortBy مش مبعوت (صفحات تانية زي recommendation-results) بيفضل الترتيب القديم: الأحدث الأول
+            var sort = (filter.SortBy ?? "").Trim().ToLower();
+            IOrderedQueryable<Property> orderedQuery = sort switch
+            {
+                "hotdeals" => query.OrderByDescending(p => _context.HotDeals.Any(h => h.PropertyId == p.Id))
+                                         .ThenByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
+                "price_asc" => query.OrderBy(p => p.Price).ThenByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
+                "price_desc" => query.OrderByDescending(p => p.Price).ThenByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
+                "rooms_asc" => query.OrderBy(p => p.Rooms).ThenByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
+                "rooms_desc" => query.OrderByDescending(p => p.Rooms).ThenByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
+                "bathrooms_asc" => query.OrderBy(p => p.Bathrooms).ThenByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
+                "bathrooms_desc" => query.OrderByDescending(p => p.Bathrooms).ThenByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
+                "floors_asc" => query.OrderBy(p => p.TotalFloors).ThenByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
+                "floors_desc" => query.OrderByDescending(p => p.TotalFloors).ThenByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
+                _ => query.OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),   // newest
+            };
 
             // 🟢 التقطيع لصفحات (Pagination) بيتفعل بس لو الطالب بعت PageNumber/PageSize فعلاً (زي صفحة الهوم مع Load More)
             // لو محدش بعتهم (زي recommendation-results, price-range-search, explore-home, lookalike units) بيرجع كل النتائج زي ما كان بالظبط، عشان دول بيعملوا فلترة على القائمة كاملة عندهم

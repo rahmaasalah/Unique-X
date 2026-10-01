@@ -187,3 +187,61 @@ select optgroup.region-group option.project-option {
   transform: translateY(-4px);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12) !important;
 }
+
+
+/* ===== 🟢 Sticky Search Bar =====
+   الـ top بييجي من الـ TS (ارتفاع الناف بار)، وبيلزق بس لما More Filters تكون مقفولة
+   (لو مفتوحة الفلاتر طويلة خصوصًا على الموبايل وكانت هتغطي الصفحة) */
+.filters-sticky {
+  position: sticky;
+  z-index: 1010; /* أقل من الناف بار (1020) وأعلى من الكروت */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12) !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* ===== 🟢 Sort menu ===== */
+.sort-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1040;
+}
+
+.sort-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 240px;
+  z-index: 1050;
+  border: 1px solid #f1f1f1;
+}
+
+.sort-option {
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.sort-option:hover {
+  color: #ef3341;
+}
+
+.sort-menu .form-check-input {
+  width: 1.2rem;
+  height: 1.2rem;
+  cursor: pointer;
+}
+
+.sort-menu .form-check-input:checked {
+  background-color: #ef3341;
+  border-color: #ef3341;
+}
+
+.sort-menu .form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(239, 51, 65, 0.25);
+}
+
+@media (max-width: 768px) {
+  .sort-menu {
+    right: 0;
+    width: 100%;
+  }
+}
