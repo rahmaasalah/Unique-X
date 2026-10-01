@@ -547,6 +547,17 @@
       </div>
       <h5 class="fw-bold mb-1">{{ prop.brokerName }}</h5>
       <p class="text-danger small mb-4 fw-bold">{{ prop.brokerTitle || 'Real Estate Consultant' }}</p>
+
+      <!-- Social share icons (Admin / Broker only) -->
+      @if (isBroker()) {
+        <div class="d-flex justify-content-center gap-2 mb-3 social-share">
+          <button type="button" class="social-btn" style="--c:#1877f2" title="Post on Facebook"  (click)="shareToPlatform('facebook')"><i class="bi bi-facebook"></i></button>
+          <button type="button" class="social-btn" style="--c:#e4405f" title="Post on Instagram" (click)="shareToPlatform('instagram')"><i class="bi bi-instagram"></i></button>
+          <button type="button" class="social-btn" style="--c:#000000" title="Post on TikTok"    (click)="shareToPlatform('tiktok')"><i class="bi bi-tiktok"></i></button>
+          <button type="button" class="social-btn" style="--c:#000000" title="Post on X"         (click)="shareToPlatform('x')"><i class="bi bi-twitter-x"></i></button>
+          <button type="button" class="social-btn" style="--c:#0a66c2" title="Post on LinkedIn"  (click)="shareToPlatform('linkedin')"><i class="bi bi-linkedin"></i></button>
+        </div>
+      }
      
       <!-- زر الاتصال -->
       <a href="javascript:void(0)" (click)="handleContact($event, 'call', prop.brokerPhone)" 
