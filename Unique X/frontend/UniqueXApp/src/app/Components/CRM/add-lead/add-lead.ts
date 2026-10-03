@@ -5,7 +5,8 @@ import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
 import { Router } from '@angular/router';
 import { AdminService } from '../../../Services/admin';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 import { PhoneInputComponent } from '../../phone-input/phone-input';
 
@@ -137,9 +138,8 @@ export class AddLeadComponent implements OnInit {
     // 🟢 السحر هنا: لما يغير الغرض (Primary/Resale..) بنجيب أكواد العقارات من الداتابيز
     this.leadForm.get('purpose')?.valueChanges.subscribe(purpose => {
       this.leadForm.patchValue({ selectedRegions: [], selectedProjects: [], downPayment: 0, installmentYears: 0, campaignName: '' });
+      this.searchCampaignCode.set('');
       this.fetchPropertyCodes(purpose);
-      // 🟢 المشاريع بتتغير حسب الـ Purpose (Primary / Resale Project) - نعيد تحميلها بنفس الـ Zone المختارة
-      this.updateAvailableProjects(this.leadForm.get('zoneId')?.value, purpose);
     });
 
     this.leadForm.get('paymentMethod')?.valueChanges.subscribe(() => {
@@ -147,12 +147,46 @@ export class AddLeadComponent implements OnInit {
     });
   }
 
+  // 🟢 قايمة الـ Campaign Name = أكواد الوحدات + المشاريع (من الداتابيز) حسب الـ Purpose:
+  //   Resale          -> أكواد وحدات الـ Resale
+  //   Primary         -> أكواد وحدات الـ Primary + مشاريع الـ Primary
+  //   Rent            -> أكواد وحدات الـ Rent + مشاريع الـ Primary
+  //   Resale Project  -> أكواد وحدات الـ Resale Project + مشاريع الـ Resale
   fetchPropertyCodes(purpose: string) {
-    if (purpose) {
-      this.crmService.getPropertyCodesByPurpose(purpose).subscribe(codes => {
-        this.availablePropertyCodes.set(codes);
-      });
+    if (!purpose) return;
+
+    this.availablePropertyCodes.set([]); // تفريغ القايمة القديمة لحد ما الجديدة توصل
+
+    // نوع الوحدات اللي هنجيب أكوادها، ونوع المشاريع (ProjectListingType: Primary = 0 , Resale = 1)
+    let codesPurpose = purpose;
+    let projectType: number | null = null;
+
+    if (purpose === 'Primary' || purpose === 'Rent') {
+      // Primary -> وحدات Primary | Rent -> وحدات Rent (codesPurpose بيفضل زي الـ purpose)
+      projectType = 0; // المشاريع Primary في الحالتين
+    } else if (purpose === 'Resale Project') {
+      projectType = 1;
     }
+
+    const codes$ = this.crmService.getPropertyCodesByPurpose(codesPurpose).pipe(
+      catchError(() => of([] as string[]))
+    );
+    const projects$ = projectType === null
+      ? of([] as any[])
+      : this.adminService.getProjects(projectType).pipe(catchError(() => of([] as any[])));
+
+    forkJoin([codes$, projects$]).subscribe(([codes, projects]) => {
+      const projectNames = (projects || []).map((p: any) => p.name);
+      const merged = [...(codes || []), ...projectNames].filter((x: string) => !!x);
+      // شيل التكرار وارتب أبجدياً
+      this.availablePropertyCodes.set([...new Set<string>(merged)].sort((a, b) => a.localeCompare(b)));
+    });
+  }
+
+  get campaignPlaceholder(): string {
+    return this.leadForm?.get('purpose')?.value === 'Resale'
+      ? 'Type to search code...'
+      : 'Type to search code or project...';
   }
 
   // 🟢 المناطق (Regions) بقت جايه من الداتابيز (تاب Lookups بتاع الأدمن) بدل ليستة ثابتة في الكود
@@ -168,19 +202,10 @@ export class AddLeadComponent implements OnInit {
   }
 
   // 🟢 المشاريع (Projects) بقت جايه من الداتابيز (تاب Lookups بتاع الأدمن) بدل ليستة ثابتة في الكود
-  // 🟢 نوع المشروع في الداتابيز (ProjectListingType): Primary = 0, Resale = 1 - مش نفس أرقام الـ Purpose
-  // Primary -> مشاريع Primary بس | Resale Project و Rent -> مشاريع Resale بس
-  // (الـ Rent بيتعامل زي الـ Resale في الأكواد، فبياخد مشاريع الـ Resale. لو عايزاه Primary غيّري الرقم بتاعه لـ 0)
-  private projectTypeForPurpose(purpose: string): number | undefined {
-    if (purpose === 'Primary') return 0;
-    if (purpose === 'Resale Project' || purpose === 'Rent') return 1;
-    return undefined;
-  }
-
-  updateAvailableProjects(zoneId: number, purpose: string = this.leadForm?.get('purpose')?.value) {
+  updateAvailableProjects(zoneId: number) {
     this.availableProjects =[];
     if (!zoneId) return;
-    this.adminService.getProjects(this.projectTypeForPurpose(purpose), zoneId).subscribe({
+    this.adminService.getProjects(undefined, zoneId).subscribe({
       next: (projects: any[]) => {
         this.availableProjects = (projects || []).map(p => p.name).sort();
       },

@@ -163,7 +163,7 @@
         <div class="col-md-3 position-relative">
   <label class="form-label small fw-bold text-dark">Campaign Name *</label>
   <input type="text" class="form-control bg-light border-0 rounded-3 text-dark fw-bold" 
-         placeholder="Type to search code..."
+         [placeholder]="campaignPlaceholder"
          [ngModel]="searchCampaignCode()" 
          (ngModelChange)="searchCampaignCode.set($event); leadForm.patchValue({campaignName: ''}); isCampaignDropdownOpen.set(true)"
          [ngModelOptions]="{standalone: true}"
@@ -176,7 +176,7 @@
         <button type="button" class="dropdown-item py-2 fw-bold" (mousedown)="selectCampaign(code)">{{ code }}</button>
       </li>
     } @empty {
-      <li><span class="dropdown-item text-muted small">No codes found</span></li>
+      <li><span class="dropdown-item text-muted small">No results found</span></li>
     }
   </ul>
 </div>

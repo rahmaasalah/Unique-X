@@ -188,6 +188,13 @@ namespace Unique_X.Controllers.CRM
                 l.IsTransferredIn = transferredInLeadIds.Contains(l.Id);
             }
 
+            // 🟢 تفاصيل الطلب / الوحدة اللي استفسر عنها العميل (Queries مجمّعة لكل العملاء مرة واحدة)
+            var requestSummaries = await LeadRequestSummaryBuilder.BuildAsync(_context, leads.Select(x => x.Id).ToList());
+            foreach (var l in leads)
+            {
+                l.Details = requestSummaries.GetValueOrDefault(l.Id);
+            }
+
             return Ok(leads);
         }
 
@@ -1304,7 +1311,24 @@ namespace Unique_X.Controllers.CRM
                 })
                 .ToListAsync();
 
-            return Ok(pendingLeads);
+            // 🟢 تفاصيل الطلب / الوحدة اللي استفسر عنها العميل - بتتحدث تلقائي لو البروكر عدّل الـ Request
+            var requestSummaries = await LeadRequestSummaryBuilder.BuildAsync(_context, pendingLeads.Select(x => x.Id).ToList());
+
+            var pendingResult = pendingLeads.Select(l => new
+            {
+                l.Id,
+                l.FullName,
+                l.PhoneNumber,
+                l.StatusName,
+                l.StatusId,
+                l.PreviousBrokerId,
+                l.PreviousBrokerName,
+                l.UnassignedAt,
+                l.HoursSinceUnassigned,
+                Details = requestSummaries.GetValueOrDefault(l.Id)
+            }).ToList();
+
+            return Ok(pendingResult);
         }
 
         // PUT: api/crm/leads/{id}/assign-new-broker

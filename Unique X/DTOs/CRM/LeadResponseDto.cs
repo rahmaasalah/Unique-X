@@ -81,5 +81,8 @@
 
         // 🟢 true لو الليد ده جاي من مودال Get Recommendation ولسه ما اتوزعش على بروكر حقيقي
         public bool IsNewFromWebsite { get; set; }
+
+        // 🟢 ملخص الطلب + الوحدة اللي استفسر عنها العميل (بيتعرض في Transfer Leads)
+        public LeadRequestSummaryDto? Details { get; set; }
     }
 }
