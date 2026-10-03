@@ -1,0 +1,164 @@
+<section class="py-5" style="background:#f8f9fa;min-height:100vh;">
+  <div class="container" style="max-width:900px;">
+
+    <!-- Header -->
+    <div class="text-center mb-5">
+      <a routerLink="/home" class="text-muted small d-inline-block mb-3 text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i> Back to Home
+      </a>
+      <h2 class="fw-bold" style="color:#1a1a2e;">Calculator</h2>
+      <p class="text-muted">Price per meter, total price, down payment and installments — all in one place.</p>
+      <div style="width:60px;height:4px;background:#ef3341;margin:0 auto;border-radius:2px;"></div>
+    </div>
+
+    <!-- ============ Inputs ============ -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+
+      <h6 class="fw-bold mb-3" style="color:#1a1a2e;"><i class="bi bi-tag text-danger me-1"></i> Price</h6>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-muted">Area (m²)</label>
+          <input type="text" inputmode="decimal" class="form-control bg-light border-0 rounded-3 py-2"
+                 [value]="values.area" (input)="onInput($event, 'area')" (keydown)="blockInvalidKeys($event)"
+                 placeholder="e.g. 120">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-muted">Price per Meter (EGP)</label>
+          <input type="text" inputmode="numeric" class="form-control bg-light border-0 rounded-3 py-2"
+                 [value]="values.pricePerMeter" (input)="onInput($event, 'pricePerMeter')" (keydown)="blockInvalidKeys($event)"
+                 placeholder="e.g. 50,000">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-bold text-muted">Total Price (EGP)</label>
+          <input type="text" inputmode="numeric" class="form-control bg-light border-0 rounded-3 py-2"
+                 [value]="values.totalPrice" (input)="onInput($event, 'totalPrice')" (keydown)="blockInvalidKeys($event)"
+                 placeholder="e.g. 6,000,000">
+        </div>
+        <div class="col-12">
+          <small class="text-muted">
+            <i class="bi bi-lightbulb text-warning me-1"></i>
+            Enter the area with either the price per meter <b>or</b> the total price — the other one is calculated for you.
+          </small>
+        </div>
+      </div>
+
+      <h6 class="fw-bold mb-3" style="color:#1a1a2e;"><i class="bi bi-cash-coin text-danger me-1"></i> Down Payment</h6>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label small fw-bold text-muted">Down Payment (%)</label>
+          <input type="text" inputmode="decimal" class="form-control bg-light border-0 rounded-3 py-2"
+                 [value]="values.downPct" (input)="onInput($event, 'downPct')" (keydown)="blockInvalidKeys($event)"
+                 placeholder="e.g. 10">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-bold text-muted">Down Payment Amount (EGP)</label>
+          <input type="text" inputmode="numeric" class="form-control bg-light border-0 rounded-3 py-2"
+                 [value]="values.downAmount" (input)="onInput($event, 'downAmount')" (keydown)="blockInvalidKeys($event)"
+                 placeholder="e.g. 600,000">
+        </div>
+      </div>
+
+      <h6 class="fw-bold mb-3" style="color:#1a1a2e;"><i class="bi bi-calendar-check text-danger me-1"></i> Installments</h6>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label small fw-bold text-muted">Installment Years</label>
+          <input type="text" inputmode="decimal" class="form-control bg-light border-0 rounded-3 py-2"
+                 [value]="values.years" (input)="onInput($event, 'years')" (keydown)="blockInvalidKeys($event)"
+                 placeholder="e.g. 8 or 2.5">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-bold text-muted">Frequency</label>
+          <select class="form-select bg-light border-0 rounded-3 py-2" [(ngModel)]="frequency" (ngModelChange)="result.set(null)">
+            @for (f of frequencies; track f.value) {
+              <option [value]="f.value">{{ f.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="alert alert-danger small py-2">{{ errorMessage() }}</div>
+      }
+
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-danger rounded-pill fw-bold py-2 px-4" (click)="calculate()">
+          <i class="bi bi-calculator me-1"></i> Show Result
+        </button>
+        <button type="button" class="btn btn-outline-secondary rounded-pill fw-bold py-2 px-4" (click)="reset()">
+          <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ Results ============ -->
+    @if (result(); as r) {
+      <div class="card border-0 shadow-sm rounded-4 p-4">
+        <h5 class="fw-bold mb-4" style="color:#1a1a2e;"><i class="bi bi-clipboard-data text-danger me-1"></i> Results</h5>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="p-3 rounded-3 bg-light h-100">
+              <div class="small text-muted fw-bold">Area</div>
+              <div class="fs-5 fw-bold">{{ r.area | number:'1.0-2' }} m²</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 rounded-3 bg-light h-100">
+              <div class="small text-muted fw-bold">Price per Meter</div>
+              <div class="fs-5 fw-bold">{{ r.pricePerMeter | number:'1.0-0' }} EGP</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 rounded-3 h-100 bg-danger-subtle">
+              <div class="small text-danger fw-bold">Total Price</div>
+              <div class="fs-5 fw-bold text-danger">{{ r.totalPrice | number:'1.0-0' }} EGP</div>
+            </div>
+          </div>
+
+          @if (r.downAmount > 0) {
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 bg-light h-100">
+                <div class="small text-muted fw-bold">Down Payment (%)</div>
+                <div class="fs-5 fw-bold">{{ r.downPct | number:'1.0-2' }}%</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 bg-light h-100">
+                <div class="small text-muted fw-bold">Down Payment Amount</div>
+                <div class="fs-5 fw-bold">{{ r.downAmount | number:'1.0-0' }} EGP</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 bg-light h-100">
+                <div class="small text-muted fw-bold">Remaining After Down Payment</div>
+                <div class="fs-5 fw-bold">{{ r.remaining | number:'1.0-0' }} EGP</div>
+              </div>
+            </div>
+          }
+
+          @if (r.installmentAmount > 0) {
+            <div class="col-md-6">
+              <div class="p-3 rounded-3 bg-light h-100">
+                <div class="small text-muted fw-bold">Number of Installments</div>
+                <div class="fs-5 fw-bold">{{ r.installmentsCount | number:'1.0-2' }} ({{ r.frequencyLabel }} over {{ r.years | number:'1.0-2' }} years)</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded-3 h-100 bg-danger-subtle">
+                <div class="small text-danger fw-bold">{{ r.frequencyLabel }} Installment</div>
+                <div class="fs-5 fw-bold text-danger">{{ r.installmentAmount | number:'1.0-0' }} EGP</div>
+              </div>
+            </div>
+          } @else if (r.remaining > 0 && r.years <= 0) {
+            <div class="col-12">
+              <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Enter the installment years to calculate the installment amount.</small>
+            </div>
+          }
+        </div>
+
+        
+      </div>
+    }
+
+  </div>
+</section>

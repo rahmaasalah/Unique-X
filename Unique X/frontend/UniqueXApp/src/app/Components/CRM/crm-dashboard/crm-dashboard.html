@@ -2061,6 +2061,7 @@
                   <th>Current Broker</th>
 
                   <th>Campaign</th>
+                  <th>Request Details</th>
 
                   <th>Budget</th>
 
@@ -2120,7 +2121,55 @@
 
                   </td>
 
-                  <td>
+                                    <!-- 🟢 تفاصيل الطلب / الوحدة اللي استفسر عنها العميل -->
+                  <td style="min-width: 250px; max-width: 320px;">
+                    @if (lead.details; as d) {
+                      @if (d.isFromUnit) {
+                        @for (u of d.units.slice(0, 2); track u.id) {
+                          <div class="mb-2">
+                            <span class="badge rounded-pill px-2 py-1 fw-bold" style="background:#e7f1ff; color:#0d6efd;">
+                              <i class="bi bi-building me-1"></i>{{ u.code }}
+                            </span>
+                            @if (u.price > 0) {
+                              <span class="fw-bold text-success small ms-1">EGP {{ u.price | number }}</span>
+                            }
+                            @if (!d.isRequestEdited) {
+                              @for (line of unitLines(u); track line.icon) {
+                                <div class="text-muted small"><i class="bi {{ line.icon }} me-1"></i>{{ line.text }}</div>
+                              }
+                            }
+                          </div>
+                        }
+                        @if (d.units.length > 2) {
+                          <div class="text-muted small mb-1">+{{ d.units.length - 2 }} more unit(s)</div>
+                        }
+                        @if (d.isRequestEdited) {
+                          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill mb-1">
+                            <i class="bi bi-pencil-square me-1"></i>Updated by broker
+                          </span>
+                          @for (line of requestLines(d); track line.icon) {
+                            <div class="text-muted small"><i class="bi {{ line.icon }} me-1"></i>{{ line.text }}</div>
+                          }
+                        }
+                      } @else {
+                        @if (d.source === 'Recommendation') {
+                          <span class="badge rounded-pill px-2 py-1 fw-bold mb-1" style="background:#fff3cd; color:#8a6d00;">
+                            <i class="bi bi-stars me-1"></i>Recommendation
+                          </span>
+                        }
+                        @for (line of requestLines(d); track line.icon) {
+                          <div class="text-muted small"><i class="bi {{ line.icon }} me-1"></i>{{ line.text }}</div>
+                        }
+                        @if (requestLines(d).length === 0 && d.source !== 'Recommendation') {
+                          <span class="text-muted small">—</span>
+                        }
+                      }
+                    } @else {
+                      <span class="text-muted small">—</span>
+                    }
+                  </td>
+
+<td>
 
                     @if (lead.totalAmount > 0) {
 
@@ -2146,7 +2195,7 @@
 
                 <tr *ngIf="filteredClients().length === 0">
 
-                  <td colspan="5" class="text-center py-5 text-muted">No leads found.</td>
+                  <td colspan="8" class="text-center py-5 text-muted">No leads found.</td>
 
                 </tr>
 
@@ -4692,6 +4741,7 @@
                     <th class="py-3">Stage</th>
 
                     <th class="py-3">Previous Broker</th>
+                    <th class="py-3">Request Details</th>
 
                     <th class="py-3">Unassigned Since</th>
 
@@ -4709,7 +4759,7 @@
 
                     <tr>
 
-                      <td colspan="8" class="text-center text-muted py-4">No clients match your filters.</td>
+                      <td colspan="9" class="text-center text-muted py-4">No clients match your filters.</td>
 
                     </tr>
 
@@ -4738,6 +4788,55 @@
                         <span class="fw-semibold text-dark">{{ client.previousBrokerName }}</span>
 
                       </td>
+
+                  <!-- 🟢 تفاصيل الطلب / الوحدة اللي استفسر عنها العميل -->
+                  <td style="min-width: 250px; max-width: 320px;">
+                    @if (client.details; as d) {
+                      @if (d.isFromUnit) {
+                        @for (u of d.units.slice(0, 2); track u.id) {
+                          <div class="mb-2">
+                            <span class="badge rounded-pill px-2 py-1 fw-bold" style="background:#e7f1ff; color:#0d6efd;">
+                              <i class="bi bi-building me-1"></i>{{ u.code }}
+                            </span>
+                            @if (u.price > 0) {
+                              <span class="fw-bold text-success small ms-1">EGP {{ u.price | number }}</span>
+                            }
+                            @if (!d.isRequestEdited) {
+                              @for (line of unitLines(u); track line.icon) {
+                                <div class="text-muted small"><i class="bi {{ line.icon }} me-1"></i>{{ line.text }}</div>
+                              }
+                            }
+                          </div>
+                        }
+                        @if (d.units.length > 2) {
+                          <div class="text-muted small mb-1">+{{ d.units.length - 2 }} more unit(s)</div>
+                        }
+                        @if (d.isRequestEdited) {
+                          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill mb-1">
+                            <i class="bi bi-pencil-square me-1"></i>Updated by broker
+                          </span>
+                          @for (line of requestLines(d); track line.icon) {
+                            <div class="text-muted small"><i class="bi {{ line.icon }} me-1"></i>{{ line.text }}</div>
+                          }
+                        }
+                      } @else {
+                        @if (d.source === 'Recommendation') {
+                          <span class="badge rounded-pill px-2 py-1 fw-bold mb-1" style="background:#fff3cd; color:#8a6d00;">
+                            <i class="bi bi-stars me-1"></i>Recommendation
+                          </span>
+                        }
+                        @for (line of requestLines(d); track line.icon) {
+                          <div class="text-muted small"><i class="bi {{ line.icon }} me-1"></i>{{ line.text }}</div>
+                        }
+                        @if (requestLines(d).length === 0 && d.source !== 'Recommendation') {
+                          <span class="text-muted small">—</span>
+                        }
+                      }
+                    } @else {
+                      <span class="text-muted small">—</span>
+                    }
+                  </td>
+
 
                       <td>
 

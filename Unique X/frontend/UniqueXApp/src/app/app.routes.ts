@@ -43,6 +43,7 @@ export const routes: Routes = [
   // ===== Admin =====
   { path: 'admin', loadComponent: () => import('./Components/admin-dashboard/admin-dashboard').then(m => m.AdminDashboardComponent), canActivate: [adminGuard] },
   { path: 'investment-calculator', loadComponent: () => import('./Components/investment-calculator/investment-calculator').then(m => m.InvestmentCalculatorComponent) },
+  { path: 'calculator', loadComponent: () => import('./Components/calculator/calculator').then(m => m.CalculatorComponent) },
   { path: 'launch', loadComponent: () => import('./Components/launch-list/launch-list').then(m => m.LaunchListComponent) },
   { path: 'launch/:id', loadComponent: () => import('./Components/launch-detail/launch-detail').then(m => m.LaunchDetailComponent) },
   { path: 'launch/:id/:slug', loadComponent: () => import('./Components/launch-detail/launch-detail').then(m => m.LaunchDetailComponent) },

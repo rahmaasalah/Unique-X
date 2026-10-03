@@ -274,6 +274,74 @@ export class CrmDashboardComponent implements OnInit {
     });
   }
 
+  // ============================================================
+  // 🟢 عرض تفاصيل الطلب / الوحدة في جدولي Transfer Leads و Pending Clients
+  // (الداتا بتيجي جاهزة من الـ API في lead.details)
+  // ============================================================
+  private fmtMoney(v: any): string {
+    const n = Number(v);
+    return n > 0 ? 'EGP ' + n.toLocaleString('en-US') : '';
+  }
+
+  private fmtRange(min: any, max: any): string {
+    const a = Number(min) || 0, b = Number(max) || 0;
+    if (a > 0 && b > 0) return a === b ? `${a}` : `${a} - ${b}`;
+    if (a > 0) return `${a}+`;
+    if (b > 0) return `up to ${b}`;
+    return '';
+  }
+
+  private fmtMoneyRange(min: any, max: any): string {
+    const a = Number(min) || 0, b = Number(max) || 0;
+    if (a > 0 && b > 0) return a === b ? this.fmtMoney(a) : `${this.fmtMoney(a)} - ${Number(b).toLocaleString('en-US')}`;
+    if (a > 0) return `${this.fmtMoney(a)}+`;
+    if (b > 0) return `up to ${this.fmtMoney(b)}`;
+    return '';
+  }
+
+  private csv(v: any): string {
+    return (v || '').toString().split(',').map((x: string) => x.trim()).filter((x: string) => x).join(', ');
+  }
+
+  // سطور تفاصيل الوحدة (كود/سعر بيتعرضوا في الـ Header، دي باقي التفاصيل)
+  unitLines(u: any): { icon: string; text: string }[] {
+    const lines: { icon: string; text: string }[] = [];
+    const typeText = [u.propertyType, u.listingType].filter((x: any) => x).join(' · ');
+    if (typeText) lines.push({ icon: 'bi-house-door', text: typeText });
+    if (u.location) lines.push({ icon: 'bi-geo-alt', text: u.location });
+    const specs: string[] = [];
+    if (u.rooms > 0) specs.push(`${u.rooms} rooms`);
+    if (u.bathrooms > 0) specs.push(`${u.bathrooms} baths`);
+    if (u.area > 0) specs.push(`${u.area} m²`);
+    if (u.floor > 0) specs.push(`floor ${u.floor}`);
+    if (specs.length) lines.push({ icon: 'bi-rulers', text: specs.join(' · ') });
+    if (u.finishing) lines.push({ icon: 'bi-brush', text: u.finishing + (u.deliveryYear ? ` · delivery ${u.deliveryYear}` : '') });
+    return lines;
+  }
+
+  // سطور طلب العميل (Recommendation / أي طلب البروكر عدّله)
+  requestLines(d: any): { icon: string; text: string }[] {
+    const r = d?.request;
+    const lines: { icon: string; text: string }[] = [];
+    if (!r) return lines;
+    const typeText = [this.csv(r.propertyType), this.csv(r.purpose)].filter(x => x).join(' · ');
+    if (typeText) lines.push({ icon: 'bi-house-door', text: typeText });
+    const place = [this.csv(r.cities), this.csv(r.regions), this.csv(r.projects)].filter(x => x).join(' · ');
+    if (place) lines.push({ icon: 'bi-geo-alt', text: place });
+    const budget = this.fmtMoneyRange(r.minBudget, r.maxBudget) || this.fmtMoney(r.totalAmount);
+    if (budget) lines.push({ icon: 'bi-cash-stack', text: budget });
+    const rooms = this.fmtRange(r.minRooms, r.maxRooms);
+    if (rooms) lines.push({ icon: 'bi-door-open', text: `${rooms} rooms` });
+    const baths = this.fmtRange(r.minBathrooms, r.maxBathrooms);
+    if (baths) lines.push({ icon: 'bi-droplet', text: `${baths} baths` });
+    const pay: string[] = [];
+    if (r.paymentMethod) pay.push(r.paymentMethod);
+    if (Number(r.downPayment) > 0) pay.push(`down ${this.fmtMoney(r.downPayment)}`);
+    if (Number(r.installmentYears) > 0) pay.push(`${r.installmentYears} yrs`);
+    if (pay.length) lines.push({ icon: 'bi-credit-card', text: pay.join(' · ') });
+    return lines;
+  }
+
   pendingClients = signal<any[]>([]);
 
   pendingClientsLoading = signal<boolean>(false);
