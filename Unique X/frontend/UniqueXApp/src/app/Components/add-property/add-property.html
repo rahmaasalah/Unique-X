@@ -58,6 +58,7 @@
                   <option [value]="3">Office</option>
                   <option [value]="4">Chalet</option>
                   <option [value]="5">Full Floor</option>
+                  <option [value]="6">Full Building</option>
                 </select>
               </div>
             </div>
@@ -65,18 +66,25 @@
             <!-- ================== الجزء المعدل: حقول الفيلا المتقدمة ================== -->
             @if (isVilla()) {
               <div class="bg-light p-4 rounded-4 border mb-5 animate__animated animate__fadeIn">
-                <h5 class="fw-bold text-danger mb-4"><i class="bi bi-gem me-2"></i>Villa Specifications</h5>
+                <h5 class="fw-bold text-danger mb-4"><i class="bi bi-gem me-2"></i>{{ isFullBuilding() ? 'Building' : 'Villa' }} Specifications</h5>
                 
                 <div class="row g-3 mb-4">
-  <div class="col-md-6">
-    <label class="small fw-bold">Built-up Area (m²) </label>
-    <input type="text" (input)="formatInteger($event, 'builtUpArea')" formControlName="builtUpArea" class="form-control shadow-sm">
-  </div>
-  <div class="col-md-6">
-    <label class="small fw-bold">Land Area (m²) </label>
-    <input type="text" (input)="formatInteger($event, 'landArea')" formControlName="landArea" class="form-control shadow-sm">
-  </div>
-</div>
+                  <div class="col-md-4">
+                    <label class="small fw-bold">Built-up Area (m²) </label>
+                    <input type="text" (input)="formatInteger($event, 'builtUpArea')" formControlName="builtUpArea" class="form-control shadow-sm">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="small fw-bold">Land Area (m²) <span class="text-danger">*</span></label>
+                    <input type="text" (input)="formatInteger($event, 'landArea'); onLandAreaChange()" formControlName="landArea" class="form-control shadow-sm">
+                    @if (propertyForm.get('landArea')?.touched && propertyForm.get('landArea')?.errors?.['min']) {
+                      <small class="text-danger d-block mt-1">Land area is required and must be greater than 0</small>
+                    }
+                  </div>
+                  <div class="col-md-4">
+                    <label class="small fw-bold">Garden Area (m²) </label>
+                    <input type="text" (input)="formatInteger($event, 'gardenArea')" formControlName="gardenArea" class="form-control shadow-sm">
+                  </div>
+                </div>
 
 <div class="row g-3 mb-4">
                   <div class="col-md-4">
@@ -102,34 +110,35 @@
                   </div>
                 </div>
 
-                <div class="row g-3">
-                  <!-- Ground Floor -->
-                  <div class="col-md-4">
-                    <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
-                      <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">Ground Floor</h6>
-                      <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatInteger($event, 'groundRooms')" formControlName="groundRooms" class="form-control form-control-sm"></div>
-                      <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatInteger($event, 'groundBaths')" formControlName="groundBaths" class="form-control form-control-sm"></div>
-                      <div><label class="x-small fw-bold">Reception Pieces</label><input type="text" (input)="formatInteger($event, 'groundReception')" formControlName="groundReception" class="form-control form-control-sm"></div>
+                <!-- 🟢 أدوار الفيلا: Basement / Ground / First + زرار (+) بيضيف Second ثم Third وهكذا -->
+                <div class="row g-3" formArrayName="floors">
+                  @for (floor of floors.controls; track $index; let i = $index) {
+                    <div class="col-md-3 col-sm-6" [formGroupName]="i">
+                      <div class="p-3 bg-white border rounded-3 shadow-sm h-100 position-relative">
+                        @if (i === floors.length - 1 && i >= 3) {
+                          <button type="button" class="btn btn-sm btn-outline-danger rounded-circle position-absolute d-flex align-items-center justify-content-center p-0"
+                                  style="top: 8px; right: 8px; width: 24px; height: 24px;" title="Remove this floor" (click)="removeFloor(i)">
+                            <i class="bi bi-x"></i>
+                          </button>
+                        }
+                        <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">{{ floorLabel(floor.get('level')?.value) }} Floor</h6>
+                        <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatFloorInteger($event, i, 'rooms')" formControlName="rooms" class="form-control form-control-sm"></div>
+                        <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatFloorInteger($event, i, 'baths')" formControlName="baths" class="form-control form-control-sm"></div>
+                        <div><label class="x-small fw-bold">Reception Pieces</label><input type="text" (input)="formatFloorInteger($event, i, 'reception')" formControlName="reception" class="form-control form-control-sm"></div>
+                      </div>
                     </div>
-                  </div>
-                  <!-- First Floor -->
-                  <div class="col-md-4">
-                    <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
-                      <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">First Floor</h6>
-                      <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatInteger($event, 'firstRooms')" formControlName="firstRooms" class="form-control form-control-sm"></div>
-                      <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatInteger($event, 'firstBaths')" formControlName="firstBaths" class="form-control form-control-sm"></div>
-                      <div><label class="x-small fw-bold">Reception Pieces</label><input type="text" (input)="formatInteger($event, 'firstReception')" formControlName="firstReception" class="form-control form-control-sm"></div>
+                  }
+
+                  @if (canAddFloor()) {
+                    <div class="col-md-3 col-sm-6">
+                      <button type="button" (click)="addFloor()"
+                              class="btn w-100 h-100 d-flex flex-column align-items-center justify-content-center gap-2 text-danger bg-white rounded-3"
+                              style="border: 2px dashed #dc3545; min-height: 200px;">
+                        <i class="bi bi-plus-circle-fill fs-1"></i>
+                        <span class="small fw-bold">Add {{ floorLabel(nextFloorLevel()) }} Floor</span>
+                      </button>
                     </div>
-                  </div>
-                  <!-- Second Floor -->
-                  <div class="col-md-4">
-                    <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
-                      <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">Second Floor</h6>
-                      <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatInteger($event, 'secondRooms')" formControlName="secondRooms" class="form-control form-control-sm"></div>
-                      <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatInteger($event, 'secondBaths')" formControlName="secondBaths" class="form-control form-control-sm"></div>
-                      <div><label class="x-small fw-bold">Reception Pieces</label><input type="text" (input)="formatInteger($event, 'secondReception')" formControlName="secondReception" class="form-control form-control-sm"></div>
-                    </div>
-                  </div>
+                  }
                 </div>
               </div>
             }
@@ -164,24 +173,26 @@
 }
 
             <div class="row g-3 mb-4">
-              <!-- حقل المساحة -->
-              <div class="col-md-4">
-                <label class="form-label fw-bold small">Area (m²) <span class="text-danger">*</span></label>
-                <div class="input-group">
-                  <span class="input-group-text bg-white"><i class="bi bi-aspect-ratio"></i></span>
-                  <!-- 🟢 غيرنا الدالة هنا لـ onAreaChange -->
-                  <input type="text" (input)="formatInteger($event, 'area'); onAreaChange()" formControlName="area" class="form-control" placeholder="">
+              @if (!isVilla()) {
+                <!-- حقل المساحة -->
+                <div class="col-md-4">
+                  <label class="form-label fw-bold small">Area (m²) <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-aspect-ratio"></i></span>
+                    <!-- 🟢 غيرنا الدالة هنا لـ onAreaChange -->
+                    <input type="text" (input)="formatInteger($event, 'area'); onAreaChange()" formControlName="area" class="form-control" placeholder="">
+                  </div>
+                  @if (propertyForm.get('area')?.touched && propertyForm.get('area')?.errors?.['required']) {
+                    <small class="text-danger d-block mt-1">Area is required</small>
+                  } @else if (propertyForm.get('area')?.touched && propertyForm.get('area')?.errors?.['min']) {
+                    <small class="text-danger d-block mt-1">Area must be greater than 0</small>
+                  }
                 </div>
-                @if (propertyForm.get('area')?.touched && propertyForm.get('area')?.errors?.['required']) {
-                  <small class="text-danger d-block mt-1">Area is required</small>
-                } @else if (propertyForm.get('area')?.touched && propertyForm.get('area')?.errors?.['min']) {
-                  <small class="text-danger d-block mt-1">Area must be greater than 0</small>
-                }
-              </div>
+              }
               
               <!-- 🟢 حقل سعر المتر (يظهر فقط في حالة الـ Primary) -->
               @if (isPrimary()) {
-                <div class="col-md-4 animate__animated animate__fadeIn">
+                <div [class]="isVilla() ? 'col-md-6 animate__animated animate__fadeIn' : 'col-md-4 animate__animated animate__fadeIn'">
                   <label class="form-label fw-bold small text-dark">Price per Meter <span class="text-danger">*</span></label>
                   <div class="input-group">
                     <span class="input-group-text bg-light">EGP</span>
@@ -198,7 +209,7 @@
               }
 
               <!-- 🟢 حقل السعر الكلي -->
-              <div [class]="!isPrimary() ? 'col-md-8 animate__animated animate__fadeIn' : 'col-md-4'">
+              <div [class]="isVilla() ? (isPrimary() ? 'col-md-6' : 'col-md-12 animate__animated animate__fadeIn') : (!isPrimary() ? 'col-md-8 animate__animated animate__fadeIn' : 'col-md-4')">
                 <label class="form-label fw-bold small">Total Price <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <span class="input-group-text fw-bold ">EGP</span>
@@ -237,6 +248,11 @@
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-house-door me-2 text-danger"></i>Unit Specifications</h5>
             
             <div class="row g-3 mb-4 align-items-end">
+              <!-- 🟢 عدد المطابخ (لكل الأنواع) -->
+              <div class="col-md-3">
+                <label class="form-label fw-bold small">Kitchens</label>
+                <input type="text" (input)="formatInteger($event, 'kitchens')" formControlName="kitchens" class="form-control shadow-sm" min="0">
+              </div>
               @if (!isVilla()) {
                 <div class="col-md-3">
                   <label class="form-label fw-bold small">Rooms</label>
@@ -493,12 +509,14 @@
       <input class="form-check-input ms-0" type="checkbox" formControlName="hasPool">
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
-      <label class="form-check-label small fw-bold mb-0">Garden Area</label>
-      <input class="form-check-input ms-0" type="checkbox" formControlName="hasGarden">
+  @if (!isVilla()) {
+    <div class="col-md-4">
+      <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">
+        <label class="form-check-label small fw-bold mb-0">Garden Area</label>
+        <input class="form-check-input ms-0" type="checkbox" formControlName="hasGarden">
+      </div>
     </div>
-  </div>
+  }
 
   <div class="col-md-4">
     <div class="form-check form-switch p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-sm h-100">

@@ -1598,6 +1598,36 @@ onBannerReorder(event: CdkDragDrop<any[]>) {
   }
 
   onDuplicateProperty(prop: any) {
+    // 🟢 لو الوحدة Suspended نوقف الأدمن ونقوله يعمل لها Activate الأول
+    if (prop.isSuspended) {
+      (window as any).Swal.fire({
+        icon: 'warning',
+        title: 'Property is suspended',
+        text: `"${prop.title}" is suspended. Please activate it first, then copy it.`,
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+
+    const swal = (window as any).Swal;
+
+    // 🟢 الخطوة الأولى: نسأل الأدمن هل بيانات الـ Owner (الاسم والموبايل) تتنسخ مع الوحدة ولا لا
+    swal.fire({
+      icon: 'question',
+      title: 'Copy owner data?',
+      text: 'Do you want to copy the owner name and phone to the new copy? If not, they will be replaced with zeros.',
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: 'Yes, copy owner data',
+      denyButtonText: 'No, use zeros',
+      confirmButtonColor: '#0d6efd'
+    }).then((ownerChoice: any) => {
+      if (!ownerChoice.isConfirmed && !ownerChoice.isDenied) return; // Cancel
+      this.chooseBrokerAndDuplicate(prop, ownerChoice.isConfirmed);
+    });
+  }
+
+  private chooseBrokerAndDuplicate(prop: any, copyOwnerData: boolean) {
     // 1. تجهيز قائمة البروكرز لتظهر في القائمة المنسدلة
     const brokerOptions: any = {};
     this.brokersList().forEach(b => {
@@ -1629,7 +1659,7 @@ onBannerReorder(event: CdkDragDrop<any[]>) {
         this.alertService.showLoading('Duplicating Property...');
         
         // 2. إرسال الطلب للباك إند
-        this.adminService.duplicateProperty(prop.id, selectedBrokerId).subscribe({
+        this.adminService.duplicateProperty(prop.id, selectedBrokerId, copyOwnerData).subscribe({
           next: () => {
             this.alertService.close();
             this.alertService.success('Property duplicated successfully!');
@@ -1637,7 +1667,7 @@ onBannerReorder(event: CdkDragDrop<any[]>) {
           },
           error: (err: any) => {
             this.alertService.close();
-            this.alertService.error('Failed to duplicate property.');
+            this.alertService.error(typeof err?.error === 'string' && err.error ? err.error : 'Failed to duplicate property.');
           }
         });
       }

@@ -10,6 +10,10 @@ namespace Unique_X.DTOs
         public decimal? Price { get; set; }
         public decimal? PricePerMeter { get; set; }
         public int? Area { get; set; }
+        public decimal? BuiltUpArea { get; set; }
+        public decimal? LandArea { get; set; }
+        public decimal? GardenArea { get; set; }      // مساحة الحديقة (للفيلا)
+        public string? FloorsJson { get; set; }       // أدوار الفيلا الديناميكية كـ JSON
         public int? Rooms { get; set; }
         public int? Bathrooms { get; set; }
         public string? DistanceFromLandmark { get; set; }
@@ -70,6 +74,7 @@ namespace Unique_X.DTOs
         public int? FirstRooms { get; set; }
         public int? FirstBaths { get; set; }
         public int? FirstReception { get; set; }
+        public int? Kitchens { get; set; }
 
         // حقول الأدوار (Second Floor)
         public int? SecondRooms { get; set; }

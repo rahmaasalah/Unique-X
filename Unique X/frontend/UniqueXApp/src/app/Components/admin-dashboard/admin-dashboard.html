@@ -291,7 +291,7 @@
 
    @if (activeTab() === 'hotDeals') {
   <section class="animate__animated animate__fadeIn">
-    <h4 class="fw-bold mb-4">Manage Hot Deals ({{ hotDeals().length }}/12)</h4>
+    <h4 class="fw-bold mb-4">Manage Hot Deals ({{ hotDeals().length }})</h4>
     
     <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
       <div class="row g-3 align-items-end">
@@ -328,7 +328,7 @@
   <!-- 🟢 الزرار بياخد قيمته من selectedHotDealCode() بدل dealSelect.value -->
   <button class="btn btn-danger w-100 rounded-pill fw-bold" 
           (click)="onAddHotDeal(selectedHotDealCode())" 
-          [disabled]="!selectedHotDealCode() || hotDeals().length >= 12">
+          [disabled]="!selectedHotDealCode()">
     <i class="bi bi-plus-lg me-1"></i> Add
   </button>
 </div>
@@ -353,7 +353,7 @@
 
 @if (activeTab() === 'recommendedVisits') {
   <section class="animate__animated animate__fadeIn">
-    <h4 class="fw-bold mb-4">Manage Recommended to Visit ({{ recommendedVisits().length }}/12)</h4>
+    <h4 class="fw-bold mb-4">Manage Recommended to Visit ({{ recommendedVisits().length }})</h4>
 
     <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
       <div class="row g-3 align-items-end">
@@ -387,7 +387,7 @@
 <div class="col-md-2">
   <button class="btn btn-danger w-100 rounded-pill fw-bold" 
           (click)="onAddRecommendedVisit(selectedRecommendedVisitCode())" 
-          [disabled]="!selectedRecommendedVisitCode() || recommendedVisits().length >= 12">
+          [disabled]="!selectedRecommendedVisitCode()">
     <i class="bi bi-plus-lg me-1"></i> Add
   </button>
 </div>

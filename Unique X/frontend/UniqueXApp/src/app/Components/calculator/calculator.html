@@ -58,6 +58,16 @@
         </div>
       </div>
 
+      <h6 class="fw-bold mb-3" style="color:#1a1a2e;"><i class="bi bi-tools text-danger me-1"></i> Maintenance Fees</h6>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label small fw-bold text-muted">Maintenance Fees (%)</label>
+          <input type="text" inputmode="decimal" class="form-control bg-light border-0 rounded-3 py-2"
+                 [value]="values.maintenancePct" (input)="onInput($event, 'maintenancePct')" (keydown)="blockInvalidKeys($event)"
+                 placeholder="e.g. 7">
+        </div>
+      </div>
+
       <h6 class="fw-bold mb-3" style="color:#1a1a2e;"><i class="bi bi-calendar-check text-danger me-1"></i> Installments</h6>
       <div class="row g-3 mb-4">
         <div class="col-md-6">
@@ -74,6 +84,27 @@
             }
           </select>
         </div>
+
+        @if (frequency === 'Back-Loaded') {
+          <div class="col-md-6">
+            <label class="form-label small fw-bold text-muted">Monthly Payment (% of yearly installment, paid over {{ monthsPerYear }} months)</label>
+            <input type="text" inputmode="decimal" class="form-control bg-light border-0 rounded-3 py-2"
+                   [value]="values.monthlyPct" (input)="onInput($event, 'monthlyPct')" (keydown)="blockInvalidKeys($event)"
+                   placeholder="e.g. 40">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold text-muted">Annual Payment (% of yearly installment, paid once a year)</label>
+            <input type="text" inputmode="decimal" class="form-control bg-light border-0 rounded-3 py-2"
+                   [value]="values.annualPct" (input)="onInput($event, 'annualPct')" (keydown)="blockInvalidKeys($event)"
+                   placeholder="e.g. 60">
+          </div>
+          <div class="col-12">
+            <small class="text-muted">
+              <i class="bi bi-lightbulb text-warning me-1"></i>
+              The monthly % and the annual % must add up to 100%. Enter one and the other is completed for you.
+            </small>
+          </div>
+        }
       </div>
 
       @if (errorMessage()) {
@@ -136,7 +167,29 @@
             </div>
           }
 
-          @if (r.installmentAmount > 0) {
+          @if (r.isBackLoaded && r.yearlyInstallment > 0) {
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 bg-light h-100">
+                <div class="small text-muted fw-bold">Yearly Installment (total)</div>
+                <div class="fs-5 fw-bold">{{ r.yearlyInstallment | number:'1.0-0' }} EGP</div>
+                <div class="small text-muted">over {{ r.years | number:'1.0-2' }} years</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 h-100 bg-danger-subtle">
+                <div class="small text-danger fw-bold">Monthly Payment ({{ r.monthlyPct | number:'1.0-2' }}%)</div>
+                <div class="fs-5 fw-bold text-danger">{{ r.monthlyAmount | number:'1.0-0' }} EGP</div>
+                <div class="small text-muted">× {{ monthsPerYear }} months each year ({{ r.monthlyCount | number:'1.0-2' }} payments)</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 h-100 bg-danger-subtle">
+                <div class="small text-danger fw-bold">Annual Payment ({{ r.annualPct | number:'1.0-2' }}%)</div>
+                <div class="fs-5 fw-bold text-danger">{{ r.annualAmount | number:'1.0-0' }} EGP</div>
+                <div class="small text-muted">once a year ({{ r.annualCount | number:'1.0-2' }} payments)</div>
+              </div>
+            </div>
+          } @else if (r.installmentAmount > 0) {
             <div class="col-md-6">
               <div class="p-3 rounded-3 bg-light h-100">
                 <div class="small text-muted fw-bold">Number of Installments</div>
@@ -152,6 +205,21 @@
           } @else if (r.remaining > 0 && r.years <= 0) {
             <div class="col-12">
               <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Enter the installment years to calculate the installment amount.</small>
+            </div>
+          }
+
+          @if (r.maintenanceTotal > 0) {
+            <div class="col-md-6">
+              <div class="p-3 rounded-3 bg-light h-100">
+                <div class="small text-muted fw-bold">Maintenance Fees (%)</div>
+                <div class="fs-5 fw-bold">{{ r.maintenancePct | number:'1.0-2' }}%</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-3 rounded-3 h-100 bg-danger-subtle">
+                <div class="small text-danger fw-bold">Maintenance Total</div>
+                <div class="fs-5 fw-bold text-danger">{{ r.maintenanceTotal | number:'1.0-0' }} EGP</div>
+              </div>
             </div>
           }
         </div>

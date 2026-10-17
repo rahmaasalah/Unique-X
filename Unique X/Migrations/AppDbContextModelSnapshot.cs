@@ -1776,6 +1776,12 @@ namespace Unique_X.Migrations
                     b.Property<int>("Floor")
                         .HasColumnType("int");
 
+                    b.Property<string>("FloorsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("GardenArea")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int?>("GroundBaths")
                         .HasColumnType("int");
 
@@ -1847,6 +1853,12 @@ namespace Unique_X.Migrations
 
                     b.Property<bool>("IsSold")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsSuspended")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Kitchens")
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("LandArea")
                         .HasColumnType("decimal(18,2)");

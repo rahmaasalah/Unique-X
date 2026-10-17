@@ -153,6 +153,7 @@ namespace Unique_X.Controllers
                 SuspendedUsers = await _userManager.Users.CountAsync(u => !u.IsActive),
                 SoldProperties = await _context.Properties.CountAsync(p => p.IsSold),
                 InactiveProperties = await _context.Properties.CountAsync(p => !p.IsActive),
+                SuspendedProperties = await _context.Properties.CountAsync(p => p.IsSuspended),
                 TotalWhatsAppClicks = await _context.AnalyticsRecords.CountAsync(r => r.ActionType == "WhatsAppClick"),
                 TotalCallClicks = await _context.AnalyticsRecords.CountAsync(r => r.ActionType == "CallClick")
             };
@@ -179,7 +180,17 @@ namespace Unique_X.Controllers
         {
             var prop = await _context.Properties.FindAsync(id);
             if (prop == null) return NotFound();
-            prop.IsActive = !prop.IsActive;
+            // 🟢 Suspend يعلّم الوحدة IsSuspended=true، و Activate يشيل العلامة - عشان الوحدة الـ Suspended ترجع Active بس بقرار الأدمن
+            if (prop.IsActive)
+            {
+                prop.IsActive = false;
+                prop.IsSuspended = true;
+            }
+            else
+            {
+                prop.IsActive = true;
+                prop.IsSuspended = false;
+            }
             await _context.SaveChangesAsync();
             return Ok(new { Status = prop.IsActive });
         }
@@ -215,7 +226,7 @@ namespace Unique_X.Controllers
 
 
         [HttpPost("duplicate-property/{id}/{newBrokerId}")]
-        public async Task<IActionResult> DuplicateProperty(int id, string newBrokerId)
+        public async Task<IActionResult> DuplicateProperty(int id, string newBrokerId, [FromQuery] bool copyOwnerData = true)
         {
             // 1. التأكد من البروكر
             var newBroker = await _userManager.FindByIdAsync(newBrokerId);
@@ -231,11 +242,22 @@ namespace Unique_X.Controllers
 
             if (originalProp == null) return NotFound("Property not found.");
 
+            // 🟢 مينفعش نعمل Copy لوحدة Suspended - الأدمن لازم يعمل لها Activate الأول وبعدين يرجع يعمل Copy
+            if (originalProp.IsSuspended)
+                return BadRequest("This property is suspended. Please activate it first, then copy it.");
+
             // 3. تصفير الـ IDs وتعديل البيانات الأساسية للنسخة الجديدة
             originalProp.Id = 0;
             originalProp.BrokerId = newBrokerId;
             originalProp.CreatedAt = DateTime.UtcNow;
             originalProp.Code = originalProp.Code + "-COPY";
+
+            // 🟢 لو الأدمن اختار ميتنسخش بيانات الـ Owner، بنحط أصفار مكان الاسم والموبايل
+            if (!copyOwnerData)
+            {
+                originalProp.OwnerName = "00000000000";
+                originalProp.OwnerPhone = "00000000000";
+            }
 
             // تفعيل النسخة الجديدة لتظهر في الهوم فوراً
             originalProp.IsApproved = true;
@@ -622,7 +644,7 @@ namespace Unique_X.Controllers
             var props = await _context.Properties
                 .Include(p => p.Broker)
                 .Include(p => p.PaymentPlans)
-                .Where(p => !p.IsActive)
+                .Where(p => p.IsSuspended)
                 .Select(p => new {
                     p.Id,
                     p.Title,
@@ -785,9 +807,14 @@ namespace Unique_X.Controllers
                     p.IsApproved,
                     p.RejectionReason,
                     p.IsActive,
+                    p.IsSuspended,
                     p.IsSold,
                     p.IsOwnerSubmitted,
                     p.Area,
+                    p.BuiltUpArea,
+                    p.LandArea,
+                    p.GardenArea,
+                    p.FloorsJson,
                     p.Rooms,
                     p.Bathrooms,
                     p.Floor,
@@ -853,12 +880,18 @@ namespace Unique_X.Controllers
             var property = await _context.Properties.FindAsync(id);
             if (property == null) return NotFound("Property not found");
 
+            // 🟢 الموافقة على تعديل وحدة Suspended متفعّلهاش تاني - بتفضل Suspended لحد ما الأدمن يعمل لها Activate بنفسه
             property.IsApproved = true;
-            property.IsActive = true;
+            property.IsActive = !property.IsSuspended;
             property.RejectionReason = null;
             await _context.SaveChangesAsync();
 
-            return Ok(new { Message = "Property approved and published successfully" });
+            return Ok(new
+            {
+                Message = property.IsSuspended
+                    ? "Property approved, but it is still suspended. Activate it to publish it."
+                    : "Property approved and published successfully"
+            });
         }
 
         [HttpPatch("leads/{leadId}/approve-duplicate")]
@@ -918,9 +951,6 @@ namespace Unique_X.Controllers
         [HttpPost("hot-deals")]
         public async Task<IActionResult> AddHotDeal([FromBody] HotDealDto dto)
         {
-            var count = await _context.HotDeals.CountAsync();
-            if (count >= 12) return BadRequest("Maximum 12 Hot Deals allowed.");
-
             var property = await _context.Properties.FirstOrDefaultAsync(p => p.Code == dto.Code);
             if (property == null) return NotFound("Property not found with this code.");
 
@@ -960,9 +990,6 @@ namespace Unique_X.Controllers
         [HttpPost("recommended-visits")]
         public async Task<IActionResult> AddRecommendedVisit([FromBody] RecommendedVisitDto dto)
         {
-            var count = await _context.RecommendedVisits.CountAsync();
-            if (count >= 12) return BadRequest("Maximum 12 Recommended to Visit properties allowed.");
-
             var property = await _context.Properties.FirstOrDefaultAsync(p => p.Code == dto.Code);
             if (property == null) return NotFound("Property not found with this code.");
 
@@ -1064,7 +1091,7 @@ namespace Unique_X.Controllers
             if (property == null) return NotFound();
 
             property.PendingDeletion = false;
-            property.IsActive = true; // نرجعها تظهر
+            property.IsActive = !property.IsSuspended; // نرجعها تظهر (إلا لو كانت Suspended)
             property.DeletionRejectionReason = dto.Reason;
 
             await _context.SaveChangesAsync();

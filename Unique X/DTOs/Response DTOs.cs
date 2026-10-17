@@ -11,6 +11,15 @@ namespace Unique_X.DTOs
         public int DisplayOrder { get; set; }
     }
 
+    // دور واحد من أدوار الفيلا: Level = -1 (Basement), 0 (Ground), 1 (First), 2 (Second), 3 (Third) ...
+    public class VillaFloorDto
+    {
+        public int Level { get; set; }
+        public int Rooms { get; set; }
+        public int Baths { get; set; }
+        public int Reception { get; set; }
+    }
+
     public class PropertyResponseDto
     {
         public int Id { get; set; }
@@ -24,6 +33,7 @@ namespace Unique_X.DTOs
         public bool IsShortlisted { get; set; }
         public bool IsVisitListed { get; set; }
         public int Bathrooms { get; set; }
+        public int Kitchens { get; set; }
         public string? Region { get; set; }
         public string? Address { get; set; }
         public string City { get; set; }
@@ -100,9 +110,13 @@ namespace Unique_X.DTOs
         public int? SecondBaths { get; set; }
         public int? SecondReception { get; set; }
 
+        // 🟢 أدوار الفيلا الديناميكية (Basement / Ground / First / Second / Third ...) - مرتبة من الأسفل للأعلى
+        public List<VillaFloorDto>? Floors { get; set; }
+
         // مرافق جديدة
         public bool? HasPool { get; set; }
         public bool? HasGarden { get; set; }
+        public decimal? GardenArea { get; set; }      // مساحة الحديقة (للفيلا)
         public List<PhotoResponseDto> Photos { get; set; }
 
         public string BrokerName { get; set; }
@@ -154,6 +168,9 @@ namespace Unique_X.DTOs
 
         // 🟢 الترتيب: hotdeals | newest | price_asc | price_desc | rooms_asc | rooms_desc | bathrooms_asc | bathrooms_desc | floors_asc | floors_desc
         public string? SortBy { get; set; }
+
+        // 🟢 لو true بيستبعد الوحدات اللي في Hot Deals من النتايج (صفحة الهوم العادية: الوحدة تظهر في Hot Deals بس ومتتكررش في قسم نوعها)
+        public bool? ExcludeHotDeals { get; set; }
         public decimal? MinPricePerMeter { get; set; }
         public decimal? MaxPricePerMeter { get; set; }
 

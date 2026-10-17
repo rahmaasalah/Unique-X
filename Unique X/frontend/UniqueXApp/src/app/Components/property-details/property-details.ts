@@ -6,6 +6,7 @@ import { PhoneInputComponent } from '../phone-input/phone-input';
 import { PropertyCardComponent } from '../property-card/property-card';
 import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
+import { floorLabel, villaFloorsOf, isVillaLike } from '../../Models/villa.floor.model';
 import { AuthService } from '../../Services/auth';
 import { Router } from '@angular/router';
 import { AdminService } from '../../Services/admin';
@@ -44,8 +45,15 @@ export class PropertyDetailsComponent implements OnInit, AfterViewInit {
 
   
   property = signal<Property | null>(null);
+
+  // 🟢 أدوار الفيلا الديناميكية (Basement / Ground / First / Second / Third ...) - بتتعرض بس الأدوار اللي البروكر ملاها
+  floorLabel = floorLabel;
+  villaFloorsOf = villaFloorsOf;
+  isVillaLike = isVillaLike;
+
   currentSlideIndex = signal(0);
   isDescriptionExpanded = signal(false);
+  descriptionCopied = signal(false);
 
   // 🟢 "Lookalike Units" - وحدات في نفس المشروع (لو موجود) أو نفس المنطقة، بتظهر آخر الصفحة بسكرول أفقي زي الهوم
   lookalikeUnits = signal<Property[]>([]);
@@ -263,6 +271,34 @@ generateSlug(text: string): string {
     if (!container) return;
     const amount = container.clientWidth * 0.8 * dir;
     container.scrollBy({ left: amount, behavior: 'smooth' });
+  }
+
+  // 🟢 نسخ نص الوصف كامل للـ clipboard (بيشتغل حتى لو الصفحة مش HTTPS بفضل الـ fallback)
+  async copyDescription() {
+    const text = this.property()?.description ?? '';
+    if (!text) return;
+
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      try { copied = document.execCommand('copy'); } catch { copied = false; }
+      document.body.removeChild(area);
+    }
+
+    if (copied) {
+      this.descriptionCopied.set(true);
+      setTimeout(() => this.descriptionCopied.set(false), 2000);
+    } else {
+      this.alertService.error('Could not copy the text. Please select it and copy manually.');
+    }
   }
 
   toggleDescription() {

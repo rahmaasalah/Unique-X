@@ -32,7 +32,8 @@
             Shop = 2,
             Office = 3,
             Chalet = 4,
-            FullFloor = 5
+            FullFloor = 5,
+            FullBuilding = 6   // مبنى كامل: بياخد نفس خصائص الفيلا (أدوار + مساحة أرض + حديقة)
         }
         public enum DeliveryStatus
         {
@@ -40,23 +41,23 @@
             UnderConstruction = 1
         }
 
-        public enum AreaType 
-        { 
-            LandArea = 0, 
-            BuiltUpArea = 1 
+        public enum AreaType
+        {
+            LandArea = 0,
+            BuiltUpArea = 1
         }
-        public enum VillaCategory 
-        { 
-            Standalone = 0, 
-            TwinHouse = 1, 
-            TownHouse = 2, 
-            TiesseraLower = 3, 
-            TiesseraUpper = 4, 
-            SkyVilla = 5 
+        public enum VillaCategory
+        {
+            Standalone = 0,
+            TwinHouse = 1,
+            TownHouse = 2,
+            TiesseraLower = 3,
+            TiesseraUpper = 4,
+            SkyVilla = 5
         }
-        public enum VillaType 
-        { 
-            Basement = 0, 
+        public enum VillaType
+        {
+            Basement = 0,
             Penthouse = 1,
             Corner = 2,
             Middle = 3

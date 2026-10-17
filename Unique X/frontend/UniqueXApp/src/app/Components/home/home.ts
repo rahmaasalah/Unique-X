@@ -618,6 +618,12 @@ updateProjectsList(cityId: any) {
       sortBy: (cleanFilters as any)['sortBy'] || 'hotdeals'
     };
 
+    // 🟢 في الهوم العادي (من غير بحث/فلاتر) قسم Hot Deals ظاهر فوق، فنستبعد وحداته من أقسام الأنواع عشان متتكررش.
+    // مع البحث/الفلاتر قسم Hot Deals بيختفي، فالوحدات لازم تفضل تظهر في نوعها.
+    if (!this.hasSearchFilters()) {
+      apiFilters['excludeHotDeals'] = true;
+    }
+
     if (apiFilters['searchTerm']) {
       apiFilters['searchTerm'] = this.getSmartSearchTerm(apiFilters['searchTerm'] as string);
     }

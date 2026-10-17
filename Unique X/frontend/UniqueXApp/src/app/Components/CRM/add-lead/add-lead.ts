@@ -54,6 +54,8 @@ export class AddLeadComponent implements OnInit {
 
 
   availableRegions: string[] =[];
+  // 🟢 نص البحث في قائمة المناطق
+  regionSearchText = '';
   availableProjects: string[] =[];
 
   searchCampaignCode = signal<string>('');
@@ -192,6 +194,7 @@ export class AddLeadComponent implements OnInit {
   // 🟢 المناطق (Regions) بقت جايه من الداتابيز (تاب Lookups بتاع الأدمن) بدل ليستة ثابتة في الكود
   loadRegionsForZone(zoneId: number) {
     this.availableRegions = [];
+    this.regionSearchText = '';
     if (!zoneId) return;
     this.adminService.getRegions(zoneId).subscribe({
       next: (regions: any[]) => {
@@ -212,6 +215,23 @@ export class AddLeadComponent implements OnInit {
       error: () => this.availableProjects = []
     });
   }
+
+  // 🟢 المناطق بعد الفلترة بالحروف المكتوبة (مش حساس لحالة الحروف)
+  get filteredRegions(): string[] {
+    const q = this.regionSearchText.trim().toLowerCase();
+    return q ? this.availableRegions.filter(r => r.toLowerCase().includes(q)) : this.availableRegions;
+  }
+
+  get selectedRegionsCount(): number {
+    return ((this.leadForm.get('selectedRegions')?.value as string[]) || []).length;
+  }
+
+  // الـ Checkbox بيتقرا من قيمة الفورم، عشان الاختيار يفضل ظاهر حتى لو القائمة اتفلترت واتعاد رسمها
+  isRegionSelected(region: string): boolean {
+    return ((this.leadForm.get('selectedRegions')?.value as string[]) || []).includes(region);
+  }
+
+  trackByRegion = (_: number, region: string) => region;
 
   // دوال للتحكم في الـ Checkboxes
   onRegionChange(event: any, region: string) {

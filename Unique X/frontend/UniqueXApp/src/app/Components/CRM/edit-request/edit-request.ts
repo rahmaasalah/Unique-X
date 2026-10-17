@@ -439,6 +439,8 @@ export class EditRequestComponent implements OnInit {
     this.crmService.updateLeadDetails(this.leadId, submitData).subscribe({
       next: (res: any) => {
         this.alertService.close();
+        // 🟢 تعديل الريكويست يعتبر Action على الليد، فلما يرجع لصفحة التفاصيل لازم يضيف فيدباك قبل ما يخرج
+        sessionStorage.setItem('feedbackPending_' + this.leadId, '1');
         if (res?.isDuplicate) {
           if (this.isAdmin()) {
             // الأدمن يشوف modal يقبل أو يرفض

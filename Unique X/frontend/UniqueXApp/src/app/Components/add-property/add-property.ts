@@ -5,6 +5,7 @@ import { PropertyService } from '../../Services/property';
 import { AlertService } from '../../Services/alert';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CurrencyService } from '../../Services/currency.service';
+import { floorLabel, MAX_FLOOR_LEVEL } from '../../Models/villa.floor.model';
 
 function minAmountValidator(min: number): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -13,6 +14,14 @@ function minAmountValidator(min: number): ValidatorFn {
     const currentAmount = Number(control.value.toString().replace(/,/g, ''));
     
     return currentAmount < min ? { 'min': true } : null;
+  };
+}
+
+// 🟢 لازم يكون رقم أكبر من صفر (بنستخدمه لمساحة الأرض في الفيلا)
+function positiveNumberValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const n = Number(String(control.value ?? '').replace(/,/g, ''));
+    return n > 0 ? null : { 'min': true };
   };
 }
 
@@ -103,6 +112,7 @@ filteredProjects: string[] = [];
       area: ['',[Validators.required, Validators.min(1)]],
       rooms: [0, [Validators.min(0)]],
       bathrooms:[0, [Validators.min(0)]],
+      kitchens: [0, [Validators.min(0)]],
       city: [1, Validators.required], 
       region: ['', Validators.required],
       address: [''],
@@ -125,14 +135,14 @@ filteredProjects: string[] = [];
       isLegalReconciled: [false],
       hasParking:[false], 
       builtUpArea: [0, [Validators.min(0)]],
-landArea: [0, [Validators.min(0)]],
+      landArea: ['', [Validators.min(0)]],
+      gardenArea: [0, [Validators.min(0)]],
       propertyType: [0, Validators.required],
       areaType: [0],
       villaCategory: [0],
       villaSubType: [null],
-      groundRooms: [0], groundBaths: [0], groundReception: [0],
-      firstRooms: [0], firstBaths:[0], firstReception: [0],
-      secondRooms: [0], secondBaths: [0], secondReception: [0],
+      // 🟢 أدوار الفيلا: Basement / Ground / First بشكل افتراضي، وزرار + بيضيف Second ثم Third وهكذا
+      floors: this.fb.array([this.createFloor(-1), this.createFloor(0), this.createFloor(1)]),
       hasPool: [false], 
       hasGarden: [false],
       hasBalcony: [false],
@@ -214,6 +224,10 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
   }
 });
 
+    // 🟢 للفيلا: بنشيل حقل Area وكل الحسابات بتتبني على Land Area
+    this.propertyForm.get('propertyType')?.valueChanges.subscribe(() => this.applyVillaAreaRules());
+    this.applyVillaAreaRules();
+
     this.propertyForm.valueChanges.subscribe(() => {
       if (this.propertyForm.invalid) {
         console.warn('Form Invalid. Check these fields:');
@@ -242,7 +256,7 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
 
     let type = f.propertyType == 0 ? "A" : f.propertyType == 1 ? "V" : 
                f.propertyType == 2 ? "S" : f.propertyType == 3 ? "O" : 
-               f.propertyType == 4 ? "CH" : f.propertyType == 5 ? "F" : "";
+               f.propertyType == 4 ? "CH" : f.propertyType == 5 ? "F" : f.propertyType == 6 ? "FB" : "";
 
     let prefix = "";
 
@@ -315,7 +329,9 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
     return security > 0 && totalPrice > 0 && security > totalPrice;
   }
 
-  isVilla(): boolean { return Number(this.propertyForm.get('propertyType')?.value) === 1; }
+  // 🟢 الفيلا و Full Building (6) ليهم نفس الخصائص
+  isVilla(): boolean { const t = Number(this.propertyForm.get('propertyType')?.value); return t === 1 || t === 6; }
+  isFullBuilding(): boolean { return Number(this.propertyForm.get('propertyType')?.value) === 6; }
   isPrimary(): boolean { return Number(this.propertyForm.get('listingType')?.value) === 2; }
   isRent(): boolean { return Number(this.propertyForm.get('listingType')?.value) === 1; }
   isProject(): boolean { const type = Number(this.propertyForm.get('listingType')?.value); return type === 2 || type === 3; }
@@ -432,10 +448,95 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
     return Math.round(value / 1000) * 1000;
   }
 
+  // ================== 🟢 مساحة الفيلا (Land Area) ==================
+  // المساحة اللي بتتبني عليها كل الحسابات (السعر الكلي / سعر المتر): للفيلا مساحة الأرض، لغيرها حقل Area العادي
+  getCalcArea(): number {
+    return this.isVilla() ? this.getPureNumber('landArea') : this.getPureNumber('area');
+  }
+
+  // لما مساحة الأرض تتغير بنحدّث حقل area الداخلي (مش ظاهر للفيلا) وبنعيد الحسابات
+  onLandAreaChange() {
+    this.areaFilledFromLand = true;
+    this.propertyForm.get('area')?.setValue(this.getPureNumber('landArea') || '', { emitEvent: false });
+    this.onAreaChange();
+  }
+
+  private areaFilledFromLand = false;
+
+  // للفيلا: حقل Area مش مطلوب ومخفي، و Land Area هو المطلوب. لأي نوع تاني: العكس
+  private applyVillaAreaRules(): void {
+    const area = this.propertyForm.get('area');
+    const land = this.propertyForm.get('landArea');
+    if (!area || !land) return;
+
+    if (this.isVilla()) {
+      area.clearValidators();
+      land.setValidators([positiveNumberValidator()]);
+      this.areaFilledFromLand = true;
+      area.setValue(this.getPureNumber('landArea') || '', { emitEvent: false });
+    } else {
+      area.setValidators([Validators.required, Validators.min(1)]);
+      land.setValidators([Validators.min(0)]);
+      // لو حقل area كان متملي تلقائي من مساحة الأرض (وقت ما النوع كان فيلا) نفضيه
+      if (this.areaFilledFromLand) {
+        area.setValue('', { emitEvent: false });
+        this.areaFilledFromLand = false;
+      }
+    }
+
+    area.updateValueAndValidity({ emitEvent: false });
+    land.updateValueAndValidity({ emitEvent: false });
+    this.onAreaChange();
+  }
+
+  // ================== 🟢 أدوار الفيلا الديناميكية ==================
+  floorLabel = floorLabel;
+
+  get floors(): FormArray {
+    return this.propertyForm.get('floors') as FormArray;
+  }
+
+  private createFloor(level: number): FormGroup {
+    return this.fb.group({
+      level: [level],
+      rooms: [0],
+      baths: [0],
+      reception: [0]
+    });
+  }
+
+  // رقم الدور اللي هيتضاف لما نضغط +
+  nextFloorLevel(): number {
+    const levels = this.floors.controls.map(c => Number(c.get('level')?.value));
+    return levels.length ? Math.max(...levels) + 1 : 0;
+  }
+
+  canAddFloor(): boolean {
+    return this.nextFloorLevel() <= MAX_FLOOR_LEVEL;
+  }
+
+  addFloor() {
+    if (!this.canAddFloor()) return;
+    this.floors.push(this.createFloor(this.nextFloorLevel()));
+  }
+
+  // الحذف متاح بس لآخر دور اتضاف (من Second وطالع)، عشان لو اتضاف بالغلط
+  removeFloor(index: number) {
+    if (index === this.floors.length - 1 && index >= 3) {
+      this.floors.removeAt(index);
+    }
+  }
+
+  formatFloorInteger(event: any, index: number, controlName: string) {
+    const input = this.convertArabicToEnglish(event.target.value);
+    const pureDigits = input.replace(/[^0-9]/g, '');
+    this.floors.at(index).get(controlName)?.setValue(pureDigits, { emitEvent: false });
+  }
+
   // 🟢 دالة جديدة: لما يغير المساحة، تقرر تحسب السعر الكلي ولا سعر المتر
   onAreaChange() {
     if (!this.isPrimary()) return;
-    const area = this.getPureNumber('area');
+    const area = this.getCalcArea();
     const ppm = this.getPureNumber('pricePerMeter');
     const total = this.getPureNumber('price');
 
@@ -453,7 +554,7 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
 
   calculateTotalPrice() {
     if (!this.isPrimary()) return; 
-    const area = this.getPureNumber('area');
+    const area = this.getCalcArea();
     const ppm = this.getPureNumber('pricePerMeter');
     
     if (area > 0 && ppm > 0) {
@@ -469,7 +570,7 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
   // 🟢 دالة حساب سعر المتر (السعر الإجمالي ÷ المساحة)
   calculatePricePerMeter() {
     if (!this.isPrimary()) return;
-    const area = this.getPureNumber('area');
+    const area = this.getCalcArea();
     const total = this.getPureNumber('price');
 
     if (area > 0 && total > 0) {
@@ -898,9 +999,11 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
 
     // 🟢 إرسال الأرقام بعد غسيلها بـ cleanNum لضمان قبول C# لها
     formData.append('Price', cleanNum(f.price));
-    formData.append('Area', cleanNum(f.area));
+    // 🟢 للفيلا مفيش حقل Area؛ المساحة الأساسية = Land Area
+    formData.append('Area', cleanNum(this.isVilla() ? f.landArea : f.area));
     formData.append('Rooms', cleanNum(f.rooms));
     formData.append('Bathrooms', cleanNum(f.bathrooms));
+    formData.append('Kitchens', cleanNum(f.kitchens));
     formData.append('ReceptionPieces', cleanNum(f.receptionPieces));
 
     formData.append('BuiltUpArea', cleanNum(f.builtUpArea));
@@ -912,15 +1015,18 @@ formData.append('LandArea', cleanNum(f.landArea));
     formData.append('ElevatorsCount', cleanNum(f.elevatorsCount));
 
     // حقول الفيلا (مغسولة)
-    formData.append('GroundRooms', cleanNum(f.groundRooms));
-    formData.append('GroundBaths', cleanNum(f.groundBaths));
-    formData.append('GroundReception', cleanNum(f.groundReception));
-    formData.append('FirstRooms', cleanNum(f.firstRooms));
-    formData.append('FirstBaths', cleanNum(f.firstBaths));
-    formData.append('FirstReception', cleanNum(f.firstReception));
-    formData.append('SecondRooms', cleanNum(f.secondRooms));
-    formData.append('SecondBaths', cleanNum(f.secondBaths));
-    formData.append('SecondReception', cleanNum(f.secondReception));
+    formData.append('GardenArea', cleanNum(this.isVilla() ? f.gardenArea : 0));
+
+    // 🟢 أدوار الفيلا الديناميكية: بتتبعت كـ JSON، والباك إند بياخد بس الأدوار اللي البروكر ملاها
+    if (this.isVilla()) {
+      const floorsPayload = this.floors.controls.map(c => ({
+        level: Number(c.get('level')?.value),
+        rooms: Number(cleanNum(c.get('rooms')?.value)) || 0,
+        baths: Number(cleanNum(c.get('baths')?.value)) || 0,
+        reception: Number(cleanNum(c.get('reception')?.value)) || 0
+      }));
+      formData.append('FloorsJson', JSON.stringify(floorsPayload));
+    }
 
     formData.append('AreaType', f.areaType?.toString() || '0');
     formData.append('VillaCategory', f.villaCategory?.toString() || '0');
@@ -930,7 +1036,8 @@ formData.append('LandArea', cleanNum(f.landArea));
 
     // المفاتيح (Booleans)
     formData.append('HasPool', (f.hasPool || false).toString());
-    formData.append('HasGarden', (f.hasGarden || false).toString());
+    // للفيلا: الحديقة موجودة لو مساحتها أكبر من صفر
+    formData.append('HasGarden', (this.isVilla() ? this.getPureNumber('gardenArea') > 0 : (f.hasGarden || false)).toString());
     formData.append('HasLandShare', (f.hasLandShare || false).toString());
     formData.append('IsLicensed', (f.isLicensed || false).toString());
     formData.append('IsLegalReconciled', (f.isLegalReconciled || false).toString());

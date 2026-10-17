@@ -91,7 +91,12 @@ namespace Unique_X.DTOs
 
         public decimal? BuiltUpArea { get; set; }
         public decimal? LandArea { get; set; }
+        public decimal? GardenArea { get; set; }      // مساحة الحديقة (للفيلا)
         public decimal? PricePerMeter { get; set; }
+        public int? Kitchens { get; set; }
+
+        // أدوار الفيلا الديناميكية كـ JSON: [{"level":-1,"rooms":0,"baths":0,"reception":0}, ...]
+        public string? FloorsJson { get; set; }
 
 
         public int? PropertyType { get; set; }

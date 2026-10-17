@@ -149,14 +149,28 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
   adminName = signal<string>('');
   adminId = signal<string>('');
 
-  // 🟢 نظام الـ Feedback الإجباري: لو أدمن أو صاحب الليد، لازم يضيف فيدباك قبل ما يخرج من الصفحة
-  feedbackAddedThisVisit = signal<boolean>(false);
+  // 🟢 نظام الـ Feedback الإجباري: لو أدمن أو صاحب الليد عمل Action فعلي على الليد (تغيير حالة / تعديل ريكويست / Visit / Activity...)
+  // لازم يضيف فيدباك قبل ما يخرج من الصفحة. لو بس بيتفرج على الصفحة، يقدر يخرج عادي من غير فيدباك.
+  actionPendingFeedback = signal<boolean>(false);
 
-  // بيحدد هل شرط الفيدباك الإجباري لازم يتفعل مع الليد ده ولا لأ
+  // بنفتح مودال الـ Next Action بعد الفيدباك، والـ Visit/Activity اللي بيتعمل منه ميتحسبش Action جديد (عشان منعلقش في لوب فيدباك)
+  private skipNextActionMark = false;
+
+  // بنسجل إن حصل Action فعلي - بيتحفظ في sessionStorage عشان يفضل مطلوب حتى لو راح صفحة تعديل الريكويست ورجع
+  private markActionTaken() {
+    if (this.skipNextActionMark) {
+      this.skipNextActionMark = false;
+      return;
+    }
+    this.actionPendingFeedback.set(true);
+    sessionStorage.setItem('feedbackPending_' + this.leadId, '1');
+  }
+
+  // بيحدد هل لازم نطلب فيدباك قبل الخروج: (أدمن أو صاحب الليد) + عمل Action ولسه مضافش فيدباك بعده
   get requiresMandatoryFeedback(): boolean {
     const info = this.leadInfo();
     if (!info) return false;
-    return this.isAdmin() || info.brokerId === this.currentBrokerId;
+    return (this.isAdmin() || info.brokerId === this.currentBrokerId) && this.actionPendingFeedback();
   }
 
   // عدد الفيدباكات الكلي المسجلة على الليد ده (مستخرج من نفس الحقل الموجود بالفعل)
@@ -210,9 +224,8 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
     this.route.paramMap.subscribe(params => {
       this.leadId = Number(params.get('id'));
       if (this.leadId) {
-        // 🟢 لو سبق وحطيت فيدباك على العميل ده في نفس الجلسة (حتى لو راح صفحة تعديل ورجع)، منطلبوش تاني
-        const alreadyGivenThisSession = sessionStorage.getItem('feedbackGiven_' + this.leadId) === '1';
-        this.feedbackAddedThisVisit.set(alreadyGivenThisSession);
+        // 🟢 لو عمل Action على العميل ده قبل كده في نفس الجلسة (زي تعديل الريكويست من صفحة تانية) ولسه مضافش فيدباك، نكمل نطلبه
+        this.actionPendingFeedback.set(sessionStorage.getItem('feedbackPending_' + this.leadId) === '1');
         this.checkPagination(); 
         this.initForms(); 
         this.loadLeadData(this.leadId); 
@@ -223,7 +236,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
   // 🟢 لو حاول يقفل التاب أو يعمل Refresh وهو لسه محتاج يضيف فيدباك، المتصفح هيوريه تحذيره الافتراضي
   @HostListener('window:beforeunload', ['$event'])
   handleBeforeUnload(event: BeforeUnloadEvent) {
-    if (this.requiresMandatoryFeedback && !this.feedbackAddedThisVisit()) {
+    if (this.requiresMandatoryFeedback) {
       event.preventDefault();
       event.returnValue = ''; // لازم السطر ده عشان أغلب المتصفحات تعرض التحذير
     }
@@ -231,7 +244,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
 
   // 🟢 الدالة اللي بيسألها الـ Guard قبل ما يسمح بأي تنقل جوه التطبيق
   canDeactivate(): boolean {
-    if (!this.requiresMandatoryFeedback || this.feedbackAddedThisVisit()) {
+    if (!this.requiresMandatoryFeedback) {
       return true;
     }
     this.alertService.warning(
@@ -255,6 +268,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
     this.crmService.transferLead(this.leadId, newBroker, this.currentBrokerId).subscribe({
       next: () => {
         this.alertService.close();
+        this.markActionTaken();
         this.alertService.success('Lead transferred successfully!');
         this.loadLeadData(this.leadId); // تحديث الداتا بعد النقل
         document.getElementById('closeTransferModal')?.click(); // قفل المودال
@@ -539,6 +553,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
     }).subscribe({
       next: () => {
         this.alertService.close();
+        this.markActionTaken();
         this.alertService.success('Stage updated successfully!');
         this.loadLeadData(this.leadId); // تحديث الداتا عشان الهيستوري يتكتب فيه
       },
@@ -561,6 +576,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
         this.crmService.rescheduleVisit(this.rescheduleId()!, newDate).subscribe({
           next: () => {
             this.alertService.close();
+            this.markActionTaken();
             this.alertService.success('Visit rescheduled successfully!');
             this.loadLeadData(this.leadId); // تحديث التايم لاين
             document.getElementById('closeVisitModal')?.click(); // قفل المودال
@@ -580,6 +596,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
         this.crmService.updateVisit(this.editId()!, submitData).subscribe({
           next: () => {
             this.alertService.close();
+            this.markActionTaken();
             this.alertService.success('Visit updated successfully!');
             this.isEditing.set(false);
             this.editId.set(null);
@@ -604,6 +621,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
         this.crmService.scheduleVisit(submitData).subscribe({
           next: () => {
             this.alertService.close();
+            this.markActionTaken();
             this.alertService.success('Visit scheduled successfully!');
             this.visitForm.reset({ leadId: this.leadId, brokerId: this.currentBrokerId });
             this.loadLeadData(this.leadId); 
@@ -687,6 +705,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
         this.crmService.rescheduleActivity(this.rescheduleId()!, newDate).subscribe({
           next: () => {
             this.alertService.close();
+            this.markActionTaken();
             this.alertService.success('Activity rescheduled successfully!');
             this.loadLeadData(this.leadId);
             document.getElementById('closeActivityModal')?.click();
@@ -703,6 +722,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
         this.crmService.updateActivity(this.editId()!, submitData).subscribe({
           next: () => {
             this.alertService.close();
+            this.markActionTaken();
             this.alertService.success('Activity updated successfully!');
             this.isEditing.set(false);
             this.editId.set(null);
@@ -731,6 +751,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
         this.crmService.logActivity(submitData).subscribe({
           next: () => {
             this.alertService.close();
+            this.markActionTaken();
             this.alertService.success('Activity logged successfully!');
             this.activityForm.reset({ leadId: this.leadId, assignedToId: this.currentBrokerId, activityType: 'Call' });
             this.loadLeadData(this.leadId); 
@@ -763,6 +784,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
     apiCall.subscribe({
       next: () => {
         this.alertService.close();
+        this.markActionTaken();
         this.loadLeadData(this.leadId);
         this.crmService.refreshNavbar$.next(); // تحديث الجرس
       }
@@ -886,6 +908,7 @@ isAdminAction(item: any): boolean {
 
   chooseNextAction(type: 'visit' | 'activity') {
     this.showNextActionPrompt.set(false);
+    this.skipNextActionMark = true;
     const bootstrap = (window as any).bootstrap;
 
     // نقفل مودال اختيار الـ Next Action لو لسه فاتح
@@ -900,6 +923,8 @@ isAdminAction(item: any): boolean {
     setTimeout(() => {
       const targetEl = document.getElementById(type === 'visit' ? 'visitModal' : 'activityModal');
       if (bootstrap && targetEl) {
+        // لو قفل المودال من غير ما يحفظ، نرجّع الحساب الطبيعي للـ Actions
+        targetEl.addEventListener('hidden.bs.modal', () => { this.skipNextActionMark = false; }, { once: true });
         new bootstrap.Modal(targetEl).show();
       }
     }, 300); // 👈 استنى قفل المودال اللي قبله الأول عشان مايحصلش تصادم بين المودالز
@@ -912,9 +937,9 @@ isAdminAction(item: any): boolean {
         next: () => {
           this.alertService.close();
 
-          // 🟢 تم إضافة الفيدباك المطلوب - يقدر يخرج من الصفحة دلوقتي (طول الجلسة، حتى لو راح صفحة تانية ورجع)
-          this.feedbackAddedThisVisit.set(true);
-          sessionStorage.setItem('feedbackGiven_' + this.leadId, '1');
+          // 🟢 تم إضافة الفيدباك المطلوب - يقدر يخرج من الصفحة دلوقتي (لحد ما يعمل Action جديد)
+          this.actionPendingFeedback.set(false);
+          sessionStorage.removeItem('feedbackPending_' + this.leadId);
 
           // 🟢 +1 لأن الداتا القديمة لسه في الذاكرة والريكوست الجديد لسه بيترفريشها
           const newCount = this.feedbackCount + 1;

@@ -156,8 +156,8 @@ reorderHomeSectionBanners(orderedKeys: string[]): Observable<any> {
   return this.http.put(`${this.baseUrl}/home-section-banners/reorder`, orderedKeys);
 }
 
-duplicateProperty(propertyId: number, brokerId: string) {
-    return this.http.post(`${this.baseUrl}/duplicate-property/${propertyId}/${brokerId}`, {});
+duplicateProperty(propertyId: number, brokerId: string, copyOwnerData: boolean = true) {
+    return this.http.post(`${this.baseUrl}/duplicate-property/${propertyId}/${brokerId}?copyOwnerData=${copyOwnerData}`, {});
   }
 
  getHotDeals() {

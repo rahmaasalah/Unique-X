@@ -11,6 +11,7 @@ import { AdminService } from '../../Services/admin';
 import { GoogleAnalyticsService } from 'ngx-google-analytics';
 import { CrmService } from '../../Services/crm.services';
 import { CurrencyService } from '../../Services/currency.service';
+import { villaTotals, isVillaLike } from '../../Models/villa.floor.model';
 
 @Component({
   selector: 'app-property-card',
@@ -56,20 +57,19 @@ export class PropertyCardComponent {
     }
   }
 
+  isVillaLike = isVillaLike;
+
   get displayRooms(): number {
-    if (this.property.propertyType === 'Villa') {
-      return (this.property.groundRooms || 0) +
-             (this.property.firstRooms || 0) +
-             (this.property.secondRooms || 0);
+    if (isVillaLike(this.property.propertyType)) {
+      // مجموع كل أدوار الفيلا (Basement / Ground / First / Second / Third ...)
+      return villaTotals(this.property).rooms;
     }
     return this.property.rooms || 0;
   }
 
   get displayBaths(): number {
-    if (this.property.propertyType === 'Villa') {
-      return (this.property.groundBaths || 0) +
-             (this.property.firstBaths || 0) +
-             (this.property.secondBaths || 0);
+    if (isVillaLike(this.property.propertyType)) {
+      return villaTotals(this.property).baths;
     }
     return this.property.bathrooms || 0;
   }

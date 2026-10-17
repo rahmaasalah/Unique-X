@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PropertyService } from '../../Services/property';
 import { Property } from '../../Models/property.model';
+import { floorLabel, villaFloorsOf, villaTotals, isVillaLike } from '../../Models/villa.floor.model';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -17,6 +18,12 @@ export class ComparePropertiesComponent implements OnInit {
   private router = inject(Router);
   private propertyService = inject(PropertyService);
   
+  // 🟢 أدوار الفيلا الديناميكية (Basement / Ground / First / Second / Third ...)
+  floorLabel = floorLabel;
+  villaFloorsOf = villaFloorsOf;
+  villaTotals = villaTotals;
+  isVillaLike = isVillaLike;
+
   properties = signal<Property[]>([]);
   isLoading = signal<boolean>(true);
   newCode = ''; 

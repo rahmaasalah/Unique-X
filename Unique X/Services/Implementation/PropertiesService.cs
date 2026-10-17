@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Principal;
 using Unique_X.Data;
 using Unique_X.DTOs;
+using Unique_X.Helpers;
 using Unique_X.Models;
 using Unique_X.Services.Interface;
 using Unique_X.Services;
@@ -65,6 +66,7 @@ namespace Unique_X.Services.Implementation
                 Area = dto.Area ?? 0,
                 Rooms = dto.Rooms ?? 0,
                 Bathrooms = dto.Bathrooms ?? 0,
+                Kitchens = dto.Kitchens ?? 0,
                 Code = dto.Code ?? string.Empty,
 
                 OwnerName = dto.OwnerName ?? string.Empty,
@@ -74,6 +76,7 @@ namespace Unique_X.Services.Implementation
 
                 BuiltUpArea = dto.BuiltUpArea,
                 LandArea = dto.LandArea,
+                GardenArea = dto.GardenArea,
 
                 // التصنيفات (Enums)
                 City = (City)(dto.City ?? 1),
@@ -144,6 +147,8 @@ namespace Unique_X.Services.Implementation
                 IsOwnerSubmitted = dto.IsOwnerSubmitted ?? false,
                 Photos = new List<Photo>()
             };
+
+            ApplyVillaRules(property, dto.FloorsJson);
 
             // معالجة رفع الصور
             if (dto.Photos != null && dto.Photos.Count > 0)
@@ -382,6 +387,11 @@ namespace Unique_X.Services.Implementation
                 }
             }
 
+            // 🟢 استبعاد الـ Hot Deals من النتايج (بيتم قبل الـ Count والـ Pagination عشان العدد الكلي وزرار Load More يفضلوا صح)
+            // الشرط الأساسي (!IsSold && IsActive && IsApproved) متطبق فوق بالفعل، فأي Hot Deal ظاهر هنا هو نفسه اللي بيظهر في قسم Hot Deals
+            if (filter.ExcludeHotDeals == true)
+                query = query.Where(p => !_context.HotDeals.Any(h => h.PropertyId == p.Id));
+
             // 🟢 العدد الكلي للنتائج المطابقة (قبل تقطيعها لصفحات) - بيتحسب مرة واحدة على الفلاتر بس، من غير Include عشان يكون خفيف
             var totalCount = await query.CountAsync();
 
@@ -541,8 +551,12 @@ namespace Unique_X.Services.Implementation
             if (dto.PricePerMeter.HasValue && dto.PricePerMeter > 0) property.PricePerMeter = dto.PricePerMeter.Value; // 🟢 أضيفي هذا السطر
 
             if (dto.Area.HasValue && dto.Area > 0) property.Area = dto.Area.Value;
+            if (dto.BuiltUpArea.HasValue) property.BuiltUpArea = dto.BuiltUpArea.Value;
+            if (dto.LandArea.HasValue) property.LandArea = dto.LandArea.Value;
+            if (dto.GardenArea.HasValue) property.GardenArea = dto.GardenArea.Value;
             if (dto.Rooms.HasValue) property.Rooms = dto.Rooms.Value;
             if (dto.Bathrooms.HasValue) property.Bathrooms = dto.Bathrooms.Value;
+            if (dto.Kitchens.HasValue) property.Kitchens = dto.Kitchens.Value;
             if (dto.City.HasValue) property.City = (City)dto.City.Value;
             if (dto.ListingType.HasValue) property.ListingType = (ListingType)dto.ListingType.Value;
             if (dto.PropertyType.HasValue) property.PropertyType = (PropertyType)dto.PropertyType.Value;
@@ -573,6 +587,8 @@ namespace Unique_X.Services.Implementation
 
             if (dto.HasPool.HasValue) property.HasPool = dto.HasPool.Value;
             if (dto.HasGarden.HasValue) property.HasGarden = dto.HasGarden.Value;
+
+            ApplyVillaRules(property, dto.FloorsJson);
 
             if (dto.MonthlyRent.HasValue) property.MonthlyRent = dto.MonthlyRent.Value;
 
@@ -713,6 +729,29 @@ namespace Unique_X.Services.Implementation
             return await _context.SaveChangesAsync() > 0;
         }
 
+        // 🟢 قواعد الفيلا (بتتطبق في الإضافة والتعديل):
+        //   - الأدوار الديناميكية (FloorsJson) بتتخزن وبتملى أعمدة Ground/First/Second القديمة
+        //   - HasGarden بيتحدد من مساحة الحديقة (GardenArea > 0)
+        //   - المساحة الأساسية (Area) = مساحة الأرض (LandArea)، فكل الحسابات (السعر الكلي / سعر المتر / الفلاتر) بتتبني عليها
+        // أي نوع تاني غير الفيلا: مساحة الحديقة بتتمسح
+        private static void ApplyVillaRules(Property property, string? floorsJson)
+        {
+            if (VillaFloorsHelper.IsVillaLike(property.PropertyType))
+            {
+                if (floorsJson != null)
+                    VillaFloorsHelper.ApplyToProperty(property, floorsJson);
+
+                if (property.GardenArea.HasValue)
+                    property.HasGarden = property.GardenArea.Value > 0;
+
+                VillaFloorsHelper.SyncAreaFromLand(property);
+            }
+            else
+            {
+                property.GardenArea = null;
+            }
+        }
+
         // 🟢 isHotDealOverride: لو الكولر (اللي بيجيب أكتر من عقار مرة واحدة) عنده الإجابة جاهزة، بيبعتها هنا بدل ما الدالة تعمل كويري لوحدها لكل عقار (كان ده بيعمل N+1 query حقيقي على كل صفحة فيها أكتر من عقار)
         private PropertyResponseDto MapToResponseDto(Property property, bool? isHotDealOverride = null)
         {
@@ -726,6 +765,7 @@ namespace Unique_X.Services.Implementation
                 Area = property.Area,
                 Rooms = property.Rooms,
                 Bathrooms = property.Bathrooms,
+                Kitchens = property.Kitchens,
                 Code = property.Code,
                 PricePerMeter = property.PricePerMeter,
 
@@ -782,6 +822,9 @@ namespace Unique_X.Services.Implementation
 
                 BuiltUpArea = property.BuiltUpArea,
                 LandArea = property.LandArea,
+                GardenArea = property.GardenArea,
+
+                Floors = VillaFloorsHelper.IsVillaLike(property.PropertyType) ? VillaFloorsHelper.ToResponse(property) : null,
 
                 HasGarden = property.HasGarden,
                 HasPool = property.HasPool,
@@ -884,7 +927,8 @@ namespace Unique_X.Services.Implementation
                           property.PropertyType == PropertyType.Shop ? "S" :
                           property.PropertyType == PropertyType.Office ? "O" :
                           property.PropertyType == PropertyType.Chalet ? "CH" :
-                          property.PropertyType == PropertyType.FullFloor ? "F" : "";
+                          property.PropertyType == PropertyType.FullFloor ? "F" :
+                          property.PropertyType == PropertyType.FullBuilding ? "FB" : "";
 
             if (property.ListingType == ListingType.Primary)
             {
