@@ -105,13 +105,22 @@ namespace Unique_X.Models
         // الفرق بينه وبين BrokerId: BrokerId = مين المسؤول عن الوحدة دلوقتي (ممكن يتغير)، AddedByBrokerId = مين اللي رفعها فعلاً (ثابت)
         public string? AddedByBrokerId { get; set; }
         public bool IsActive { get; set; } = false;
+
+        // 🟢 الأدمن هو اللي عمل Suspend للوحدة (مختلف عن IsActive=false بسبب إنها لسه Pending أو Rejected).
+        // بيخلي الوحدة تفضل Suspended حتى لو اتعدلت واتوافق عليها تاني، أو اتنسخت، أو اتلغى طلب حذفها.
+        public bool IsSuspended { get; set; } = false;
         public bool IsApproved { get; set; } = false;
         public bool IsHotDeal { get; set; } = false;
         public string? RejectionReason { get; set; }
+        public int Kitchens { get; set; }
 
         public string OwnerName { get; set; } = string.Empty;
         public string OwnerPhone { get; set; } = string.Empty;
         public string? DeveloperName { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? GardenArea { get; set; }
+
+        public string? FloorsJson { get; set; }
 
         public bool PendingDeletion { get; set; } = false;
         public string? DeletionRejectionReason { get; set; }

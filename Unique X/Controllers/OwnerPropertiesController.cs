@@ -59,6 +59,7 @@ namespace Unique_X.Controllers
                 Area = property.Area,
                 Rooms = property.Rooms,
                 Bathrooms = property.Bathrooms,
+                Kitchens = property.Kitchens,
                 Code = property.Code,
                 PricePerMeter = property.PricePerMeter,
 
@@ -111,6 +112,11 @@ namespace Unique_X.Controllers
 
                 BuiltUpArea = property.BuiltUpArea,
                 LandArea = property.LandArea,
+                GardenArea = property.GardenArea,
+
+                Floors = Unique_X.Helpers.VillaFloorsHelper.IsVillaLike(property.PropertyType)
+                    ? Unique_X.Helpers.VillaFloorsHelper.ToResponse(property)
+                    : null,
 
                 HasGarden = property.HasGarden,
                 HasPool = property.HasPool,

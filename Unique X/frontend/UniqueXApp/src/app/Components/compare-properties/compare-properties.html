@@ -98,14 +98,14 @@
                 }
 
                 <!-- Rooms - للفيلا مجموع الأدوار، لغيرها العدد العادي -->
-                @if (prop.propertyType === 'Villa') {
+                @if (isVillaLike(prop.propertyType)) {
                   <li><i class="bi bi-door-open text-danger me-1"></i>
                     <strong>Rooms:</strong>
-                    {{ (prop.groundRooms || 0) + (prop.firstRooms || 0) + (prop.secondRooms || 0) }}
+                    {{ villaTotals(prop).rooms }}
                   </li>
                   <li><i class="bi bi-droplet text-danger me-1"></i>
                     <strong>Baths:</strong>
-                    {{ (prop.groundBaths || 0) + (prop.firstBaths || 0) + (prop.secondBaths || 0) }}
+                    {{ villaTotals(prop).baths }}
                   </li>
                 } @else {
                   <li><i class="bi bi-door-open text-danger me-1"></i>
@@ -122,7 +122,7 @@
                   </li>
                 }
 
-                @if (prop.propertyType !== 'Villa') {
+                @if (!isVillaLike(prop.propertyType)) {
                   @if (prop.floor > 0) {
                     <li><i class="bi bi-layers text-danger me-1"></i>
                       <strong>Floor:</strong> {{ prop.floor }}
@@ -173,7 +173,7 @@
               </ul>
 
               <!-- ===== Villa Layout ===== -->
-              @if (prop.propertyType === 'Villa') {
+              @if (isVillaLike(prop.propertyType)) {
                 <hr class="my-2">
                 <div class="fw-bold text-danger small mb-1">
                   <i class="bi bi-layers-half me-1"></i> Villa Layout
@@ -182,19 +182,9 @@
                   @if (prop.areaType) { <li><strong>Area Type:</strong> {{ prop.areaType }}</li> }
                   @if (prop.villaCategory) { <li><strong>Category:</strong> {{ prop.villaCategory }}</li> }
                   @if (prop.villaSubType) { <li><strong>Sub-Type:</strong> {{ prop.villaSubType }}</li> }
-                  @if (prop.groundRooms > 0 || prop.groundBaths > 0) {
+                  @for (floor of villaFloorsOf(prop); track floor.level) {
                     <li><i class="bi bi-arrow-return-right text-danger me-1"></i>
-                      <strong>Ground:</strong> {{ prop.groundRooms }} Rooms | {{ prop.groundBaths }} Baths
-                    </li>
-                  }
-                  @if (prop.firstRooms > 0 || prop.firstBaths > 0) {
-                    <li><i class="bi bi-arrow-return-right text-danger me-1"></i>
-                      <strong>First:</strong> {{ prop.firstRooms }} Rooms | {{ prop.firstBaths }} Baths
-                    </li>
-                  }
-                  @if (prop.secondRooms > 0 || prop.secondBaths > 0) {
-                    <li><i class="bi bi-arrow-return-right text-danger me-1"></i>
-                      <strong>Second:</strong> {{ prop.secondRooms }} Rooms | {{ prop.secondBaths }} Baths
+                      <strong>{{ floorLabel(floor.level) }}:</strong> {{ floor.rooms }} Rooms | {{ floor.baths }} Baths
                     </li>
                   }
                 </ul>

@@ -182,17 +182,30 @@
     <div><i class="bi bi-droplet fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.bathrooms }}</span> <small class="text-muted d-block small">Baths</small></div>
   }
 
+  <!-- 🟢 المطابخ: تظهر فقط لو ليها قيمة -->
+  @if (prop.kitchens > 0) {
+    <div><i class="bi bi-cup-hot fs-4 d-block text-danger"></i> <span class="fw-bold">{{ prop.kitchens }}</span> <small class="text-muted d-block small">Kitchens</small></div>
+  }
+
   <!-- المساحة دائماً تظهر لأنها أساسية لكل أنواع العقارات -->
   <div>
   <i class="bi bi-aspect-ratio fs-4 d-block text-danger"></i> 
-  <span class="fw-bold">{{ prop.area }} m² </span> 
-  
-  @if(prop.propertyType === 'Villa') { 
+  @if (isVillaLike(prop.propertyType)) {
+    <!-- للفيلا المساحة الأساسية هي مساحة الأرض (Land Area) -->
+    <span class="fw-bold">{{ prop.landArea || prop.area }} m² </span>
     <small class="text-danger fw-bold d-block" style="font-size: 0.7rem;">
-       Built-up: {{ prop.builtUpArea }} m²
-       <br>
-       Land: {{ prop.landArea }} m²
+       Land Area
+       @if (prop.builtUpArea > 0) {
+         <br>
+         Built-up: {{ prop.builtUpArea }} m²
+       }
+       @if (prop.gardenArea > 0) {
+         <br>
+         Garden: {{ prop.gardenArea }} m²
+       }
     </small> 
+  } @else {
+    <span class="fw-bold">{{ prop.area }} m² </span> 
   }
 </div>
   
@@ -210,49 +223,47 @@
   </p>
 
   <!-- يظهر الزرار فقط لو النص اتقطع فعليًا (سطرين) على الشاشة الحالية، مش على عدد حروف ثابت -->
-  @if (isDescriptionTruncated() || isDescriptionExpanded()) {
-    <button type="button" class="see-more-btn" (click)="toggleDescription()">
-      {{ isDescriptionExpanded() ? 'See less' : 'See full description' }}
-      <i class="bi" [class.bi-chevron-up]="isDescriptionExpanded()" [class.bi-chevron-down]="!isDescriptionExpanded()"></i>
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    @if (isDescriptionTruncated() || isDescriptionExpanded()) {
+      <button type="button" class="see-more-btn" (click)="toggleDescription()">
+        {{ isDescriptionExpanded() ? 'See less' : 'See full description' }}
+        <i class="bi" [class.bi-chevron-up]="isDescriptionExpanded()" [class.bi-chevron-down]="!isDescriptionExpanded()"></i>
+      </button>
+    }
+
+    <!-- 🟢 بيكوبي الوصف كامل (حتى لو لسه مقفول على سطرين) -->
+    <button type="button" class="see-more-btn" (click)="copyDescription()">
+      <i class="bi me-1" [class.bi-clipboard]="!descriptionCopied()" [class.bi-clipboard-check]="descriptionCopied()"></i>
+      {{ descriptionCopied() ? 'Copied!' : 'Copy text' }}
     </button>
-  }
+  </div>
 </div>
 
 
-<!-- [جديد] كارت تقسيم أدوار الفيلا (يظهر فقط لو النوع Villa) -->
-      @if (prop.propertyType === 'Villa') {
+<!-- [جديد] كارت تقسيم أدوار الفيلا (يظهر فقط لو النوع Villa) - بيعرض بس الأدوار اللي البروكر ملاها -->
+      @if (isVillaLike(prop.propertyType) && villaFloorsOf(prop).length > 0) {
         <div class="bg-white p-4 rounded-4 shadow-sm border border-light mb-4 animate__animated animate__fadeIn">
-          <h5 class="fw-bold mb-4 border-bottom pb-2"><i class="bi bi-layers-half me-2 text-danger"></i>Villa Layout</h5>
-          <div class="row g-4 text-center">
-            @if (prop.groundRooms > 0 || prop.groundBaths > 0) {
-              <div class="col-md-4 border-end">
-                <h6 class="fw-bold text-danger small text-uppercase">Ground Floor</h6>
-                <div class="small fw-bold">{{ prop.groundRooms }} Rooms | {{ prop.groundBaths }} Baths</div>
-                <div class="small text-muted">{{ prop.groundReception }} Reception Pcs</div>
-              </div>
-            }
-            @if (prop.firstRooms > 0 || prop.firstBaths > 0) {
-              <div class="col-md-4 border-end">
-                <h6 class="fw-bold text-danger small text-uppercase">First Floor</h6>
-                <div class="small fw-bold">{{ prop.firstRooms }} Rooms | {{ prop.firstBaths }} Baths</div>
-                <div class="small text-muted">{{ prop.firstReception }} Reception Pcs</div>
-              </div>
-            }
-            @if (prop.secondRooms > 0 || prop.secondBaths > 0) {
-              <div class="col-md-4">
-                <h6 class="fw-bold text-danger small text-uppercase">Second Floor</h6>
-                <div class="small fw-bold">{{ prop.secondRooms }} Rooms | {{ prop.secondBaths }} Baths</div>
-                <div class="small text-muted">{{ prop.secondReception }} Reception Pcs</div>
+          <h5 class="fw-bold mb-4 border-bottom pb-2"><i class="bi bi-layers-half me-2 text-danger"></i>{{ prop.propertyType === 'FullBuilding' ? 'Building' : 'Villa' }} Layout</h5>
+          <div class="row g-3 text-center">
+            @for (floor of villaFloorsOf(prop); track floor.level) {
+              <div class="col-6 col-md-4">
+                <div class="border rounded-3 p-3 h-100">
+                  <h6 class="fw-bold text-danger small text-uppercase">{{ floorLabel(floor.level) }} Floor</h6>
+                  <div class="small fw-bold">{{ floor.rooms }} Rooms | {{ floor.baths }} Baths</div>
+                  @if (floor.reception > 0) {
+                    <div class="small text-muted">{{ floor.reception }} Reception Pcs</div>
+                  }
+                </div>
               </div>
             }
           </div>
         </div>
       }
 
-      @if (prop.propertyType === 'Villa') {
+      @if (isVillaLike(prop.propertyType)) {
   <div class="bg-white p-4 rounded-4 shadow-sm border border-light mb-4 animate__animated animate__fadeIn">
     <h5 class="fw-bold mb-4 border-bottom pb-2">
-      <i class="bi bi-info-square me-2 text-danger"></i>Villa Specifications
+      <i class="bi bi-info-square me-2 text-danger"></i>{{ prop.propertyType === 'FullBuilding' ? 'Building' : 'Villa' }} Specifications
     </h5>
     
     <div class="row g-4 text-center">
@@ -278,6 +289,53 @@
   </div>
 }
 
+      <!-- 🟢 كارت الدفع (Payment) - لوحده قبل Property Specifications -->
+      <div class="bg-white p-4 rounded-4 shadow-sm border border-light mb-4">
+        <h5 class="fw-bold mb-4 border-bottom pb-2"><i class="bi bi-cash-coin me-2 text-danger"></i>{{ prop.listingType === 'Rent' ? 'Rental Terms' : 'Payment' }}</h5>
+        <div class="p-3 rounded-3 bg-danger-subtle border border-danger border-opacity-10 shadow-sm">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-wallet2 fs-4 text-danger me-3"></i>
+            <div>
+              @if (prop.listingType === 'Rent') {
+                <h6 class="mb-0 fw-bold">Rental Terms</h6>
+                @if (prop.securityDeposit > 0) { <small class="text-danger fw-bold">Security Deposit: {{ currencyService.format(prop.securityDeposit) }}</small> }
+              } @else {
+                <h6 class="mb-2 fw-bold">Payment Plan: {{ prop.paymentMethod }}</h6>
+                
+                @if (prop.paymentMethod === 'Installment') {
+                   <div class="mt-2">
+                     <!-- 🟢 عرض كل خطط الدفع المتاحة -->
+                     @for(plan of prop.paymentPlans; track $index; let i = $index) {
+                        <div class="bg-white p-3 rounded-4 border mb-2 shadow-sm position-relative">
+                           <span class="position-absolute top-0 end-0 badge bg-danger rounded-bottom-4 px-2 py-1 m-2" style="font-size: 0.6rem;">Plan {{ i + 1 }}</span>
+                           
+                           <div class="row g-2 mt-1">
+                             <div class="col-6">
+                               <small class="d-block text-dark fw-bold" style="font-size: 0.65rem;">DOWN PAYMENT</small>
+                               <span class="text-dark fs-6">{{ currencyService.format(plan.downPayment) }}</span>
+                             </div>
+                             <div class="col-6">
+                               <small class="d-block text-muted fw-bold" style="font-size: 0.65rem;">DURATION</small>
+                               <span class="fw-bold text-dark fs-6">{{ plan.installmentYears }} Years</span>
+                             </div>
+                             <div class="col-12 mt-2 pt-2 border-top">
+                               <small class="d-block text-success fw-bold text-uppercase" style="font-size: 0.65rem;">{{ plan.frequency || 'Quarterly' }} Installment</small>
+                               <span class="text-success fs-6">{{ currencyService.format(plan.installmentAmount) }}</span>
+                             </div>
+                           </div>
+                        </div>
+                     }
+                   </div>
+                } @else {
+                    <small class="text-muted d-block border p-3 rounded-3 bg-white mt-2">Full cash payment required.</small>
+                }
+              }
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- كارت المواصفات الفنية -->
       <div class="bg-white p-4 rounded-4 shadow-sm border border-light mb-4">
         <h5 class="fw-bold mb-4 border-bottom pb-2">Property Specifications</h5>
@@ -296,7 +354,7 @@
         @if (prop.floor > 0) {
           <li class="mb-3 small"><i class="bi bi-layers text-danger me-2"></i> <strong>Floor:</strong> {{ prop.floor }} @if(prop.totalFloors > 0) { of {{ prop.totalFloors }} }</li>
         }
-       @if (prop.totalFloors > 2 && prop.propertyType !== 'Villa') {
+       @if (prop.totalFloors > 2 && !isVillaLike(prop.propertyType)) {
   <li class="mb-3 small ">
     <strong><i class="bi bi-layers text-danger me-2"></i> Total Floors:</strong> 
     <span>{{ prop.totalFloors }}</span>
@@ -306,7 +364,7 @@
 <!-- 2. عدد الشقق في الدور -->
 <!-- يظهر للمحلات والمكاتب والـ Full Floor فقط لو البروكر كتب رقم أكبر من 0 -->
 <!-- ويختفي تماماً في حالة الفيلا -->
-@if (prop.apartmentsPerFloor > 1 && prop.propertyType !== 'Villa') {
+@if (prop.apartmentsPerFloor > 1 && !isVillaLike(prop.propertyType)) {
   <li class="mb-3 small ">
     <strong><i class="bi bi-people text-danger me-2"></i> Units per floor:</strong> 
     <span>{{ prop.apartmentsPerFloor }}</span>
@@ -357,52 +415,14 @@
             </div>
         }
 
-        <div class="mt-4 p-3 rounded-3 bg-danger-subtle border border-danger border-opacity-10 shadow-sm">
-          <div class="d-flex align-items-center">
-            <i class="bi bi-wallet2 fs-4 text-danger me-3"></i>
-            <div>
-              @if (prop.listingType === 'Rent') {
-                <h6 class="mb-0 fw-bold">Rental Terms</h6>
-                @if (prop.securityDeposit > 0) { <small class="text-danger fw-bold">Security Deposit: {{ currencyService.format(prop.securityDeposit) }}</small> }
-              } @else {
-                <h6 class="mb-2 fw-bold">Payment Plan: {{ prop.paymentMethod }}</h6>
-                
-                @if (prop.paymentMethod === 'Installment') {
-                   <div class="mt-2">
-                     <!-- 🟢 عرض كل خطط الدفع المتاحة -->
-                     @for(plan of prop.paymentPlans; track $index; let i = $index) {
-                        <div class="bg-white p-3 rounded-4 border mb-2 shadow-sm position-relative">
-                           <span class="position-absolute top-0 end-0 badge bg-danger rounded-bottom-4 px-2 py-1 m-2" style="font-size: 0.6rem;">Plan {{ i + 1 }}</span>
-                           
-                           <div class="row g-2 mt-1">
-                             <div class="col-6">
-                               <small class="d-block text-dark fw-bold" style="font-size: 0.65rem;">DOWN PAYMENT</small>
-                               <span class="text-dark fs-6">{{ currencyService.format(plan.downPayment) }}</span>
-                             </div>
-                             <div class="col-6">
-                               <small class="d-block text-muted fw-bold" style="font-size: 0.65rem;">DURATION</small>
-                               <span class="fw-bold text-dark fs-6">{{ plan.installmentYears }} Years</span>
-                             </div>
-                             <div class="col-12 mt-2 pt-2 border-top">
-                               <small class="d-block text-success fw-bold text-uppercase" style="font-size: 0.65rem;">{{ plan.frequency || 'Quarterly' }} Installment</small>
-                               <span class="text-success fs-6">{{ currencyService.format(plan.installmentAmount) }}</span>
-                             </div>
-                           </div>
-                        </div>
-                     }
-                   </div>
-                } @else {
-                    <small class="text-muted d-block border p-3 rounded-3 bg-white mt-2">Full cash payment required.</small>
-                }
-              }
-            </div>
-          </div>
-        </div>
 
-<br>
+        <!-- 🟢 فاصل بين المواصفات والمميزات -->
+        <hr class="my-4">
+
         <!-- قسم المميزات والخدمات (Key Features & Amenities) -->
-<div class="mt-5">
-  <h6 class="fw-bold small text-muted mb-4 " style="letter-spacing: 1px;">Key Features & Amenities</h6>
+<div class="mt-4">
+  
+  <h5 class="fw-bold mb-4  pb-2">Key Features & Amenities</h5>
   
   <div class="row g-3 animate__animated animate__fadeInUp"> <!-- صف لتقسيم المساحة إلى عمودين -->
     
@@ -497,11 +517,11 @@
       </div>
     }
 
-    @if(prop.hasGarden) {
+    @if(prop.hasGarden || prop.gardenArea > 0) {
       <div class="col-md-6">
         <div class="d-flex align-items-center">
           <i class="bi bi-check2-circle text-danger fs-5 me-2"></i>
-          <span class="text-dark fw-medium">Garden Area</span>
+          <span class="text-dark fw-medium">{{ prop.gardenArea > 0 ? 'Garden Area: ' + prop.gardenArea + ' m²' : 'Garden Area' }}</span>
         </div>
       </div>
     }

@@ -1,3 +1,5 @@
+import { VillaFloor } from './villa.floor.model';
+
 export interface Property {
   id: number;
   title: string;
@@ -12,6 +14,7 @@ export interface Property {
   area: number;
   rooms: number;
   bathrooms: number;
+  kitchens?: number;
   city: string;
   ownerName: string;
   ownerPhone: string;
@@ -81,6 +84,9 @@ projectName?: string;
   secondBaths: number;
   secondReception: number;
 
+  // 🟢 أدوار الفيلا الديناميكية (Basement / Ground / First / Second / Third ...)
+  floors?: VillaFloor[];
+
   // أنواع الفيلا والمساحة
   areaType: string;
   villaCategory: string;
@@ -89,6 +95,7 @@ projectName?: string;
   // المميزات الجديدة
   hasPool: boolean;
   hasGarden: boolean;
+  gardenArea?: number;
   paymentPlans?: any
   isApproved: boolean;
 rejectionReason?: string;
