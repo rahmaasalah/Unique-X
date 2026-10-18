@@ -184,7 +184,7 @@
                   @if (prop.villaSubType) { <li><strong>Sub-Type:</strong> {{ prop.villaSubType }}</li> }
                   @for (floor of villaFloorsOf(prop); track floor.level) {
                     <li><i class="bi bi-arrow-return-right text-danger me-1"></i>
-                      <strong>{{ floorLabel(floor.level) }}:</strong> {{ floor.rooms }} Rooms | {{ floor.baths }} Baths
+                      <strong>{{ floorLabel(floor.level) }}:</strong> {{ floor.rooms }} Rooms | {{ floor.baths }} Baths@if (floor.kitchens > 0) { | {{ floor.kitchens }} Kitchens }
                     </li>
                   }
                 </ul>

@@ -6,6 +6,7 @@ export interface VillaFloor {
   rooms: number;
   baths: number;
   reception: number;
+  kitchens: number;
 }
 
 // أقل دور (Basement) وأعلى دور مسموح بإضافته من زرار +
@@ -41,18 +42,19 @@ export function villaFloorsOf(p: any): VillaFloor[] {
       level: toNumber(f.level),
       rooms: toNumber(f.rooms),
       baths: toNumber(f.baths),
-      reception: toNumber(f.reception)
+      reception: toNumber(f.reception),
+      kitchens: toNumber(f.kitchens)
     }));
   } else {
     floors = [
-      { level: 0, rooms: toNumber(p.groundRooms), baths: toNumber(p.groundBaths), reception: toNumber(p.groundReception) },
-      { level: 1, rooms: toNumber(p.firstRooms), baths: toNumber(p.firstBaths), reception: toNumber(p.firstReception) },
-      { level: 2, rooms: toNumber(p.secondRooms), baths: toNumber(p.secondBaths), reception: toNumber(p.secondReception) }
+      { level: 0, rooms: toNumber(p.groundRooms), baths: toNumber(p.groundBaths), reception: toNumber(p.groundReception), kitchens: 0 },
+      { level: 1, rooms: toNumber(p.firstRooms), baths: toNumber(p.firstBaths), reception: toNumber(p.firstReception), kitchens: 0 },
+      { level: 2, rooms: toNumber(p.secondRooms), baths: toNumber(p.secondBaths), reception: toNumber(p.secondReception), kitchens: 0 }
     ];
   }
 
   return floors
-    .filter(f => f.rooms > 0 || f.baths > 0 || f.reception > 0)
+    .filter(f => f.rooms > 0 || f.baths > 0 || f.reception > 0 || f.kitchens > 0)
     .sort((a, b) => a.level - b.level);
 }
 

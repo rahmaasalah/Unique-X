@@ -250,6 +250,9 @@
                 <div class="border rounded-3 p-3 h-100">
                   <h6 class="fw-bold text-danger small text-uppercase">{{ floorLabel(floor.level) }} Floor</h6>
                   <div class="small fw-bold">{{ floor.rooms }} Rooms | {{ floor.baths }} Baths</div>
+                  @if (floor.kitchens > 0) {
+                    <div class="small text-muted">{{ floor.kitchens }} {{ floor.kitchens === 1 ? 'Kitchen' : 'Kitchens' }}</div>
+                  }
                   @if (floor.reception > 0) {
                     <div class="small text-muted">{{ floor.reception }} Reception Pcs</div>
                   }
