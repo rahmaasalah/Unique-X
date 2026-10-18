@@ -114,6 +114,7 @@
                         <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">{{ floorLabel(floor.get('level')?.value) }} Floor</h6>
                         <div class="mb-2"><label class="x-small fw-bold">Rooms</label><input type="text" (input)="formatFloorInteger($event, i, 'rooms')" formControlName="rooms" class="form-control form-control-sm"></div>
                         <div class="mb-2"><label class="x-small fw-bold">Baths</label><input type="text" (input)="formatFloorInteger($event, i, 'baths')" formControlName="baths" class="form-control form-control-sm"></div>
+                        <div class="mb-2"><label class="x-small fw-bold">Kitchens</label><input type="text" (input)="formatFloorInteger($event, i, 'kitchens')" formControlName="kitchens" class="form-control form-control-sm"></div>
                         <div><label class="x-small fw-bold">Reception (Pcs)</label><input type="text" (input)="formatFloorInteger($event, i, 'reception')" formControlName="reception" class="form-control form-control-sm"></div>
                       </div>
                     </div>
@@ -227,12 +228,12 @@
             <h5 class="fw-bold text-dark border-bottom pb-2 mb-4"><i class="bi bi-house-door me-2 text-danger"></i>Unit Specifications</h5>
             
             <div class="row g-3 mb-4 align-items-end">
-              <!-- 🟢 عدد المطابخ (لكل الأنواع) -->
-              <div class="col-md-3">
-                <label class="form-label fw-bold small">Kitchens</label>
-                <input type="text" (input)="formatInteger($event, 'kitchens')" formControlName="kitchens" class="form-control shadow-sm" min="0">
-              </div>
               @if (!isVilla()) {
+                <!-- 🟢 عدد المطابخ (لكل الأنواع ما عدا الفيلا: الفيلا بتحدده لكل دور) -->
+                <div class="col-md-3">
+                  <label class="form-label fw-bold small">Kitchens</label>
+                  <input type="text" (input)="formatInteger($event, 'kitchens')" formControlName="kitchens" class="form-control shadow-sm" min="0">
+                </div>
                 <div class="col-md-3">
                   <label class="form-label fw-bold small">Rooms</label>
                   <input type="text" (input)="formatInteger($event, 'rooms')" formControlName="rooms" class="form-control shadow-sm" min="0">

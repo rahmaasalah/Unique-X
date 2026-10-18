@@ -501,7 +501,8 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
       level: [level],
       rooms: [0],
       baths: [0],
-      reception: [0]
+      reception: [0],
+      kitchens: [0]
     });
   }
 
@@ -1003,7 +1004,10 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
     formData.append('Area', cleanNum(this.isVilla() ? f.landArea : f.area));
     formData.append('Rooms', cleanNum(f.rooms));
     formData.append('Bathrooms', cleanNum(f.bathrooms));
-    formData.append('Kitchens', cleanNum(f.kitchens));
+    // 🟢 الفيلا: عدد المطابخ بيتحدد لكل دور، وإجماليه بيتحسب هنا (والباك إند بيحسبه برضه)
+    formData.append('Kitchens', this.isVilla()
+      ? this.floors.controls.reduce((sum, c) => sum + (Number(cleanNum(c.get('kitchens')?.value)) || 0), 0).toString()
+      : cleanNum(f.kitchens));
     formData.append('ReceptionPieces', cleanNum(f.receptionPieces));
 
     formData.append('BuiltUpArea', cleanNum(f.builtUpArea));
@@ -1023,7 +1027,8 @@ formData.append('LandArea', cleanNum(f.landArea));
         level: Number(c.get('level')?.value),
         rooms: Number(cleanNum(c.get('rooms')?.value)) || 0,
         baths: Number(cleanNum(c.get('baths')?.value)) || 0,
-        reception: Number(cleanNum(c.get('reception')?.value)) || 0
+        reception: Number(cleanNum(c.get('reception')?.value)) || 0,
+        kitchens: Number(cleanNum(c.get('kitchens')?.value)) || 0
       }));
       formData.append('FloorsJson', JSON.stringify(floorsPayload));
     }

@@ -18,6 +18,7 @@ namespace Unique_X.DTOs
         public int Rooms { get; set; }
         public int Baths { get; set; }
         public int Reception { get; set; }
+        public int Kitchens { get; set; }
     }
 
     public class PropertyResponseDto
