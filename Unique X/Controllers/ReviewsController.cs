@@ -33,15 +33,25 @@ namespace Unique_X.Controllers
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
+            // 🟢 الريفيوهات اللي البروكر سجلها من رأي عميل في الـ CRM: بنعرض الاسم الأول للعميل بس (من غير رقم أو بيانات تانية)
+            var leadIds = reviews.Where(r => r.LeadId.HasValue).Select(r => r.LeadId!.Value).Distinct().ToList();
+            var leadNames = leadIds.Count == 0
+                ? new Dictionary<int, string>()
+                : await _context.Leads
+                    .Where(l => leadIds.Contains(l.Id))
+                    .ToDictionaryAsync(l => l.Id, l => l.FullName);
+
             var result = reviews.Select(r => new ReviewResponseDto
             {
                 Id = r.Id,
                 Rating = r.Rating,
                 Comment = r.Comment,
                 CreatedAt = r.CreatedAt,
-                UserName = $"{r.User?.FirstName} {r.User?.LastName}".Trim(),
-                UserType = (r.User != null && r.User.UserType == 1) ? "Broker" : "Client",
-                UserImage = r.User?.ProfileImageUrl,
+                UserName = r.LeadId.HasValue
+                    ? ((leadNames.TryGetValue(r.LeadId.Value, out var leadName) ? (leadName ?? "").Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() : null) ?? "Client")
+                    : $"{r.User?.FirstName} {r.User?.LastName}".Trim(),
+                UserType = r.LeadId.HasValue ? "Client" : ((r.User != null && r.User.UserType == 1) ? "Broker" : "Client"),
+                UserImage = r.LeadId.HasValue ? null : r.User?.ProfileImageUrl,
                 IsOwn = currentUserId != null && r.UserId == currentUserId,
                 CanDelete = isAdmin || (currentUserId != null && r.UserId == currentUserId)
             });
@@ -62,7 +72,7 @@ namespace Unique_X.Controllers
             if (!propertyExists) return NotFound("Property not found");
 
             var existing = await _context.Reviews
-                .FirstOrDefaultAsync(r => r.PropertyId == propertyId && r.UserId == userId);
+                .FirstOrDefaultAsync(r => r.PropertyId == propertyId && r.UserId == userId && r.LeadId == null);
 
             if (existing != null)
             {

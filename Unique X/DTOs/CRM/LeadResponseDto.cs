@@ -65,6 +65,10 @@
         // 🟢 Today / Late / TooLate - محسوبة من أقدم Call/Visit لسه Pending على العميل ده
         public string? LateStatus { get; set; }
 
+        // 🟢 التراكر متجمّد (Owner / Visit scheduled / Follow up after visit / Follow up for closing)
+        public DateTime? TimerFrozenAt { get; set; }
+        public bool IsTimerFrozen => TimerFrozenAt.HasValue;
+
         // 🟢 هل العميل ده اتنقل للبروكر الحالي بواسطة الأدمن (Transfer) في أي وقت؟
         public bool IsTransferredIn { get; set; }
 

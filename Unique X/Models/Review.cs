@@ -26,5 +26,8 @@ namespace Unique_X.Models
         public string Comment { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // 🟢 لو الريفيو ده رأي عميل (Lead) سجله البروكر من الـ CRM بعد ما عرضله الوحدة
+        public int? LeadId { get; set; }
     }
 }

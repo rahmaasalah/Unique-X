@@ -56,7 +56,8 @@ export class EditRequestComponent implements OnInit {
     { id: 11, name: 'Meeting Scheduled' },
     { id: 8, name: 'Follow up After visit' },
     { id: 18, name: 'Follow up for closing' },
-    { id: 19, name: 'Deal closed' }
+    { id: 19, name: 'Deal closed' },
+    { id: 28, name: 'Owner' }
   ];
 
   unqualifiedStages = [

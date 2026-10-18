@@ -28,12 +28,30 @@
         // (TooLate = بادج تحذيري بس، الرقم ده هو اللي فعليًا بيحرك LeadAutoReassignmentService)
         public const double UnassignThresholdHours = 72;
 
+        // 🟢 الحالات اللي التراكر بيتجمّد فيها (مفيش Late / Too Late / سحب تلقائي وهو في أي واحدة منهم):
+        //   7  = Visit scheduled
+        //   8  = Follow up After visit
+        //   18 = Follow up for closing
+        //   28 = Owner
+        public const int OwnerStatusId = 28;
+        private static readonly HashSet<int> FrozenStatusIds = new() { 7, 8, 18, OwnerStatusId };
+
+        public static bool IsFrozenStatus(int statusId) => FrozenStatusIds.Contains(statusId);
+
+        // الوقت اللي عدى على آخر أكشن. لو التراكر متجمّد بنحسب لحد لحظة التجميد بس (مش لحد دلوقتي).
+        // لو حصل أكشن جديد وهو متجمّد (UpdatedAt بعد وقت التجميد) بيتحسب صفر.
+        public static double ElapsedHours(DateTime? updatedAt, DateTime createdAt, DateTime now, DateTime? frozenAt = null)
+        {
+            var lastAction = updatedAt ?? createdAt;
+            var end = frozenAt ?? now;
+            return Math.Max(0, (end - lastAction).TotalHours);
+        }
+
         // بيرجع "Active" / "Late" / "TooLate"
-        public static string GetLateStatus(DateTime? updatedAt, DateTime createdAt, DateTime? nowUtc = null)
+        public static string GetLateStatus(DateTime? updatedAt, DateTime createdAt, DateTime? nowUtc = null, DateTime? frozenAt = null)
         {
             var now = nowUtc ?? DateTime.UtcNow;
-            var lastAction = updatedAt ?? createdAt;
-            var hoursSinceAction = (now - lastAction).TotalHours;
+            var hoursSinceAction = ElapsedHours(updatedAt, createdAt, now, frozenAt);
 
             if (hoursSinceAction >= TooLateThresholdHours) return "TooLate";
             if (hoursSinceAction >= LateThresholdHours) return "Late";

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Unique_X.Helpers;
 using Unique_X.Models;
 using Unique_X.Models.Authorization;
 
@@ -37,6 +38,7 @@ namespace Unique_X.Data
         public DbSet<Shortlist> Shortlists { get; set; }
         public DbSet<VisitList> VisitLists { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<LeadShownProperty> LeadShownProperties { get; set; }
         public DbSet<BrokerNotification> BrokerNotifications { get; set; }
         public DbSet<ProjectMeetingRequest> ProjectMeetingRequests { get; set; }
         public DbSet<Launch> Launches { get; set; }
@@ -121,6 +123,11 @@ namespace Unique_X.Data
             builder.Entity<Property>()
                 .HasIndex(p => p.ProjectName);
 
+            // 🟢 الوحدة بتتعرض على نفس العميل مرة واحدة بس (والفيدباك بيتحدث على نفس السطر)
+            builder.Entity<LeadShownProperty>()
+                .HasIndex(s => new { s.LeadId, s.PropertyId })
+                .IsUnique();
+
 
 
             builder.Entity<Property>()
@@ -190,6 +197,76 @@ namespace Unique_X.Data
                 .HasForeignKey(l => l.BrokerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+        }
+
+        // ============================================================
+        // 🟢 تجميد تراكر الـ Late / Too Late لما حالة العميل تدخل أو تخرج من الحالات المجمّدة
+        // (Owner / Visit scheduled / Follow up after visit / Follow up for closing)
+        //   - دخول حالة مجمّدة: التراكر بيقف عند الوقت اللي كان وصله (بدون تصفير)
+        //   - خروج لحالة عادية: التراكر بيكمل من نفس المكان اللي وقف عنده
+        //   - من حالة عادية لحالة عادية: زي الأول (أي أكشن بيصفّر التراكر)
+        // الحساب هنا في SaveChanges عشان يشتغل مع كل الأماكن اللي بتغيّر LeadStatusId من غير ما نعدّل كل واحد فيهم
+        // ============================================================
+        private void ApplyLeadTimerFreeze()
+        {
+            ChangeTracker.DetectChanges();
+            var now = DateTime.UtcNow;
+
+            foreach (var entry in ChangeTracker.Entries<Lead>())
+            {
+                var lead = entry.Entity;
+
+                if (entry.State == EntityState.Added)
+                {
+                    if (LeadTrackerHelper.IsFrozenStatus(lead.LeadStatusId))
+                        lead.TimerFrozenAt = now;
+                    continue;
+                }
+
+                if (entry.State != EntityState.Modified) continue;
+
+                var statusProp = entry.Property(l => l.LeadStatusId);
+                if (!statusProp.IsModified) continue;
+
+                var oldId = statusProp.OriginalValue;
+                var newId = statusProp.CurrentValue;
+                if (oldId == newId) continue;
+
+                bool wasFrozen = LeadTrackerHelper.IsFrozenStatus(oldId);
+                bool willFreeze = LeadTrackerHelper.IsFrozenStatus(newId);
+                if (!wasFrozen && !willFreeze) continue;
+
+                var originalUpdatedAt = entry.Property(l => l.UpdatedAt).OriginalValue;
+                var originalFrozenAt = entry.Property(l => l.TimerFrozenAt).OriginalValue;
+
+                // الوقت اللي كان عدّى قبل تغيير الحالة دي (قبل ما الأكشن يصفّر UpdatedAt)
+                var elapsed = TimeSpan.FromHours(
+                    LeadTrackerHelper.ElapsedHours(originalUpdatedAt, lead.CreatedAt, now, originalFrozenAt));
+
+                if (willFreeze)
+                {
+                    var frozenAt = originalFrozenAt ?? now;
+                    lead.TimerFrozenAt = frozenAt;
+                    lead.UpdatedAt = frozenAt - elapsed;
+                }
+                else
+                {
+                    lead.TimerFrozenAt = null;
+                    lead.UpdatedAt = now - elapsed;
+                }
+            }
+        }
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            ApplyLeadTimerFreeze();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            ApplyLeadTimerFreeze();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         }
     }
 }

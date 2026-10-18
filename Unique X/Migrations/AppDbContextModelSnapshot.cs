@@ -1261,6 +1261,9 @@ namespace Unique_X.Migrations
                     b.Property<string>("ReferredBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("TimerFrozenAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("UnassignedAt")
                         .HasColumnType("datetime2");
 
@@ -1458,6 +1461,39 @@ namespace Unique_X.Migrations
                     b.HasIndex("LeadId");
 
                     b.ToTable("LeadRequests");
+                });
+
+            modelBuilder.Entity("Unique_X.Models.LeadShownProperty", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("LeadId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ReviewId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ShownAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ShownByBrokerId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("LeadId", "PropertyId")
+                        .IsUnique();
+
+                    b.ToTable("LeadShownProperties");
                 });
 
             modelBuilder.Entity("Unique_X.Models.LeadStatus", b =>
@@ -2022,6 +2058,9 @@ namespace Unique_X.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("LeadId")
+                        .HasColumnType("int");
+
                     b.Property<int>("PropertyId")
                         .HasColumnType("int");
 
@@ -2423,6 +2462,25 @@ namespace Unique_X.Migrations
                         .IsRequired();
 
                     b.Navigation("Lead");
+                });
+
+            modelBuilder.Entity("Unique_X.Models.LeadShownProperty", b =>
+                {
+                    b.HasOne("Unique_X.Models.Lead", "Lead")
+                        .WithMany()
+                        .HasForeignKey("LeadId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Unique_X.Models.Property", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lead");
+
+                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("Unique_X.Models.LeadStatusHistory", b =>
