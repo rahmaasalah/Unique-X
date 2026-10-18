@@ -166,6 +166,19 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
     return this.http.put(`${this.apiUrl}/leads/${leadId}/mark-proposed/${propertyId}`, {});
   }
 
+  // 🟢 الوحدات اللي اتعرضت على العميل + رأيه فيها
+  getShownProperties(leadId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/leads/${leadId}/shown-properties`);
+  }
+
+  markPropertyShown(leadId: number, propertyId: number, brokerId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/leads/${leadId}/shown-properties/${propertyId}?brokerId=${encodeURIComponent(brokerId)}`, {});
+  }
+
+  addShownPropertyFeedback(leadId: number, propertyId: number, dto: { rating: number; comment: string; brokerId: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/leads/${leadId}/shown-properties/${propertyId}/feedback`, dto);
+  }
+
   // رفع ملف CSV
   uploadBulkLeads(file: File, brokerId: string): Observable<any> {
     const formData = new FormData();

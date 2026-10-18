@@ -74,6 +74,15 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
 
   recommendations = signal<any[]>([]); // لتخزين العقارات المرشحة
 
+  // 🟢 الوحدات اللي اتعرضت على العميل + رأيه فيها
+  shownProperties = signal<any[]>([]);
+  pendingShown = signal<{ id: number; code: string } | null>(null); // سؤال "هل عرضتها على العميل؟"
+  private pendingClick: { id: number; code: string; at: number } | null = null;
+  feedbackTarget = signal<any | null>(null);
+  feedbackRating = 0;
+  feedbackComment = '';
+  isSavingFeedback = signal(false);
+
   // الفورمز
   visitForm!: FormGroup;
   activityForm!: FormGroup;
@@ -93,7 +102,7 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
     { id: 16, name: 'Follow up for event' }, { id: 17, name: 'Follow up after event' }, { id: 18, name: 'Follow up for closing' },
     { id: 19, name: 'Deal closed' }, { id: 20, name: 'Follow up, not now' }, { id: 21, name: 'N/A "unreachable"' },
     { id: 22, name: 'Lost Not interested' }, { id: 23, name: 'Low Budget' }, { id: 24, name: 'Number Issue' },
-    { id: 25, name: 'Broker' }, { id: 26, name: 'Recommend to shift' }
+    { id: 25, name: 'Broker' }, { id: 26, name: 'Recommend to shift' }, { id: 28, name: 'Owner' }
   ];
 
   // 🟢 الحالات اللي بتظهر لو البروكر دوس Qualified
@@ -106,7 +115,8 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
     { id: 11, name: 'Meeting Scheduled' },
     { id: 8, name: 'Follow up After visit' },
     { id: 18, name: 'Follow up for closing' },
-    { id: 19, name: 'Deal closed' }
+    { id: 19, name: 'Deal closed' },
+    { id: 28, name: 'Owner' }
   ];
 
   // 🟢 الحالات اللي بتظهر لو البروكر دوس Unqualified
@@ -533,6 +543,16 @@ export class LeadDetailsComponent implements OnInit, CanComponentDeactivate {
     this.crmService.getLeadRecommendations(id).subscribe({
       next: (recs) => { this.recommendations.set(recs); this.cdr.markForCheck(); },
       error: (err) => console.error('Error fetching recommendations', err)
+    });
+
+    this.loadShownProperties();
+  }
+
+  loadShownProperties() {
+    if (!this.leadId) return;
+    this.crmService.getShownProperties(this.leadId).subscribe({
+      next: (list) => { this.shownProperties.set(list); this.cdr.markForCheck(); },
+      error: (err) => console.error('Error fetching shown properties', err)
     });
   }
 
@@ -991,14 +1011,69 @@ isAdminAction(item: any): boolean {
     const baseUrl = window.location.origin;
     window.open(`${baseUrl}/property-details/${prop.id}`, '_blank');
 
-    // 2. لو مكنش متداس عليه قبل كده، هنعلم عليه في الداتابيز ونلونه أخضر
-    if (!prop.isProposed) {
-      prop.isProposed = true; // تحويل وهمي سريع للعين
-      
-      this.crmService.markPropertyAsProposed(this.leadId, prop.id).subscribe({
-        error: () => prop.isProposed = false // نرجعه لو حصل إيرور
-      });
-    }
+    // 2. لما البروكر يرجع للصفحة هنسأله: هل عرضتها على العميل؟
+    this.pendingClick = { id: prop.id, code: prop.code, at: Date.now() };
+  }
+
+  // 🟢 البروكر رجع للصفحة بعد ما فتح وحدة: نسأله هل عرضها على العميل
+  @HostListener('window:focus')
+  @HostListener('document:visibilitychange')
+  askIfShown() {
+    if (!this.pendingClick || document.visibilityState !== 'visible') return;
+    if (Date.now() - this.pendingClick.at < 2000) return; // لسه فاتح التاب الجديد
+    if (this.pendingShown()) return;
+
+    this.pendingShown.set({ id: this.pendingClick.id, code: this.pendingClick.code });
+    this.pendingClick = null;
+    this.cdr.markForCheck();
+  }
+
+  answerShown(shown: boolean) {
+    const p = this.pendingShown();
+    this.pendingShown.set(null);
+    if (!p || !shown) return;
+
+    this.crmService.markPropertyShown(this.leadId, p.id, this.currentBrokerId).subscribe({
+      next: () => {
+        this.recommendations.update(list => list.map(r => r.id === p.id ? { ...r, isProposed: true } : r));
+        this.loadShownProperties();
+      },
+      error: () => this.alertService.error('Could not save this property as shown. Please try again.')
+    });
+  }
+
+  openFeedback(item: any) {
+    this.feedbackTarget.set(item);
+    this.feedbackRating = item.feedback?.rating ?? 0;
+    this.feedbackComment = item.feedback?.comment ?? '';
+  }
+
+  closeFeedback() {
+    this.feedbackTarget.set(null);
+  }
+
+  saveFeedback() {
+    const target = this.feedbackTarget();
+    const comment = this.feedbackComment.trim();
+    if (!target || this.feedbackRating < 1 || !comment) return;
+
+    this.isSavingFeedback.set(true);
+    this.crmService.addShownPropertyFeedback(this.leadId, target.propertyId, {
+      rating: this.feedbackRating,
+      comment,
+      brokerId: this.currentBrokerId
+    }).subscribe({
+      next: () => {
+        this.isSavingFeedback.set(false);
+        this.feedbackTarget.set(null);
+        this.alertService.success('Client feedback saved and added to the property reviews.');
+        this.loadShownProperties();
+      },
+      error: () => {
+        this.isSavingFeedback.set(false);
+        this.alertService.error('Could not save the feedback. Please try again.');
+      }
+    });
   }
   
 }

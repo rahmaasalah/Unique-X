@@ -197,6 +197,7 @@ namespace Unique_X.Controllers.CRM
                     ReferredBy = l.ReferredBy ?? "",
                     CreatedAt = l.CreatedAt,
                     UpdatedAt = l.UpdatedAt ?? l.CreatedAt,
+                    TimerFrozenAt = l.TimerFrozenAt,
                     IsDuplicate = l.IsDuplicate,
                     IsApprovedDuplicate = l.IsApprovedDuplicate,
 
@@ -229,7 +230,7 @@ namespace Unique_X.Controllers.CRM
             var nowUtc = DateTime.UtcNow;
             foreach (var l in leads)
             {
-                l.LateStatus = LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc);
+                l.LateStatus = LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc, l.TimerFrozenAt);
             }
 
             var brokerLeadIds = await _context.Leads

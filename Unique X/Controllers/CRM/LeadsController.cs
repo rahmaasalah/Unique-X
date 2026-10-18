@@ -122,6 +122,7 @@ namespace Unique_X.Controllers.CRM
 
                 // 👇 ده السطر اللي بيجيب تاريخ آخر تعديل، ولو مفيش بيجيب تاريخ الإنشاء
                 UpdatedAt = l.UpdatedAt ?? l.CreatedAt,
+                TimerFrozenAt = l.TimerFrozenAt,
                 LastActionBy = l.LastActionBy ?? "broker",
                 IsRejectedDuplicate = l.IsRejectedDuplicate,
 
@@ -184,7 +185,7 @@ namespace Unique_X.Controllers.CRM
 
             foreach (var l in leads)
             {
-                l.LateStatus = LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc);
+                l.LateStatus = LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc, l.TimerFrozenAt);
                 l.IsTransferredIn = transferredInLeadIds.Contains(l.Id);
             }
 
@@ -677,7 +678,9 @@ namespace Unique_X.Controllers.CRM
                     UpdatedAt = lead.UpdatedAt ?? lead.CreatedAt,
                     // 🟢 نفس التراكر الموحّد المستخدم في قايمة الـ Leads وشاشة broker-profile - عشان البادج
                     // يبقى ظاهر جوه صفحة تفاصيل العميل نفسها (لصاحب العميل وللأدمن) مش بس في الليست
-                    LateStatus = LeadTrackerHelper.GetLateStatus(lead.UpdatedAt, lead.CreatedAt)
+                    LateStatus = LeadTrackerHelper.GetLateStatus(lead.UpdatedAt, lead.CreatedAt, null, lead.TimerFrozenAt),
+                    // 🟢 التراكر متجمّد في حالات (Owner / Visit scheduled / Follow up after visit / Follow up for closing)
+                    IsTimerFrozen = lead.TimerFrozenAt != null
                 },
                 RequestDetails = new
                 {
@@ -1022,17 +1025,51 @@ namespace Unique_X.Controllers.CRM
             if (request.MinBathrooms.HasValue) query = query.Where(p => p.Bathrooms >= request.MinBathrooms.Value);
             if (request.MaxBathrooms.HasValue) query = query.Where(p => p.Bathrooms <= request.MaxBathrooms.Value);
 
-            var recommendations = await query
+            var props = await query
+                .AsNoTracking()
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(12)
-                .Select(p => new {
+                .ToListAsync();
+
+            // 🟢 الوحدات اللي اتعرضت فعلاً على العميل (بتتلون أخضر)
+            var shownIds = await _context.LeadShownProperties
+                .Where(s => s.LeadId == id)
+                .Select(s => s.PropertyId)
+                .ToListAsync();
+
+            var recommendations = props.Select(p =>
+            {
+                int rooms = p.Rooms;
+                int baths = p.Bathrooms;
+
+                // 🟢 الفيلا / Full Building: الغرف والحمامات بتتجمع من كل الأدوار
+                if (VillaFloorsHelper.IsVillaLike(p.PropertyType))
+                {
+                    var floors = VillaFloorsHelper.ToResponse(p);
+                    if (floors.Count > 0)
+                    {
+                        rooms = floors.Sum(f => f.Rooms);
+                        baths = floors.Sum(f => f.Baths);
+                    }
+                }
+
+                var pricePerMeter = p.PricePerMeter > 0
+                    ? p.PricePerMeter
+                    : (p.Area > 0 ? Math.Round(p.Price / p.Area, 0) : 0m);
+
+                return new
+                {
                     Id = p.Id,
                     Code = p.Code ?? ("PROP-" + p.Id),
                     Title = p.Title,
                     Price = p.Price,
-                    IsProposed = proposedIds.Contains(p.Id.ToString())
-                })
-                .ToListAsync();
+                    Rooms = rooms,
+                    Bathrooms = baths,
+                    Area = p.Area,
+                    PricePerMeter = pricePerMeter,
+                    IsProposed = proposedIds.Contains(p.Id.ToString()) || shownIds.Contains(p.Id)
+                };
+            }).ToList();
 
             return Ok(recommendations);
         }

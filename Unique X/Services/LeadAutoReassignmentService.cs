@@ -74,7 +74,7 @@ namespace Unique_X.Services
             // عدى عليه 72 ساعة - مش شرط يكون عندهم Activity أو Visit مجدولة أصلاً، أي عميل ساكت لـ 72 ساعة بيتسحب
             // (الـ TooLate بادج بيظهر عند 48 ساعة كتحذير، بس السحب الفعلي بيحصل عند 72)
             var leadsToUnassign = await context.Leads
-                .Where(l => !l.IsUnassigned && (l.UpdatedAt ?? l.CreatedAt) <= unassignCutoff)
+                .Where(l => !l.IsUnassigned && l.TimerFrozenAt == null && (l.UpdatedAt ?? l.CreatedAt) <= unassignCutoff)
                 .ToListAsync(stoppingToken);
 
             if (!leadsToUnassign.Any())

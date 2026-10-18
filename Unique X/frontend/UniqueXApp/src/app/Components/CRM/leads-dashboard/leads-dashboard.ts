@@ -495,6 +495,7 @@ const matchCampCode = campCode === '' || lead.campaignName === campCode;
       { id: 18, name: 'Follow up for closing', leads: [] as any[] },
 
       { id: 19, name: 'Deal closed', leads: [] as any[] },
+      { id: 28, name: 'Owner', leads: [] as any[] },
 
       { id: 23, name: 'Low Budget', leads: [] as any[] },
 

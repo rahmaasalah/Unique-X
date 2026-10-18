@@ -29,6 +29,11 @@
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
+
+        // 🟢 لو التراكر (Late/Too Late) متجمّد: وقت ما اتجمّد. null = التراكر شغال عادي.
+        // بيتجمّد لما حالة العميل تبقى (Owner / Visit scheduled / Follow up after visit / Follow up for closing)
+        // وبيكمل من مكان ما وقف لما الحالة تتغير لأي حاجة تانية - شوفي LeadTrackerHelper و AppDbContext.SaveChanges
+        public DateTime? TimerFrozenAt { get; set; }
         public string? LastActionBy { get; set; } // "broker" or "admin"
 
 

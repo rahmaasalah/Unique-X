@@ -89,14 +89,14 @@ namespace Unique_X.Controllers
             {
                 var brokerLeads = await _context.Leads
                     .Where(l => l.BrokerId == broker.Id && !l.IsUnassigned)
-                    .Select(l => new { l.Id, l.FullName, l.PhoneNumber, l.UpdatedAt, l.CreatedAt })
+                    .Select(l => new { l.Id, l.FullName, l.PhoneNumber, l.UpdatedAt, l.CreatedAt, l.TimerFrozenAt })
                     .ToListAsync();
 
                 var lateClients = brokerLeads
-                    .Where(l => LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc) == "Late")
+                    .Where(l => LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc, l.TimerFrozenAt) == "Late")
                     .Select(l => new { l.Id, l.FullName, l.PhoneNumber, lateStatus = "Late" }).ToList();
                 var tooLateClients = brokerLeads
-                    .Where(l => LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc) == "TooLate")
+                    .Where(l => LeadTrackerHelper.GetLateStatus(l.UpdatedAt, l.CreatedAt, nowUtc, l.TimerFrozenAt) == "TooLate")
                     .Select(l => new { l.Id, l.FullName, l.PhoneNumber, lateStatus = "TooLate" }).ToList();
                 var transferredInCount = brokerLeads.Count(l => transferredInLeadIds.Contains(l.Id));
 
