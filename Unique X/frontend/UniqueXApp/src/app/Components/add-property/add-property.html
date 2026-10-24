@@ -575,6 +575,7 @@
   <option value="Annual">Annual</option>
   <option value="Semi-Annual">Semi-Annual</option>
   <option value="Quarterly">Quarterly</option>
+  <option value="Back-Loaded">Back-Loaded Payment Plan</option>
 </select>
             
             <div class="col-md-3">
@@ -616,9 +617,49 @@
   <small class="text-muted">
     @if (plan.get('frequency')?.value === 'Quarterly') { Quarterly installment }
     @else if (plan.get('frequency')?.value === 'Semi-Annual') { Semi-annual installment }
+    @else if (plan.get('frequency')?.value === 'Back-Loaded') { Yearly installment (total) }
     @else { Annual installment }
   </small>
 </div>
+
+            <!-- 🟢 Back-Loaded: نسبة شهرية + نسبة سنوية من القسط السنوي (نفس الحاسبة) -->
+            @if (plan.get('frequency')?.value === 'Back-Loaded') {
+              <div class="col-12 col-md-3">
+                <label class="small fw-bold text-dark">Monthly Payment %</label>
+                <div class="input-group">
+                  <input type="text" inputmode="decimal" (input)="onBackLoadedPercentChange($event, i, 'monthlyPercentage')" formControlName="monthlyPercentage" class="form-control shadow-sm" placeholder="e.g. 40">
+                  <span class="input-group-text bg-white">%</span>
+                </div>
+                <small class="text-muted">of the yearly installment, paid over {{ backLoadedMonths }} months</small>
+              </div>
+
+              <div class="col-12 col-md-3">
+                <label class="small fw-bold text-dark">Annual Payment %</label>
+                <div class="input-group">
+                  <input type="text" inputmode="decimal" (input)="onBackLoadedPercentChange($event, i, 'annualPercentage')" formControlName="annualPercentage" class="form-control shadow-sm" placeholder="e.g. 60">
+                  <span class="input-group-text bg-white">%</span>
+                </div>
+                <small class="text-muted">of the yearly installment, paid once a year</small>
+              </div>
+
+              <div class="col-12 col-md-3">
+                <label class="small fw-bold text-dark">Monthly Payment</label>
+                <div class="input-group">
+                  <span class="input-group-text">EGP</span>
+                  <input type="text" class="form-control bg-light" formControlName="monthlyAmount" placeholder="Auto-calculated" readonly>
+                </div>
+                <small class="text-muted">× {{ backLoadedMonths }} months each year</small>
+              </div>
+
+              <div class="col-12 col-md-3">
+                <label class="small fw-bold text-dark">Annual Payment</label>
+                <div class="input-group">
+                  <span class="input-group-text">EGP</span>
+                  <input type="text" class="form-control bg-light" formControlName="annualAmount" placeholder="Auto-calculated" readonly>
+                </div>
+                <small class="text-muted">once a year</small>
+              </div>
+            }
             
           </div>
         }

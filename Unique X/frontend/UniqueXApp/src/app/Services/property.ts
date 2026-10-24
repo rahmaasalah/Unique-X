@@ -119,7 +119,8 @@ getProjectsList(type?: number, city?: number): Observable<any[]> {
   const params: string[] = [];
   if (type !== undefined && type !== null) params.push(`type=${type}`);
   if (city !== undefined && city !== null) params.push(`city=${city}`);
-  if (params.length) url += `?${params.join('&')}`;
+  params.push(`_t=${Date.now()}`); // منع الكاش عشان المشاريع الجديدة تظهر فورًا
+  url += `?${params.join('&')}`;
   return this.http.get<any[]>(url);
 }
 

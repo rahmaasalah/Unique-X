@@ -178,7 +178,11 @@ namespace Unique_X.Services.Implementation
                         InstallmentYears = plan.InstallmentYears,
                         DownPayment = plan.DownPayment,
                         QuarterInstallment = plan.InstallmentAmount,
-                        Frequency = string.IsNullOrEmpty(plan.Frequency) ? "Quarterly" : plan.Frequency
+                        Frequency = string.IsNullOrEmpty(plan.Frequency) ? "Quarterly" : plan.Frequency,
+                        MonthlyPercentage = IsBackLoaded(plan) ? plan.MonthlyPercentage : null,
+                        AnnualPercentage = IsBackLoaded(plan) ? plan.AnnualPercentage : null,
+                        MonthlyAmount = IsBackLoaded(plan) ? plan.MonthlyAmount : null,
+                        AnnualAmount = IsBackLoaded(plan) ? plan.AnnualAmount : null
 
                     });
                 }
@@ -648,7 +652,11 @@ namespace Unique_X.Services.Implementation
                         InstallmentYears = plan.InstallmentYears,
                         DownPayment = plan.DownPayment,
                         QuarterInstallment = plan.InstallmentAmount,
-                        Frequency = string.IsNullOrEmpty(plan.Frequency) ? "Quarterly" : plan.Frequency
+                        Frequency = string.IsNullOrEmpty(plan.Frequency) ? "Quarterly" : plan.Frequency,
+                        MonthlyPercentage = IsBackLoaded(plan) ? plan.MonthlyPercentage : null,
+                        AnnualPercentage = IsBackLoaded(plan) ? plan.AnnualPercentage : null,
+                        MonthlyAmount = IsBackLoaded(plan) ? plan.MonthlyAmount : null,
+                        AnnualAmount = IsBackLoaded(plan) ? plan.AnnualAmount : null
                     });
                 }
             }
@@ -734,6 +742,10 @@ namespace Unique_X.Services.Implementation
         //   - HasGarden بيتحدد من مساحة الحديقة (GardenArea > 0)
         //   - المساحة الأساسية (Area) = مساحة الأرض (LandArea)، فكل الحسابات (السعر الكلي / سعر المتر / الفلاتر) بتتبني عليها
         // أي نوع تاني غير الفيلا: مساحة الحديقة بتتمسح
+        // 🟢 خطة الدفع Back-Loaded (جزء شهري على 11 شهر + جزء سنوي من القسط السنوي)
+        private static bool IsBackLoaded(PaymentPlanDto plan) =>
+            string.Equals(plan.Frequency, "Back-Loaded", StringComparison.OrdinalIgnoreCase);
+
         private static void ApplyVillaRules(Property property, string? floorsJson)
         {
             if (VillaFloorsHelper.IsVillaLike(property.PropertyType))
@@ -859,7 +871,11 @@ namespace Unique_X.Services.Implementation
                     InstallmentYears = p.InstallmentYears,
                     DownPayment = p.DownPayment,
                     InstallmentAmount = p.QuarterInstallment,
-                    Frequency = p.Frequency ?? "Quarterly"
+                    Frequency = p.Frequency ?? "Quarterly",
+                    MonthlyPercentage = p.MonthlyPercentage,
+                    AnnualPercentage = p.AnnualPercentage,
+                    MonthlyAmount = p.MonthlyAmount,
+                    AnnualAmount = p.AnnualAmount
                 }).ToList() ?? new List<PaymentPlanDto>(),
 
                 Photos = property.Photos?

@@ -399,7 +399,12 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
     downPayment: [dp],
     frequency: ['Quarterly'],      // ✅ القيمة الافتراضية
     quarterInstallment: [quarter],
-    installmentAmount: ['']        // ✅ أضيفي السطر ده
+    installmentAmount: [''],       // ✅ أضيفي السطر ده
+    // 🟢 Back-Loaded Payment Plan
+    monthlyPercentage: [''],
+    annualPercentage: [''],
+    monthlyAmount: [''],
+    annualAmount: ['']
   });
 }
 
@@ -440,6 +445,48 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
     let pureDigits = input.replace(/[^0-9.]/g, '');
     if ((pureDigits.match(/\./g) ||[]).length > 1) pureDigits = pureDigits.substring(0, pureDigits.length - 1);
     this.paymentPlans.at(index).get(controlName)?.setValue(pureDigits, { emitEvent: false });
+  }
+
+
+  // ================== 🟢 Back-Loaded Payment Plan (نفس الحاسبة اللي في الموقع) ==================
+  // القسط السنوي = (السعر - المقدم) ÷ السنين، وبيتقسم: جزء شهري (على 11 شهر في السنة) وجزء سنوي بالنسب المدخلة
+  readonly backLoadedMonths = 11;
+
+  isBackLoadedPlan(index: number): boolean {
+    return this.paymentPlans.at(index).get('frequency')?.value === 'Back-Loaded';
+  }
+
+  // بيكمّل النسبة التانية لحد 100% (مدخل واحد بس والتاني بيتحسب)
+  onBackLoadedPercentChange(event: any, index: number, field: 'monthlyPercentage' | 'annualPercentage') {
+    const plan = this.paymentPlans.at(index);
+    let v = this.convertArabicToEnglish(event.target.value).replace(/[^0-9.]/g, '');
+    if ((v.match(/\./g) || []).length > 1) v = v.substring(0, v.lastIndexOf('.'));
+    if (Number(v) > 100) v = '100';
+
+    plan.get(field)?.setValue(v, { emitEvent: false });
+    event.target.value = v;
+
+    const other = field === 'monthlyPercentage' ? 'annualPercentage' : 'monthlyPercentage';
+    plan.get(other)?.setValue(v === '' ? '' : String(parseFloat((100 - Number(v)).toFixed(2))), { emitEvent: false });
+
+    this.calculateInstallments(index);
+  }
+
+  // رسالة الخطأ لو خطة Back-Loaded ناقصة أو النسب مش 100%
+  getBackLoadedError(): string | null {
+    for (let i = 0; i < this.paymentPlans.length; i++) {
+      if (!this.isBackLoadedPlan(i)) continue;
+      const plan = this.paymentPlans.at(i);
+      const m = plan.get('monthlyPercentage')?.value ?? '';
+      const a = plan.get('annualPercentage')?.value ?? '';
+      if (m === '' && a === '') {
+        return `Plan ${i + 1}: please enter the monthly % and/or the annual % for the Back-Loaded Payment Plan.`;
+      }
+      if (Math.abs(Number(m || 0) + Number(a || 0) - 100) > 0.001) {
+        return `Plan ${i + 1}: the monthly % and the annual % must add up to 100%.`;
+      }
+    }
+    return null;
   }
 
   // ================== 🟢 دوال الحسابات الذكية ==================
@@ -626,6 +673,25 @@ this.propertyForm.get('monthlyRent')?.valueChanges.subscribe(val => {
     let result = 0;
 
     if (remaining > 0) {
+      // 🟢 Back-Loaded: القسط السنوي الكلي + الجزء الشهري (11 شهر) والجزء السنوي
+      if (frequency === 'Back-Loaded') {
+        const yearly = remaining / years;
+        plan.get('installmentAmount')?.setValue(Math.round(yearly).toLocaleString('en-US'), { emitEvent: false });
+
+        const mRaw = plan.get('monthlyPercentage')?.value ?? '';
+        const aRaw = plan.get('annualPercentage')?.value ?? '';
+        if (mRaw !== '' || aRaw !== '') {
+          const mPct = mRaw !== '' ? Number(mRaw) : 100 - Number(aRaw);
+          const aPct = aRaw !== '' ? Number(aRaw) : 100 - mPct;
+          plan.get('monthlyAmount')?.setValue(this.roundAmount(yearly * (mPct / 100) / this.backLoadedMonths).toLocaleString('en-US'), { emitEvent: false });
+          plan.get('annualAmount')?.setValue(this.roundAmount(yearly * (aPct / 100)).toLocaleString('en-US'), { emitEvent: false });
+        } else {
+          plan.get('monthlyAmount')?.setValue('', { emitEvent: false });
+          plan.get('annualAmount')?.setValue('', { emitEvent: false });
+        }
+        return;
+      }
+
       // الحساب سيعمل بشكل صحيح مع 2.5 سنة (سواء سنوي أو ربع سنوي)
       if (frequency === 'Quarterly') {
         result = (remaining / years) / 4;
@@ -964,6 +1030,13 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
         return;
     }
 
+    // 🟢 خطة Back-Loaded: لازم النسب تكمل 100%
+    const backLoadedError = this.isInstallment() ? this.getBackLoadedError() : null;
+    if (backLoadedError) {
+        this.alertService.error(backLoadedError);
+        return;
+    }
+
     this.isSubmitting = true;
     this.alertService.showLoading('Publishing Listing...');
     
@@ -1070,6 +1143,14 @@ formData.append('LandArea', cleanNum(f.landArea));
 
         formData.append(`PaymentPlans[${index}].InstallmentAmount`, cleanNum(plan.get('installmentAmount')?.value));
     formData.append(`PaymentPlans[${index}].Frequency`, plan.get('frequency')?.value);
+
+        // 🟢 Back-Loaded: النسب والمبالغ الشهرية والسنوية
+        if ((plan.get('frequency')?.value || '') === 'Back-Loaded') {
+          formData.append(`PaymentPlans[${index}].MonthlyPercentage`, cleanNum(plan.get('monthlyPercentage')?.value));
+          formData.append(`PaymentPlans[${index}].AnnualPercentage`, cleanNum(plan.get('annualPercentage')?.value));
+          formData.append(`PaymentPlans[${index}].MonthlyAmount`, cleanNum(plan.get('monthlyAmount')?.value));
+          formData.append(`PaymentPlans[${index}].AnnualAmount`, cleanNum(plan.get('annualAmount')?.value));
+        }
       });
     }
     

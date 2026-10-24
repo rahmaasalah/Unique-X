@@ -77,6 +77,13 @@ export class PropertyCardComponent {
   // 🟢 خطة الدفع الربع سنوية (لو موجودة) — بتُستخدم لعرض "القسط الربع سنوي / عدد السنين" تحت السعر
   // ملحوظة: حقل QuarterInstallment في الموديل هو دايمًا قيمة القسط الربع سنوي بغض النظر عن قيمة Frequency،
   // فبناخد أول خطة دفع موجودة للوحدة من غير ما نفلتر على frequency
+  // 🟢 اسم نوع القسط اللي بيظهر في الكارت (Quarterly / Semi-Annual / Annual / Yearly للـ Back-Loaded)
+  get planFrequencyLabel(): string {
+    const f = this.quarterlyPlan?.frequency;
+    if (f === 'Back-Loaded') return 'Yearly';
+    return f || 'Quarterly';
+  }
+
   get quarterlyPlan(): any {
     const plans = this.property.paymentPlans;
     if (!plans || !plans.length) return null;

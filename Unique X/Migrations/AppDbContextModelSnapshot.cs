@@ -1561,6 +1561,12 @@ namespace Unique_X.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal?>("AnnualAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("AnnualPercentage")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<decimal>("DownPayment")
                         .HasColumnType("decimal(18,2)");
 
@@ -1570,6 +1576,12 @@ namespace Unique_X.Migrations
 
                     b.Property<decimal>("InstallmentYears")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MonthlyAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MonthlyPercentage")
+                        .HasColumnType("decimal(5,2)");
 
                     b.Property<int>("PropertyId")
                         .HasColumnType("int");

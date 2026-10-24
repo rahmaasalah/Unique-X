@@ -152,7 +152,11 @@ namespace Unique_X.Controllers
                     InstallmentYears = p.InstallmentYears,
                     DownPayment = p.DownPayment,
                     InstallmentAmount = p.QuarterInstallment,
-                    Frequency = p.Frequency ?? "Quarterly"
+                    Frequency = p.Frequency ?? "Quarterly",
+                    MonthlyPercentage = p.MonthlyPercentage,
+                    AnnualPercentage = p.AnnualPercentage,
+                    MonthlyAmount = p.MonthlyAmount,
+                    AnnualAmount = p.AnnualAmount
                 }).ToList() ?? new List<PaymentPlanDto>(),
 
                 Photos = property.Photos?

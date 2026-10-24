@@ -866,7 +866,12 @@ namespace Unique_X.Controllers
                     {
                         pl.DownPayment,
                         pl.QuarterInstallment,
-                        pl.InstallmentYears
+                        pl.InstallmentYears,
+                        pl.Frequency,
+                        pl.MonthlyPercentage,
+                        pl.AnnualPercentage,
+                        pl.MonthlyAmount,
+                        pl.AnnualAmount
                     })
                 })
                 .ToListAsync();

@@ -99,7 +99,7 @@
     @if (property.listingType === 'Primary' && property.paymentMethod?.toLowerCase() === 'installment' && quarterlyPlan) {
       <p class="text-dark small mb-1">
         {{ currencyService.format(quarterlyPlan.installmentAmount) }}
-        <span class="text-muted fw-normal">Quarterly</span> / {{ quarterlyPlan.installmentYears }} Years
+        <span class="text-muted fw-normal">{{ planFrequencyLabel }}</span> / {{ quarterlyPlan.installmentYears }} Years
       </p>
     }
 
