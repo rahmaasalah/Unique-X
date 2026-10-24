@@ -389,6 +389,16 @@
       <span class="small fw-semibold text-dark text-center" style="font-size:0.75rem;">Blogs</span>
     </a>
 
+    <!-- 🟢 Property Valuation: تقييم سعر الوحدة للملاك -->
+    <a class="text-decoration-none d-flex flex-column align-items-center quick-link-item" style="width:80px;"
+       routerLink="/valuation" routerLinkActive="quick-link-active" title="Property Valuation">
+      <div class="rounded-circle bg-danger-subtle d-flex align-items-center justify-content-center mb-1 shadow-sm text-danger"
+           style="width:60px;height:60px;">
+        <i class="bi bi-graph-up-arrow fs-4"></i>
+      </div>
+      <span class="small fw-bold text-danger text-center" style="font-size:0.75rem;">Property Valuation</span>
+    </a>
+
     @if (!authService.loggedIn() || authService.getUserType() === 0) {
       <a class="text-decoration-none d-flex flex-column align-items-center quick-link-item" style="width:80px;"
          routerLink="/join-our-team" title="Join Our Team">

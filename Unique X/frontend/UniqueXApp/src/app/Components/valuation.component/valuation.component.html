@@ -1,0 +1,164 @@
+<div class="val-page">
+  <div class="val-header">
+    <h1>Property Valuation</h1>
+    <p>Enter your unit details and get an estimated price based on similar units on Betk.</p>
+  </div>
+
+  <form #f="ngForm" class="val-card" (ngSubmit)="showResult()">
+
+    <h3>Location</h3>
+    <div class="grid">
+      <div class="field">
+        <label>City *</label>
+        <select name="city" [(ngModel)]="model.city" (change)="onCityChange()" required>
+          <option value="" disabled>Select city</option>
+          <option *ngFor="let c of options().cities" [value]="c">{{ label(c) }}</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Region *</label>
+        <input name="region" [(ngModel)]="model.region" list="regions-list"
+               placeholder="Select or type region" [disabled]="!model.city" required />
+        <datalist id="regions-list">
+          <option *ngFor="let r of regions()" [value]="r"></option>
+        </datalist>
+      </div>
+    </div>
+
+    <h3>Unit details</h3>
+    <div class="grid">
+      <div class="field">
+        <label>Property type *</label>
+        <select name="propertyType" [(ngModel)]="model.propertyType" required>
+          <option value="" disabled>Select type</option>
+          <option *ngFor="let t of options().propertyTypes" [value]="t">{{ label(t) }}</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Area (m²) *</label>
+        <input type="number" name="area" [(ngModel)]="model.area" min="20" max="5000" required />
+      </div>
+
+      <div class="field">
+        <label>Finishing *</label>
+        <select name="finishing" [(ngModel)]="model.finishing" required>
+          <option value="" disabled>Select finishing</option>
+          <option *ngFor="let t of options().finishingTypes" [value]="t">{{ label(t) }}</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Delivery status</label>
+        <select name="deliveryStatus" [(ngModel)]="model.deliveryStatus">
+          <option *ngFor="let t of options().deliveryStatuses" [value]="t">{{ label(t) }}</option>
+        </select>
+      </div>
+
+      <!-- تحت الإنشاء: سنة التسليم / جاهزة: سنة البناء -->
+      <div class="field" *ngIf="isUnderConstruction">
+        <label>Delivery year *</label>
+        <input type="number" name="deliveryYear" #dy="ngModel" [(ngModel)]="model.deliveryYear"
+               [min]="minDeliveryYear" [max]="maxDeliveryYear" required
+               [placeholder]="'e.g. ' + (currentYear + 2)" />
+        <small class="field-error" *ngIf="dy.invalid && (dy.dirty || dy.touched)">
+          Delivery year must be between {{ minDeliveryYear }} and {{ maxDeliveryYear }}.
+        </small>
+      </div>
+
+      <div class="field" *ngIf="!isUnderConstruction">
+        <label>Build year</label>
+        <input type="number" name="buildYear" [(ngModel)]="model.buildYear"
+               min="1950" [max]="currentYear" placeholder="e.g. 2015" />
+      </div>
+
+      <div class="field">
+        <label>Floor (0 = ground)</label>
+        <input type="number" name="floor" [(ngModel)]="model.floor" min="0" max="100" />
+      </div>
+
+      <div class="field">
+        <label>Building floors</label>
+        <input type="number" name="totalFloors" [(ngModel)]="model.totalFloors"
+               min="1" max="100" placeholder="e.g. 8" />
+        <small class="field-error" *ngIf="floorError">
+          Floor cannot be higher than the number of building floors.
+        </small>
+      </div>
+
+      <div class="field">
+        <label>Rooms</label>
+        <input type="number" name="rooms" [(ngModel)]="model.rooms" min="0" max="20" />
+      </div>
+
+      <div class="field">
+        <label>Bathrooms</label>
+        <input type="number" name="bathrooms" [(ngModel)]="model.bathrooms" min="0" max="20" />
+      </div>
+    </div>
+
+    <h3>Features</h3>
+    <div class="chips">
+      <button type="button" class="chip" *ngFor="let ft of features"
+              [class.on]="isOn(ft.key)" (click)="toggle(ft.key)">
+        {{ ft.label }}
+      </button>
+    </div>
+
+    <p class="error" *ngIf="error()">{{ error() }}</p>
+
+    <button type="submit" class="btn-primary" [disabled]="f.invalid || loading() || floorError">
+      {{ loading() ? 'Calculating...' : 'Show Result' }}
+    </button>
+  </form>
+
+  <!-- Result -->
+  <div id="valuation-result">
+    <div class="val-card result" *ngIf="result() as result">
+
+      <ng-container *ngIf="result.success; else noData">
+        <div class="result-head">
+          <h2>Estimated value</h2>
+          <span class="badge" [ngClass]="result.confidence.toLowerCase()">
+            {{ result.confidence }} confidence
+          </span>
+        </div>
+
+        <div class="total">
+          {{ result.totalMid | number:'1.0-0' }} <small>EGP</small>
+        </div>
+        <div class="range">
+          Range: {{ result.totalLow | number:'1.0-0' }} – {{ result.totalHigh | number:'1.0-0' }} EGP
+        </div>
+
+        <div class="ppm">
+          <div>
+            <span>Price per m²</span>
+            <strong>{{ result.pricePerMeterMid | number:'1.0-0' }} EGP</strong>
+          </div>
+          <div>
+            <span>m² range</span>
+            <strong>{{ result.pricePerMeterLow | number:'1.0-0' }} – {{ result.pricePerMeterHigh | number:'1.0-0' }}</strong>
+          </div>
+          <div>
+            <span>Similar units</span>
+            <strong>{{ result.comparablesCount }}</strong>
+          </div>
+        </div>
+
+        <p class="basis">{{ result.basis }}</p>
+        <p class="disclaimer">
+          This is an indicative estimate based on listings on our platform. It is not an official appraisal.
+        </p>
+      </ng-container>
+
+      <ng-template #noData>
+        <h2>Not enough data</h2>
+        <p>{{ result.message }}</p>
+      </ng-template>
+
+      <button type="button" class="btn-link" (click)="reset()">Close</button>
+    </div>
+  </div>
+</div>

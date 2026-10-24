@@ -56,6 +56,12 @@ export const routes: Routes = [
   { path: 'crm/profile', loadComponent: () => import('./Components/CRM/broker-profile/broker-profile').then(m => m.BrokerProfileComponent) },
   { path: 'crm/campaigns', loadComponent: () => import('./Components/CRM/campaigns-manager/campaigns-manager').then(m => m.CampaignsManagerComponent) },
   { path: 'crm/add-lead', loadComponent: () => import('./Components/CRM/add-lead/add-lead').then(m => m.AddLeadComponent) },
+  {
+  path: 'valuation',
+  loadComponent: () =>
+    import('./Components/valuation.component/valuation.component')
+      .then(m => m.ValuationComponent)
+},
 
   // ===== Fallback =====
   { path: '**', redirectTo: '/login' }
