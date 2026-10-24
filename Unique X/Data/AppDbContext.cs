@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Unique_X.Helpers;
 using Unique_X.Models;
 using Unique_X.Models.Authorization;
+using Unique_X.Valuation;
 
 namespace Unique_X.Data
 {
@@ -49,6 +50,9 @@ namespace Unique_X.Data
         public DbSet<Region> Regions { get; set; }
         public DbSet<Article> Articles { get; set; }
         public DbSet<SearchLog> SearchLogs { get; set; }
+
+        // 🟢 سجل عمليات تقييم العقار
+        public DbSet<ValuationLog> ValuationLogs { get; set; }
 
         // 🟢 Authorization (Custom Roles)
         public DbSet<CustomRole> CustomRoles { get; set; }

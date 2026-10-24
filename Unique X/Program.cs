@@ -1,17 +1,20 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IO.Compression;
 using System.Text;
+using System.Threading.RateLimiting;
 using Unique_X.Data;
 using Unique_X.Helpers;
 using Unique_X.Models;
 using Unique_X.Services;
 using Unique_X.Services.Implementation;
 using Unique_X.Services.Interface;
+using Unique_X.Valuation;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -76,6 +79,24 @@ builder.Services.AddScoped<IPropertiesService, PropertiesService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
+
+// 🟢 أداة تقييم العقار (Valuation)
+builder.Services.Configure<ValuationOptions>(builder.Configuration.GetSection("Valuation"));
+builder.Services.AddScoped<IValuationService, ValuationService>();
+
+// 🟢 Rate Limiting لأداة التقييم: 15 طلب في الدقيقة لكل IP (عشان محدش يسحب الداتا بطلبات كتير)
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.AddPolicy("valuation", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 15,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+});
 
 
 // 🟢 خدمة السحب التلقائي للعملاء اللي معملهاش أكشن لـ 72 ساعة (Late/Too Late system)
@@ -199,6 +220,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseRateLimiter();
 
 app.MapControllers();
 
