@@ -189,5 +189,11 @@ namespace Unique_X.DTOs
         public decimal DownPayment { get; set; }
         public decimal InstallmentAmount { get; set; }
         public string Frequency { get; set; }
+
+        // 🟢 Back-Loaded Payment Plan: القسط السنوي (InstallmentAmount) متقسم لجزء شهري (11 شهر في السنة) وجزء سنوي
+        public decimal? MonthlyPercentage { get; set; }
+        public decimal? AnnualPercentage { get; set; }
+        public decimal? MonthlyAmount { get; set; }
+        public decimal? AnnualAmount { get; set; }
     }
 }

@@ -321,10 +321,32 @@
                                <small class="d-block text-muted fw-bold" style="font-size: 0.65rem;">DURATION</small>
                                <span class="fw-bold text-dark fs-6">{{ plan.installmentYears }} Years</span>
                              </div>
-                             <div class="col-12 mt-2 pt-2 border-top">
-                               <small class="d-block text-success fw-bold text-uppercase" style="font-size: 0.65rem;">{{ plan.frequency || 'Quarterly' }} Installment</small>
-                               <span class="text-success fs-6">{{ currencyService.format(plan.installmentAmount) }}</span>
-                             </div>
+                             @if (plan.frequency === 'Back-Loaded') {
+                               <!-- 🟢 Back-Loaded Payment Plan: القسط السنوي متقسم لجزء شهري (11 شهر) وجزء سنوي -->
+                               <div class="col-12 mt-2 pt-2 border-top">
+                                 <small class="d-block text-success fw-bold text-uppercase" style="font-size: 0.65rem;">Back-Loaded · Yearly Installment</small>
+                                 <span class="text-success fs-6">{{ currencyService.format(plan.installmentAmount) }}</span>
+                               </div>
+                               @if (plan.monthlyAmount > 0) {
+                                 <div class="col-6">
+                                   <small class="d-block text-success fw-bold text-uppercase" style="font-size: 0.65rem;">Monthly ({{ plan.monthlyPercentage }}%)</small>
+                                   <span class="text-success fs-6">{{ currencyService.format(plan.monthlyAmount) }}</span>
+                                   <small class="d-block text-muted" style="font-size: 0.65rem;">× 11 months each year</small>
+                                 </div>
+                               }
+                               @if (plan.annualAmount > 0) {
+                                 <div class="col-6">
+                                   <small class="d-block text-success fw-bold text-uppercase" style="font-size: 0.65rem;">Annual ({{ plan.annualPercentage }}%)</small>
+                                   <span class="text-success fs-6">{{ currencyService.format(plan.annualAmount) }}</span>
+                                   <small class="d-block text-muted" style="font-size: 0.65rem;">once a year</small>
+                                 </div>
+                               }
+                             } @else {
+                               <div class="col-12 mt-2 pt-2 border-top">
+                                 <small class="d-block text-success fw-bold text-uppercase" style="font-size: 0.65rem;">{{ plan.frequency || 'Quarterly' }} Installment</small>
+                                 <span class="text-success fs-6">{{ currencyService.format(plan.installmentAmount) }}</span>
+                               </div>
+                             }
                            </div>
                         </div>
                      }

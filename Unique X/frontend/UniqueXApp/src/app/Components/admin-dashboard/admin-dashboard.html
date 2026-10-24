@@ -4676,7 +4676,13 @@
                            <div class="p-2 border rounded-3 bg-light mb-2 small d-flex flex-wrap gap-3 align-items-center">
                              <span class="badge bg-danger">Plan {{ i + 1 }}</span>
                              <span><b>Down Payment:</b> EGP {{ plan.downPayment | number }}</span>
-                             <span><b>{{ plan.frequency || 'Quarterly' }}:</b> EGP {{ plan.quarterInstallment | number }}</span>
+                             <span><b>{{ plan.frequency === 'Back-Loaded' ? 'Back-Loaded (yearly)' : (plan.frequency || 'Quarterly') }}:</b> EGP {{ plan.quarterInstallment | number }}</span>
+                             @if (plan.frequency === 'Back-Loaded' && plan.monthlyAmount > 0) {
+                               <span><b>Monthly ({{ plan.monthlyPercentage }}%) × 11:</b> EGP {{ plan.monthlyAmount | number }}</span>
+                             }
+                             @if (plan.frequency === 'Back-Loaded' && plan.annualAmount > 0) {
+                               <span><b>Annual ({{ plan.annualPercentage }}%):</b> EGP {{ plan.annualAmount | number }}</span>
+                             }
                              <span><b>Duration:</b> {{ plan.installmentYears }} Years</span>
                            </div>
                          }

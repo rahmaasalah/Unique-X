@@ -162,6 +162,10 @@ namespace Unique_X.Data
             builder.Entity<Property>().Property(p => p.SecurityDeposit).HasColumnType("decimal(18,2)");
             builder.Entity<PaymentPlan>().Property(p => p.DownPayment).HasColumnType("decimal(18,2)");
             builder.Entity<PaymentPlan>().Property(p => p.QuarterInstallment).HasColumnType("decimal(18,2)");
+            builder.Entity<PaymentPlan>().Property(p => p.MonthlyAmount).HasColumnType("decimal(18,2)");
+            builder.Entity<PaymentPlan>().Property(p => p.AnnualAmount).HasColumnType("decimal(18,2)");
+            builder.Entity<PaymentPlan>().Property(p => p.MonthlyPercentage).HasColumnType("decimal(5,2)");
+            builder.Entity<PaymentPlan>().Property(p => p.AnnualPercentage).HasColumnType("decimal(5,2)");
 
             builder.Entity<LeadRequest>().Property(lr => lr.MinBudget).HasColumnType("decimal(18,2)");
             builder.Entity<LeadRequest>().Property(lr => lr.MaxBudget).HasColumnType("decimal(18,2)");

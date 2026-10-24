@@ -232,9 +232,23 @@
                           <span class="fw-bold text-dark">{{ plan.installmentYears }} yrs</span>
                         </div>
                         <div class="d-flex justify-content-between border-top pt-1 mt-1">
-                          <span class="text-success" style="font-size:0.65rem;">QUARTERLY</span>
-                          <span class="fw-bold text-success">EGP {{ plan.quarterInstallment | number }}</span>
+                          <span class="text-success" style="font-size:0.65rem;">{{ plan.frequency === 'Back-Loaded' ? 'YEARLY' : ((plan.frequency || 'Quarterly') | uppercase) }}</span>
+                          <span class="fw-bold text-success">EGP {{ (plan.installmentAmount ?? plan.quarterInstallment) | number }}</span>
                         </div>
+                        @if (plan.frequency === 'Back-Loaded') {
+                          @if (plan.monthlyAmount > 0) {
+                            <div class="d-flex justify-content-between">
+                              <span class="text-success" style="font-size:0.65rem;">MONTHLY ({{ plan.monthlyPercentage }}%) × 11</span>
+                              <span class="fw-bold text-success">EGP {{ plan.monthlyAmount | number }}</span>
+                            </div>
+                          }
+                          @if (plan.annualAmount > 0) {
+                            <div class="d-flex justify-content-between">
+                              <span class="text-success" style="font-size:0.65rem;">ANNUAL ({{ plan.annualPercentage }}%)</span>
+                              <span class="fw-bold text-success">EGP {{ plan.annualAmount | number }}</span>
+                            </div>
+                          }
+                        }
                       </div>
                     }
                   </div>
