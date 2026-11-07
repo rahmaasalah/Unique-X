@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Unique_X.Data;
 using Unique_X.Helpers;
+using Unique_X.Hubs;
 using Unique_X.Models;
 using Unique_X.Services;
 using Unique_X.Services.Implementation;
@@ -70,6 +71,19 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["JWT:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
     };
+
+    // 🟢 SignalR: المتصفح مش بيقدر يبعت Authorization header مع WebSocket، فالتوكن بييجي في الـ query string
+    o.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/api/hubs"))
+                context.Token = accessToken;
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // 2. تسجيل الخدمات
@@ -114,9 +128,12 @@ builder.Services.AddCors(options =>
                 "https://www.betk.property"
             )
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials(); // لازم لـ SignalR
         });
 });
+
+builder.Services.AddSignalR();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -224,6 +241,7 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/api/hubs/chat");
 
 
 app.Run();

@@ -4,6 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CurrencyService, CurrencyCode } from '../../Services/currency.service';
 import { RecommendationModalService } from '../../Services/recommendation-modal.service';
+import { ChatService } from '../../Services/chat.service';
 
 @Component({
   selector: 'app-navbar',
@@ -16,6 +17,12 @@ export class NavbarComponent {
   router = inject(Router);
   currencyService = inject(CurrencyService);
   recommendationModalService = inject(RecommendationModalService);
+  chatService = inject(ChatService);
+
+  constructor() {
+    // 🟢 الاتصال اللحظي بالشات (لو اليوزر مسجل دخول)
+    if (this.authService.loggedIn()) this.chatService.start();
+  }
 
   setCurrency(code: CurrencyCode) {
     this.currencyService.setCurrency(code);
@@ -31,6 +38,7 @@ export class NavbarComponent {
   }
 
   onLogout() {
+    this.chatService.stop();
     this.authService.logout();
     localStorage.clear();
     this.router.navigate(['/login']);
