@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -110,6 +111,24 @@ builder.Services.AddRateLimiter(o =>
                 PermitLimit = 15,
                 Window = TimeSpan.FromMinutes(1)
             }));
+
+    // 🟢 Live Chat العام: 12 رسالة في الدقيقة لكل IP
+    o.AddPolicy("livechat", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 12,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+});
+
+// 🟢 السيرفر ورا reverse proxy: نقرا الـ IP الحقيقي من X-Forwarded-For (للـ Rate Limiting)
+builder.Services.Configure<ForwardedHeadersOptions>(o =>
+{
+    o.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
+    o.KnownNetworks.Clear();
+    o.KnownProxies.Clear();
 });
 
 
@@ -229,6 +248,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseForwardedHeaders();
 app.UseResponseCompression();
 
 app.UseCors("AllowAngularApp");
@@ -242,6 +262,7 @@ app.UseRateLimiter();
 
 app.MapControllers();
 app.MapHub<ChatHub>("/api/hubs/chat");
+app.MapHub<LiveChatHub>("/api/hubs/livechat");
 
 
 app.Run();

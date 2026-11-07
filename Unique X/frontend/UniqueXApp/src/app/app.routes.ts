@@ -38,6 +38,7 @@ export const routes: Routes = [
   { path: 'shortlist', loadComponent: () => import('./Components/shortlist/shortlist').then(m => m.ShortlistComponent), canActivate: [authGuard] },
   { path: 'visit-list', loadComponent: () => import('./Components/visitlist/visitlist').then(m => m.VisitListComponent), canActivate: [authGuard] },
   { path: 'profile', loadComponent: () => import('./Components/profile/profile').then(m => m.ProfileComponent), canActivate: [authGuard] },
+  { path: 'live-chat', loadComponent: () => import('./Components/live-chat/live-chat').then(m => m.LiveChatComponent) },
   { path: 'chat', loadComponent: () => import('./Components/chat/chat').then(m => m.ChatComponent), canActivate: [authGuard] },
   { path: 'chat/join/:code', loadComponent: () => import('./Components/chat/chat-join').then(m => m.ChatJoinComponent) },
   { path: 'chat/:id', loadComponent: () => import('./Components/chat/chat').then(m => m.ChatComponent), canActivate: [authGuard] },
