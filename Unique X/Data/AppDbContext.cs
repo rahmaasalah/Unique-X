@@ -58,6 +58,7 @@ namespace Unique_X.Data
         public DbSet<ChatConversation> ChatConversations { get; set; }
         public DbSet<ChatParticipant> ChatParticipants { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<LiveChatMessage> LiveChatMessages { get; set; }
 
         // 🟢 Authorization (Custom Roles)
         public DbSet<CustomRole> CustomRoles { get; set; }
@@ -150,6 +151,7 @@ namespace Unique_X.Data
             builder.Entity<ChatConversation>().HasIndex(c => c.DirectKey).IsUnique();
             builder.Entity<ChatConversation>().HasIndex(c => c.InviteCode).IsUnique();
             builder.Entity<ChatParticipant>().HasIndex(p => p.UserId);
+            builder.Entity<LiveChatMessage>().HasIndex(m => m.IsPinned);
 
             // 🟢 الوحدة بتتعرض على نفس العميل مرة واحدة بس (والفيدباك بيتحدث على نفس السطر)
             builder.Entity<LeadShownProperty>()

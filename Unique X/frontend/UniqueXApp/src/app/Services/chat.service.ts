@@ -38,12 +38,22 @@ export class ChatService {
   message$ = new Subject<ChatMessage>();
   // عدد الرسائل الغير مقروءة (للبادج في النافبار)
   unread = signal(0);
+  // حالة الاتصال اللحظي
+  connected = signal(false);
+  private pollTimer?: ReturnType<typeof setInterval>;
 
   constructor(private http: HttpClient) {}
 
   // ---------- Real-time ----------
   async start(): Promise<void> {
     if (!localStorage.getItem('token')) return;
+
+    // 🟢 العدّاد بيتحدث من الـ API مباشرة (من غير ما يعتمد على نجاح الاتصال اللحظي)
+    this.refreshUnread();
+    if (!this.pollTimer) {
+      this.pollTimer = setInterval(() => this.refreshUnread(), 20000);
+    }
+
     if (this.hub && this.hub.state !== signalR.HubConnectionState.Disconnected) return;
 
     // تحت /api عشان نفس راوت الـ reverse proxy بتاع الـ API يغطيه
@@ -58,19 +68,26 @@ export class ChatService {
       this.refreshUnread();
     });
 
-    this.hub.onreconnected(() => this.refreshUnread());
+    this.hub.onreconnected(() => { this.connected.set(true); this.refreshUnread(); });
+    this.hub.onreconnecting(() => this.connected.set(false));
+    this.hub.onclose(() => this.connected.set(false));
 
     try {
       await this.hub.start();
+      this.connected.set(true);
       this.refreshUnread();
-    } catch {
-      // لو الاتصال فشل الشات هيفضل شغال بالـ REST، ومحاولة تانية عند فتح الصفحة
+    } catch (e) {
+      // لو الاتصال اللحظي فشل الشات هيفضل شغال بالـ REST (تحديث دوري)، ومحاولة تانية عند فتح الصفحة
+      this.connected.set(false);
+      console.warn('Chat real-time connection failed, falling back to polling.', e);
     }
   }
 
   async stop(): Promise<void> {
     try { await this.hub?.stop(); } catch { /* ignore */ }
     this.hub = undefined;
+    this.connected.set(false);
+    if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = undefined; }
     this.unread.set(0);
   }
 

@@ -1,0 +1,132 @@
+<div class="live-shell">
+
+  <header class="live-head">
+    <div class="d-flex align-items-center gap-2 min-w-0">
+      <span class="live-dot"></span>
+      <div class="min-w-0">
+        <div class="fw-bold">Live Chat</div>
+        <small class="text-muted">Open to everyone — no login needed</small>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm rounded-pill" [class.btn-dark]="showPinned()" [class.btn-outline-dark]="!showPinned()"
+              (click)="showPinned.set(!showPinned())">
+        <i class="bi bi-pin-angle-fill"></i> Pinned
+        @if (pinned().length) { <span class="badge bg-danger ms-1">{{ pinned().length }}</span> }
+      </button>
+      <button class="btn btn-sm btn-outline-danger rounded-pill" (click)="copyInvite()">
+        <i class="bi bi-link-45deg"></i> Invite
+      </button>
+    </div>
+  </header>
+
+  <!-- ============ Pinned items ============ -->
+  @if (showPinned()) {
+    <div class="pinned-box">
+      <div class="fw-bold small mb-2"><i class="bi bi-pin-angle-fill text-danger"></i> Pinned items</div>
+      @for (p of pinned(); track p.id) {
+        <div class="pinned-item">
+          <button class="pinned-main" (click)="jumpTo(p)">
+            <span class="small fw-bold">{{ p.senderName }}</span>
+            @if (p.text) { <span class="small text-truncate d-block">{{ p.text }}</span> }
+            @if (p.property) { <span class="small text-danger d-block"><i class="bi bi-house-door"></i> {{ p.property.code }} — {{ p.property.title }}</span> }
+            @if (p.imageUrl) { <span class="small text-muted d-block"><i class="bi bi-image"></i> Photo</span> }
+          </button>
+          @if (isAdmin) {
+            <button class="btn btn-sm btn-link text-danger" (click)="togglePin(p)" title="Unpin"><i class="bi bi-pin-angle"></i></button>
+          }
+        </div>
+      } @empty {
+        <div class="text-muted small">Nothing is pinned yet.</div>
+      }
+    </div>
+  }
+
+  <!-- ============ Messages ============ -->
+  <div class="msgs" #scroller>
+    @if (hasMore()) {
+      <div class="text-center mb-2"><button class="btn btn-sm btn-light" (click)="loadOlder()">Load older messages</button></div>
+    }
+    @if (loading()) { <div class="text-center text-muted small py-3">Loading...</div> }
+
+    @for (m of messages(); track m.id; let i = $index) {
+      @if (showDay(i)) {
+        <div class="day-sep"><span>{{ m.createdAt | date:'EEE, d MMM' }}</span></div>
+      }
+      <div class="msg-row" [class.mine]="isMine(m)" [id]="'live-msg-' + m.id">
+        <div class="bubble" [class.mine]="isMine(m)" [class.pinned]="m.isPinned">
+          @if (showSender(i)) {
+            <div class="sender">
+              {{ m.senderName }}
+              @if (m.isGuest) { <span class="guest-tag">guest</span> }
+            </div>
+          }
+          @if (m.isPinned) { <div class="pin-tag"><i class="bi bi-pin-angle-fill"></i> Pinned</div> }
+
+          @if (m.imageUrl) {
+            <a [href]="m.imageUrl" target="_blank" rel="noopener"><img [src]="m.imageUrl" class="msg-img" alt="photo"></a>
+          }
+
+          @if (m.property) {
+            <a class="prop-card" [routerLink]="['/property-details', m.property.id]">
+              @if (m.property.imageUrl) { <img [src]="m.property.imageUrl" alt=""> }
+              <div class="prop-info">
+                <div class="fw-bold small text-truncate">{{ m.property.title }}</div>
+                <div class="small text-muted text-truncate"><i class="bi bi-geo-alt"></i> {{ m.property.region }}, {{ m.property.city }}</div>
+                <div class="small fw-bold text-danger">{{ m.property.price | number:'1.0-0' }} EGP</div>
+                <div class="code-tag">{{ m.property.code }}</div>
+              </div>
+            </a>
+          }
+
+          @if (m.text) { <div class="txt">{{ m.text }}</div> }
+
+          <div class="meta">
+            <span class="time">{{ m.createdAt | date:'shortTime' }}</span>
+            @if (isAdmin) {
+              <button class="act" (click)="togglePin(m)" [title]="m.isPinned ? 'Unpin' : 'Pin'">
+                <i class="bi" [ngClass]="m.isPinned ? 'bi-pin-angle-fill' : 'bi-pin-angle'"></i>
+              </button>
+              <button class="act" (click)="remove(m)" title="Delete"><i class="bi bi-trash"></i></button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ============ Composer ============ -->
+  <footer class="composer">
+    @if (!loggedIn) {
+      <div class="input-group input-group-sm mb-2">
+        <span class="input-group-text"><i class="bi bi-person"></i></span>
+        <input class="form-control" [(ngModel)]="guestName" (blur)="saveGuestName()" maxlength="30"
+               placeholder="Your name (required to chat)">
+        <a routerLink="/login" class="btn btn-outline-secondary">Log in</a>
+      </div>
+    }
+    @if (imagePreview) {
+      <div class="preview">
+        <img [src]="imagePreview" alt="">
+        <button class="btn-close" (click)="removeImage()"></button>
+      </div>
+    }
+    @if (showCode) {
+      <div class="input-group input-group-sm mb-2">
+        <span class="input-group-text"><i class="bi bi-house-door"></i></span>
+        <input class="form-control" [(ngModel)]="propertyCode" placeholder="Property code (e.g. AR#123)" (keydown.enter)="send()">
+      </div>
+    }
+    <div class="d-flex align-items-end gap-2">
+      @if (loggedIn) {
+        <input #fileInput type="file" accept="image/*" hidden (change)="onFile($event)">
+        <button class="btn btn-light rounded-circle tool" (click)="fileInput.click()" title="Send photo"><i class="bi bi-image"></i></button>
+      }
+      <button class="btn rounded-circle tool" [class.btn-dark]="showCode" [class.btn-light]="!showCode"
+              (click)="showCode = !showCode" title="Send property by code"><i class="bi bi-house-door"></i></button>
+      <textarea class="form-control" rows="1" [(ngModel)]="text" maxlength="1000" placeholder="Type a message..."
+                (keydown.enter)="onEnter($event)"></textarea>
+      <button class="btn btn-danger rounded-circle tool" [disabled]="!canSend()" (click)="send()"><i class="bi bi-send-fill"></i></button>
+    </div>
+  </footer>
+</div>

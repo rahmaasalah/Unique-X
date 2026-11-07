@@ -52,10 +52,14 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   private subs: Subscription[] = [];
   private search$ = new Subject<string>();
+  private pollTimer?: ReturnType<typeof setInterval>;
 
   ngOnInit(): void {
     this.chat.start();
     this.loadConversations();
+
+    // 🟢 لو الاتصال اللحظي مش شغال، نحدث القايمة والرسائل كل 6 ثواني
+    this.pollTimer = setInterval(() => { if (!this.chat.connected()) this.poll(); }, 6000);
 
     this.subs.push(
       this.route.paramMap.subscribe(p => {
@@ -70,7 +74,25 @@ export class ChatComponent implements OnInit, OnDestroy {
     );
   }
 
-  ngOnDestroy(): void { this.subs.forEach(s => s.unsubscribe()); }
+  ngOnDestroy(): void {
+    this.subs.forEach(s => s.unsubscribe());
+    if (this.pollTimer) clearInterval(this.pollTimer);
+  }
+
+  private poll(): void {
+    this.loadConversations();
+    const id = this.activeId();
+    if (!id) return;
+    this.chat.getMessages(id).subscribe(list => {
+      const known = new Set(this.messages().map(m => m.id));
+      const fresh = list.filter(m => !known.has(m.id));
+      if (fresh.length) {
+        this.messages.update(l => [...l, ...fresh]);
+        this.scrollBottom();
+        this.markRead(id);
+      }
+    });
+  }
 
   private currentUserId(): string {
     try { return JSON.parse(localStorage.getItem('user') || '{}').id || ''; } catch { return ''; }

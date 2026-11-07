@@ -21,6 +21,11 @@
 
     <div class="d-flex align-items-center flex-nowrap gap-2 gap-md-4 navbar-right-group">
 
+      <!-- Live Chat: مفتوح للكل (حتى من غير تسجيل دخول) -->
+      <a routerLink="/live-chat" class="nav-link p-0" title="Live Chat">
+        <i class="bi bi-broadcast fs-4 text-danger"></i>
+      </a>
+
       @if (authService.loggedIn()) {
 
         <!-- Wishlist: للـ Client بس -->
