@@ -58,8 +58,8 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.chat.start();
     this.loadConversations();
 
-    // 🟢 لو الاتصال اللحظي مش شغال، نحدث القايمة والرسائل كل 6 ثواني
-    this.pollTimer = setInterval(() => { if (!this.chat.connected()) this.poll(); }, 6000);
+    // 🟢 شبكة أمان: تحديث دوري كل 5 ثواني (حتى لو الاتصال اللحظي شغال) عشان أي رسالة جديدة تظهر لوحدها
+    this.pollTimer = setInterval(() => { if (!document.hidden) this.poll(); }, 5000);
 
     this.subs.push(
       this.route.paramMap.subscribe(p => {
