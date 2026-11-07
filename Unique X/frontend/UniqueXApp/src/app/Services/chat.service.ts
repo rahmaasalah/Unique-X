@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface ChatProperty {
@@ -51,7 +51,7 @@ export class ChatService {
     // 🟢 العدّاد بيتحدث من الـ API مباشرة (من غير ما يعتمد على نجاح الاتصال اللحظي)
     this.refreshUnread();
     if (!this.pollTimer) {
-      this.pollTimer = setInterval(() => this.refreshUnread(), 20000);
+      this.pollTimer = setInterval(() => { if (!document.hidden) this.refreshUnread(); }, 8000);
     }
 
     if (this.hub && this.hub.state !== signalR.HubConnectionState.Disconnected) return;
@@ -102,7 +102,10 @@ export class ChatService {
     return this.http.get<ChatUser[]>(`${this.base}/users`, { params: new HttpParams().set('q', q) });
   }
   getConversations(): Observable<Conversation[]> {
-    return this.http.get<Conversation[]>(`${this.base}/conversations`);
+    // التواريخ من السيرفر UTC: لو جت من غير Z نضيفها عشان المتصفح ميفسرهاش بتوقيت محلي غلط
+    return this.http.get<Conversation[]>(`${this.base}/conversations`).pipe(
+      map(list => list.map(c => ({ ...c, lastMessageAt: this.asUtc(c.lastMessageAt) })))
+    );
   }
   getConversation(id: number): Observable<Conversation> {
     return this.http.get<Conversation>(`${this.base}/conversations/${id}`);
@@ -133,6 +136,10 @@ export class ChatService {
   }
   markRead(id: number) {
     return this.http.post(`${this.base}/conversations/${id}/read`, {});
+  }
+
+  private asUtc(d: string): string {
+    return /(Z|[+-]\d{2}:?\d{2})$/.test(d) ? d : d + 'Z';
   }
 
   // لينك الدعوة اللي بيتشارك

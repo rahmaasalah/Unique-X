@@ -132,7 +132,7 @@ namespace Unique_X.Controllers
                     MembersCount = r.MembersCount,
                     UnreadCount = unread.TryGetValue(r.Id, out var c) ? c : 0,
                     LastMessage = preview,
-                    LastMessageAt = r.LastMessageAt
+                    LastMessageAt = DateTime.SpecifyKind(r.LastMessageAt, DateTimeKind.Utc)
                 };
             })
             .OrderByDescending(c => c.LastMessageAt)
@@ -449,7 +449,7 @@ namespace Unique_X.Controllers
                 ImageUrl = img,
                 InviteCode = conv.Type == 1 ? conv.InviteCode : null,
                 MembersCount = conv.Participants.Count,
-                LastMessageAt = conv.LastMessageAt,
+                LastMessageAt = DateTime.SpecifyKind(conv.LastMessageAt, DateTimeKind.Utc),
                 Members = includeMembers
                     ? conv.Participants.Select(p => new ChatMemberDto
                     {
