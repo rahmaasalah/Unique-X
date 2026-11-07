@@ -1,0 +1,207 @@
+<div class="chat-shell" [class.has-active]="activeId()">
+
+  <!-- ============ Sidebar: conversations ============ -->
+  <aside class="chat-side">
+    <div class="side-head">
+      <h5 class="fw-bold mb-0">Messages</h5>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-dark rounded-pill" (click)="openNew('direct')" title="New chat">
+          <i class="bi bi-chat-dots"></i> New
+        </button>
+        <button class="btn btn-sm btn-danger rounded-pill" (click)="openNew('room')" title="Create room">
+          <i class="bi bi-people-fill"></i> Room
+        </button>
+      </div>
+    </div>
+
+    <div class="conv-list">
+      @for (c of conversations(); track c.id) {
+        <button class="conv-item" [class.active]="c.id === activeId()" (click)="select(c)">
+          @if (c.imageUrl) {
+            <img [src]="c.imageUrl" class="avatar" alt="">
+          } @else {
+            <span class="avatar avatar-ph" [class.room]="c.type === 1">
+              <i class="bi" [ngClass]="c.type === 1 ? 'bi-people-fill' : 'bi-person-fill'"></i>
+            </span>
+          }
+          <span class="conv-body">
+            <span class="conv-top">
+              <span class="conv-title text-truncate">{{ c.title }}</span>
+              <small class="text-muted">{{ c.lastMessageAt | date:'shortTime' }}</small>
+            </span>
+            <span class="conv-bottom">
+              <small class="text-muted text-truncate">{{ c.lastMessage || 'No messages yet' }}</small>
+              @if (c.unreadCount > 0) { <span class="badge rounded-pill bg-danger">{{ c.unreadCount }}</span> }
+            </span>
+          </span>
+        </button>
+      } @empty {
+        <div class="text-center text-muted p-4 small">
+          <i class="bi bi-chat-square-text fs-1 d-block mb-2"></i>
+          No conversations yet.<br>Start a new chat or create a room.
+        </div>
+      }
+    </div>
+  </aside>
+
+  <!-- ============ Main: messages ============ -->
+  <section class="chat-main">
+    @if (activeId()) {
+      <header class="main-head">
+        <button class="btn btn-sm btn-light d-md-none" (click)="back()"><i class="bi bi-arrow-left"></i></button>
+        @if (active()?.imageUrl) {
+          <img [src]="active()!.imageUrl" class="avatar sm" alt="">
+        } @else {
+          <span class="avatar sm avatar-ph" [class.room]="active()?.type === 1">
+            <i class="bi" [ngClass]="active()?.type === 1 ? 'bi-people-fill' : 'bi-person-fill'"></i>
+          </span>
+        }
+        <div class="flex-grow-1 min-w-0">
+          <div class="fw-bold text-truncate">{{ active()?.title }}</div>
+          @if (active()?.type === 1) { <small class="text-muted">{{ active()?.membersCount }} members</small> }
+        </div>
+        @if (active()?.type === 1) {
+          <button class="btn btn-sm btn-outline-dark rounded-pill" (click)="showInfo.set(!showInfo())">
+            <i class="bi bi-link-45deg"></i> Invite
+          </button>
+        }
+      </header>
+
+      @if (showInfo() && active()?.type === 1) {
+        <div class="info-box">
+          <div class="small fw-bold mb-1">Invitation link</div>
+          <div class="input-group input-group-sm mb-3">
+            <input class="form-control" [value]="inviteLink()" readonly (focus)="$any($event.target).select()">
+            <button class="btn btn-dark" (click)="copyInvite()"><i class="bi bi-clipboard"></i> Copy</button>
+          </div>
+          <div class="small text-muted mb-2">Anyone with this link can join the room. It never expires.</div>
+          <div class="small fw-bold mb-1">Members</div>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            @for (m of detail()?.members ?? []; track m.userId) {
+              <span class="badge bg-light text-dark border">{{ m.name }}</span>
+            }
+          </div>
+          <button class="btn btn-sm btn-outline-danger" (click)="leaveRoom()">Leave room</button>
+        </div>
+      }
+
+      <div class="msgs" #scroller>
+        @if (hasMore()) {
+          <div class="text-center mb-2">
+            <button class="btn btn-sm btn-light" (click)="loadOlder()">Load older messages</button>
+          </div>
+        }
+        @if (loadingMessages()) { <div class="text-center text-muted small py-3">Loading...</div> }
+
+        @for (m of messages(); track m.id; let i = $index) {
+          @if (showDay(i)) {
+            <div class="day-sep"><span>{{ m.createdAt | date:'EEE, d MMM' }}</span></div>
+          }
+          <div class="msg-row" [class.mine]="isMine(m)">
+            <div class="bubble" [class.mine]="isMine(m)">
+              @if (showSender(i)) { <div class="sender">{{ m.senderName }}</div> }
+
+              @if (m.imageUrl) {
+                <a [href]="m.imageUrl" target="_blank" rel="noopener">
+                  <img [src]="m.imageUrl" class="msg-img" alt="photo">
+                </a>
+              }
+
+              @if (m.property) {
+                <a class="prop-card" [routerLink]="['/property-details', m.property.id]">
+                  @if (m.property.imageUrl) { <img [src]="m.property.imageUrl" alt=""> }
+                  <div class="prop-info">
+                    <div class="fw-bold small text-truncate">{{ m.property.title }}</div>
+                    <div class="small text-muted text-truncate">
+                      <i class="bi bi-geo-alt"></i> {{ m.property.region }}, {{ m.property.city }}
+                    </div>
+                    <div class="small fw-bold text-danger">{{ m.property.price | number:'1.0-0' }} EGP</div>
+                    <div class="code-tag">{{ m.property.code }}</div>
+                  </div>
+                </a>
+              }
+
+              @if (m.text) { <div class="txt">{{ m.text }}</div> }
+              <div class="time">{{ m.createdAt | date:'shortTime' }}</div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- ============ Composer ============ -->
+      <footer class="composer">
+        @if (imagePreview) {
+          <div class="preview">
+            <img [src]="imagePreview" alt="">
+            <button class="btn-close" (click)="removeImage()"></button>
+          </div>
+        }
+        @if (showCode) {
+          <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text"><i class="bi bi-house-door"></i></span>
+            <input class="form-control" [(ngModel)]="propertyCode" placeholder="Property code (e.g. AR#123)"
+                   (keydown.enter)="send()">
+          </div>
+        }
+        <div class="d-flex align-items-end gap-2">
+          <input #fileInput type="file" accept="image/*" hidden (change)="onFile($event)">
+          <button class="btn btn-light rounded-circle tool" (click)="fileInput.click()" title="Send photo">
+            <i class="bi bi-image"></i>
+          </button>
+          <button class="btn rounded-circle tool" [class.btn-dark]="showCode" [class.btn-light]="!showCode"
+                  (click)="showCode = !showCode" title="Send property by code">
+            <i class="bi bi-house-door"></i>
+          </button>
+          <textarea class="form-control" rows="1" [(ngModel)]="text" placeholder="Type a message..."
+                    (keydown.enter)="onEnter($event)"></textarea>
+          <button class="btn btn-danger rounded-circle tool" [disabled]="!canSend()" (click)="send()">
+            <i class="bi bi-send-fill"></i>
+          </button>
+        </div>
+      </footer>
+    } @else {
+      <div class="empty-main">
+        <i class="bi bi-chat-heart fs-1"></i>
+        <div class="mt-2">Select a conversation or start a new one</div>
+      </div>
+    }
+  </section>
+</div>
+
+<!-- ============ New chat / room modal ============ -->
+@if (showNew()) {
+  <div class="modal-back" (click)="showNew.set(false)">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <ul class="nav nav-pills small">
+          <li class="nav-item"><button class="nav-link" [class.active]="newTab === 'direct'" (click)="newTab = 'direct'">Direct chat</button></li>
+          <li class="nav-item"><button class="nav-link" [class.active]="newTab === 'room'" (click)="newTab = 'room'">New room</button></li>
+        </ul>
+        <button class="btn-close" (click)="showNew.set(false)"></button>
+      </div>
+
+      @if (newTab === 'direct') {
+        <input class="form-control mb-2" [(ngModel)]="userQuery" (ngModelChange)="onUserQuery()"
+               placeholder="Search by name (min 2 letters)..." autofocus>
+        <div class="user-results">
+          @for (u of userResults(); track u.id) {
+            <button class="conv-item" (click)="startWith(u)">
+              @if (u.imageUrl) { <img [src]="u.imageUrl" class="avatar sm" alt=""> }
+              @else { <span class="avatar sm avatar-ph"><i class="bi bi-person-fill"></i></span> }
+              <span class="conv-title">{{ u.name }}</span>
+              <small class="text-muted ms-auto">{{ u.userType === 1 ? 'Broker' : 'Client' }}</small>
+            </button>
+          } @empty {
+            @if (userQuery.trim().length >= 2) { <div class="text-muted small text-center p-3">No users found</div> }
+          }
+        </div>
+      } @else {
+        <input class="form-control mb-3" [(ngModel)]="roomName" maxlength="100" placeholder="Room name"
+               (keydown.enter)="createRoom()">
+        <button class="btn btn-danger w-100" [disabled]="!roomName.trim()" (click)="createRoom()">
+          Create room &amp; get invitation link
+        </button>
+      }
+    </div>
+  </div>
+}

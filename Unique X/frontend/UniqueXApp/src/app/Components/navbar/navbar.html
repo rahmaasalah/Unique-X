@@ -30,6 +30,16 @@
           </a>
         }
 
+        <!-- Chat -->
+        <a routerLink="/chat" class="nav-link p-0 position-relative" title="Messages">
+          <i class="bi bi-chat-dots-fill fs-4 text-dark"></i>
+          @if (chatService.unread() > 0) {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: .6rem;">
+              {{ chatService.unread() > 99 ? '99+' : chatService.unread() }}
+            </span>
+          }
+        </a>
+
         <!-- صورة البروفايل + رسالة الترحيب -->
         <a routerLink="/profile" class="nav-link p-0 d-flex align-items-center profile-nav-link">
           @if (authService.getUserImage()) {

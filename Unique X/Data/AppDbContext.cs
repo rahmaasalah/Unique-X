@@ -54,6 +54,11 @@ namespace Unique_X.Data
         // 🟢 سجل عمليات تقييم العقار
         public DbSet<ValuationLog> ValuationLogs { get; set; }
 
+        // 🟢 Chat
+        public DbSet<ChatConversation> ChatConversations { get; set; }
+        public DbSet<ChatParticipant> ChatParticipants { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+
         // 🟢 Authorization (Custom Roles)
         public DbSet<CustomRole> CustomRoles { get; set; }
         public DbSet<CustomRolePermission> CustomRolePermissions { get; set; }
@@ -126,6 +131,25 @@ namespace Unique_X.Data
 
             builder.Entity<Property>()
                 .HasIndex(p => p.ProjectName);
+
+            // 🟢 Chat: المسح بيعدي من المحادثة للأعضاء والرسائل. علاقات اليوزر Restrict عشان نتجنب multiple cascade paths
+            builder.Entity<ChatParticipant>().HasKey(p => new { p.ConversationId, p.UserId });
+            builder.Entity<ChatParticipant>()
+                .HasOne(p => p.Conversation).WithMany(c => c.Participants)
+                .HasForeignKey(p => p.ConversationId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<ChatParticipant>()
+                .HasOne(p => p.User).WithMany()
+                .HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<ChatMessage>()
+                .HasOne(m => m.Conversation).WithMany(c => c.Messages)
+                .HasForeignKey(m => m.ConversationId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<ChatMessage>()
+                .HasOne(m => m.Sender).WithMany()
+                .HasForeignKey(m => m.SenderId).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<ChatMessage>().HasIndex(m => new { m.ConversationId, m.Id });
+            builder.Entity<ChatConversation>().HasIndex(c => c.DirectKey).IsUnique();
+            builder.Entity<ChatConversation>().HasIndex(c => c.InviteCode).IsUnique();
+            builder.Entity<ChatParticipant>().HasIndex(p => p.UserId);
 
             // 🟢 الوحدة بتتعرض على نفس العميل مرة واحدة بس (والفيدباك بيتحدث على نفس السطر)
             builder.Entity<LeadShownProperty>()
