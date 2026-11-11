@@ -792,55 +792,50 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
       error: () => {}
     });
 
-    // مشاريع Primary
-    this.propertyService.getProjectsList(0).subscribe({
-      next: (list) => {
-        const mapping = this.projectsMapping || {};
-        const codes: any = {};
-        list.forEach((p: any) => {
-          if (p.city === 2) {
-            if (!mapping[2]) mapping[2] = {};
-            if (!mapping[2]['any']) mapping[2]['any'] = [];
-            mapping[2]['any'].push(p.name);
-          } else {
-            const region = p.region || 'any';
-            if (!mapping[p.city]) mapping[p.city] = {};
-            if (!mapping[p.city][region]) mapping[p.city][region] = [];
-            mapping[p.city][region].push(p.name);
-          }
-          if (p.code) codes[p.name] = p.code;
-        });
-        this.projectsMapping = mapping;
-        this.primaryProjectCodes = codes;
-        this.refreshFilteredListsSilently();
-      },
-      error: () => {}
-    });
+    this.loadProjects();
+  }
 
-    // مشاريع Resale
-    this.propertyService.getProjectsList(1).subscribe({
+  // 🟢 بتجيب كل المشاريع (Primary + Resale) من الداتابيز وتبني الـ Mapping من جديد
+  // - مفتاح المنطقة بيتقارن بدون مراعاة حروف كبيرة/صغيرة أو مسافات زيادة
+  // - أي مشروع من غير منطقة بيظهر في كل مناطق المدينة
+  loadProjects(): void {
+    this.propertyService.getProjectsList().subscribe({
       next: (list) => {
-        const mapping = this.projectsMapping || {};
-        const ids: any = {};
-        list.forEach((p: any) => {
-          if (p.city === 2) {
-            if (!mapping[2]) mapping[2] = {};
-            if (!mapping[2]['any']) mapping[2]['any'] = [];
-            mapping[2]['any'].push(p.name);
-          } else {
-            const region = p.region || 'any';
-            if (!mapping[p.city]) mapping[p.city] = {};
-            if (!mapping[p.city][region]) mapping[p.city][region] = [];
-            mapping[p.city][region].push(p.name);
+        const mapping: any = {};
+        const primaryCodes: any = {};
+        const resaleCodes: any = {};
+        (list || []).forEach((p: any) => {
+          const city = Number(p.city);
+          const region = this.normRegion(p.region) || 'any';
+          if (!mapping[city]) mapping[city] = {};
+          if (!mapping[city][region]) mapping[city][region] = [];
+          if (!mapping[city][region].includes(p.name)) mapping[city][region].push(p.name);
+          if (p.code) {
+            if (Number(p.type) === 0) primaryCodes[p.name] = p.code;
+            else resaleCodes[p.name] = p.code;
           }
-          if (p.code) ids[p.name] = p.code;
         });
         this.projectsMapping = mapping;
-        this.resaleProjectIds = ids;
+        this.primaryProjectCodes = primaryCodes;
+        this.resaleProjectIds = resaleCodes;
         this.refreshFilteredListsSilently();
       },
       error: () => {}
     });
+  }
+
+  private normRegion(r: any): string {
+    return (r || '').toString().trim().toLowerCase();
+  }
+
+  private projectsFor(cityId: number, region: any): string[] {
+    const byCity = this.projectsMapping[cityId] || {};
+    if (cityId === 2) return Object.values(byCity).flat() as string[];
+    const sortUnique = (l: string[]) => Array.from(new Set(l)).sort((x, y) => x.localeCompare(y));
+    // مشاريع المنطقة المختارة + المشاريع اللي مالهاش منطقة (بتظهر في كل المناطق)
+    const list = sortUnique([...(byCity[this.normRegion(region)] || []), ...(byCity['any'] || [])]);
+    // لو مفيش ولا مشروع للمنطقة دي، نعرض كل مشاريع المدينة بدل منيو فاضية
+    return list.length ? list : sortUnique(Object.values(byCity).flat() as string[]);
   }
 
   // بتحدث الليستات الظاهرة (Regions/Projects) من غير ما تمسح اختيار المستخدم
@@ -850,28 +845,15 @@ getPureNumberFromPlan(plan: AbstractControl, controlName: string): number {
 
     this.filteredRegions = this.regionsMapping[cityId] || [];
 
-    if (cityId === 1 || cityId === 3) {
-      this.filteredProjects = this.projectsMapping[cityId]?.[region] || [];
-    } else if (cityId === 2) {
-      this.filteredProjects = this.projectsMapping[cityId]?.['any'] || [];
-    } else {
-      this.filteredProjects = [];
-    }
+    this.filteredProjects = [1, 2, 3].includes(cityId) ? this.projectsFor(cityId, region) : [];
   }
 
   updateProjectsList(cId?: number, rName?: string) {
     const id = cId || Number(this.editForm.get('city')?.value);
     const reg = rName || this.editForm.get('region')?.value;
     
-    if (id === 1 || id === 3) {
-      this.filteredProjects = this.projectsMapping[id]?.[reg] ||[];
-    } 
-    else if (id === 2) {
-      this.filteredProjects = this.projectsMapping[id]?.['any'] ||[];
-    } 
-    else {
-      this.filteredProjects =[];
-    }
+    this.filteredProjects = [1, 2, 3].includes(id) ? this.projectsFor(id, reg) : [];
+    this.loadProjects(); // تحديث من الداتابيز عشان أي مشروع جديد يظهر فورًا
     
     this.editForm.get('projectName')?.setValue('');
   }

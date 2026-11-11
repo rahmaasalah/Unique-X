@@ -229,11 +229,6 @@
             
             <div class="row g-3 mb-4 align-items-end">
               @if (!isVilla()) {
-                <!-- 🟢 عدد المطابخ (لكل الأنواع ما عدا الفيلا: الفيلا بتحدده لكل دور) -->
-                <div class="col-md-3">
-                  <label class="form-label fw-bold small">Kitchens</label>
-                  <input type="text" (input)="formatInteger($event, 'kitchens')" formControlName="kitchens" class="form-control shadow-sm" min="0">
-                </div>
                 <div class="col-md-3">
                   <label class="form-label fw-bold small">Rooms</label>
                   <input type="text" (input)="formatInteger($event, 'rooms')" formControlName="rooms" class="form-control shadow-sm" min="0">
