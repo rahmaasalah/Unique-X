@@ -9,10 +9,25 @@ export interface ChatProperty {
   city?: string; region?: string; imageUrl?: string;
 }
 
+export interface ChatRequest {
+  id: number; purpose?: string; propertyType?: string;
+  minBudget: number; maxBudget: number; paymentMethod?: string;
+  downPayment?: number; installmentYears?: number;
+  cities?: string; regions?: string; projects?: string; preferredLocation?: string;
+  minRooms?: number; maxRooms?: number; minBathrooms?: number; maxBathrooms?: number;
+}
+
+export interface MyPropertyItem {
+  id: number; code?: string; title?: string; price: number;
+  city?: string; region?: string; imageUrl?: string;
+}
+
+export interface MyRequestItem { id: number; leadName: string; request: ChatRequest; }
+
 export interface ChatMessage {
   id: number; conversationId: number;
   senderId: string; senderName: string; senderImage?: string;
-  text?: string; imageUrl?: string; property?: ChatProperty | null;
+  text?: string; imageUrl?: string; property?: ChatProperty | null; request?: ChatRequest | null;
   createdAt: string;
 }
 
@@ -127,12 +142,19 @@ export class ChatService {
     if (before) params = params.set('before', before);
     return this.http.get<ChatMessage[]>(`${this.base}/conversations/${id}/messages`, { params });
   }
-  send(id: number, text: string, propertyCode: string, image: File | null): Observable<ChatMessage> {
+  send(id: number, text: string, propertyCode: string, leadRequestId?: number): Observable<ChatMessage> {
     const fd = new FormData();
     if (text) fd.append('text', text);
     if (propertyCode) fd.append('propertyCode', propertyCode);
-    if (image) fd.append('image', image);
+    if (leadRequestId) fd.append('leadRequestId', String(leadRequestId));
     return this.http.post<ChatMessage>(`${this.base}/conversations/${id}/messages`, fd);
+  }
+  // أدوات البروكر
+  getMyProperties(): Observable<MyPropertyItem[]> {
+    return this.http.get<MyPropertyItem[]>(`${this.base}/my-properties`);
+  }
+  getMyRequests(): Observable<MyRequestItem[]> {
+    return this.http.get<MyRequestItem[]>(`${this.base}/my-requests`);
   }
   markRead(id: number) {
     return this.http.post(`${this.base}/conversations/${id}/read`, {});

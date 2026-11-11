@@ -3,12 +3,12 @@ import { Injectable, signal } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { Observable, Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ChatProperty } from './chat.service';
+import { ChatProperty, ChatRequest } from './chat.service';
 
 export interface LiveMessage {
   id: number;
   senderKey: string; senderName: string; senderImage?: string; isGuest: boolean;
-  text?: string; imageUrl?: string; property?: ChatProperty | null;
+  text?: string; imageUrl?: string; property?: ChatProperty | null; request?: ChatRequest | null;
   isPinned: boolean; pinnedAt?: string; pinnedByName?: string;
   createdAt: string;
 }
@@ -68,13 +68,15 @@ export class LiveChatService {
     return this.http.get<LiveMessage[]>(`${this.base}/pinned`);
   }
 
-  send(text: string, propertyCode: string, image: File | null, guestName: string, guestKey: string): Observable<LiveMessage> {
+  send(text: string, propertyCode: string, leadRequestId: number | undefined,
+       guestName: string, guestKey: string, anonymous: boolean): Observable<LiveMessage> {
     const fd = new FormData();
     if (text) fd.append('text', text);
     if (propertyCode) fd.append('propertyCode', propertyCode);
-    if (image) fd.append('image', image);
+    if (leadRequestId) fd.append('leadRequestId', String(leadRequestId));
     if (guestName) fd.append('guestName', guestName);
     if (guestKey) fd.append('guestKey', guestKey);
+    if (anonymous) fd.append('anonymous', 'true');
     return this.http.post<LiveMessage>(`${this.base}/messages`, fd);
   }
 

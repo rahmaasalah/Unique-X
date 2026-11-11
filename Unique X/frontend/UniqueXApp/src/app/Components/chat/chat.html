@@ -121,6 +121,8 @@
                 </a>
               }
 
+              @if (m.request) { <app-chat-request-card [request]="m.request" /> }
+
               @if (m.text) { <div class="txt">{{ m.text }}</div> }
               <div class="time">{{ m.createdAt | date:'shortTime' }}</div>
             </div>
@@ -130,12 +132,6 @@
 
       <!-- ============ Composer ============ -->
       <footer class="composer">
-        @if (imagePreview) {
-          <div class="preview">
-            <img [src]="imagePreview" alt="">
-            <button class="btn-close" (click)="removeImage()"></button>
-          </div>
-        }
         @if (showCode) {
           <div class="input-group input-group-sm mb-2">
             <span class="input-group-text"><i class="bi bi-house-door"></i></span>
@@ -144,10 +140,14 @@
           </div>
         }
         <div class="d-flex align-items-end gap-2">
-          <input #fileInput type="file" accept="image/*" hidden (change)="onFile($event)">
-          <button class="btn btn-light rounded-circle tool" (click)="fileInput.click()" title="Send photo">
-            <i class="bi bi-image"></i>
-          </button>
+          @if (isBroker) {
+            <button class="btn btn-light rounded-circle tool" (click)="picker.set('properties')" title="My properties">
+              <i class="bi bi-buildings"></i>
+            </button>
+            <button class="btn btn-light rounded-circle tool" (click)="picker.set('requests')" title="My clients' requests">
+              <i class="bi bi-person-lines-fill"></i>
+            </button>
+          }
           <button class="btn rounded-circle tool" [class.btn-dark]="showCode" [class.btn-light]="!showCode"
                   (click)="showCode = !showCode" title="Send property by code">
             <i class="bi bi-house-door"></i>
@@ -204,4 +204,9 @@
       }
     </div>
   </div>
+}
+
+@if (picker()) {
+  <app-broker-share-picker [mode]="picker()!" (pickedProperty)="sharePropertyCode($event)"
+                           (pickedRequest)="shareRequest($event)" (closed)="picker.set(null)" />
 }

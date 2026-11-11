@@ -6,11 +6,13 @@ import { Subscription } from 'rxjs';
 import { LiveChatService, LiveMessage } from '../../Services/livechat.service';
 import { AuthService } from '../../Services/auth';
 import { AlertService } from '../../Services/alert';
+import { BrokerSharePickerComponent } from '../chat/broker-share-picker';
+import { ChatRequestCardComponent } from '../chat/chat-request-card';
 
 @Component({
   selector: 'app-live-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, BrokerSharePickerComponent, ChatRequestCardComponent],
   templateUrl: './live-chat.html',
   styleUrl: './live-chat.css'
 })
@@ -20,7 +22,6 @@ export class LiveChatComponent implements OnInit, OnDestroy {
   private alert = inject(AlertService);
 
   @ViewChild('scroller') scroller?: ElementRef<HTMLElement>;
-  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
 
   messages = signal<LiveMessage[]>([]);
   pinned = signal<LiveMessage[]>([]);
@@ -36,8 +37,8 @@ export class LiveChatComponent implements OnInit, OnDestroy {
   text = '';
   propertyCode = '';
   showCode = false;
-  image: File | null = null;
-  imagePreview: string | null = null;
+  anonymous = false;
+  picker = signal<'properties' | 'requests' | null>(null);
   sending = signal(false);
 
   private subs: Subscription[] = [];
@@ -157,28 +158,35 @@ export class LiveChatComponent implements OnInit, OnDestroy {
   }
 
   // ---------- Sending ----------
-  onFile(ev: Event): void {
-    const f = (ev.target as HTMLInputElement).files?.[0];
-    if (!f) return;
-    if (!f.type.startsWith('image/')) { this.alert.error('Please choose an image.'); return; }
-    if (f.size > 5 * 1024 * 1024) { this.alert.error('Image is too large (max 5 MB).'); return; }
-    this.image = f;
-    const r = new FileReader();
-    r.onload = () => (this.imagePreview = r.result as string);
-    r.readAsDataURL(f);
+  // 🟢 أدوات البروكر
+  get isBroker(): boolean {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      return this.loggedIn && (u.userType === 1 || !!u.roles?.includes('Broker'));
+    } catch { return false; }
   }
 
-  removeImage(): void {
-    this.image = null; this.imagePreview = null;
-    if (this.fileInput) this.fileInput.nativeElement.value = '';
+  sharePropertyCode(code: string): void {
+    this.picker.set(null);
+    this.doSend('', code, undefined);
+  }
+
+  shareRequest(leadRequestId: number): void {
+    this.picker.set(null);
+    this.doSend('', '', leadRequestId);
   }
 
   canSend(): boolean {
-    return !this.sending() && (!!this.text.trim() || !!this.image || !!this.propertyCode.trim());
+    return !this.sending() && (!!this.text.trim() || !!this.propertyCode.trim());
   }
 
   send(): void {
     if (!this.canSend()) return;
+    this.doSend(this.text.trim(), this.propertyCode.trim(), undefined);
+  }
+
+  private doSend(text: string, code: string, leadRequestId?: number): void {
+    if (this.sending()) return;
     if (!this.loggedIn && this.guestName.trim().length < 2) {
       this.alert.error('Please enter your name (at least 2 letters).');
       return;
@@ -186,10 +194,10 @@ export class LiveChatComponent implements OnInit, OnDestroy {
     this.saveGuestName();
     this.sending.set(true);
 
-    this.live.send(this.text.trim(), this.propertyCode.trim(), this.image, this.guestName.trim(), this.guestKey).subscribe({
+    this.live.send(text, code, leadRequestId, this.guestName.trim(), this.guestKey, this.loggedIn && this.anonymous).subscribe({
       next: m => {
         this.onIncoming(m);
-        this.text = ''; this.propertyCode = ''; this.showCode = false; this.removeImage();
+        this.text = ''; this.propertyCode = ''; this.showCode = false;
         this.sending.set(false);
         this.scrollBottom();
       },

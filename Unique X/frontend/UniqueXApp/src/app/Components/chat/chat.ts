@@ -5,12 +5,14 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, of } from 'rxjs';
 import { ChatMessage, ChatService, ChatUser, Conversation } from '../../Services/chat.service';
+import { BrokerSharePickerComponent } from './broker-share-picker';
+import { ChatRequestCardComponent } from './chat-request-card';
 import { AlertService } from '../../Services/alert';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, BrokerSharePickerComponent, ChatRequestCardComponent],
   templateUrl: './chat.html',
   styleUrl: './chat.css'
 })
@@ -21,7 +23,6 @@ export class ChatComponent implements OnInit, OnDestroy {
   private alert = inject(AlertService);
 
   @ViewChild('scroller') scroller?: ElementRef<HTMLElement>;
-  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
 
   me = this.currentUserId();
   conversations = signal<Conversation[]>([]);
@@ -36,8 +37,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   text = '';
   propertyCode = '';
   showCode = false;
-  image: File | null = null;
-  imagePreview: string | null = null;
+  picker = signal<'properties' | 'requests' | null>(null);
   sending = signal(false);
 
   // new chat / room
@@ -170,7 +170,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     const known = this.conversations().some(c => c.id === m.conversationId);
     if (!known) { this.loadConversations(); return; }
 
-    const preview = m.text || (m.property ? '🏠 Property' : m.imageUrl ? '📷 Photo' : '');
+    const preview = m.text || (m.property ? '🏠 Property' : m.request ? '📋 Client request' : m.imageUrl ? '📷 Photo' : '');
     this.conversations.update(list => {
       const updated = list.map(c => c.id === m.conversationId ? {
         ...c,
@@ -183,36 +183,43 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   // ---------- Sending ----------
-  onFile(ev: Event): void {
-    const f = (ev.target as HTMLInputElement).files?.[0];
-    if (!f) return;
-    if (!f.type.startsWith('image/')) { this.alert.error('Please choose an image.'); return; }
-    if (f.size > 5 * 1024 * 1024) { this.alert.error('Image is too large (max 5 MB).'); return; }
-    this.image = f;
-    const reader = new FileReader();
-    reader.onload = () => (this.imagePreview = reader.result as string);
-    reader.readAsDataURL(f);
+  // 🟢 أدوات البروكر
+  get isBroker(): boolean {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      return u.userType === 1 || !!u.roles?.includes('Broker');
+    } catch { return false; }
   }
 
-  removeImage(): void {
-    this.image = null; this.imagePreview = null;
-    if (this.fileInput) this.fileInput.nativeElement.value = '';
+  sharePropertyCode(code: string): void {
+    this.picker.set(null);
+    this.doSend('', code, undefined);
+  }
+
+  shareRequest(leadRequestId: number): void {
+    this.picker.set(null);
+    this.doSend('', '', leadRequestId);
   }
 
   private resetComposer(): void {
-    this.text = ''; this.propertyCode = ''; this.showCode = false; this.removeImage();
+    this.text = ''; this.propertyCode = ''; this.showCode = false;
   }
 
   canSend(): boolean {
-    return !this.sending() && (!!this.text.trim() || !!this.image || !!this.propertyCode.trim());
+    return !this.sending() && (!!this.text.trim() || !!this.propertyCode.trim());
   }
 
   send(): void {
+    if (!this.canSend()) return;
+    this.doSend(this.text.trim(), this.propertyCode.trim(), undefined);
+  }
+
+  private doSend(text: string, code: string, leadRequestId?: number): void {
     const id = this.activeId();
-    if (!id || !this.canSend()) return;
+    if (!id || this.sending()) return;
 
     this.sending.set(true);
-    this.chat.send(id, this.text.trim(), this.propertyCode.trim(), this.image).subscribe({
+    this.chat.send(id, text, code, leadRequestId).subscribe({
       next: m => {
         if (!this.messages().some(x => x.id === m.id)) this.messages.update(l => [...l, m]);
         this.resetComposer();

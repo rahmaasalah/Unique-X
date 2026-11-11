@@ -374,4 +374,13 @@ toggleJobPosting(id: number): Observable<any> {
 deleteJobPosting(id: number): Observable<any> {
   return this.http.delete(`${this.baseUrl}/job-postings/${id}`);
 }
+
+// --- Chat Rooms (تاب Rooms) ---
+getChatRooms(): Observable<any[]> {
+  return this.http.get<any[]>(`${environment.apiUrl}/admin/chat-rooms`);
+}
+
+getChatRoom(id: number): Observable<any> {
+  return this.http.get<any>(`${environment.apiUrl}/admin/chat-rooms/${id}`);
+}
 }

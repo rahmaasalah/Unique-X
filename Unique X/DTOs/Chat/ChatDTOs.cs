@@ -13,7 +13,7 @@ namespace Unique_X.DTOs.Chat
     {
         [MaxLength(4000)] public string? Text { get; set; }
         [MaxLength(60)] public string? PropertyCode { get; set; }
-        public IFormFile? Image { get; set; }
+        public int? LeadRequestId { get; set; }   // طلب عميل (للبروكر فقط)
     }
 
     public class ChatPropertyDto
@@ -37,6 +37,7 @@ namespace Unique_X.DTOs.Chat
         public string? Text { get; set; }
         public string? ImageUrl { get; set; }
         public ChatPropertyDto? Property { get; set; }
+        public ChatRequestDto? Request { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 
@@ -67,5 +68,46 @@ namespace Unique_X.DTOs.Chat
         public string Name { get; set; } = "";
         public string? ImageUrl { get; set; }
         public int UserType { get; set; }
+    }
+
+    // طلب عميل بدون أي بيانات شخصية
+    public class ChatRequestDto
+    {
+        public int Id { get; set; }
+        public string? Purpose { get; set; }
+        public string? PropertyType { get; set; }
+        public decimal MinBudget { get; set; }
+        public decimal MaxBudget { get; set; }
+        public string? PaymentMethod { get; set; }
+        public decimal? DownPayment { get; set; }
+        public int? InstallmentYears { get; set; }
+        public string? Cities { get; set; }
+        public string? Regions { get; set; }
+        public string? Projects { get; set; }
+        public string? PreferredLocation { get; set; }
+        public int? MinRooms { get; set; }
+        public int? MaxRooms { get; set; }
+        public int? MinBathrooms { get; set; }
+        public int? MaxBathrooms { get; set; }
+    }
+
+    // وحدات البروكر (للاختيار في الشات)
+    public class MyPropertyItemDto
+    {
+        public int Id { get; set; }
+        public string? Code { get; set; }
+        public string? Title { get; set; }
+        public decimal Price { get; set; }
+        public string? City { get; set; }
+        public string? Region { get; set; }
+        public string? ImageUrl { get; set; }
+    }
+
+    // طلبات عملاء البروكر (للاختيار في الشات). اسم العميل بيظهر للبروكر هنا بس، ومش بيتبعت في الشات
+    public class MyRequestItemDto
+    {
+        public int Id { get; set; }
+        public string LeadName { get; set; } = "";
+        public ChatRequestDto Request { get; set; } = new();
     }
 }

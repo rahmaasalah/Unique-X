@@ -115,7 +115,7 @@ export class AdminDashboardComponent implements OnInit {
   draggedBannerKey: string | null = null;
   bannersOrderChanged = signal<boolean>(false);
 
-  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'homeSectionBanners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'projectFinancial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'recommendedVisits' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings' | 'launches' | 'launchMeetings' | 'articles' | 'lookups' | 'propertyAnalytics' | 'searchAnalytics' | 'brokerLimits' | 'jobPostings' | 'authorization'>('users');
+  activeTab = signal<'users' | 'props' | 'settings' | 'banners' | 'homeSectionBanners' | 'sold' | 'whatsapp' | 'calls' | 'suspUsers' | 'suspProps' | 'financial' | 'projectFinancial' | 'pending' | 'rejected' | 'addLead'| 'hotDeals' | 'recommendedVisits' | 'deletions' | 'ourTeam' | 'interviewCalendar' | 'blogs' | 'ownerProps' | 'projectMeetings' | 'launches' | 'launchMeetings' | 'articles' | 'lookups' | 'propertyAnalytics' | 'searchAnalytics' | 'brokerLimits' | 'jobPostings' | 'authorization' | 'chatRooms'>('users');
 
   // 🟢 Authorization: هل اليوزر فُل أدمن ولا صاحب Custom Role محدود؟
   // بندي القيمة الافتراضية false (Fail-Closed) لحد ما نتأكد من الباك اند فعليًا - أأمن من إننا نفترض إنه أدمن
@@ -210,6 +210,53 @@ updateBrokerLimit(brokerId: string, value: string) {
 
 // ===================== Job Postings (Join Our Team) =====================
 jobPostings = signal<any[]>([]);
+
+// ===== Chat Rooms =====
+chatRooms = signal<any[]>([]);
+chatRoomsLoading = signal(false);
+selectedRoom = signal<any | null>(null);
+roomDetailLoading = signal(false);
+
+loadChatRooms() {
+  this.chatRoomsLoading.set(true);
+  this.adminService.getChatRooms().subscribe({
+    next: (data) => { this.chatRooms.set(data); this.chatRoomsLoading.set(false); },
+    error: () => { this.chatRoomsLoading.set(false); this.alertService.error('Failed to load rooms.'); }
+  });
+}
+
+openChatRoom(id: number) {
+  this.roomDetailLoading.set(true);
+  this.selectedRoom.set({ id, members: [] });
+  this.adminService.getChatRoom(id).subscribe({
+    next: (data) => { this.selectedRoom.set(data); this.roomDetailLoading.set(false); },
+    error: () => { this.roomDetailLoading.set(false); this.selectedRoom.set(null); this.alertService.error('Failed to load room details.'); }
+  });
+}
+
+// مدة الروم: من الإنشاء لحد وقت خروج آخر عضو (لو فاضية) أو لحد دلوقتي (لو شغالة)
+roomDuration(room: any): string {
+  if (!room?.createdAt) return '—';
+  const end = room.endedAt ? new Date(room.endedAt).getTime() : Date.now();
+  return this.formatSpan(end - new Date(room.createdAt).getTime());
+}
+
+// مدة بقاء عضو في فترة واحدة
+stintDuration(st: any): string {
+  const end = st.leftAt ? new Date(st.leftAt).getTime() : Date.now();
+  return this.formatSpan(end - new Date(st.joinedAt).getTime());
+}
+
+private formatSpan(ms: number): string {
+  if (!isFinite(ms) || ms < 0) return '—';
+  const mins = Math.floor(ms / 60000);
+  const d = Math.floor(mins / 1440);
+  const h = Math.floor((mins % 1440) / 60);
+  const m = mins % 60;
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
 newJobTitle = signal<string>('');
 newJobSummary = signal<string>('');
 newJobResponsibilities = signal<string>('');

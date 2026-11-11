@@ -208,6 +208,13 @@
 </li>
 <li class="mb-1">
   <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
+          [class.active]="activeTab() === 'chatRooms'" *ngIf="canAccess('chatRooms')"
+          (click)="activeTab.set('chatRooms'); loadChatRooms()">
+    <i class="bi bi-chat-square-dots-fill me-3 fs-6"></i> Rooms
+  </button>
+</li>
+<li class="mb-1">
+  <button class="btn sidebar-link w-100 text-start d-flex align-items-center py-2"
           [class.active]="activeTab() === 'authorization'" *ngIf="canAccess('authorization')"
           (click)="switchTab('authorization')">
     <i class="bi bi-shield-lock-fill me-3 fs-6"></i> Authorization
@@ -2004,6 +2011,141 @@
       </table>
     </div>
   </section>
+}
+
+<!-- ================== Chat Rooms ================== -->
+@if (activeTab() === 'chatRooms') {
+  <section class="animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-chat-square-dots-fill text-danger me-2"></i>Chat Rooms</h4>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-dark rounded-pill px-3">{{ chatRooms().length }} Rooms</span>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill" (click)="loadChatRooms()">
+          <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden border-top border-danger border-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4 py-3">ROOM</th>
+              <th>CREATED BY</th>
+              <th>CREATED AT</th>
+              <th class="text-center">MEMBERS (NOW / EVER)</th>
+              <th class="text-center">MESSAGES</th>
+              <th>DURATION</th>
+              <th>STATUS</th>
+              <th class="text-end pe-4"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of chatRooms(); track r.id) {
+              <tr style="cursor: pointer;" (click)="openChatRoom(r.id)">
+                <td class="ps-4 fw-bold">{{ r.name }}</td>
+                <td>{{ r.createdByName }}</td>
+                <td class="small">{{ r.createdAt | date:'dd MMM yyyy, hh:mm a' }}</td>
+                <td class="text-center">
+                  <span class="badge bg-success-subtle text-success">{{ r.currentMembers }}</span>
+                  <span class="text-muted mx-1">/</span>
+                  <span class="badge bg-secondary-subtle text-secondary">{{ r.totalMembersEver }}</span>
+                </td>
+                <td class="text-center">{{ r.messagesCount }}</td>
+                <td>{{ roomDuration(r) }}</td>
+                <td>
+                  @if (r.endedAt) {
+                    <span class="badge bg-secondary">Empty</span>
+                    <div class="small text-muted">since {{ r.endedAt | date:'dd MMM, hh:mm a' }}</div>
+                  } @else {
+                    <span class="badge bg-success">Active</span>
+                    <div class="small text-muted">last msg {{ r.lastActivityAt | date:'dd MMM, hh:mm a' }}</div>
+                  }
+                </td>
+                <td class="text-end pe-4"><button class="btn btn-sm btn-outline-dark rounded-pill">Details</button></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="8" class="text-center text-muted py-5">
+                @if (chatRoomsLoading()) { Loading... } @else { No rooms have been created yet. }
+              </td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- تفاصيل الروم -->
+  @if (selectedRoom(); as room) {
+    <div style="position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1080; display: flex; align-items: center; justify-content: center; padding: 16px;"
+         (click)="selectedRoom.set(null)">
+      <div class="bg-white rounded-4 shadow p-4" style="width: 100%; max-width: 820px; max-height: 88vh; overflow-y: auto;"
+           (click)="$event.stopPropagation()">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h5 class="fw-bold mb-1"><i class="bi bi-people-fill text-danger me-2"></i>{{ room.name }}</h5>
+            @if (!roomDetailLoading()) {
+              <div class="small text-muted">
+                Created by <b>{{ room.createdByName }}</b> on {{ room.createdAt | date:'dd MMM yyyy, hh:mm a' }}
+              </div>
+            }
+          </div>
+          <button class="btn-close" (click)="selectedRoom.set(null)"></button>
+        </div>
+
+        @if (roomDetailLoading()) {
+          <div class="text-center text-muted py-4">Loading...</div>
+        } @else {
+          <div class="row g-2 mb-3">
+            <div class="col-6 col-md-3"><div class="border rounded-3 p-2 text-center"><div class="small text-muted">Duration</div><div class="fw-bold">{{ roomDuration(room) }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="border rounded-3 p-2 text-center"><div class="small text-muted">Members ever</div><div class="fw-bold">{{ room.totalMembersEver }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="border rounded-3 p-2 text-center"><div class="small text-muted">In room now</div><div class="fw-bold">{{ room.currentMembers }}</div></div></div>
+            <div class="col-6 col-md-3"><div class="border rounded-3 p-2 text-center"><div class="small text-muted">Messages</div><div class="fw-bold">{{ room.messagesCount }}</div></div></div>
+          </div>
+          <div class="small text-muted mb-3">
+            Last message: {{ room.lastActivityAt | date:'dd MMM yyyy, hh:mm a' }}
+            @if (room.endedAt) { · Room became empty: {{ room.endedAt | date:'dd MMM yyyy, hh:mm a' }} }
+            @else { · Room is still active }
+          </div>
+
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead class="table-light">
+                <tr><th>MEMBER</th><th>TYPE</th><th>JOINED</th><th>LEFT</th><th>TIME IN ROOM</th></tr>
+              </thead>
+              <tbody>
+                @for (m of room.members; track m.userId) {
+                  @for (st of m.stints; track $index; let first = $first) {
+                    <tr>
+                      @if (first) {
+                        <td [attr.rowspan]="m.stints.length">
+                          <div class="fw-bold">{{ m.name }}
+                            @if (m.isCreator) { <span class="badge bg-danger ms-1">Creator</span> }
+                          </div>
+                          <div class="small text-muted">{{ m.email }}</div>
+                        </td>
+                        <td [attr.rowspan]="m.stints.length">
+                          <span class="badge" [ngClass]="m.userType === 'Broker' ? 'bg-primary' : 'bg-secondary'">{{ m.userType }}</span>
+                        </td>
+                      }
+                      <td class="small">{{ st.joinedAt | date:'dd MMM yyyy, hh:mm a' }}</td>
+                      <td class="small">
+                        @if (st.leftAt) { {{ st.leftAt | date:'dd MMM yyyy, hh:mm a' }} }
+                        @else { <span class="badge bg-success-subtle text-success">Still in room</span> }
+                      </td>
+                      <td class="small">{{ stintDuration(st) }}</td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="small text-muted">Members who left before this feature was added may not appear, because their leave time was not recorded.</div>
+        }
+      </div>
+    </div>
+  }
 }
 
 <!-- ================== جدول المستخدمين الموقوفين (Suspended Users) ================== -->

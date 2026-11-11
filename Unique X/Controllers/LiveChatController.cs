@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Unique_X.Data;
 using Unique_X.DTOs.Chat;
+using Unique_X.Helpers;
 using Unique_X.Hubs;
 using Unique_X.Models;
-using Unique_X.Services.Interface;
 
 namespace Unique_X.Controllers
 {
@@ -18,17 +18,13 @@ namespace Unique_X.Controllers
     [Route("api/livechat")]
     public class LiveChatController : ControllerBase
     {
-        private const int MaxImageBytes = 5 * 1024 * 1024;
-
         private readonly AppDbContext _db;
         private readonly IHubContext<LiveChatHub> _hub;
-        private readonly IPhotoService _photos;
 
-        public LiveChatController(AppDbContext db, IHubContext<LiveChatHub> hub, IPhotoService photos)
+        public LiveChatController(AppDbContext db, IHubContext<LiveChatHub> hub)
         {
             _db = db;
             _hub = hub;
-            _photos = photos;
         }
 
         private string? MyId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -58,10 +54,9 @@ namespace Unique_X.Controllers
             return Ok(await Map(list));
         }
 
-        // POST api/livechat/messages  (multipart: guestName, guestKey, text, propertyCode, image)
+        // POST api/livechat/messages  (form-data: guestName, guestKey, text, propertyCode, leadRequestId, anonymous)
         [HttpPost("messages")]
         [EnableRateLimiting("livechat")]
-        [RequestSizeLimit(10 * 1024 * 1024)]
         public async Task<IActionResult> Send([FromForm] LiveSendForm form)
         {
             var text = form.Text?.Trim();
@@ -69,6 +64,7 @@ namespace Unique_X.Controllers
 
             // هوية المرسل: مسجل دخول → اسمه وصورته، وإلا اسم الزائر
             string? userId = MyId;
+            var realUserId = MyId;   // للتحقق من الصلاحيات (حتى لو بعت Anonymous)
             string name;
             string? image = null;
             string? guestKey = null;
@@ -77,8 +73,19 @@ namespace Unique_X.Controllers
             {
                 var u = await _db.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId);
                 if (u == null || !u.IsActive) return Unauthorized();
-                name = $"{u.FirstName} {u.LastName}".Trim();
-                image = u.ProfileImageUrl;
+
+                if (form.Anonymous)
+                {
+                    // 🟢 إرسال Anonymous: مبنخزنش هوية المسجل خالص، وبنستخدم معرّف المتصفح عشان الرسالة تظهر "بتاعتي" عنده
+                    name = "Anonymous";
+                    guestKey = string.IsNullOrWhiteSpace(form.GuestKey) ? null : form.GuestKey.Trim();
+                    userId = null;
+                }
+                else
+                {
+                    name = $"{u.FirstName} {u.LastName}".Trim();
+                    image = u.ProfileImageUrl;
+                }
             }
             else
             {
@@ -101,20 +108,17 @@ namespace Unique_X.Controllers
                 if (propertyId != null) text = null;
             }
 
-            // الصور للمسجلين بس (حماية من إساءة الاستخدام)
-            string? imageUrl = null;
-            if (form.Image != null && form.Image.Length > 0)
+            // طلب عميل (للبروكر فقط، وبيتبعت منه نسخة من غير بيانات شخصية)
+            string? requestJson = null;
+            if (form.LeadRequestId.HasValue)
             {
-                if (string.IsNullOrEmpty(userId)) return BadRequest("Please log in to send photos.");
-                if (!(form.Image.ContentType ?? "").StartsWith("image/")) return BadRequest("Only image files are allowed.");
-                if (form.Image.Length > MaxImageBytes) return BadRequest("Image is too large (max 5 MB).");
-
-                var up = await _photos.AddPhotoAsync(form.Image);
-                if (up.Error != null || up.SecureUrl == null) return BadRequest("Could not upload the image.");
-                imageUrl = up.SecureUrl.ToString();
+                if (string.IsNullOrEmpty(realUserId) || !User.IsInRole("Broker")) return Forbid();
+                var rq = await ChatShareHelper.BuildAsync(_db, realUserId, form.LeadRequestId.Value);
+                if (rq == null) return BadRequest("Request not found.");
+                requestJson = ChatShareHelper.Serialize(rq);
             }
 
-            if (text == null && imageUrl == null && propertyId == null) return BadRequest("Message is empty.");
+            if (text == null && propertyId == null && requestJson == null) return BadRequest("Message is empty.");
 
             var msg = new LiveChatMessage
             {
@@ -123,8 +127,8 @@ namespace Unique_X.Controllers
                 SenderImage = image,
                 GuestKey = guestKey,
                 Text = text,
-                ImageUrl = imageUrl,
                 PropertyId = propertyId,
+                RequestJson = requestJson,
                 CreatedAt = DateTime.UtcNow
             };
             _db.LiveChatMessages.Add(msg);
@@ -244,6 +248,7 @@ namespace Unique_X.Controllers
                 IsGuest = m.SenderUserId == null,
                 Text = m.Text,
                 ImageUrl = m.ImageUrl,
+                Request = ChatShareHelper.Deserialize(m.RequestJson),
                 Property = m.PropertyId != null && props.TryGetValue(m.PropertyId.Value, out var pr) ? pr : null,
                 IsPinned = m.IsPinned,
                 PinnedAt = m.PinnedAt.HasValue ? DateTime.SpecifyKind(m.PinnedAt.Value, DateTimeKind.Utc) : null,

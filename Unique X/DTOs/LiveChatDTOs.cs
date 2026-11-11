@@ -9,7 +9,8 @@ namespace Unique_X.DTOs.Chat
         [MaxLength(40)] public string? GuestKey { get; set; }
         [MaxLength(1000)] public string? Text { get; set; }
         [MaxLength(60)] public string? PropertyCode { get; set; }
-        public IFormFile? Image { get; set; }
+        public int? LeadRequestId { get; set; }   // طلب عميل (للبروكر فقط)
+        public bool Anonymous { get; set; }       // المسجل يقدر يبعت كـ Anonymous
     }
 
     public class LiveMessageDto
@@ -22,6 +23,7 @@ namespace Unique_X.DTOs.Chat
         public string? Text { get; set; }
         public string? ImageUrl { get; set; }
         public ChatPropertyDto? Property { get; set; }
+        public ChatRequestDto? Request { get; set; }
         public bool IsPinned { get; set; }
         public DateTime? PinnedAt { get; set; }
         public string? PinnedByName { get; set; }

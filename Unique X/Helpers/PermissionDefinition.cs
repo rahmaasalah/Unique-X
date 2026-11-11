@@ -34,6 +34,7 @@
             new() { Key = "projectMeetings", Label = "Project Meetings" },
             new() { Key = "lookups", Label = "Developers / Projects / Regions" },
             new() { Key = "jobPostings", Label = "Job Postings" },
+            new() { Key = "chatRooms", Label = "Chat Rooms" },
             new() { Key = "ourTeam", Label = "Our Team" },
             new() { Key = "users", Label = "Users Management" },
             new() { Key = "suspUsers", Label = "Suspended Users" },

@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Unique_X.Data;
 using Unique_X.DTOs.Chat;
+using Unique_X.Helpers;
 using Unique_X.Hubs;
 using Unique_X.Models;
-using Unique_X.Services.Interface;
 
 namespace Unique_X.Controllers
 {
@@ -18,17 +18,13 @@ namespace Unique_X.Controllers
     [Route("api/chat")]
     public class ChatController : ControllerBase
     {
-        private const int MaxImageBytes = 5 * 1024 * 1024;
-
         private readonly AppDbContext _db;
         private readonly IHubContext<ChatHub> _hub;
-        private readonly IPhotoService _photos;
 
-        public ChatController(AppDbContext db, IHubContext<ChatHub> hub, IPhotoService photos)
+        public ChatController(AppDbContext db, IHubContext<ChatHub> hub)
         {
             _db = db;
             _hub = hub;
-            _photos = photos;
         }
 
         private string Me => User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
@@ -84,7 +80,7 @@ namespace Unique_X.Controllers
                     MembersCount = p.Conversation.Participants.Count,
                     Last = p.Conversation.Messages
                         .OrderByDescending(m => m.Id)
-                        .Select(m => new { m.Text, m.ImageUrl, m.PropertyId })
+                        .Select(m => new { m.Text, m.ImageUrl, m.PropertyId, HasRequest = m.RequestJson != null })
                         .FirstOrDefault()
                 })
                 .ToListAsync();
@@ -120,6 +116,7 @@ namespace Unique_X.Controllers
                 if (r.Last != null)
                     preview = !string.IsNullOrWhiteSpace(r.Last.Text) ? r.Last.Text
                             : r.Last.PropertyId != null ? "🏠 Property"
+                            : r.Last.HasRequest ? "📋 Client request"
                             : r.Last.ImageUrl != null ? "📷 Photo" : null;
 
                 return new ConversationDto
@@ -199,6 +196,10 @@ namespace Unique_X.Controllers
             _db.ChatConversations.Add(conv);
             await _db.SaveChangesAsync();
 
+            // 🟢 سجل العضوية: صاحب الروم دخلها وقت الإنشاء
+            _db.ChatMembershipLogs.Add(new ChatMembershipLog { ConversationId = conv.Id, UserId = me, JoinedAt = conv.CreatedAt });
+            await _db.SaveChangesAsync();
+
             return Ok(await BuildConversationDto(conv.Id, me, includeMembers: false));
         }
 
@@ -216,7 +217,9 @@ namespace Unique_X.Controllers
             var already = await _db.ChatParticipants.AnyAsync(p => p.ConversationId == conv.Id && p.UserId == me);
             if (!already)
             {
-                _db.ChatParticipants.Add(new ChatParticipant { ConversationId = conv.Id, UserId = me });
+                var joinedAt = DateTime.UtcNow;
+                _db.ChatParticipants.Add(new ChatParticipant { ConversationId = conv.Id, UserId = me, JoinedAt = joinedAt });
+                _db.ChatMembershipLogs.Add(new ChatMembershipLog { ConversationId = conv.Id, UserId = me, JoinedAt = joinedAt });
                 await _db.SaveChangesAsync();
             }
 
@@ -233,6 +236,22 @@ namespace Unique_X.Controllers
                 .FirstOrDefaultAsync(p => p.ConversationId == id && p.UserId == me);
             if (part == null) return NotFound();
             if (part.Conversation!.Type != 1) return BadRequest("You can only leave rooms.");
+
+            var leftAt = DateTime.UtcNow;
+
+            // 🟢 نقفل آخر فترة عضوية مفتوحة. لو العضو قديم ومالوش سجل (قبل ميزة السجل) ننشئله سجل بوقت دخوله الأصلي
+            var openLog = await _db.ChatMembershipLogs
+                .Where(l => l.ConversationId == id && l.UserId == me && l.LeftAt == null)
+                .OrderByDescending(l => l.Id)
+                .FirstOrDefaultAsync();
+            if (openLog != null) openLog.LeftAt = leftAt;
+            else _db.ChatMembershipLogs.Add(new ChatMembershipLog
+            {
+                ConversationId = id,
+                UserId = me,
+                JoinedAt = part.JoinedAt,
+                LeftAt = leftAt
+            });
 
             _db.ChatParticipants.Remove(part);
             await _db.SaveChangesAsync();
@@ -258,9 +277,8 @@ namespace Unique_X.Controllers
             return Ok(await MapMessages(msgs));
         }
 
-        // POST api/chat/conversations/5/messages  (multipart/form-data: text, propertyCode, image)
+        // POST api/chat/conversations/5/messages  (form-data: text, propertyCode, leadRequestId)
         [HttpPost("conversations/{id:int}/messages")]
-        [RequestSizeLimit(10 * 1024 * 1024)]
         public async Task<IActionResult> SendMessage(int id, [FromForm] SendMessageForm form)
         {
             var me = Me;
@@ -283,22 +301,17 @@ namespace Unique_X.Controllers
                 if (propertyId != null) text = null; // الرسالة كلها كود → بتظهر كارت وحدة
             }
 
-            // 2) الصورة
-            string? imageUrl = null;
-            if (form.Image != null && form.Image.Length > 0)
+            // 2) طلب عميل (للبروكر فقط، وبيتبعت منه نسخة من غير بيانات شخصية)
+            string? requestJson = null;
+            if (form.LeadRequestId.HasValue)
             {
-                if (!(form.Image.ContentType ?? "").StartsWith("image/"))
-                    return BadRequest("Only image files are allowed.");
-                if (form.Image.Length > MaxImageBytes)
-                    return BadRequest("Image is too large (max 5 MB).");
-
-                var up = await _photos.AddPhotoAsync(form.Image);
-                if (up.Error != null || up.SecureUrl == null)
-                    return BadRequest("Could not upload the image.");
-                imageUrl = up.SecureUrl.ToString();
+                if (!User.IsInRole("Broker")) return Forbid();
+                var rq = await ChatShareHelper.BuildAsync(_db, me, form.LeadRequestId.Value);
+                if (rq == null) return BadRequest("Request not found.");
+                requestJson = ChatShareHelper.Serialize(rq);
             }
 
-            if (text == null && imageUrl == null && propertyId == null)
+            if (text == null && propertyId == null && requestJson == null)
                 return BadRequest("Message is empty.");
 
             var now = DateTime.UtcNow;
@@ -307,8 +320,8 @@ namespace Unique_X.Controllers
                 ConversationId = id,
                 SenderId = me,
                 Text = text,
-                ImageUrl = imageUrl,
                 PropertyId = propertyId,
+                RequestJson = requestJson,
                 CreatedAt = now
             };
             _db.ChatMessages.Add(msg);
@@ -356,6 +369,67 @@ namespace Unique_X.Controllers
                 select m.Id
             ).CountAsync();
             return Ok(new { count });
+        }
+
+        // ---------- أدوات البروكر (مشاركة وحداته وطلبات عملائه) ----------
+
+        // GET api/chat/my-properties  (وحدات البروكر المعتمدة والنشطة)
+        [HttpGet("my-properties")]
+        public async Task<IActionResult> MyProperties()
+        {
+            if (!User.IsInRole("Broker")) return Forbid();
+            var me = Me;
+
+            var rows = await _db.Properties.AsNoTracking()
+                .Where(p => p.BrokerId == me && p.IsApproved && p.IsActive && !p.IsSuspended && p.Code != null)
+                .OrderByDescending(p => p.Id)
+                .Take(200)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Code,
+                    p.Title,
+                    p.Price,
+                    p.City,
+                    p.Region,
+                    Image = p.Photos
+                        .OrderByDescending(ph => ph.IsMain).ThenBy(ph => ph.DisplayOrder)
+                        .Select(ph => ph.Url).FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return Ok(rows.Select(p => new MyPropertyItemDto
+            {
+                Id = p.Id,
+                Code = p.Code,
+                Title = p.Title,
+                Price = p.Price,
+                City = p.City.ToString(),
+                Region = p.Region,
+                ImageUrl = p.Image
+            }));
+        }
+
+        // GET api/chat/my-requests  (طلبات العملاء المسجلين مع البروكر في الـ CRM)
+        [HttpGet("my-requests")]
+        public async Task<IActionResult> MyRequests()
+        {
+            if (!User.IsInRole("Broker")) return Forbid();
+            var me = Me;
+
+            var rows = await _db.LeadRequests.AsNoTracking()
+                .Include(r => r.Lead)
+                .Where(r => r.Lead.BrokerId == me && !r.Lead.IsUnassigned)
+                .OrderByDescending(r => r.Id)
+                .Take(200)
+                .ToListAsync();
+
+            return Ok(rows.Select(r => new MyRequestItemDto
+            {
+                Id = r.Id,
+                LeadName = r.Lead.FullName,
+                Request = ChatShareHelper.ToDto(r)
+            }));
         }
 
         // ---------- Helpers ----------
@@ -420,6 +494,7 @@ namespace Unique_X.Controllers
                 SenderImage = m.Sender?.ProfileImageUrl,
                 Text = m.Text,
                 ImageUrl = m.ImageUrl,
+                Request = ChatShareHelper.Deserialize(m.RequestJson),
                 Property = m.PropertyId != null && props.TryGetValue(m.PropertyId.Value, out var pr) ? pr : null,
                 CreatedAt = DateTime.SpecifyKind(m.CreatedAt, DateTimeKind.Utc)
             }).ToList();

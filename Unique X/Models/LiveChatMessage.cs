@@ -27,6 +27,9 @@ namespace Unique_X.Models
 
         public int? PropertyId { get; set; }
 
+        // طلب عميل متشارك من البروكر (نسخة آمنة JSON من غير بيانات شخصية)
+        public string? RequestJson { get; set; }
+
         public bool IsPinned { get; set; }
         public DateTime? PinnedAt { get; set; }
 

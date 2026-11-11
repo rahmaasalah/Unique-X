@@ -42,6 +42,22 @@ namespace Unique_X.Models
         public DateTime LastReadAt { get; set; } = DateTime.UtcNow;
     }
 
+    // 🟢 سجل دخول/خروج الأعضاء من الرومات (للأدمن). كل صف = فترة عضوية واحدة (دخل ... خرج).
+    // من غير FK على اليوزر عمدًا عشان السجل يفضل موجود حتى لو اليوزر اتمسح.
+    public class ChatMembershipLog
+    {
+        public long Id { get; set; }
+
+        public int ConversationId { get; set; }
+        public ChatConversation? Conversation { get; set; }
+
+        [MaxLength(450)]
+        public string UserId { get; set; } = "";
+
+        public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? LeftAt { get; set; }   // null = لسه جوه الروم
+    }
+
     public class ChatMessage
     {
         public long Id { get; set; }
@@ -60,6 +76,9 @@ namespace Unique_X.Models
 
         // وحدة مرفقة بالرسالة (من الكود). من غير FK عشان لو الوحدة اتمسحت الرسالة تفضل موجودة
         public int? PropertyId { get; set; }
+
+        // طلب عميل متشارك من البروكر (نسخة آمنة JSON من غير بيانات شخصية)
+        public string? RequestJson { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

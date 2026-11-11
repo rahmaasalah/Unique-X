@@ -730,6 +730,35 @@ namespace Unique_X.Migrations
                     b.ToTable("ChatConversations");
                 });
 
+            modelBuilder.Entity("Unique_X.Models.ChatMembershipLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("ConversationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LeftAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId", "UserId");
+
+                    b.ToTable("ChatMembershipLogs");
+                });
+
             modelBuilder.Entity("Unique_X.Models.ChatMessage", b =>
                 {
                     b.Property<long>("Id")
@@ -749,6 +778,9 @@ namespace Unique_X.Migrations
 
                     b.Property<int?>("PropertyId")
                         .HasColumnType("int");
+
+                    b.Property<string>("RequestJson")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SenderId")
                         .IsRequired()
@@ -1691,6 +1723,9 @@ namespace Unique_X.Migrations
                     b.Property<int?>("PropertyId")
                         .HasColumnType("int");
 
+                    b.Property<string>("RequestJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("SenderImage")
                         .HasColumnType("nvarchar(max)");
 
@@ -2603,6 +2638,17 @@ namespace Unique_X.Migrations
                         .IsRequired();
 
                     b.Navigation("Broker");
+                });
+
+            modelBuilder.Entity("Unique_X.Models.ChatMembershipLog", b =>
+                {
+                    b.HasOne("Unique_X.Models.ChatConversation", "Conversation")
+                        .WithMany()
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
                 });
 
             modelBuilder.Entity("Unique_X.Models.ChatMessage", b =>
