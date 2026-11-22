@@ -29,6 +29,13 @@
       <button class="btn btn-outline-danger rounded-pill fw-bold px-4" routerLink="/crm/add-lead">
         <i class="bi bi-person-plus-fill me-1"></i> Add Lead
       </button>
+      <button class="btn btn-outline-danger rounded-pill fw-bold px-4" (click)="openAddVisitModal()">
+        <i class="bi bi-calendar-check me-1"></i> Add Visit
+      </button>
+      <!-- الأدمن بيشوف الـ Master Calendar جوه الداشبوورد بتاعته، فالزرار ده للبروكر بس -->
+      <button *ngIf="!isAdmin()" class="btn btn-outline-danger rounded-pill fw-bold px-4" routerLink="/crm/calendar">
+        <i class="bi bi-calendar3 me-1"></i> My Calendar
+      </button>
       <button class="btn btn-danger rounded-pill fw-bold px-4 shadow-sm" routerLink="/crm/leads">
         <i class="bi bi-kanban me-1"></i> My Pipeline
       </button>
@@ -597,6 +604,169 @@
 
     
 
+  </div>
+
+
+  <!-- ===== Add Visit Modal ===== -->
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 2000; overflow-y: auto;" *ngIf="showVisitModal()">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-0 bg-danger text-white rounded-top-4 p-4">
+          <h5 class="modal-title fw-bold"><i class="bi bi-calendar-check me-2"></i>Schedule Visit</h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeAddVisitModal()"></button>
+        </div>
+        <div class="modal-body p-4">
+
+          <!-- 1. البحث عن العميل برقمه -->
+          <div class="mb-3 position-relative">
+            <label class="form-label small fw-bold text-dark">Client Phone Number *</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-0"><i class="bi bi-telephone"></i></span>
+              <input type="text" class="form-control bg-light border-0" placeholder="Type the client's number..."
+                     [ngModel]="visitPhoneQuery()" (ngModelChange)="onVisitPhoneInput($event)" autocomplete="off">
+              <button *ngIf="visitSelectedLead()" type="button" class="btn btn-light border-0" (click)="clearVisitLead()" title="Change client">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <!-- اقتراحات من عملاء البروكر -->
+            <div class="list-group position-absolute w-100 shadow-sm mt-1" style="z-index: 5; max-height: 240px; overflow-y: auto;" *ngIf="visitSuggestions().length > 0">
+              <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                      *ngFor="let l of visitSuggestions()" (click)="selectVisitLead(l)">
+                <span class="fw-bold">{{ l.fullName }}</span>
+                <span class="text-muted small">{{ l.phoneNumber }}</span>
+              </button>
+            </div>
+
+            <!-- العميل المختار -->
+            <div class="alert alert-success py-2 px-3 mt-2 mb-0 small fw-bold" *ngIf="visitSelectedLead() as sl">
+              <i class="bi bi-check-circle-fill me-1"></i> {{ sl.fullName }} — {{ sl.phoneNumber }}
+            </div>
+
+            <div class="text-muted small mt-2" *ngIf="visitLookupState() === 'checking'">
+              <span class="spinner-border spinner-border-sm me-1"></span> Checking this number...
+            </div>
+
+            <!-- عميل متسجل عند بروكر تاني -->
+            <div class="alert alert-warning py-2 px-3 mt-2 mb-0 small fw-bold" *ngIf="visitLookupState() === 'other'">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i> This client is already registered with another broker.
+            </div>
+
+            <!-- عميل جديد -->
+            <div class="alert alert-info py-2 px-3 mt-2 mb-0 small d-flex justify-content-between align-items-center flex-wrap gap-2" *ngIf="visitLookupState() === 'none'">
+              <span class="fw-bold"><i class="bi bi-person-plus-fill me-1"></i> This is a new client — not in our system yet.</span>
+              <button type="button" class="btn btn-sm btn-danger rounded-pill fw-bold px-3" (click)="goAddLeadFromVisit()">
+                Add Lead <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+            </div>
+          </div>
+
+          <hr class="text-muted">
+
+          <form [formGroup]="visitForm" (ngSubmit)="submitAddVisit()">
+            <fieldset [disabled]="!visitSelectedLead()" [style.opacity]="visitSelectedLead() ? 1 : 0.55">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Visit Date & Time *</label>
+                  <input type="datetime-local" class="form-control bg-light border-0 rounded-3" formControlName="visitDate">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Location*</label>
+                  <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="location" placeholder="e.g. Compound Gate">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Visit Type *</label>
+                  <select class="form-select bg-light border-0 rounded-3 fw-bold" formControlName="visitType">
+                    <option value="">-- Select Type --</option>
+                    <option value="Client">Client</option>
+                    <option value="Broker">Broker</option>
+                  </select>
+                </div>
+
+                <div class="col-md-6" *ngIf="isVisitDatePast">
+                  <label class="form-label small fw-bold text-dark">Stage (past visit) *</label>
+                  <select class="form-select bg-light border-0 rounded-3 fw-bold" formControlName="status">
+                    <option value="">-- Select Stage --</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Rescheduled">Rescheduled</option>
+                  </select>
+                </div>
+                <div class="col-md-6" *ngIf="isVisitDatePast && visitForm.get('status')?.value === 'Completed'">
+                  <label class="form-label small fw-bold text-dark">Feedback *</label>
+                  <textarea class="form-control bg-light border-0 rounded-3" formControlName="feedback" rows="1" placeholder="What happened during the visit..."></textarea>
+                </div>
+
+                <hr class="my-2 text-muted">
+
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-dark">Zone *</label>
+                  <select class="form-select bg-light border-0 rounded-3 fw-bold" formControlName="zoneId">
+                    <option value="">-- Select Zone --</option>
+                    <option *ngFor="let zone of zones" [value]="zone.id">{{ zone.name }}</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-dark">Listing Type *</label>
+                  <select class="form-select bg-light border-0 rounded-3" formControlName="listingType">
+                    <option value="">-- Select Type --</option>
+                    <option value="Resale">Resale</option>
+                    <option value="Primary">Primary</option>
+                    <option value="Resale Project">Resale Project</option>
+                    <option value="Rent">Rent</option>
+                  </select>
+                </div>
+
+                <div class="col-md-6" *ngIf="showVisitRegion">
+                  <label class="form-label small fw-bold text-dark">Region <span *ngIf="visitForm.get('listingType')?.value === 'Resale'" class="text-danger">*</span></label>
+                  <select class="form-select bg-light border-0 rounded-3" formControlName="region">
+                    <option value="">-- Select Region --</option>
+                    <option *ngFor="let r of visitRegions()" [value]="r">{{ r }}</option>
+                  </select>
+                </div>
+                <div class="col-md-6" *ngIf="showVisitProject">
+                  <label class="form-label small fw-bold text-dark">Project <span *ngIf="visitForm.get('listingType')?.value === 'Primary' || visitForm.get('listingType')?.value === 'Resale Project'" class="text-danger">*</span></label>
+                  <select class="form-select bg-light border-0 rounded-3" formControlName="project">
+                    <option value="">-- Select Project --</option>
+                    <option *ngFor="let p of visitProjects()" [value]="p">{{ p }}</option>
+                  </select>
+                </div>
+
+                <hr class="my-2 text-muted">
+
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">
+                    Property Code
+                    <span *ngIf="visitForm.get('visitType')?.value === 'Broker'" class="text-danger">*</span>
+                    <span *ngIf="visitForm.get('visitType')?.value !== 'Broker'">(Optional)</span>
+                  </label>
+                  <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="propertyCode" placeholder="e.g. ARP-123">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Property Name (Optional)</label>
+                  <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="propertyName" placeholder="e.g. Villa in Zed">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold text-muted">Broker Phone (Optional)</label>
+                  <input type="text" class="form-control bg-light border-0 rounded-3" formControlName="brokerPhone" placeholder="e.g. 01012345678">
+                </div>
+                <div class="col-12 mt-2">
+                  <label class="form-label small fw-bold text-muted">Notes</label>
+                  <textarea class="form-control bg-light border-0 rounded-3" formControlName="notes" rows="2" placeholder="Add any details..."></textarea>
+                </div>
+              </div>
+            </fieldset>
+
+            <div class="text-end mt-4">
+              <button type="submit" class="btn btn-danger px-5 rounded-pill fw-bold shadow-sm"
+                      [disabled]="!visitSelectedLead() || visitForm.invalid || visitSaving()">
+                <i class="bi bi-calendar-check me-1"></i> Save Visit
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ===== Request Leads Modal ===== -->

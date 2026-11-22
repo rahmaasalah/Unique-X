@@ -55,6 +55,16 @@ updateLeadStatus(leadId: number, data: { newStatusId: number, brokerId: string, 
     return this.http.get<any>(`${this.apiUrl}/leads/${id}`);
   }
 
+  // 🟢 أحداث الكاليندر (زيارات + مكالمات) - brokerId فاضي = الأدمن (كل البروكرز)
+  getCalendarEvents(from: string, to: string, brokerId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/calendar`, { params: { from, to, brokerId: brokerId || '' } });
+  }
+
+  // 🟢 فحص رقم عميل: mine / other / none (مودال Add Visit في بروفايل الـ CRM)
+  checkLeadPhone(phone: string, brokerId: string): Observable<{ status: 'mine' | 'other' | 'none'; leadId?: number; fullName?: string; phoneNumber?: string }> {
+    return this.http.get<any>(`${this.apiUrl}/leads/phone-check`, { params: { phone, brokerId: brokerId || '' } });
+  }
+
   // إضافة زيارة جديدة
   scheduleVisit(visitData: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/visits`, visitData);

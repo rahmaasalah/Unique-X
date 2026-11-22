@@ -16,6 +16,7 @@ import { AlertService } from '../../../Services/alert';
 
 import { forkJoin, catchError, of } from 'rxjs';
 import { AuthorizationManagerComponent } from '../../authorization-manager/authorization-manager';
+import { MyCalenderComponent } from '../my-calender/my-calender';
 import { AuthorizationService } from '../../../Services/authorization.service';
 
 
@@ -26,7 +27,7 @@ import { AuthorizationService } from '../../../Services/authorization.service';
 
   standalone: true,
 
-  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, AuthorizationManagerComponent],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, AuthorizationManagerComponent, MyCalenderComponent] ,
 
   templateUrl: './crm-dashboard.html',
 

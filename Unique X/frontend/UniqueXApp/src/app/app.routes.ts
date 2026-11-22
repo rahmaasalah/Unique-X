@@ -58,6 +58,7 @@ export const routes: Routes = [
   { path: 'crm/leads/:id/edit', loadComponent: () => import('./Components/CRM/edit-request/edit-request').then(m => m.EditRequestComponent) },
   { path: 'crm/dashboard', loadComponent: () => import('./Components/CRM/crm-dashboard/crm-dashboard').then(m => m.CrmDashboardComponent) },
   { path: 'crm/profile', loadComponent: () => import('./Components/CRM/broker-profile/broker-profile').then(m => m.BrokerProfileComponent) },
+  { path: 'crm/calendar', loadComponent: () => import('./Components/CRM/my-calender/my-calender').then(m => m.MyCalenderComponent) },
   { path: 'crm/campaigns', loadComponent: () => import('./Components/CRM/campaigns-manager/campaigns-manager').then(m => m.CampaignsManagerComponent) },
   { path: 'crm/add-lead', loadComponent: () => import('./Components/CRM/add-lead/add-lead').then(m => m.AddLeadComponent) },
   {

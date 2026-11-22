@@ -562,6 +562,50 @@ namespace Unique_X.Controllers.CRM
         // ============================================================
         // 🟢 Endpoint: تاب "New Leads" في crm-dashboard - الليدز الجاية من المودال ولسه معلقة عند الأكاونت المؤقت
         // ============================================================
+        // 🟢 فحص رقم عميل (بيستخدمه مودال Add Visit في بروفايل الـ CRM)
+        // mine  = الرقم موجود عند البروكر ده (بنرجع بياناته)
+        // other = الرقم موجود في الداتابيز عند بروكر تاني (من غير ما نكشف أي بيانات)
+        // none  = عميل جديد مش موجود خالص
+        // GET: api/crm/leads/phone-check?phone=%2B20 01012345678&brokerId=xxx
+        [HttpGet("phone-check")]
+        public async Task<IActionResult> PhoneCheck([FromQuery] string phone, [FromQuery] string? brokerId)
+        {
+            var digits = new string((phone ?? "").Where(char.IsDigit).ToArray());
+            if (digits.Length < 7) return BadRequest("Invalid phone number.");
+
+            // بنقارن بآخر 10 أرقام عشان نتفادى اختلاف الصيغة (+20 / 0 / من غير كود)
+            var tail = digits.Length > 10 ? digits.Substring(digits.Length - 10) : digits;
+
+            var matches = await _context.Leads
+                .Where(l => l.PhoneNumber != null &&
+                            l.PhoneNumber.Replace(" ", "").Replace("+", "").Replace("-", "").EndsWith(tail))
+                .Select(l => new
+                {
+                    l.Id,
+                    l.FullName,
+                    l.PhoneNumber,
+                    l.BrokerId,
+                    l.IsUnassigned,
+                    l.IsDuplicate,
+                    l.IsApprovedDuplicate
+                })
+                .ToListAsync();
+
+            if (matches.Count == 0)
+                return Ok(new { status = "none" });
+
+            var mine = matches.FirstOrDefault(l =>
+                !string.IsNullOrEmpty(brokerId) &&
+                l.BrokerId == brokerId &&
+                !l.IsUnassigned &&
+                !(l.IsDuplicate && !l.IsApprovedDuplicate));
+
+            if (mine != null)
+                return Ok(new { status = "mine", leadId = mine.Id, fullName = mine.FullName, phoneNumber = mine.PhoneNumber });
+
+            return Ok(new { status = "other" });
+        }
+
         [HttpGet("new-leads")]
         public async Task<IActionResult> GetNewLeads()
         {

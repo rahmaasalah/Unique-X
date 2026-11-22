@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms'; // 👈 استيراد FormsModule مهم للفلاتر
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms'; // 👈 استيراد FormsModule مهم للفلاتر
 import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
 import { AuthService } from '../../../Services/auth';
@@ -12,7 +12,7 @@ import { AuthorizationService } from '../../../Services/authorization.service';
 @Component({
   selector: 'app-broker-profile',
   standalone: true,
-  imports:[CommonModule, RouterModule, FormsModule], // 👈 ضفنا FormsModule هنا
+  imports:[CommonModule, RouterModule, FormsModule, ReactiveFormsModule], // 👈 ضفنا FormsModule هنا
   templateUrl: './broker-profile.html',
   styleUrls: ['./broker-profile.css']
 })
@@ -29,6 +29,7 @@ export class BrokerProfileComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private adminService = inject(AdminService);
   private authorizationService = inject(AuthorizationService);
+  private fb = inject(FormBuilder);
 
   // 🟢 true لو معاه custom role جوه crm-dashboard (Team Leader مثلاً) - مش فُل أدمن
   hasLimitedCrmRole = signal(false);
@@ -333,6 +334,7 @@ if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
         // ✅ جيب visits وactivities كمان للأدمن
         // بس الأدمن مش ليه brokerId معين، فهنجيب كلهم
         this.profileData.set({ leads: data, visits: [], activities: [] });
+        this.resumeVisitIfNeeded();
         // الـ visits والactivities للأدمن مش محتاجينهم في صفحة البروفايل
         // لأن الأدمن بيتعامل مع كل العملاء مش مع بروكر معين
       }
@@ -348,6 +350,7 @@ if (campCode) leads = leads.filter((l: any) => l.campaignName === campCode);
             });
           }
           this.profileData.set(data);
+          this.resumeVisitIfNeeded();
         },
         error: (err) => console.error('Error fetching profile data', err)
       });
@@ -514,6 +517,243 @@ cleanAdminPrefix(text: string | null): string | null {
     minRooms: '', maxRooms: '',
     minBathrooms: '', maxBathrooms: ''
   };
+
+
+  // =====================================================================
+  // 🟢 Add Visit (من بروفايل الـ CRM) - بيدوّر على العميل برقمه الأول
+  // =====================================================================
+  showVisitModal = signal<boolean>(false);
+  visitPhoneQuery = signal<string>('');
+  visitSelectedLead = signal<any>(null);
+  // idle | checking | other | none
+  visitLookupState = signal<'idle' | 'checking' | 'other' | 'none'>('idle');
+  visitSaving = signal<boolean>(false);
+  visitRegions = signal<string[]>([]);
+  visitProjects = signal<string[]>([]);
+  visitForm!: FormGroup;
+  private visitLookupTimer: any;
+  private readonly VISIT_DRAFT_KEY = 'addVisitDraft';
+  private readonly VISIT_RESUME_KEY = 'addVisitResume';
+
+  private digitsTail(phone: string): string {
+    const d = (phone || '').replace(/\D/g, '');
+    return d.length > 10 ? d.slice(-10) : d;
+  }
+
+  // العملاء اللي عند البروكر ده (من غير المتكرر المستني موافقة)
+  private myVisitLeads = computed(() => {
+    const leads = this.profileData()?.leads || [];
+    return leads.filter((l: any) => !(l.isDuplicate && !l.isApprovedDuplicate) && !l.isUnassigned);
+  });
+
+  // الاقتراحات اللي بتظهر وهو بيكتب الرقم
+  visitSuggestions = computed(() => {
+    const q = this.visitPhoneQuery().replace(/\D/g, '');
+    if (!q || this.visitSelectedLead()) return [];
+    return this.myVisitLeads()
+      .filter((l: any) => (l.phoneNumber || '').replace(/\D/g, '').includes(q))
+      .slice(0, 8);
+  });
+
+  private buildVisitForm() {
+    this.visitForm = this.fb.group({
+      visitDate: ['', Validators.required],
+      location: ['', Validators.required],
+      visitType: ['', Validators.required],
+      zoneId: ['', Validators.required],
+      listingType: ['', Validators.required],
+      region: [''],
+      project: [''],
+      propertyCode: [''],
+      propertyName: [''],
+      brokerPhone: [''],
+      notes: [''],
+      status: [''],
+      feedback: ['']
+    });
+
+    this.visitForm.get('visitDate')?.valueChanges.subscribe(v => {
+      const past = v ? new Date(v).getTime() <= Date.now() : false;
+      const st = this.visitForm.get('status'); const fb = this.visitForm.get('feedback');
+      if (past) { st?.setValidators(Validators.required); }
+      else { st?.clearValidators(); st?.setValue('', { emitEvent: false }); fb?.clearValidators(); fb?.setValue('', { emitEvent: false }); }
+      st?.updateValueAndValidity({ emitEvent: false }); fb?.updateValueAndValidity({ emitEvent: false });
+    });
+    this.visitForm.get('status')?.valueChanges.subscribe(st => {
+      const fb = this.visitForm.get('feedback');
+      if (st === 'Completed') fb?.setValidators(Validators.required); else fb?.clearValidators();
+      fb?.updateValueAndValidity({ emitEvent: false });
+    });
+    this.visitForm.get('zoneId')?.valueChanges.subscribe(z => {
+      this.visitForm.patchValue({ region: '', project: '' });
+      this.loadVisitRegionsProjects(z);
+    });
+    this.visitForm.get('listingType')?.valueChanges.subscribe(t => {
+      this.visitForm.patchValue({ region: '', project: '' });
+      const r = this.visitForm.get('region'); const p = this.visitForm.get('project');
+      r?.clearValidators(); p?.clearValidators();
+      if (t === 'Resale') r?.setValidators(Validators.required);
+      else if (t === 'Primary' || t === 'Resale Project') p?.setValidators(Validators.required);
+      r?.updateValueAndValidity(); p?.updateValueAndValidity();
+    });
+    this.visitForm.get('visitType')?.valueChanges.subscribe(t => {
+      const c = this.visitForm.get('propertyCode');
+      if (t === 'Broker') c?.setValidators(Validators.required); else c?.clearValidators();
+      c?.updateValueAndValidity();
+    });
+  }
+
+  private loadVisitRegionsProjects(zoneId: any) {
+    this.visitRegions.set([]); this.visitProjects.set([]);
+    if (!zoneId) return;
+    this.adminService.getRegions(Number(zoneId)).subscribe({
+      next: (r: any[]) => this.visitRegions.set((r || []).map(x => x.name).sort()),
+      error: () => this.visitRegions.set([])
+    });
+    this.adminService.getProjects(undefined, Number(zoneId)).subscribe({
+      next: (p: any[]) => this.visitProjects.set((p || []).map(x => x.name).sort()),
+      error: () => this.visitProjects.set([])
+    });
+  }
+
+  get showVisitRegion() { return ['Resale', 'Rent'].includes(this.visitForm?.get('listingType')?.value); }
+  get showVisitProject() { return ['Primary', 'Resale Project', 'Rent'].includes(this.visitForm?.get('listingType')?.value); }
+  get isVisitDatePast(): boolean {
+    const v = this.visitForm?.get('visitDate')?.value;
+    return v ? new Date(v).getTime() <= Date.now() : false;
+  }
+
+  openAddVisitModal() {
+    if (!this.visitForm) this.buildVisitForm();
+    this.visitForm.reset({
+      visitDate: '', location: '', visitType: '', zoneId: '', listingType: '', region: '', project: '',
+      propertyCode: '', propertyName: '', brokerPhone: '', status: '', feedback: '',
+      notes: this.isAdmin() ? `[Admin: ${this.currentAdminName()}]\n` : ''
+    });
+    this.visitPhoneQuery.set('');
+    this.visitSelectedLead.set(null);
+    this.visitLookupState.set('idle');
+    this.showVisitModal.set(true);
+  }
+
+  closeAddVisitModal() {
+    clearTimeout(this.visitLookupTimer);
+    this.showVisitModal.set(false);
+  }
+
+  private currentAdminName(): string {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      return u.username || ((u.firstName || '') + ' ' + (u.lastName || '')).trim() || 'Admin';
+    } catch { return 'Admin'; }
+  }
+
+  onVisitPhoneInput(value: string) {
+    this.visitPhoneQuery.set(value);
+    this.visitSelectedLead.set(null);
+    this.visitLookupState.set('idle');
+    clearTimeout(this.visitLookupTimer);
+
+    const digits = (value || '').replace(/\D/g, '');
+    if (digits.length < 10) return;
+
+    // لو الرقم موجود عند البروكر في الليستة المحلية مش محتاجين نسأل السيرفر - بيظهر في الاقتراحات
+    const tail = this.digitsTail(value);
+    const local = this.myVisitLeads().find((l: any) => this.digitsTail(l.phoneNumber) === tail);
+    if (local) return;
+
+    this.visitLookupState.set('checking');
+    this.visitLookupTimer = setTimeout(() => {
+      this.crmService.checkLeadPhone(value, this.currentBrokerId).subscribe({
+        next: (res) => {
+          if (this.visitPhoneQuery() !== value) return; // الرقم اتغير تاني
+          if (res.status === 'mine') {
+            this.selectVisitLead({ id: res.leadId, fullName: res.fullName, phoneNumber: res.phoneNumber, brokerId: this.currentBrokerId });
+          } else {
+            this.visitLookupState.set(res.status === 'other' ? 'other' : 'none');
+          }
+        },
+        error: () => { this.visitLookupState.set('idle'); this.alertService.error('Could not check this number. Please try again.'); }
+      });
+    }, 400);
+  }
+
+  selectVisitLead(lead: any) {
+    this.visitSelectedLead.set(lead);
+    this.visitPhoneQuery.set(lead.phoneNumber);
+    this.visitLookupState.set('idle');
+  }
+
+  clearVisitLead() {
+    this.visitSelectedLead.set(null);
+    this.visitPhoneQuery.set('');
+    this.visitLookupState.set('idle');
+  }
+
+  // عميل جديد: نحفظ اللي اتكتب في المودال ونروح لصفحة Add Lead (وهترجعنا بعد الحفظ)
+  goAddLeadFromVisit() {
+    try {
+      sessionStorage.setItem(this.VISIT_DRAFT_KEY, JSON.stringify(this.visitForm.getRawValue()));
+    } catch {}
+    const phone = this.visitPhoneQuery().trim();
+    this.showVisitModal.set(false);
+    this.router.navigate(['/crm/add-lead'], { queryParams: { fromVisit: 1, phone } });
+  }
+
+  // بيتنادى بعد ما البروفايل يتحمل: لو راجعين من Add Lead نفتح المودال تاني بنفس البيانات
+  private resumeVisitIfNeeded() {
+    let resume: any = null;
+    try {
+      const raw = sessionStorage.getItem(this.VISIT_RESUME_KEY);
+      if (raw) resume = JSON.parse(raw);
+    } catch {}
+    if (!resume) return;
+    sessionStorage.removeItem(this.VISIT_RESUME_KEY);
+
+    let draft: any = null;
+    try {
+      const raw = sessionStorage.getItem(this.VISIT_DRAFT_KEY);
+      if (raw) draft = JSON.parse(raw);
+    } catch {}
+    sessionStorage.removeItem(this.VISIT_DRAFT_KEY);
+
+    this.openAddVisitModal();
+    if (draft) {
+      const zone = draft.zoneId; const listing = draft.listingType; const region = draft.region; const project = draft.project;
+      this.visitForm.patchValue({ ...draft, zoneId: zone, listingType: listing, region: '', project: '' });
+      // الـ valueChanges بتصفّر المنطقة والمشروع، فبنرجعهم بعد ما القوائم تتحمل
+      setTimeout(() => this.visitForm.patchValue({ region, project }), 700);
+    }
+    const found = (this.profileData()?.leads || []).find((l: any) => l.id === resume.leadId);
+    this.selectVisitLead(found || { id: resume.leadId, fullName: resume.fullName, phoneNumber: resume.phoneNumber, brokerId: resume.brokerId });
+  }
+
+  submitAddVisit() {
+    const lead = this.visitSelectedLead();
+    if (!lead || this.visitForm.invalid || this.visitSaving()) return;
+
+    const data: any = { ...this.visitForm.getRawValue() };
+    data.leadId = lead.id;
+    data.brokerId = lead.brokerId || this.currentBrokerId;
+    data.zoneId = data.zoneId ? Number(data.zoneId) : 0;
+
+    this.visitSaving.set(true);
+    this.alertService.showLoading('Saving visit...');
+    this.crmService.scheduleVisit(data).subscribe({
+      next: () => {
+        this.visitSaving.set(false);
+        this.alertService.close();
+        this.alertService.success('Visit scheduled successfully!');
+        this.showVisitModal.set(false);
+        this.loadProfileData(this.isAdmin() ? '' : this.currentBrokerId);
+      },
+      error: () => {
+        this.visitSaving.set(false);
+        this.alertService.close();
+        this.alertService.error('Error scheduling visit.');
+      }
+    });
+  }
 
   openRequestLeadsModal() {
     this.requestLeadsForm = {

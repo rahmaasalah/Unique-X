@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CrmService } from '../../../Services/crm.services';
 import { AlertService } from '../../../Services/alert';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AdminService } from '../../../Services/admin';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -22,6 +22,10 @@ export class AddLeadComponent implements OnInit {
   private fb = inject(FormBuilder);
   private alertService = inject(AlertService);
   public router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  // 🟢 لو جاي من مودال Add Visit في البروفايل: الحالة بتبقى Visit scheduled وبنرجع للمودال بعد الحفظ
+  fromVisit = false;
 
   leadForm!: FormGroup;
   currentBrokerId: string = '';
@@ -93,6 +97,20 @@ export class AddLeadComponent implements OnInit {
     this.initForm();
     this.setupDynamicFields();
     this.fetchPropertyCodes('Resale');
+
+    const qp = this.route.snapshot.queryParamMap;
+    if (qp.get('fromVisit') === '1') {
+      this.fromVisit = true;
+      const phone = qp.get('phone') || '';
+      this.leadForm.patchValue({ leadStatusId: 7 }); // Visit scheduled
+      if (phone) {
+        const digits = phone.replace(/\D/g, '');
+        // لو الرقم مكتوب بكود دولة (+20) بنسيبه، لو محلي بنضيف +20
+        const formatted = phone.trim().startsWith('+') ? phone.trim()
+          : '+20 ' + digits.replace(/^20(?=1\d{9}$)/, '');
+        this.leadForm.patchValue({ phoneNumber: formatted });
+      }
+    }
     this.adminService.getBrokersWithCodes().subscribe({
       next: (data) => {
         const formatted = data
@@ -324,7 +342,19 @@ export class AddLeadComponent implements OnInit {
             });
           } else {
             this.alertService.success('Lead added successfully!');
-            this.router.navigate(['/crm/leads']);
+            if (this.fromVisit && res.leadId) {
+              try {
+                sessionStorage.setItem('addVisitResume', JSON.stringify({
+                  leadId: res.leadId,
+                  fullName: submitData.fullName,
+                  phoneNumber: submitData.phoneNumber,
+                  brokerId: submitData.brokerId
+                }));
+              } catch {}
+              this.router.navigate(['/crm/profile']);
+            } else {
+              this.router.navigate(['/crm/leads']);
+            }
           }
         },
         error: () => {
