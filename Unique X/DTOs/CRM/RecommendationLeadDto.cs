@@ -20,5 +20,12 @@ namespace Unique_X.DTOs.CRM
 
         public decimal? MinBudget { get; set; }
         public decimal? MaxBudget { get; set; }
+
+        // 🟢 المساحة (متر) - من سؤال "المساحة" في المودال
+        public decimal? MinArea { get; set; }
+        public decimal? MaxArea { get; set; }
+
+        // 🟢 "عايز تشتري امتى؟" - الأكواد: month / 3months / info
+        public string? PurchaseTimeline { get; set; }
     }
 }

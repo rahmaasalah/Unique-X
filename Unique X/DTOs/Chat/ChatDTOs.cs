@@ -46,6 +46,7 @@ namespace Unique_X.DTOs.Chat
         public string UserId { get; set; } = "";
         public string Name { get; set; } = "";
         public string? ImageUrl { get; set; }
+        public bool IsAdmin { get; set; }   // 🟢 الأدمن (عضو ضمني في كل الرومات)
     }
 
     public class ConversationDto
@@ -60,6 +61,7 @@ namespace Unique_X.DTOs.Chat
         public string? LastMessage { get; set; }
         public DateTime LastMessageAt { get; set; }
         public List<ChatMemberDto>? Members { get; set; }
+        public bool AdminView { get; set; }   // 🟢 الأدمن شايف الروم كأدمن (مش عضو فعلي فيها)
     }
 
     public class ChatUserDto

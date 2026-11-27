@@ -50,6 +50,9 @@ export interface RecommendationLeadDto {
   maxBathrooms?: number | null;
   minBudget?: number | null;
   maxBudget?: number | null;
+  minArea?: number | null;
+  maxArea?: number | null;
+  purchaseTimeline?: string | null; // month | 3months | info
 }
 
 export interface AdminDashboardDto {

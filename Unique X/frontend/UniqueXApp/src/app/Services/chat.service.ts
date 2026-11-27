@@ -31,7 +31,7 @@ export interface ChatMessage {
   createdAt: string;
 }
 
-export interface ChatMember { userId: string; name: string; imageUrl?: string; }
+export interface ChatMember { userId: string; name: string; imageUrl?: string; isAdmin?: boolean; }
 
 export interface Conversation {
   id: number;
@@ -40,6 +40,7 @@ export interface Conversation {
   membersCount: number; unreadCount: number;
   lastMessage?: string; lastMessageAt: string;
   members?: ChatMember[];
+  adminView?: boolean; // الأدمن شايف الروم كأدمن (مش عضو فعلي)
 }
 
 export interface ChatUser { id: string; name: string; imageUrl?: string; userType: number; }
@@ -51,6 +52,8 @@ export class ChatService {
 
   // رسائل جاية لحظيًا
   message$ = new Subject<ChatMessage>();
+  // رسالة اتمسحت (أدمن الروم)
+  deleted$ = new Subject<{ conversationId: number; messageId: number }>();
   // عدد الرسائل الغير مقروءة (للبادج في النافبار)
   unread = signal(0);
   // حالة الاتصال اللحظي
@@ -82,6 +85,8 @@ export class ChatService {
       this.message$.next(m);
       this.refreshUnread();
     });
+
+    this.hub.on('MessageDeleted', (d: { conversationId: number; messageId: number }) => this.deleted$.next(d));
 
     this.hub.onreconnected(() => { this.connected.set(true); this.refreshUnread(); });
     this.hub.onreconnecting(() => this.connected.set(false));
@@ -155,6 +160,9 @@ export class ChatService {
   }
   getMyRequests(): Observable<MyRequestItem[]> {
     return this.http.get<MyRequestItem[]>(`${this.base}/my-requests`);
+  }
+  deleteMessage(conversationId: number, messageId: number) {
+    return this.http.delete(`${this.base}/conversations/${conversationId}/messages/${messageId}`);
   }
   markRead(id: number) {
     return this.http.post(`${this.base}/conversations/${id}/read`, {});

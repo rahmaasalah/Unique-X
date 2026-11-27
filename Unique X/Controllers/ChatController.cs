@@ -29,6 +29,15 @@ namespace Unique_X.Controllers
 
         private string Me => User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
 
+        // 🟢 الأدمن عضو ضمني في كل الرومات: بيشوفها كلها وبيقرا ويبعت فيها ويمسح رسائل (من غير ما يتسجل كعضو فعلي)
+        private bool IsAdmin => User.IsInRole("Admin");
+
+        private Task<List<string>> AdminIdsAsync() =>
+            (from ur in _db.UserRoles
+             join r in _db.Roles on ur.RoleId equals r.Id
+             where r.Name == "Admin"
+             select ur.UserId).Distinct().ToListAsync();
+
         private static string FullName(ApplicantUser? u) =>
             u == null ? "Unknown" : $"{u.FirstName} {u.LastName}".Trim();
 
@@ -70,22 +79,57 @@ namespace Unique_X.Controllers
 
             var rows = await _db.ChatParticipants.AsNoTracking()
                 .Where(p => p.UserId == me)
-                .Select(p => new
+                .Select(p => new ConvRow
                 {
-                    p.Conversation!.Id,
-                    p.Conversation.Type,
-                    p.Conversation.Name,
-                    p.Conversation.InviteCode,
-                    p.Conversation.LastMessageAt,
+                    Id = p.Conversation!.Id,
+                    Type = p.Conversation.Type,
+                    Name = p.Conversation.Name,
+                    InviteCode = p.Conversation.InviteCode,
+                    LastMessageAt = p.Conversation.LastMessageAt,
                     MembersCount = p.Conversation.Participants.Count,
                     Last = p.Conversation.Messages
                         .OrderByDescending(m => m.Id)
-                        .Select(m => new { m.Text, m.ImageUrl, m.PropertyId, HasRequest = m.RequestJson != null })
+                        .Select(m => new LastRow { Text = m.Text, ImageUrl = m.ImageUrl, PropertyId = m.PropertyId, HasRequest = m.RequestJson != null })
                         .FirstOrDefault()
                 })
                 .ToListAsync();
 
+            // 🟢 الأدمن: بيضاف ليه كل الرومات اللي مش عضو فعلي فيها (عرض كأدمن)
+            var adminIds = new List<string>();
+            if (IsAdmin)
+            {
+                adminIds = await AdminIdsAsync();
+                var myIds = rows.Select(r => r.Id).ToList();
+                var extra = await _db.ChatConversations.AsNoTracking()
+                    .Where(c => c.Type == 1 && !myIds.Contains(c.Id))
+                    .Select(c => new ConvRow
+                    {
+                        Id = c.Id,
+                        Type = c.Type,
+                        Name = c.Name,
+                        InviteCode = c.InviteCode,
+                        LastMessageAt = c.LastMessageAt,
+                        MembersCount = c.Participants.Count,
+                        AdminView = true,
+                        Last = c.Messages
+                            .OrderByDescending(m => m.Id)
+                            .Select(m => new LastRow { Text = m.Text, ImageUrl = m.ImageUrl, PropertyId = m.PropertyId, HasRequest = m.RequestJson != null })
+                            .FirstOrDefault()
+                    })
+                    .ToListAsync();
+                rows.AddRange(extra);
+            }
+
             var ids = rows.Select(r => r.Id).ToList();
+
+            // 🟢 عدد الأدمنز اللي مش أعضاء فعليين في كل روم (بيتحسبوا ضمن عدد الأعضاء)
+            var adminMembersByConv = adminIds.Count == 0
+                ? new Dictionary<int, int>()
+                : await _db.ChatParticipants.AsNoTracking()
+                    .Where(p => ids.Contains(p.ConversationId) && adminIds.Contains(p.UserId))
+                    .GroupBy(p => p.ConversationId)
+                    .Select(g => new { Id = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Id, x => x.Count);
 
             var unread = await (
                 from m in _db.ChatMessages
@@ -126,7 +170,8 @@ namespace Unique_X.Controllers
                     Title = title,
                     ImageUrl = img,
                     InviteCode = r.Type == 1 ? r.InviteCode : null,
-                    MembersCount = r.MembersCount,
+                    MembersCount = r.MembersCount + (r.Type == 1 ? Math.Max(0, adminIds.Count - (adminMembersByConv.TryGetValue(r.Id, out var am) ? am : 0)) : 0),
+                    AdminView = r.AdminView,
                     UnreadCount = unread.TryGetValue(r.Id, out var c) ? c : 0,
                     LastMessage = preview,
                     LastMessageAt = DateTime.SpecifyKind(r.LastMessageAt, DateTimeKind.Utc)
@@ -264,7 +309,7 @@ namespace Unique_X.Controllers
         [HttpGet("conversations/{id:int}/messages")]
         public async Task<IActionResult> GetMessages(int id, [FromQuery] long? before, [FromQuery] int take = 40)
         {
-            if (!await IsMember(id)) return NotFound();
+            if (!await CanAccess(id)) return NotFound();
             take = Math.Clamp(take, 1, 100);
 
             var q = _db.ChatMessages.AsNoTracking().Include(m => m.Sender)
@@ -282,7 +327,7 @@ namespace Unique_X.Controllers
         public async Task<IActionResult> SendMessage(int id, [FromForm] SendMessageForm form)
         {
             var me = Me;
-            if (!await IsMember(id)) return NotFound();
+            if (!await CanAccess(id)) return NotFound();
 
             var text = form.Text?.Trim();
             if (string.IsNullOrEmpty(text)) text = null;
@@ -330,8 +375,8 @@ namespace Unique_X.Controllers
             conv.LastMessageAt = now;
 
             // اللي بيبعت يعتبر قرا المحادثة لحد دلوقتي
-            var mine = await _db.ChatParticipants.FirstAsync(p => p.ConversationId == id && p.UserId == me);
-            mine.LastReadAt = now;
+            var mine = await _db.ChatParticipants.FirstOrDefaultAsync(p => p.ConversationId == id && p.UserId == me);
+            if (mine != null) mine.LastReadAt = now; // الأدمن (عضو ضمني) مالوش سجل قراءة
 
             await _db.SaveChangesAsync();
 
@@ -340,9 +385,32 @@ namespace Unique_X.Controllers
 
             var memberIds = await _db.ChatParticipants.AsNoTracking()
                 .Where(p => p.ConversationId == id).Select(p => p.UserId).ToListAsync();
+            if (conv.Type == 1) memberIds = memberIds.Union(await AdminIdsAsync()).ToList(); // الأدمنز بيستلموا رسايل كل الرومات
             await _hub.Clients.Users(memberIds).SendAsync("ReceiveMessage", dto);
 
             return Ok(dto);
+        }
+
+        // DELETE api/chat/conversations/5/messages/120   (أدمن الروم فقط - للرومات بس)
+        [HttpDelete("conversations/{id:int}/messages/{messageId:long}")]
+        public async Task<IActionResult> DeleteMessage(int id, long messageId)
+        {
+            if (!IsAdmin) return Forbid();
+
+            var conv = await _db.ChatConversations.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
+            if (conv == null || conv.Type != 1) return NotFound();
+
+            var msg = await _db.ChatMessages.FirstOrDefaultAsync(m => m.Id == messageId && m.ConversationId == id);
+            if (msg == null) return NotFound();
+
+            _db.ChatMessages.Remove(msg);
+            await _db.SaveChangesAsync();
+
+            var recipients = (await _db.ChatParticipants.AsNoTracking()
+                .Where(p => p.ConversationId == id).Select(p => p.UserId).ToListAsync())
+                .Union(await AdminIdsAsync()).ToList();
+            await _hub.Clients.Users(recipients).SendAsync("MessageDeleted", new { conversationId = id, messageId });
+            return Ok();
         }
 
         // POST api/chat/conversations/5/read
@@ -351,7 +419,12 @@ namespace Unique_X.Controllers
         {
             var me = Me;
             var part = await _db.ChatParticipants.FirstOrDefaultAsync(p => p.ConversationId == id && p.UserId == me);
-            if (part == null) return NotFound();
+            if (part == null)
+            {
+                // الأدمن في روم مش عضو فيها: مفيش حاجة تتعلّم
+                if (await CanAccess(id)) return Ok();
+                return NotFound();
+            }
             part.LastReadAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             return Ok();
@@ -434,10 +507,25 @@ namespace Unique_X.Controllers
 
         // ---------- Helpers ----------
 
-        private Task<bool> IsMember(int conversationId)
+        // عضو في المحادثة، أو أدمن والمحادثة روم (الأدمن بيدخل أي روم)
+        private async Task<bool> CanAccess(int conversationId)
         {
             var me = Me;
-            return _db.ChatParticipants.AnyAsync(p => p.ConversationId == conversationId && p.UserId == me);
+            if (await _db.ChatParticipants.AnyAsync(p => p.ConversationId == conversationId && p.UserId == me)) return true;
+            return IsAdmin && await _db.ChatConversations.AnyAsync(c => c.Id == conversationId && c.Type == 1);
+        }
+
+        private class LastRow { public string? Text { get; set; } public string? ImageUrl { get; set; } public int? PropertyId { get; set; } public bool HasRequest { get; set; } }
+        private class ConvRow
+        {
+            public int Id { get; set; }
+            public int Type { get; set; }
+            public string? Name { get; set; }
+            public string? InviteCode { get; set; }
+            public DateTime LastMessageAt { get; set; }
+            public int MembersCount { get; set; }
+            public bool AdminView { get; set; }
+            public LastRow? Last { get; set; }
         }
 
         private async Task<int?> FindPropertyIdByCode(string code)
@@ -492,12 +580,38 @@ namespace Unique_X.Controllers
                 SenderId = m.SenderId,
                 SenderName = FullName(m.Sender),
                 SenderImage = m.Sender?.ProfileImageUrl,
-                Text = m.Text,
+                Text = ChatShareHelper.MessageText(m.Text, m.RequestJson),
                 ImageUrl = m.ImageUrl,
-                Request = ChatShareHelper.Deserialize(m.RequestJson),
+                Request = null, // الطلب بيتعرض كرسالة نصية مطولة (Text) مش كارد
                 Property = m.PropertyId != null && props.TryGetValue(m.PropertyId.Value, out var pr) ? pr : null,
                 CreatedAt = DateTime.SpecifyKind(m.CreatedAt, DateTimeKind.Utc)
             }).ToList();
+        }
+
+        // الأعضاء الفعليين + الأدمنز (لو مش أعضاء فعليين بيتضافوا كأدمن الروم)
+        private async Task<List<ChatMemberDto>> BuildMembers(ChatConversation conv, List<string> adminIds)
+        {
+            var list = conv.Participants.Select(p => new ChatMemberDto
+            {
+                UserId = p.UserId,
+                Name = FullName(p.User),
+                ImageUrl = p.User?.ProfileImageUrl,
+                IsAdmin = adminIds.Contains(p.UserId)
+            }).ToList();
+
+            var missing = adminIds.Where(a => !conv.Participants.Any(p => p.UserId == a)).ToList();
+            if (missing.Count > 0)
+            {
+                var admins = await _db.Users.AsNoTracking().Where(u => missing.Contains(u.Id)).ToListAsync();
+                list.AddRange(admins.Select(u => new ChatMemberDto
+                {
+                    UserId = u.Id,
+                    Name = FullName(u),
+                    ImageUrl = u.ProfileImageUrl,
+                    IsAdmin = true
+                }));
+            }
+            return list;
         }
 
         private async Task<ConversationDto?> BuildConversationDto(int id, string me, bool includeMembers)
@@ -505,7 +619,12 @@ namespace Unique_X.Controllers
             var conv = await _db.ChatConversations.AsNoTracking()
                 .Include(c => c.Participants).ThenInclude(p => p.User)
                 .FirstOrDefaultAsync(c => c.Id == id);
-            if (conv == null || !conv.Participants.Any(p => p.UserId == me)) return null;
+            if (conv == null) return null;
+            bool isParticipant = conv.Participants.Any(p => p.UserId == me);
+            bool adminView = !isParticipant && IsAdmin && conv.Type == 1;
+            if (!isParticipant && !adminView) return null;
+
+            var adminIds = conv.Type == 1 ? await AdminIdsAsync() : new List<string>();
 
             string title = conv.Name ?? "Room";
             string? img = null;
@@ -523,16 +642,10 @@ namespace Unique_X.Controllers
                 Title = title,
                 ImageUrl = img,
                 InviteCode = conv.Type == 1 ? conv.InviteCode : null,
-                MembersCount = conv.Participants.Count,
+                MembersCount = conv.Participants.Count + adminIds.Count(a => !conv.Participants.Any(p => p.UserId == a)),
+                AdminView = adminView,
                 LastMessageAt = DateTime.SpecifyKind(conv.LastMessageAt, DateTimeKind.Utc),
-                Members = includeMembers
-                    ? conv.Participants.Select(p => new ChatMemberDto
-                    {
-                        UserId = p.UserId,
-                        Name = FullName(p.User),
-                        ImageUrl = p.User?.ProfileImageUrl
-                    }).ToList()
-                    : null
+                Members = includeMembers ? await BuildMembers(conv, adminIds) : null
             };
         }
     }

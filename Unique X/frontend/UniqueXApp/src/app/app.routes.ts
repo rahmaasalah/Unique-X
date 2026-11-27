@@ -3,6 +3,7 @@ import { authGuard } from './Guards/auth-guard';
 import { guestGuard } from './Guards/guest-guard';
 import { adminGuard } from './Guards/admin-guard';
 import { leadFeedbackGuard } from './Guards/lead-feedback-guard';
+import { propertyFeedbackGuard } from './Guards/property-feedback-guard';
 
 export const routes: Routes = [
   // ===== Public =====
@@ -13,8 +14,8 @@ export const routes: Routes = [
   { path: 'forgot-password', loadComponent: () => import('./Components/forgot-password/forgot-password').then(m => m.ForgotPasswordComponent) },
   { path: 'reset-password', loadComponent: () => import('./Components/reset-password/reset-password').then(m => m.ResetPasswordComponent) },
   { path: 'find-agent', loadComponent: () => import('./Components/find-agent/find-agent').then(m => m.FindAgentComponent) },
-  { path: 'property-details/:id', loadComponent: () => import('./Components/property-details/property-details').then(m => m.PropertyDetailsComponent) },
-  { path: 'property-details/:id/:title', loadComponent: () => import('./Components/property-details/property-details').then(m => m.PropertyDetailsComponent) },
+  { path: 'property-details/:id', loadComponent: () => import('./Components/property-details/property-details').then(m => m.PropertyDetailsComponent), canDeactivate: [propertyFeedbackGuard] },
+  { path: 'property-details/:id/:title', loadComponent: () => import('./Components/property-details/property-details').then(m => m.PropertyDetailsComponent), canDeactivate: [propertyFeedbackGuard] },
   { path: 'compare/:ids', loadComponent: () => import('./Components/compare-properties/compare-properties').then(m => m.ComparePropertiesComponent) },
   { path: 'compare', loadComponent: () => import('./Components/compare-properties/compare-properties').then(m => m.ComparePropertiesComponent) },
   { path: 'price-per-meter-search', loadComponent: () => import('./Components/price-range-search/price-range-search').then(m => m.PriceRangeSearchComponent) },

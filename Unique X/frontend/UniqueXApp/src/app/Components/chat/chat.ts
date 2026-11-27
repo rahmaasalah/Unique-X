@@ -67,6 +67,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (id) this.open(id, false); else { this.activeId.set(null); this.messages.set([]); }
       }),
       this.chat.message$.subscribe(m => this.onIncoming(m)),
+      this.chat.deleted$.subscribe(d => { if (d.conversationId === this.activeId()) this.messages.update(l => l.filter(x => x.id !== d.messageId)); }),
       this.search$.pipe(
         debounceTime(300), distinctUntilChanged(),
         switchMap(q => q.trim().length >= 2 ? this.chat.searchUsers(q.trim()) : of([] as ChatUser[]))
@@ -90,6 +91,12 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.messages.update(l => [...l, ...fresh]);
         this.scrollBottom();
         this.markRead(id);
+      }
+      // مزامنة المسح (رسالة الأدمن مسحها) للي مش عنده الاتصال اللحظي
+      if (list.length) {
+        const latest = new Set(list.map(m => m.id));
+        const first = list[0].id;
+        this.messages.update(l => l.filter(m => m.id < first || latest.has(m.id)));
       }
     });
   }
@@ -176,7 +183,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         ...c,
         lastMessage: preview,
         lastMessageAt: m.createdAt,
-        unreadCount: !isActive && m.senderId !== this.me ? c.unreadCount + 1 : c.unreadCount
+        unreadCount: !isActive && m.senderId !== this.me && !c.adminView ? c.unreadCount + 1 : c.unreadCount
       } : c);
       return updated.sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt));
     });
@@ -287,6 +294,20 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.chat.leave(id).subscribe(() => {
         this.conversations.update(l => l.filter(c => c.id !== id));
         this.router.navigate(['/chat']);
+      });
+    });
+  }
+
+  // ---------- Admin ----------
+  get isAdmin(): boolean {
+    try { return !!JSON.parse(localStorage.getItem('user') || '{}').roles?.includes('Admin'); } catch { return false; }
+  }
+
+  deleteMessage(m: ChatMessage): void {
+    this.alert.confirm('Delete this message for everyone in the room?', () => {
+      this.chat.deleteMessage(m.conversationId, m.id).subscribe({
+        next: () => this.messages.update(l => l.filter(x => x.id !== m.id)),
+        error: () => this.alert.error('Could not delete the message.')
       });
     });
   }

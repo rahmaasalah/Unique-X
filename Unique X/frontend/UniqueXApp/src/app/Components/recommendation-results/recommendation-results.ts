@@ -98,6 +98,10 @@ export class RecommendationResultsComponent implements OnInit {
       maxScore++;
       if (this.inRange(Number(property.floor), c.minFloorNumber, c.maxFloorNumber)) { score++; matchedFields.add('floorNumber'); }
     }
+    if (c.minArea || c.maxArea) {
+      maxScore++;
+      if (this.inRange(Number(property.area), c.minArea, c.maxArea)) { score++; matchedFields.add('area'); }
+    }
     if (c.minBudget || c.maxBudget) {
       maxScore++;
       if (this.inRange(property.price, c.minBudget, c.maxBudget)) { score++; matchedFields.add('budget'); }

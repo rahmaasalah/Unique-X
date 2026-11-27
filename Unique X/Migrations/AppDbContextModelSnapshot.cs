@@ -1533,6 +1533,9 @@ namespace Unique_X.Migrations
                     b.Property<int>("LeadId")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("MaxArea")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int?>("MaxBathrooms")
                         .HasColumnType("int");
 
@@ -1541,6 +1544,9 @@ namespace Unique_X.Migrations
 
                     b.Property<int?>("MaxRooms")
                         .HasColumnType("int");
+
+                    b.Property<decimal?>("MinArea")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("MinBathrooms")
                         .HasColumnType("int");
@@ -1568,6 +1574,9 @@ namespace Unique_X.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ProposedPropertyIds")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PurchaseTimeline")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Purpose")

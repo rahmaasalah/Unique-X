@@ -63,7 +63,8 @@ export class LiveChatComponent implements OnInit, OnDestroy {
     this.subs.push(
       this.live.message$.subscribe(m => this.onIncoming(m)),
       this.live.pinChanged$.subscribe(m => this.onPinChanged(m)),
-      this.live.deleted$.subscribe(id => this.onDeleted(id))
+      this.live.deleted$.subscribe(id => this.onDeleted(id)),
+      this.live.reset$.subscribe(() => this.onReset())
     );
 
     // لو الاتصال اللحظي مش شغال: تحديث دوري
@@ -123,6 +124,13 @@ export class LiveChatComponent implements OnInit, OnDestroy {
 
   private poll(): void {
     this.live.getMessages().subscribe(list => {
+      // لو السيرفر رجّع أقل من 40 رسالة يبقى ده الشات كله: نستبدل المحلي بيه (بيغطي الـ Reset والمسح للي مش عنده اتصال لحظي)
+      if (list.length < 40) {
+        this.messages.set(list);
+        this.hasMore.set(false);
+        this.loadPinned();
+        return;
+      }
       const known = new Set(this.messages().map(m => m.id));
       const fresh = list.filter(m => !known.has(m.id));
       if (fresh.length) { this.messages.update(l => [...l, ...fresh]); this.scrollBottom(); }
@@ -150,6 +158,13 @@ export class LiveChatComponent implements OnInit, OnDestroy {
       const rest = l.filter(x => x.id !== m.id);
       return m.isPinned ? [m, ...rest] : rest;
     });
+  }
+
+  private onReset(): void {
+    this.messages.set([]);
+    this.pinned.set([]);
+    this.hasMore.set(false);
+    this.showPinned.set(false);
   }
 
   private onDeleted(id: number): void {
@@ -231,6 +246,16 @@ export class LiveChatComponent implements OnInit, OnDestroy {
       this.live.remove(m.id).subscribe({
         next: () => this.onDeleted(m.id),
         error: () => this.alert.error('Could not delete the message.')
+      });
+    });
+  }
+
+  // 🟢 الأدمن: مسح الشات كله والبدء من أول وجديد
+  resetChat(): void {
+    this.alert.confirm('Reset the chat? ALL messages and pinned items will be permanently deleted for everyone.', () => {
+      this.live.reset().subscribe({
+        next: () => { this.onReset(); this.alert.success('Chat has been reset.'); },
+        error: () => this.alert.error('Could not reset the chat.')
       });
     });
   }

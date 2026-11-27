@@ -33,5 +33,10 @@
         public int? MaxRooms { get; set; }
         public int? MinBathrooms { get; set; }
         public int? MaxBathrooms { get; set; }
+
+        // 🟢 من مودال Get Recommendation الجديد (خطوة بخطوة)
+        public decimal? MinArea { get; set; }
+        public decimal? MaxArea { get; set; }
+        public string? PurchaseTimeline { get; set; } // Within this month / Within 3 months / Just gathering information
     }
 }

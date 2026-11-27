@@ -89,18 +89,33 @@ export class HomeComponent implements OnInit {
   // 🟢 "Get Recommendation" — مودال اختيار المواصفات (بيفتح من البانر مباشرة، من غير بوب أب تأكيد الأول)
   // 🟢 حالة مودال "Get Recommendation" بقت في service مشترك عشان زرار الناف بار يقدر يفتحه من أي صفحة
   recommendationForm: {
+    timeline: string;
     cities: string[];
     listingTypes: string[];
     propertyTypes: string[];
+    minArea: string; maxArea: string;
     minRooms: string; maxRooms: string;
     minBathrooms: string; maxBathrooms: string;
-  } = {
-    cities: [],
-    listingTypes: [],
-    propertyTypes: [],
-    minRooms: '', maxRooms: '',
-    minBathrooms: '', maxBathrooms: ''
-  };
+    minBudget: string; maxBudget: string;
+  } = this.emptyRecommendationForm();
+
+  // 🟢 المودال بقى أسئلة بالترتيب (سؤال واحد في كل مرة) بالعربي
+  // 1 عايز تشتري امتى؟ | 2 المحافظة | 3 نوع الوحدة | 4 نوع العرض | 5 المساحة | 6 الغرف | 7 الحمامات | 8 السعر
+  recStep = signal<number>(1);
+  readonly recTotalSteps = 8;
+
+  private emptyRecommendationForm() {
+    return {
+      timeline: '',
+      cities: [] as string[],
+      listingTypes: [] as string[],
+      propertyTypes: [] as string[],
+      minArea: '', maxArea: '',
+      minRooms: '', maxRooms: '',
+      minBathrooms: '', maxBathrooms: '',
+      minBudget: '', maxBudget: ''
+    };
+  }
 
   adminPhone = signal<string>('');
   showAdvancedFilters = signal<boolean>(false);
@@ -317,7 +332,9 @@ ngOnInit(): void {
         listingTypes: params.listingType ? params.listingType.split(',') : [],
         propertyTypes: params.propertyType ? params.propertyType.split(',') : [],
         minRooms: params.minRooms || '', maxRooms: params.maxRooms || '',
-        minBathrooms: params.minBathrooms || '', maxBathrooms: params.maxBathrooms || ''
+        minBathrooms: params.minBathrooms || '', maxBathrooms: params.maxBathrooms || '',
+        minArea: params.minArea || '', maxArea: params.maxArea || '',
+        timeline: params.timeline || ''
       }, params.minBudget, params.maxBudget);
       this.router.navigate(['/recommendation-results'], { queryParams: params });
     } catch { }
@@ -389,6 +406,28 @@ onRecommendationBannerClick() {
 
 closeRecommendationModal() {
   this.recommendationModalService.close();
+  this.recStep.set(1); // المرة الجاية يبدأ من أول سؤال (الإجابات بتفضل محفوظة)
+}
+
+// ===== التنقل بين الأسئلة =====
+pickTimeline(value: string) {
+  this.recommendationForm.timeline = value;
+  this.recStep.set(2); // أول سؤال بيتخطى لوحده بمجرد الاختيار
+}
+
+recNext() {
+  if (this.recStep() < this.recTotalSteps) this.recStep.update(v => v + 1);
+}
+
+recBack() {
+  if (this.recStep() > 1) this.recStep.update(v => v - 1);
+}
+
+// خانات الميزانية: بنفورمت الرقم بالفواصل وبنخزنه في الفورم (عشان يفضل لو رجع للسؤال)
+onBudgetInput(event: any, which: 'min' | 'max') {
+  this.formatPrice(event);
+  if (which === 'min') this.recommendationForm.minBudget = event.target.value;
+  else this.recommendationForm.maxBudget = event.target.value;
 }
 
 // checkboxes الاختيار المتعدد (Zone / Listing Type / Property Type)
@@ -402,7 +441,7 @@ isRecommendationValueSelected(list: string[], value: string): boolean {
   return list.includes(value);
 }
 
-submitRecommendation(minBudgetEl: HTMLInputElement, maxBudgetEl: HTMLInputElement) {
+submitRecommendation() {
   const f = this.recommendationForm;
   const queryParams: any = {};
 
@@ -414,13 +453,17 @@ submitRecommendation(minBudgetEl: HTMLInputElement, maxBudgetEl: HTMLInputElemen
   if (f.maxRooms) queryParams.maxRooms = f.maxRooms;
   if (f.minBathrooms) queryParams.minBathrooms = f.minBathrooms;
   if (f.maxBathrooms) queryParams.maxBathrooms = f.maxBathrooms;
+  if (f.minArea) queryParams.minArea = f.minArea;
+  if (f.maxArea) queryParams.maxArea = f.maxArea;
+  if (f.timeline) queryParams.timeline = f.timeline;
 
-  const minBudget = minBudgetEl?.value?.replace(/,/g, '');
-  const maxBudget = maxBudgetEl?.value?.replace(/,/g, '');
+  const minBudget = f.minBudget?.replace(/,/g, '');
+  const maxBudget = f.maxBudget?.replace(/,/g, '');
   if (minBudget) queryParams.minBudget = minBudget;
   if (maxBudget) queryParams.maxBudget = maxBudget;
 
   this.recommendationModalService.close();
+  this.recStep.set(1);
 
   // 🟢 لو مسجل دخول: نبعت طلبه كـ Lead للـ CRM في الخلفية (Fire & Forget - مبيأثرش على تجربة البحث العادية)
   if (this.authService.loggedIn()) {
@@ -440,7 +483,7 @@ submitRecommendation(minBudgetEl: HTMLInputElement, maxBudgetEl: HTMLInputElemen
 // 🟢 بتبعت مواصفات مودال "Get Recommendation" كـ Lead جديد/تحديث لليد موجود على الـ CRM
 // شغالة في الخلفية بس - مبتأثرش على تنقل المستخدم لصفحة النتائج
 private submitRecommendationToCrm(
-  f: { cities: string[]; listingTypes: string[]; propertyTypes: string[]; minRooms: string; maxRooms: string; minBathrooms: string; maxBathrooms: string; },
+  f: { cities: string[]; listingTypes: string[]; propertyTypes: string[]; minRooms: string; maxRooms: string; minBathrooms: string; maxBathrooms: string; minArea?: string; maxArea?: string; timeline?: string; },
   minBudget?: string, maxBudget?: string
 ) {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -462,6 +505,9 @@ private submitRecommendationToCrm(
     maxBathrooms: f.maxBathrooms ? Number(f.maxBathrooms) : null,
     minBudget: minBudget ? Number(minBudget) : null,
     maxBudget: maxBudget ? Number(maxBudget) : null,
+    minArea: f.minArea ? Number(f.minArea) : null,
+    maxArea: f.maxArea ? Number(f.maxArea) : null,
+    purchaseTimeline: f.timeline || null,
   };
 
   this.crmService.submitRecommendationLead(dto).subscribe({

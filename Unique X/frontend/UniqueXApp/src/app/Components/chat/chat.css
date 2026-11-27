@@ -64,3 +64,5 @@
   .chat-shell.has-active .chat-main { display: flex; }
   .conv-bottom small { max-width: 60vw; }
 }
+.del-btn { color: inherit; opacity: .55; line-height: 1; }
+.del-btn:hover { opacity: 1; }

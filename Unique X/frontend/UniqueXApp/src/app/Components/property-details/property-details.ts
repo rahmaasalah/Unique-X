@@ -17,6 +17,7 @@ import { CrmService } from '../../Services/crm.services';
 import { ReviewService } from '../../Services/review.service';
 import { CurrencyService } from '../../Services/currency.service';
 import { environment } from '../../../environments/environment';
+import { CanLeaveProperty } from '../../Guards/property-feedback-guard';
 // 🟢 بنسجل بس العناصر اللي بنستخدمها فعليًا (line chart) بدل كل الـ registerables عشان نقلل حجم الـ chunk
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Legend, Tooltip);
 
@@ -27,7 +28,7 @@ Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryS
   templateUrl: './property-details.html',
   styleUrl: './property-details.css'
 })
-export class PropertyDetailsComponent implements OnInit, AfterViewInit {
+export class PropertyDetailsComponent implements OnInit, AfterViewInit, CanLeaveProperty {
   // 🟢 بنستخدم العنصر الفعلي في الـ DOM عشان نعرف هل النص اتقطع بصريًا فعلاً (سطرين) ولا لأ،
   // بدل ما نعتمد على عدد حروف ثابت (كان بيفشل في الموبايل لأن عدد الحروف اللي بتلم في سطرين أقل بكتير من الديسكتوب)
   @ViewChild('descriptionText') descriptionTextEl?: ElementRef<HTMLElement>;
@@ -187,6 +188,7 @@ private loadProperty(id: number): void {
   this.isDescriptionExpanded.set(false);
   this.currentSlideIndex.set(0);
   this.reviews.set([]);
+  this.pageEnteredAt = Date.now();
   this.lookalikeUnits.set([]);
   this.financialHistory.set([]);
   window.scrollTo({ top: 0, behavior: 'auto' });
@@ -537,6 +539,105 @@ startCompare() {
     this.alertService.success('Link copied successfully!');
   }).catch(err => {
     console.error('Failed to copy text: ', err);
+  });
+}
+
+
+// ===================== سؤال الخروج: هل الوحدة عجبتك؟ =====================
+// بيظهر لما المستخدم (مسجل دخول) يحاول يخرج من الصفحة بعد ما قعد فيها شوية:
+//   عجبتني  -> مودال Visit Now -> بعده فورم الـ review
+//   ماعجبتنيش -> فورم الـ review على طول
+// بعد الـ Submit بنفضل في الصفحة وبننزل لقسم الـ Reviews عشان يشوف تقييمه. "Skip" بيسيبه يخرج عادي.
+feedbackStep = signal<null | 'ask' | 'review'>(null);
+feedbackLiked: boolean | null = null;
+isSubmittingFeedback = signal(false);
+private pageEnteredAt = Date.now();
+private feedbackResolver: ((leave: boolean) => void) | null = null;
+private readonly MIN_DWELL_MS = 10000; // لازم يكون قعد 10 ثواني على الأقل عشان مانزعجش اللي فتح وقفل
+
+private currentUser(): any {
+  try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; }
+}
+
+private feedbackKey(propId: number): string {
+  const u = this.currentUser();
+  return `unitFeedbackAsked_${u?.id || u?.userId || u?.username || 'u'}_${propId}`;
+}
+
+private shouldAskFeedback(): boolean {
+  const prop = this.property();
+  const user = this.currentUser();
+  if (!prop || !user || !this.authService.loggedIn()) return false;
+  if (user.roles && user.roles.includes('Admin')) return false;              // الأدمن مش بيتسأل
+  const uid = user.id || user.userId;
+  if (uid && prop.brokerId && uid === prop.brokerId) return false;           // صاحب الوحدة مش بيقيّم وحدته
+  if (this.myReview()) return false;                                         // قيّمها قبل كده
+  if (Date.now() - this.pageEnteredAt < this.MIN_DWELL_MS) return false;     // لسه ما اتفرجش كفاية
+  try { if (localStorage.getItem(this.feedbackKey(prop.id))) return false; } catch {} // اتسأل قبل كده على الوحدة دي
+  return true;
+}
+
+// بيتنادى من الـ Guard قبل أي تنقل بره الصفحة
+canLeave(): boolean | Promise<boolean> {
+  if (this.feedbackStep() !== null) return false; // السؤال ظاهر بالفعل
+  if (!this.shouldAskFeedback()) return true;
+
+  const prop = this.property()!;
+  try { localStorage.setItem(this.feedbackKey(prop.id), '1'); } catch {}
+  this.feedbackLiked = null;
+  this.newRating.set(0);
+  this.newComment = '';
+  this.feedbackStep.set('ask');
+  return new Promise<boolean>(resolve => { this.feedbackResolver = resolve; });
+}
+
+private finishFeedback(leave: boolean) {
+  this.feedbackStep.set(null);
+  const r = this.feedbackResolver;
+  this.feedbackResolver = null;
+  if (r) r(leave);
+}
+
+answerFeedback(liked: boolean) {
+  this.feedbackLiked = liked;
+  if (!liked) { this.feedbackStep.set('review'); return; }
+
+  // عجبته: نفتح مودال Visit Now، ولما يتقفل (سواء بعت الطلب أو قفله) نظهر فورم الـ review
+  this.feedbackStep.set(null);
+  this.visitDateValue = '';
+  this.visitNotes = '';
+  this.visitType = '';
+  this.visitPhone = '';
+  const bootstrap = (window as any).bootstrap;
+  const modalEl = document.getElementById('visitNowModal');
+  if (modalEl && bootstrap) {
+    modalEl.addEventListener('hidden.bs.modal', () => this.feedbackStep.set('review'), { once: true });
+    new bootstrap.Modal(modalEl).show();
+  } else {
+    this.feedbackStep.set('review');
+  }
+}
+
+skipFeedback() { this.finishFeedback(true); }
+
+submitFeedbackReview() {
+  const prop = this.property();
+  if (!prop || this.newRating() === 0 || !this.newComment.trim() || this.isSubmittingFeedback()) return;
+  this.isSubmittingFeedback.set(true);
+  this.reviewService.addReview(prop.id, { rating: this.newRating(), comment: this.newComment.trim() }).subscribe({
+    next: () => {
+      this.isSubmittingFeedback.set(false);
+      this.alertService.success('Thank you! Your review was added.');
+      this.newRating.set(0);
+      this.newComment = '';
+      this.loadReviews(prop.id);
+      this.finishFeedback(false); // نفضل في الصفحة عشان يشوف الريفيو
+      setTimeout(() => document.getElementById('reviewsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 400);
+    },
+    error: () => {
+      this.isSubmittingFeedback.set(false);
+      this.alertService.error('Failed to submit review.');
+    }
   });
 }
 

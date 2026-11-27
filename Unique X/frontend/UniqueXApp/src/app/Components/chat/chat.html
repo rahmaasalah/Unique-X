@@ -58,7 +58,10 @@
         }
         <div class="flex-grow-1 min-w-0">
           <div class="fw-bold text-truncate">{{ active()?.title }}</div>
-          @if (active()?.type === 1) { <small class="text-muted">{{ active()?.membersCount }} members</small> }
+          @if (active()?.type === 1) {
+            <small class="text-muted">{{ active()?.membersCount }} members</small>
+            @if (active()?.adminView) { <span class="badge bg-dark ms-1">Admin view</span> }
+          }
         </div>
         @if (active()?.type === 1) {
           <button class="btn btn-sm btn-outline-dark rounded-pill" (click)="showInfo.set(!showInfo())">
@@ -78,10 +81,15 @@
           <div class="small fw-bold mb-1">Members</div>
           <div class="d-flex flex-wrap gap-2 mb-3">
             @for (m of detail()?.members ?? []; track m.userId) {
-              <span class="badge bg-light text-dark border">{{ m.name }}</span>
+              <span class="badge bg-light text-dark border">
+                {{ m.name }}
+                @if (m.isAdmin) { <span class="badge bg-danger ms-1">Admin</span> }
+              </span>
             }
           </div>
-          <button class="btn btn-sm btn-outline-danger" (click)="leaveRoom()">Leave room</button>
+          @if (!active()?.adminView) {
+            <button class="btn btn-sm btn-outline-danger" (click)="leaveRoom()">Leave room</button>
+          }
         </div>
       }
 
@@ -124,7 +132,14 @@
               @if (m.request) { <app-chat-request-card [request]="m.request" /> }
 
               @if (m.text) { <div class="txt">{{ m.text }}</div> }
-              <div class="time">{{ m.createdAt | date:'shortTime' }}</div>
+              <div class="time">
+                {{ m.createdAt | date:'shortTime' }}
+                @if (isAdmin && active()?.type === 1) {
+                  <button class="btn btn-link btn-sm p-0 ms-2 del-btn" (click)="deleteMessage(m)" title="Delete (admin)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                }
+              </div>
             </div>
           </div>
         }

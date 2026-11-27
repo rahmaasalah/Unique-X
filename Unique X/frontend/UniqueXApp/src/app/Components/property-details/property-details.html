@@ -684,7 +684,7 @@
 </div>
 
 <!-- قسم التقييمات (Reviews) -->
-<div class="bg-white p-4 rounded-4 shadow-sm border border-light mt-4 mb-5">
+<div id="reviewsSection" class="bg-white p-4 rounded-4 shadow-sm border border-light mt-4 mb-5">
   <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-2 flex-wrap gap-2">
     <h5 class="fw-bold mb-0">
       <i class="bi bi-star-fill me-2 text-warning"></i>Reviews
@@ -790,6 +790,57 @@
         <button class="h-scroll-arrow right" (click)="scrollH(lookalikeScroll, 1)" aria-label="Scroll right">
           <i class="bi bi-chevron-right"></i>
         </button>
+      </div>
+    </div>
+  }
+
+  <!-- ===== سؤال الخروج: هل الوحدة عجبتك؟ ===== -->
+  @if (feedbackStep(); as step) {
+    <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
+         style="background: rgba(0,0,0,0.55); z-index: 1060;">
+      <div class="bg-white rounded-4 shadow-lg p-4" style="max-width: 460px; width: 100%;">
+        @if (step === 'ask') {
+          <div class="text-center">
+            <i class="bi bi-house-heart-fill text-danger fs-1"></i>
+            <h5 class="fw-bold mt-2 mb-1">Did you like this property?</h5>
+            <p class="text-muted small mb-4">Before you go, tell us what you think.</p>
+            <div class="d-flex gap-2 mb-3">
+              <button class="btn btn-danger flex-fill rounded-pill fw-bold py-2" (click)="answerFeedback(true)">
+                <i class="bi bi-hand-thumbs-up-fill me-1"></i> Yes, I liked it
+              </button>
+              <button class="btn btn-outline-dark flex-fill rounded-pill fw-bold py-2" (click)="answerFeedback(false)">
+                <i class="bi bi-hand-thumbs-down-fill me-1"></i> Not really
+              </button>
+            </div>
+            <button class="btn btn-link text-muted small p-0" (click)="skipFeedback()">Skip and leave</button>
+          </div>
+        } @else {
+          <h5 class="fw-bold mb-1">
+            <i class="bi bi-star-fill text-warning me-2"></i>
+            {{ feedbackLiked ? 'Share your experience' : 'What could be better?' }}
+          </h5>
+          <p class="text-muted small mb-3">Your review will appear under this property.</p>
+          <div class="mb-3">
+            @for (star of [1,2,3,4,5]; track star) {
+              <i class="bi fs-3 me-1"
+                 style="cursor:pointer;"
+                 [class.bi-star-fill]="star <= newRating()"
+                 [class.bi-star]="star > newRating()"
+                 [class.text-warning]="star <= newRating()"
+                 [class.text-muted]="star > newRating()"
+                 (click)="newRating.set(star)"></i>
+            }
+          </div>
+          <textarea class="form-control mb-3" rows="3" placeholder="Write your review..." [(ngModel)]="newComment"></textarea>
+          <div class="d-flex justify-content-between align-items-center">
+            <button class="btn btn-link text-muted small p-0" (click)="skipFeedback()">Skip and leave</button>
+            <button class="btn btn-danger rounded-pill px-4 fw-bold"
+                    [disabled]="newRating() === 0 || !newComment.trim() || isSubmittingFeedback()"
+                    (click)="submitFeedbackReview()">
+              Submit
+            </button>
+          </div>
+        }
       </div>
     </div>
   }

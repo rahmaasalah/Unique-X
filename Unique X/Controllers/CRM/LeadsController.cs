@@ -439,6 +439,10 @@ namespace Unique_X.Controllers.CRM
             var listingTypeMap = new Dictionary<string, string> { { "0", "Resale" }, { "1", "Rent" }, { "2", "Primary" }, { "3", "Resale Project" } };
             var propertyTypeMap = new Dictionary<string, string> { { "0", "Apartment" }, { "1", "Villa" }, { "2", "Shop" }, { "3", "Office" }, { "4", "Chalet" }, { "5", "Full Floor" } };
 
+            // 🟢 تحويل كود "عايز تشتري امتى؟" لنص واضح
+            var timelineMap = new Dictionary<string, string> { { "month", "Within this month" }, { "3months", "Within 3 months" }, { "info", "Just gathering information" } };
+            string? timelineText = string.IsNullOrWhiteSpace(dto.PurchaseTimeline) ? null : timelineMap.GetValueOrDefault(dto.PurchaseTimeline, dto.PurchaseTimeline);
+
             var newCities = (dto.Cities ?? new List<string>()).Select(c => cityMap.GetValueOrDefault(c, c)).Distinct().ToList();
             var newListingTypes = (dto.ListingTypes ?? new List<string>()).Select(l => listingTypeMap.GetValueOrDefault(l, l)).Distinct().ToList();
             var newPropertyTypes = (dto.PropertyTypes ?? new List<string>()).Select(p => propertyTypeMap.GetValueOrDefault(p, p)).Distinct().ToList();
@@ -506,7 +510,10 @@ namespace Unique_X.Controllers.CRM
                     MaxBathrooms = dto.MaxBathrooms,
                     PaymentMethod = "",
                     PreferredLocation = "",
-                    Notes = "Submitted via website 'Get Recommendation' form."
+                    MinArea = dto.MinArea,
+                    MaxArea = dto.MaxArea,
+                    PurchaseTimeline = timelineText,
+                    Notes = "Submitted via website 'Get Recommendation' form." + (timelineText != null ? " Wants to buy: " + timelineText + "." : "")
                 };
                 _context.LeadRequests.Add(newRequest);
             }
@@ -541,6 +548,9 @@ namespace Unique_X.Controllers.CRM
                 if (dto.MaxRooms.HasValue) request.MaxRooms = request.MaxRooms.HasValue ? Math.Max(request.MaxRooms.Value, dto.MaxRooms.Value) : dto.MaxRooms;
                 if (dto.MinBathrooms.HasValue) request.MinBathrooms = request.MinBathrooms.HasValue ? Math.Min(request.MinBathrooms.Value, dto.MinBathrooms.Value) : dto.MinBathrooms;
                 if (dto.MaxBathrooms.HasValue) request.MaxBathrooms = request.MaxBathrooms.HasValue ? Math.Max(request.MaxBathrooms.Value, dto.MaxBathrooms.Value) : dto.MaxBathrooms;
+                if (dto.MinArea.HasValue) request.MinArea = request.MinArea.HasValue ? Math.Min(request.MinArea.Value, dto.MinArea.Value) : dto.MinArea;
+                if (dto.MaxArea.HasValue) request.MaxArea = request.MaxArea.HasValue ? Math.Max(request.MaxArea.Value, dto.MaxArea.Value) : dto.MaxArea;
+                if (timelineText != null) request.PurchaseTimeline = timelineText; // أحدث إجابة هي اللي بتفضل
                 if (dto.MinBudget.HasValue) request.MinBudget = request.MinBudget > 0 ? Math.Min(request.MinBudget, dto.MinBudget.Value) : dto.MinBudget.Value;
                 if (dto.MaxBudget.HasValue) request.MaxBudget = request.MaxBudget > 0 ? Math.Max(request.MaxBudget, dto.MaxBudget.Value) : dto.MaxBudget.Value;
 
@@ -550,7 +560,7 @@ namespace Unique_X.Controllers.CRM
                     OldStatusId = lead.LeadStatusId,
                     NewStatusId = lead.LeadStatusId,
                     ChangedById = lead.BrokerId,
-                    Notes = "Client submitted a new 'Get Recommendation' request from the website - request details updated.",
+                    Notes = "Client submitted a new 'Get Recommendation' request from the website - request details updated." + (timelineText != null ? " Wants to buy: " + timelineText + "." : ""),
                     ChangedAt = DateTime.UtcNow
                 });
             }

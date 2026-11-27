@@ -1096,104 +1096,174 @@
 
 </div>
 
-<!-- ===== Recommendation Criteria Modal (بتفتح من بانر Recommendation مباشرة) ===== -->
+<!-- ===== Recommendation Criteria Modal: أسئلة بالترتيب (سؤال واحد في كل مرة) بالعربي ===== -->
 @if (recommendationModalService.show()) {
-  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 2000;">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 2000;" dir="rtl">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content rounded-4 border-0 shadow">
-        <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold text-danger">Tell us what you're looking for</h5>
-          <button type="button" class="btn-close" (click)="closeRecommendationModal()"></button>
-        </div>
-        <div class="modal-body py-3">
-          <div class="row g-4">
-
-            <!-- Zone (multi) -->
-            <div class="col-12">
-              <label class="form-label small fw-bold d-block mb-2">Zone</label>
-              <div class="d-flex flex-wrap gap-2">
-                @for (opt of [{v:'1', l:'Cairo'}, {v:'2', l:'Alexandria'}, {v:'3', l:'North Coast'}]; track opt.v) {
-                  <button type="button" class="btn btn-sm rounded-pill px-3"
-                          [class.btn-danger]="isRecommendationValueSelected(recommendationForm.cities, opt.v)"
-                          [class.btn-outline-secondary]="!isRecommendationValueSelected(recommendationForm.cities, opt.v)"
-                          (click)="toggleRecommendationValue(recommendationForm.cities, opt.v)">
-                    {{ opt.l }}
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- Listing Type (multi) -->
-            <div class="col-12">
-              <label class="form-label small fw-bold d-block mb-2">Listing Type</label>
-              <div class="d-flex flex-wrap gap-2">
-                @for (opt of [{v:'0', l:'Resale'}, {v:'1', l:'Rent'}, {v:'2', l:'Primary'}, {v:'3', l:'Resale Project'}]; track opt.v) {
-                  <button type="button" class="btn btn-sm rounded-pill px-3"
-                          [class.btn-danger]="isRecommendationValueSelected(recommendationForm.listingTypes, opt.v)"
-                          [class.btn-outline-secondary]="!isRecommendationValueSelected(recommendationForm.listingTypes, opt.v)"
-                          (click)="toggleRecommendationValue(recommendationForm.listingTypes, opt.v)">
-                    {{ opt.l }}
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- Property Type (multi) -->
-            <div class="col-12">
-              <label class="form-label small fw-bold d-block mb-2">Property Type</label>
-              <div class="row g-2">
-                @for (opt of [{v:'0', l:'Apartment'}, {v:'1', l:'Villa'}, {v:'2', l:'Shop'}, {v:'3', l:'Office'}, {v:'4', l:'Chalet'}, {v:'5', l:'Full Floor'}]; track opt.v) {
-                  <div class="col-4">
-                    <button type="button" class="btn btn-sm rounded-pill px-2 w-100"
-                            [class.btn-danger]="isRecommendationValueSelected(recommendationForm.propertyTypes, opt.v)"
-                            [class.btn-outline-secondary]="!isRecommendationValueSelected(recommendationForm.propertyTypes, opt.v)"
-                            (click)="toggleRecommendationValue(recommendationForm.propertyTypes, opt.v)">
-                      {{ opt.l }}
-                    </button>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <hr class="my-1">
-
-            <!-- Rooms range -->
-            <div class="col-6">
-              <label class="form-label small fw-bold">Min Rooms</label>
-              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.minRooms">
-            </div>
-            <div class="col-6">
-              <label class="form-label small fw-bold">Max Rooms</label>
-              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.maxRooms">
-            </div>
-
-            <!-- Bathrooms range -->
-            <div class="col-6">
-              <label class="form-label small fw-bold">Min Bathrooms</label>
-              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.minBathrooms">
-            </div>
-            <div class="col-6">
-              <label class="form-label small fw-bold">Max Bathrooms</label>
-              <input type="number" min="0" class="form-control rounded-3" [(ngModel)]="recommendationForm.maxBathrooms">
-            </div>
-
-            <!-- Budget range -->
-            <div class="col-6">
-              <label class="form-label small fw-bold">Min Budget (EGP)</label>
-              <input type="text" class="form-control rounded-3" (input)="formatPrice($event)" #minBudget>
-            </div>
-            <div class="col-6">
-              <label class="form-label small fw-bold">Max Budget (EGP)</label>
-              <input type="text" class="form-control rounded-3" (input)="formatPrice($event)" #maxBudget>
-            </div>
-
+        <div class="modal-header border-0 pb-0 d-block">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="modal-title fw-bold text-danger">قولنا بتدوّر على إيه</h5>
+            <button type="button" class="btn-close m-0" (click)="closeRecommendationModal()"></button>
           </div>
+          <!-- شريط التقدم -->
+          <div class="progress" style="height: 6px;">
+            <div class="progress-bar bg-danger" [style.width.%]="(recStep() / recTotalSteps) * 100"></div>
+          </div>
+          <div class="small text-muted mt-1">السؤال {{ recStep() }} من {{ recTotalSteps }}</div>
         </div>
-        <div class="modal-footer border-0 pt-0">
-          <button class="btn btn-danger w-100 rounded-pill fw-bold py-2" (click)="submitRecommendation(minBudget, maxBudget)">
-            Submit
-          </button>
+
+        <div class="modal-body py-4">
+
+          <!-- 1. عايز تشتري امتى؟ (اختيار واحد - بينقل للسؤال التالي أول ما يختار) -->
+          @if (recStep() === 1) {
+            <h6 class="fw-bold mb-3">عايز تشتري امتى؟</h6>
+            <div class="d-grid gap-2">
+              @for (opt of [{v:'month', l:'خلال الشهر ده'}, {v:'3months', l:'خلال 3 شهور'}, {v:'info', l:'بجمع معلومات فقط'}]; track opt.v) {
+                <button type="button" class="btn rounded-pill py-2 fw-bold"
+                        [class.btn-danger]="recommendationForm.timeline === opt.v"
+                        [class.btn-outline-secondary]="recommendationForm.timeline !== opt.v"
+                        (click)="pickTimeline(opt.v)">
+                  {{ opt.l }}
+                </button>
+              }
+            </div>
+          }
+
+          <!-- 2. المحافظة (اختيار متعدد) -->
+          @if (recStep() === 2) {
+            <h6 class="fw-bold mb-1">إيه المحافظة اللي عايز تشتري فيها؟</h6>
+            <p class="text-muted small mb-3">تقدر تختار أكتر من واحدة</p>
+            <div class="d-flex flex-wrap gap-2">
+              @for (opt of [{v:'1', l:'القاهرة'}, {v:'2', l:'الإسكندرية'}, {v:'3', l:'الساحل الشمالي'}]; track opt.v) {
+                <button type="button" class="btn rounded-pill px-4"
+                        [class.btn-danger]="isRecommendationValueSelected(recommendationForm.cities, opt.v)"
+                        [class.btn-outline-secondary]="!isRecommendationValueSelected(recommendationForm.cities, opt.v)"
+                        (click)="toggleRecommendationValue(recommendationForm.cities, opt.v)">
+                  {{ opt.l }}
+                </button>
+              }
+            </div>
+          }
+
+          <!-- 3. نوع الوحدة (اختيار متعدد) -->
+          @if (recStep() === 3) {
+            <h6 class="fw-bold mb-1">نوع الوحدة؟</h6>
+            <p class="text-muted small mb-3">تقدر تختار أكتر من نوع</p>
+            <div class="row g-2">
+              @for (opt of [{v:'0', l:'شقة'}, {v:'1', l:'فيلا'}, {v:'2', l:'محل'}, {v:'3', l:'مكتب'}, {v:'4', l:'شاليه'}, {v:'5', l:'دور كامل'}]; track opt.v) {
+                <div class="col-4">
+                  <button type="button" class="btn rounded-pill px-2 w-100"
+                          [class.btn-danger]="isRecommendationValueSelected(recommendationForm.propertyTypes, opt.v)"
+                          [class.btn-outline-secondary]="!isRecommendationValueSelected(recommendationForm.propertyTypes, opt.v)"
+                          (click)="toggleRecommendationValue(recommendationForm.propertyTypes, opt.v)">
+                    {{ opt.l }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- 4. نوع العرض (اختيار متعدد) -->
+          @if (recStep() === 4) {
+            <h6 class="fw-bold mb-1">نوع العرض؟</h6>
+            <p class="text-muted small mb-3">تقدر تختار أكتر من واحد</p>
+            <div class="d-flex flex-wrap gap-2">
+              @for (opt of [{v:'0', l:'إعادة بيع'}, {v:'1', l:'إيجار'}, {v:'2', l:'أولي (من المطوّر)'}, {v:'3', l:'مشروع إعادة بيع'}]; track opt.v) {
+                <button type="button" class="btn rounded-pill px-4"
+                        [class.btn-danger]="isRecommendationValueSelected(recommendationForm.listingTypes, opt.v)"
+                        [class.btn-outline-secondary]="!isRecommendationValueSelected(recommendationForm.listingTypes, opt.v)"
+                        (click)="toggleRecommendationValue(recommendationForm.listingTypes, opt.v)">
+                  {{ opt.l }}
+                </button>
+              }
+            </div>
+          }
+
+          <!-- 5. المساحة -->
+          @if (recStep() === 5) {
+            <h6 class="fw-bold mb-1">المساحة المناسبة ليك؟</h6>
+            <p class="text-muted small mb-3">بالمتر المربع (اختياري)</p>
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label small fw-bold">من (م²)</label>
+                <input type="number" min="0" class="form-control rounded-3" dir="ltr" [(ngModel)]="recommendationForm.minArea">
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold">إلى (م²)</label>
+                <input type="number" min="0" class="form-control rounded-3" dir="ltr" [(ngModel)]="recommendationForm.maxArea">
+              </div>
+            </div>
+          }
+
+          <!-- 6. عدد الغرف -->
+          @if (recStep() === 6) {
+            <h6 class="fw-bold mb-1">عدد الغرف؟</h6>
+            <p class="text-muted small mb-3">اختياري</p>
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label small fw-bold">الحد الأدنى</label>
+                <input type="number" min="0" class="form-control rounded-3" dir="ltr" [(ngModel)]="recommendationForm.minRooms">
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold">الحد الأقصى</label>
+                <input type="number" min="0" class="form-control rounded-3" dir="ltr" [(ngModel)]="recommendationForm.maxRooms">
+              </div>
+            </div>
+          }
+
+          <!-- 7. عدد الحمامات -->
+          @if (recStep() === 7) {
+            <h6 class="fw-bold mb-1">عدد الحمامات؟</h6>
+            <p class="text-muted small mb-3">اختياري</p>
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label small fw-bold">الحد الأدنى</label>
+                <input type="number" min="0" class="form-control rounded-3" dir="ltr" [(ngModel)]="recommendationForm.minBathrooms">
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold">الحد الأقصى</label>
+                <input type="number" min="0" class="form-control rounded-3" dir="ltr" [(ngModel)]="recommendationForm.maxBathrooms">
+              </div>
+            </div>
+          }
+
+          <!-- 8. السعر -->
+          @if (recStep() === 8) {
+            <h6 class="fw-bold mb-1">ميزانيتك؟</h6>
+            <p class="text-muted small mb-3">بالجنيه المصري (اختياري)</p>
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label small fw-bold">الحد الأدنى</label>
+                <input type="text" inputmode="numeric" class="form-control rounded-3" dir="ltr"
+                       [value]="recommendationForm.minBudget" (input)="onBudgetInput($event, 'min')">
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold">الحد الأقصى</label>
+                <input type="text" inputmode="numeric" class="form-control rounded-3" dir="ltr"
+                       [value]="recommendationForm.maxBudget" (input)="onBudgetInput($event, 'max')">
+              </div>
+            </div>
+          }
         </div>
+
+        <!-- أزرار التنقل (السؤال الأول بيتخطى لوحده بالاختيار فمفيش "التالي" فيه) -->
+        @if (recStep() > 1) {
+          <div class="modal-footer border-0 pt-0 d-flex gap-2">
+            <button class="btn btn-outline-secondary rounded-pill fw-bold py-2 px-4" (click)="recBack()">
+              <i class="bi bi-arrow-right me-1"></i> رجوع
+            </button>
+            @if (recStep() < recTotalSteps) {
+              <button class="btn btn-danger flex-fill rounded-pill fw-bold py-2" (click)="recNext()">
+                التالي <i class="bi bi-arrow-left ms-1"></i>
+              </button>
+            } @else {
+              <button class="btn btn-danger flex-fill rounded-pill fw-bold py-2" (click)="submitRecommendation()">
+                إرسال
+              </button>
+            }
+          </div>
+        }
       </div>
     </div>
   </div>

@@ -193,6 +193,18 @@ namespace Unique_X.Controllers
             return Ok();
         }
 
+        // POST api/livechat/reset   (أدمن فقط) - بيمسح الشات القديم كله (الرسائل والمثبت) ويبدأ من جديد
+        [HttpPost("reset")]
+        public async Task<IActionResult> Reset()
+        {
+            if (User.Identity?.IsAuthenticated != true) return Unauthorized();
+            if (!IsAdmin) return Forbid();
+
+            await _db.LiveChatMessages.ExecuteDeleteAsync();
+            await _hub.Clients.Group(LiveChatHub.Group).SendAsync("LiveReset");
+            return Ok();
+        }
+
         // ---------- Helpers ----------
 
         private async Task<int?> FindPropertyIdByCode(string code)
@@ -246,9 +258,9 @@ namespace Unique_X.Controllers
                 SenderName = m.SenderName,
                 SenderImage = m.SenderImage,
                 IsGuest = m.SenderUserId == null,
-                Text = m.Text,
+                Text = ChatShareHelper.MessageText(m.Text, m.RequestJson),
                 ImageUrl = m.ImageUrl,
-                Request = ChatShareHelper.Deserialize(m.RequestJson),
+                Request = null, // الطلب بيتعرض كرسالة نصية مطولة (Text) مش كارد
                 Property = m.PropertyId != null && props.TryGetValue(m.PropertyId.Value, out var pr) ? pr : null,
                 IsPinned = m.IsPinned,
                 PinnedAt = m.PinnedAt.HasValue ? DateTime.SpecifyKind(m.PinnedAt.Value, DateTimeKind.Utc) : null,

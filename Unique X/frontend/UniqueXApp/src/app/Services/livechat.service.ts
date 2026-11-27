@@ -21,6 +21,7 @@ export class LiveChatService {
   message$ = new Subject<LiveMessage>();
   pinChanged$ = new Subject<LiveMessage>();
   deleted$ = new Subject<number>();
+  reset$ = new Subject<void>();
   connected = signal(false);
 
   constructor(private http: HttpClient) {}
@@ -39,6 +40,7 @@ export class LiveChatService {
     this.hub.on('LiveMessage', (m: LiveMessage) => this.message$.next(m));
     this.hub.on('LivePinChanged', (m: LiveMessage) => this.pinChanged$.next(m));
     this.hub.on('LiveDeleted', (id: number) => this.deleted$.next(id));
+    this.hub.on('LiveReset', () => this.reset$.next());
     this.hub.onreconnected(() => this.connected.set(true));
     this.hub.onreconnecting(() => this.connected.set(false));
     this.hub.onclose(() => this.connected.set(false));
@@ -85,6 +87,10 @@ export class LiveChatService {
   }
   unpin(id: number): Observable<LiveMessage> {
     return this.http.post<LiveMessage>(`${this.base}/messages/${id}/unpin`, {});
+  }
+  // أدمن فقط: مسح الشات القديم كله والبدء من جديد
+  reset() {
+    return this.http.post(`${this.base}/reset`, {});
   }
   remove(id: number) {
     return this.http.delete(`${this.base}/messages/${id}`);
